@@ -32,7 +32,7 @@ const Cart = () => {
 
   return (
     (<Box>
-      <IconButton
+      {/* <IconButton
         size="large"
         color="inherit"
         onClick={() => setShowDrawer(true)}
@@ -45,7 +45,7 @@ const Cart = () => {
         <Badge color="error" badgeContent={bcount}>
           <IconShoppingCart size="21" stroke="1.5" />
         </Badge>
-      </IconButton>
+      </IconButton> */}
       {/* ------------------------------------------- */}
       {/* Cart Sidebar */}
       {/* ------------------------------------------- */}

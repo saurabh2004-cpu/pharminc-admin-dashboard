@@ -203,19 +203,35 @@ const ListTable = ({
     filteredAndSortedProducts,
   } = useContext(ProductContext);
 
-
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  // Define column widths for products table
+  const columnWidths = {
+    serial: { minWidth: '80px' },
+    sku: { minWidth: '150px' },
+    productName: { minWidth: '280px' },
+    stockLevel: { minWidth: '160px' },
+    pricingGroup: { minWidth: '220px' },
+    brand: { minWidth: '220px' },
+    category: { minWidth: '220px' },
+    subCategory: { minWidth: '220px' },
+    storeDescription: { minWidth: '300px' },
+    pageTitle: { minWidth: '300px' },
+    eachBarcodes: { minWidth: '150px' },
+    packBarcodes: { minWidth: '150px' },
+    createdAt: { minWidth: '160px' },
+    actions: { minWidth: '160px' },
+  };
 
   useEffect(() => {
     if (isBrandsList) {
@@ -240,7 +256,6 @@ const ListTable = ({
       });
       setRows(filteredRows);
     }
-    // ... other conditions
   };
 
   const handleRequestSort = (event, property) => {
@@ -314,7 +329,6 @@ const ListTable = ({
     }
   };
 
-
   //edit product
   const handleEdit = (id) => {
     navigate(`/dashboard/products/edit/${id}`);
@@ -327,12 +341,12 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          placeholder={isBrandsList ? "Search Product" : "Search Product"}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
-          <TableContainer >
+          <TableContainer sx={{ width: "100%" }}>
             <Table
-              sx={{ minWidth: 750 }}
+              sx={{ minWidth: 1800 }} // Increased minimum width for products table
               aria-labelledby="tableTitle"
               size={dense ? 'small' : 'medium'}
             >
@@ -356,7 +370,6 @@ const ListTable = ({
                     return (
                       <TableRow
                         hover
-                        // onClick={(event) => handleClick(event, row.name || row.title)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
@@ -373,28 +386,163 @@ const ListTable = ({
                           />
                         </TableCell>}
 
-                        { isProductsList ? (
-                          // Products List View - Updated to handle nested objects
+                        {isProductsList ? (
+                          // Products List View with enhanced styling and widths
                           <>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>{row.sku}</TableCell>
-                            <TableCell>{row.ProductName}</TableCell> {/* Capital P to match API */}
-                            <TableCell>{row.stockLevel}</TableCell>
-                            <TableCell>{row.pricingGroup?.name || 'N/A'}</TableCell> {/* Access nested name */}
-                            <TableCell>{row.commerceCategoriesOne?.name || 'N/A'}</TableCell> {/* Access nested name */}
-                            <TableCell>{row.commerceCategoriesTwo?.name || 'N/A'}</TableCell> {/* Access nested name */}
-                            <TableCell>{row.commerceCategoriesThree?.name || 'N/A'}</TableCell> {/* Access nested name */}
-                            <TableCell>
-                              {row.storeDescription ?
-                                row.storeDescription.replace(/<[^>]*>/g, '').substring(0, 50) + '...' :
-                                'No description'
-                              }
+                            <TableCell sx={columnWidths.serial}>
+                              <Box display="flex" alignItems="center">
+                                <Box sx={{ ml: 1 }}>
+                                  <Typography fontWeight="400">
+                                    {index + 1}
+                                  </Typography>
+                                </Box>
+                              </Box>
                             </TableCell>
-                            <TableCell>{row.pageTitle || 'N/A'}</TableCell>
-                            <TableCell>{row.eachBarcodes || 'N/A'}</TableCell>
-                            <TableCell>{row.packBarcodes || 'N/A'}</TableCell>
-                            <TableCell>{format(new Date(row.createdAt), 'E, MMM d yyyy')}</TableCell>
-                            <TableCell>
+
+                            <TableCell sx={columnWidths.sku}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="500" variant="subtitle2">
+                                    {row.sku}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.productName}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" variant="body2">
+                                    {row.ProductName}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.stockLevel}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" variant="body2">
+                                    {row.eachPrice || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.stockLevel}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" variant="body2">
+                                    {row.type || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.stockLevel}>
+                              <Box display="flex" alignItems="center">
+                                <Box sx={{ ml: 10 }}>
+                                  <Typography fontWeight="400">
+                                    {row.stockLevel}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.pricingGroup}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.pricingGroup?.name || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.brand}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.commerceCategoriesOne?.name || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.category}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.commerceCategoriesTwo?.name || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.subCategory}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.commerceCategoriesThree?.name || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.storeDescription}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" variant="body2">
+                                    {row.storeDescription ?
+                                      row.storeDescription.replace(/<[^>]*>/g, '').substring(0, 50) + '...' :
+                                      'No description'
+                                    }
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.pageTitle}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.pageTitle || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.eachBarcodes}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.eachBarcodes || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.packBarcodes}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.packBarcodes || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.createdAt}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {format(new Date(row.createdAt), 'E, MMM d yyyy')}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.actions}>
                               <Box display="flex" gap={1}>
                                 <Tooltip title="Edit">
                                   <IconButton size="small" color="primary" onClick={() => handleEdit(row._id)}>
@@ -424,7 +572,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

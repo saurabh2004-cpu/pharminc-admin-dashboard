@@ -208,7 +208,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -325,7 +325,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          placeholder={'Search by pack name'}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -440,7 +440,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

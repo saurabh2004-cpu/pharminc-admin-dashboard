@@ -27,7 +27,7 @@ import {
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
 // import CustomSwitch from '../../../forms/theme-elements/CustomSwitch';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconKey } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
@@ -72,7 +72,7 @@ function EnhancedTableHead(props) {
   return (
     <TableHead>
       <TableRow>
-        {showCheckBox && <TableCell padding="checkbox">
+        {showCheckBox && <TableCell padding="checkbox"  >
           <CustomCheckbox
             color="primary"
             checked={rowCount > 0 && numSelected === rowCount}
@@ -113,8 +113,8 @@ const EnhancedTableToolbar = (props) => {
 
   const handleExportCSV = async () => {
     try {
-      const response = await axios.get(
-        'http://localhost:3000/api/v1/pricing-groups-discount/export-pricing-group-discounts',
+      const response = await axiosInstance.get(
+        '/admin/export-users',
         { responseType: 'blob' }
       );
 
@@ -194,7 +194,8 @@ const ListTable = ({
   showCheckBox,
   headCells,
   tableData,
-  isBrandsList = false,
+  isProductsList = true,
+  isBrandsList = true,
   setTableData
 }) => {
 
@@ -202,19 +203,37 @@ const ListTable = ({
     filteredAndSortedProducts,
   } = useContext(ProductContext);
 
-
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  // Define column widths for products table
+  const columnWidths = {
+    serial: { minWidth: '80px' },
+    sku: { minWidth: '150px' },
+    productName: { minWidth: '280px' },
+    stockLevel: { minWidth: '240px' },
+    pricingGroup: { minWidth: '220px' },
+    brand: { minWidth: '220px' },
+    category: { minWidth: '220px' },
+    subCategory: { minWidth: '220px' },
+    storeDescription: { minWidth: '300px' },
+    pageTitle: { minWidth: '300px' },
+    eachBarcodes: { minWidth: '150px' },
+    orderApprovel: { minWidth: '300px' },
+    packBarcodes: { minWidth: '150px' },
+    defaultShippingRate: { minWidth: '200px' },
+    createdAt: { minWidth: '160px' },
+    actions: { minWidth: '160px' },
+  };
 
   useEffect(() => {
     if (isBrandsList) {
@@ -228,14 +247,14 @@ const ListTable = ({
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    if (isBrandsList) {
+    if (isProductsList) {
       const filteredRows = sourceData.filter((row) => {
-        return row.name.toLowerCase().includes(searchValue);
-      });
-      setRows(filteredRows);
-    } else {
-      const filteredRows = filteredAndSortedProducts.filter((row) => {
-        return row.title.toLowerCase().includes(searchValue);
+        return (
+          row.sku?.toLowerCase().includes(searchValue) ||
+          row.ProductName?.toLowerCase().includes(searchValue) ||
+          row.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
+          row.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue)
+        );
       });
       setRows(filteredRows);
     }
@@ -249,7 +268,7 @@ const ListTable = ({
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.name || n.title);
+      const newSelecteds = rows.map((n) => n?.name || n.title);
       setSelected(newSelecteds);
       return;
     }
@@ -296,10 +315,10 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  //delete tax
-  const handleDeleteTax = async (id) => {
+  //delete product
+  const handleDelete = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/delivery-vendor/delete-delivery-vendor/${id}`);
+      const res = await axiosInstance.delete(`/admin/delete-user/${id}`);
 
       console.log("deleted", res.data);
 
@@ -308,14 +327,18 @@ const ListTable = ({
         setRows((prevRows) => prevRows.filter((item) => item._id !== id));
       }
     } catch (error) {
-      console.error('Error deleting category:', error);
+      console.error('Error deleting pack:', error);
     }
   };
 
+  //edit product
+  const handleEdit = (id) => {
+    navigate(`/dashboard/customers/edit/${id}`);
+  };
 
-  //edit tax
-  const handleEditTax = (id) => {
-    navigate(`/dashboard/delivery-vendors/edit/${id}`);
+  //chnage password
+  const handleChangePassword = (id) => {
+    navigate(`/dashboard/customers/change-password/${id}`);
   };
 
   return (
@@ -325,12 +348,12 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Delivery Vendor" : "Search Product"}
+          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
-          <TableContainer>
+          <TableContainer sx={{ width: "100%" }}>
             <Table
-              sx={{ minWidth: 750 }}
+              sx={{ minWidth: 1800 }} // Increased minimum width for products table
               aria-labelledby="tableTitle"
               size={dense ? 'small' : 'medium'}
             >
@@ -348,13 +371,12 @@ const ListTable = ({
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row, index) => {
-                    const isItemSelected = isSelected(row.name || row.title);
+                    const isItemSelected = isSelected(row?.ProductName || row.title);
                     const labelId = `enhanced-table-checkbox-${index}`;
 
                     return (
                       <TableRow
                         hover
-                        // onClick={(event) => handleClick(event, row.name || row.title)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
@@ -371,61 +393,194 @@ const ListTable = ({
                           />
                         </TableCell>}
 
-                        {isBrandsList ? (
-                          // Brands List View
+                        {isProductsList ? (
+                          // Products List View with enhanced styling and widths
                           <>
-                            <TableCell>
+                            <TableCell sx={columnWidths.serial}>
                               <Box display="flex" alignItems="center">
-                                <Box
-                                  sx={{
-                                    ml: 2,
-                                  }}
-                                >
-                                  <Typography fontWeight="600">
+                                <Box sx={{ ml: 1 }}>
+                                  <Typography fontWeight="400">
                                     {index + 1}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
-                            <TableCell>
+
+                            <TableCell sx={columnWidths.sku}>
                               <Box display="flex" alignItems="center">
-                                <Box
-                                  sx={{
-                                    ml: 2,
-                                  }}
-                                >
-                                  <Typography fontWeight="600">
-                                    {row.vendorName}
+                                <Box>
+                                  <Typography fontWeight="500" variant="subtitle2">
+                                    {row.customerId}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
-                            <TableCell>
-                              <Typography fontWeight="600">
-                                {row.vendorTrackingUrl}
-                              </Typography>
+
+                            <TableCell sx={columnWidths.productName}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" >
+                                    {row.customerName}
+                                  </Typography>
+                                </Box>
+                              </Box>
                             </TableCell>
 
-                            <TableCell>
-                              <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
+                            <TableCell sx={columnWidths.stockLevel}>
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {row.contactName}
+                                  </Typography>
+                                </Box>
+                              </Box>
                             </TableCell>
-                            <TableCell>
+
+                            <TableCell sx={columnWidths.pricingGroup}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" sx={{ ml: 2 }}>
+                                    {row.customerEmail || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.brand}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.contactEmail || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.category}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.CustomerPhoneNo || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.subCategory}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.category || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.storeDescription}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" >
+                                    {row.primaryBrand || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.pageTitle}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {isNaN(row.netTerms) ? 'N/A' : row.netTerms}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.eachBarcodes}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.orderApproval || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.defaultShippingRate}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" sx={{ ml: 10 }}>
+                                    {isNaN(row.defaultShippingRate) ? 'N/A' : row.defaultShippingRate}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.packBarcodes}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.shippingCity || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell sx={columnWidths.packBarcodes}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.shippingState || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell sx={columnWidths.packBarcodes}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.inactive === true ? 'Inactive' : 'Active' || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.createdAt}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {format(new Date(row.createdAt), 'E, MMM d yyyy')}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.actions}>
                               <Box display="flex" gap={1}>
                                 <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEditTax(row._id)}>
+                                  <IconButton size="small" color="primary" onClick={() => handleEdit(row._id)}>
                                     <IconEdit size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDeleteTax(row._id)}>
+                                  <IconButton size="small" color="error" onClick={() => handleDelete(row._id)}>
                                     <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+
+                                {/* Change Password */}
+                                <Tooltip title="Change Password">
+                                  <IconButton
+                                    size="small"
+                                    color="secondary"
+                                    onClick={() => handleChangePassword(row._id)}
+                                  >
+                                    <IconKey size="1.1rem" /> {/* Use a key/lock icon */}
                                   </IconButton>
                                 </Tooltip>
                               </Box>
                             </TableCell>
                           </>
                         ) : (
-                          // Products List View (original code)
                           ''
                         )}
                       </TableRow>
@@ -440,7 +595,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30]}
+            rowsPerPageOptions={[5, 10, 25]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

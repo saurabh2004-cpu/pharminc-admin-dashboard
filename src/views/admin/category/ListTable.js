@@ -172,13 +172,13 @@ const ListTable = ({
     filteredAndSortedProducts,
   } = useContext(ProductContext);
 
-  
+
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -269,7 +269,7 @@ const ListTable = ({
   //delete category
   const handleDeleteCategory = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/subcategory/delete-sub-category/${id}`);
+      const res = await axiosInstance.delete(`/category/delete-category/${id}`);
 
       console.log("deleted", res.data);
 
@@ -286,7 +286,7 @@ const ListTable = ({
   //edit category
 
   const handleEditCategory = (id) => {
-    navigate(`/dashboard/subcategory/edit/${id}`);
+    navigate(`/dashboard/category/edit/${id}`);
   };
 
   return (
@@ -296,7 +296,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          placeholder={isBrandsList ? "Search Category" : "Search Product"}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -353,13 +353,26 @@ const ListTable = ({
                                   }}
                                 >
                                   <Typography fontWeight="600">
+                                    {index + 1}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Box
+                                  sx={{
+                                    ml: 2,
+                                  }}
+                                >
+                                  <Typography fontWeight="600">
                                     {row.name}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
                             <TableCell>
-                              <Typography>{row?.category?.name || 'No Category'}</Typography>
+                              <Typography>{row?.brand?.name || ''}</Typography>
                             </TableCell>
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
@@ -395,7 +408,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

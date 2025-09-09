@@ -113,15 +113,15 @@ const EnhancedTableToolbar = (props) => {
 
   const handleExportCSV = async () => {
     try {
-      const response = await axios.get(
-        'http://localhost:3000/api/v1/pricing-groups-discount/export-pricing-group-discounts',
+      const response = await axiosInstance.get(
+        '/item-based-discount/export-items-based-discount',
         { responseType: 'blob' }
       );
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "pricing_group_discounts_export.csv");
+      link.setAttribute("download", "item-based_discounts_export.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -208,7 +208,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -299,7 +299,7 @@ const ListTable = ({
   //delete pricing group
   const handleDeletePricingGroup = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/pricing-groups-discount/delete-pricing-group-discount/${id}`);
+      const res = await axiosInstance.delete(`/item-based-discount/delete-items-based-discount/${id}`);
 
       console.log("deleted", res.data);
 
@@ -316,7 +316,7 @@ const ListTable = ({
   //edit category
 
   const handleEditPricingGroup = (id) => {
-    navigate(`/dashboard/pricing-groups-discounts/edit/${id}`);
+    navigate(`/dashboard/items-based-discounts/edit/${id}`);
   };
 
   return (
@@ -326,7 +326,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          placeholder={isBrandsList ? "Search Item Discount" : "Search Product"}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -451,7 +451,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

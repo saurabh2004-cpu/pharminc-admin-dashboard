@@ -30,7 +30,7 @@ const Notifications = () => {
 
   return (
     <Box>
-      <IconButton
+      {/* <IconButton
         size="large"
         aria-label="show 11 new notifications"
         color="inherit"
@@ -46,7 +46,7 @@ const Notifications = () => {
         <Badge variant="dot" color="primary">
           <IconBellRinging size="21" stroke="1.5" />
         </Badge>
-      </IconButton>
+      </IconButton> */}
       {/* ------------------------------------------- */}
       {/* Message Dropdown */}
       {/* ------------------------------------------- */}

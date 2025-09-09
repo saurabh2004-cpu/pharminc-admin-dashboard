@@ -54,7 +54,7 @@ const Language = () => {
 
   return (
     <>
-      <IconButton
+      {/* <IconButton
         aria-label="more"
         id="long-button"
         aria-controls={open ? 'long-menu' : undefined}
@@ -63,7 +63,7 @@ const Language = () => {
         onClick={handleClick}
       >
         <Avatar src={currentLang.icon} alt={currentLang.value} sx={{ width: 20, height: 20 }} />
-      </IconButton>
+      </IconButton> */}
       <Menu
         id="long-menu"
         anchorEl={anchorEl}

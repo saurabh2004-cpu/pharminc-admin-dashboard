@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 // FC Component For Dropdown Menu
 const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hideMenu }) => {
   const { isBorderRadius } = useContext(CustomizerContext);
-
+  
   const Icon = menu.icon;
   const theme = useTheme();
   const { pathname } = useLocation();
@@ -38,28 +38,48 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hi
       }
     });
   }, [pathname, menu.children]);
+
   const ListItemStyled = styled(ListItem)(() => ({
     marginBottom: '2px',
     cursor: 'pointer',
     padding: '8px 10px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
-    backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
+    backgroundColor: open && level < 2 ? '#2E2F7F' : 'transparent',
     whiteSpace: 'nowrap',
+    position: 'relative',
     '&:hover': {
-      backgroundColor:
-        pathname.includes(menu.href) || open
-          ? theme.palette.primary.main
-          : theme.palette.primary.light,
-      color: pathname.includes(menu.href) || open ? 'white' : theme.palette.primary.main,
+      // Only apply hover styles to the direct element, not children
+      backgroundColor: '#2E2F7F',
+      color: 'white',
+      // Target only the direct child icon and text, not nested ones
+      '& > .MuiListItemIcon-root': {
+        color: 'white',
+      },
+      '& > .MuiListItemText-root': {
+        color: 'white',
+      },
+      // Prevent hover styles from affecting nested collapse items
+      '& .MuiCollapse-root': {
+        '& .MuiListItem-root': {
+          color: 'inherit',
+          '& .MuiListItemIcon-root': {
+            color: 'inherit',
+          },
+          '& .MuiListItemText-root': {
+            color: 'inherit',
+          },
+        },
+      },
     },
     color:
       open && level < 2
         ? 'white'
-        : `inherit` && level > 1 && open
+        : level > 1 && open
           ? theme.palette.primary.main
           : theme.palette.text.secondary,
     borderRadius: `${isBorderRadius}px`,
   }));
+
   // If Menu has Children
   const submenus = menu.children?.map((item) => {
     if (item.children) {
@@ -71,6 +91,7 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hi
           pathWithoutLastPart={pathWithoutLastPart}
           pathDirect={pathDirect}
           hideMenu={hideMenu}
+          onClick={onClick}
         />
       );
     } else {
@@ -104,10 +125,26 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hi
         >
           {menuIcon}
         </ListItemIcon>
-        <ListItemText color="inherit">{hideMenu ? '' : <>{t(`${menu.title}`)}</>}</ListItemText>
+        <ListItemText color="inherit">
+          {hideMenu ? '' : <>{t(`${menu.title}`)}</>}
+        </ListItemText>
         {!open ? <IconChevronDown size="1rem" /> : <IconChevronUp size="1rem" />}
       </ListItemStyled>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse 
+        in={open} 
+        timeout="auto" 
+        unmountOnExit
+        sx={{
+          // Ensure collapsed content doesn't inherit parent hover styles
+          '& .MuiListItem-root': {
+            color: theme.palette.text.secondary,
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
+          },
+        }}
+      >
         {submenus}
       </Collapse>
     </React.Fragment>

@@ -16,7 +16,7 @@ const CreateTax = () => {
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const navigate = useNavigate();
-    
+
 
     const handleSubmit = async () => {
         // Validation
@@ -63,7 +63,7 @@ const CreateTax = () => {
         }
     };
 
-    
+
 
     return (
         <div>
@@ -75,6 +75,7 @@ const CreateTax = () => {
                         sx={{ mt: 0 }}
                     >
                         Tax Name
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -92,13 +93,13 @@ const CreateTax = () => {
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="tax-percentage" sx={{ mt: 2 }}>
                         percentage
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
                     <CustomOutlinedInput
                         id="category-percentage"
                         fullWidth
-                        // disabled
                         type="number"
                         value={formData.percentage}
                         onChange={(e) => setFormData({ ...formData, percentage: e.target.value })}
@@ -130,7 +131,7 @@ const CreateTax = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ minWidth: '120px' }}
+                        sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
                     >
                         {loading ? 'Creating...' : 'Create Tax'}
                     </Button>

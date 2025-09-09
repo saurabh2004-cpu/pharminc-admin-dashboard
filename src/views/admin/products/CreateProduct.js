@@ -257,34 +257,26 @@ const CreateProduct = () => {
   return (
     <div>
       <Grid container spacing={2}>
-
-        {/* Pack Name */}
-        <Grid size={12}>
+        {/* SKU and Product Name - Two per row */}
+        <Grid size={6}>
           <CustomFormLabel htmlFor="pack-name" sx={{ mt: 2 }}>
             SKU
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="pack-name"
             fullWidth
-            // disabled
             type="text"
             value={formData.sku}
             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
             placeholder="Enter SKU"
           />
         </Grid>
-
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="quantity"
-            sx={{ mt: 0 }}
-          >
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="ProductName" sx={{ mt: 2 }}>
             ProductName
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="ProductName"
             fullWidth
@@ -295,15 +287,12 @@ const CreateProduct = () => {
           />
         </Grid>
 
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="quantity"
-            sx={{ mt: 0 }}
-          >
+        {/* Each Price and Stock Level - Two per row */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="eachPrice" sx={{ mt: 2 }}>
             Each Price
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="eachPrice"
             fullWidth
@@ -313,16 +302,11 @@ const CreateProduct = () => {
             placeholder="Enter Each Price"
           />
         </Grid>
-
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="stockLevel"
-            sx={{ mt: 0 }}
-          >
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
             Stock Level
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="stockLevel"
             fullWidth
@@ -333,57 +317,12 @@ const CreateProduct = () => {
           />
         </Grid>
 
-        {/* type of packs Selection */}
-        {/* <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="type-select"
-            sx={{ mt: 2 }}
-          >
-            Select Type Of Packs
-          </CustomFormLabel>
-        </Grid>
+        {/* Type of Packs Selection - Full Width */}
         <Grid size={12}>
-          <FormControl fullWidth>
-            <Select
-              id="type-select"
-              // value={formData.typesOfPacks[0] || ''}
-              onChange={(e) => setFormData({ ...formData, typesOfPacks: [...formData.typesOfPacks, e.target.value] })}
-              disabled={loading || packTypes.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {packTypes.length === 0 ? 'Loading types...' : 'Select a type'}
-              </MenuItem>
-              {packTypes.map((type) => (
-                <MenuItem key={type.name} value={type._id}>
-                  {type.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid> */}
-
-        {/* type of packs Selection - MULTI SELECT */}
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="types-of-packs-select"
-            sx={{ mt: 2 }}
-          >
+          <CustomFormLabel htmlFor="types-of-packs-select" sx={{ mt: 2 }}>
             Select Type Of Packs (Multiple)
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <FormControl fullWidth>
             <Select
               id="types-of-packs-select"
@@ -433,20 +372,14 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
-
-        {/* Select PricingGroup */}
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="pricing-group-select"
-            sx={{ mt: 2 }}
-          >
+        {/* Pricing Group and Commerce Category One - Two per row */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="pricing-group-select" sx={{ mt: 2 }}>
             Select PricingGroup
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <FormControl fullWidth>
             <Select
-              id="excluded-units-select"
+              id="pricing-group-select"
               value={formData.pricingGroup}
               onChange={(e) => setFormData({ ...formData, pricingGroup: e.target.value })}
               disabled={loading || packTypes.length === 0}
@@ -474,21 +407,14 @@ const CreateProduct = () => {
             </Select>
           </FormControl>
         </Grid>
-
-
-        {/* commerceCategoryOne selection */}
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="pricing-group-select"
-            sx={{ mt: 2 }}
-          >
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
             Select Commerce category One
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <FormControl fullWidth>
             <Select
-              id="excluded-units-select"
+              id="commerce-category-one-select"
               value={formData.commerceCategoriesOne}
               onChange={(e) => setFormData({ ...formData, commerceCategoriesOne: e.target.value })}
               disabled={loading || packTypes.length === 0}
@@ -517,19 +443,15 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
-        {/* commerceCategoryTwo selection */}
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="pricing-group-select"
-            sx={{ mt: 2 }}
-          >
+        {/* Commerce Category Two and Three - Two per row */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
             Select Commerce category Two
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <FormControl fullWidth>
             <Select
-              id="excluded-units-select"
+              id="commerce-category-two-select"
               value={formData.commerceCategoriesTwo}
               onChange={(e) => setFormData({ ...formData, commerceCategoriesTwo: e.target.value })}
               disabled={loading || categoryTwo.length === 0}
@@ -557,22 +479,13 @@ const CreateProduct = () => {
             </Select>
           </FormControl>
         </Grid>
-
-
-
-        {/* commerceCategoryThree selection */}
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="commerceCategoryThree-select"
-            sx={{ mt: 2 }}
-          >
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
             Select Commerce category Three
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <FormControl fullWidth>
             <Select
-              id="excluded-units-select"
+              id="commerceCategoryThree-select"
               value={formData.commerceCategoriesThree}
               onChange={(e) => setFormData({ ...formData, commerceCategoriesThree: e.target.value })}
               disabled={loading || categoryThree.length === 0}
@@ -601,16 +514,11 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
-
+        {/* Store Description - Full Width */}
         <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="storeDescription"
-            sx={{ mt: 0 }}
-          >
+          <CustomFormLabel htmlFor="storeDescription" sx={{ mt: 2 }}>
             Store Description
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="storeDescription"
             fullWidth
@@ -621,15 +529,11 @@ const CreateProduct = () => {
           />
         </Grid>
 
+        {/* Page Title - Full Width */}
         <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="pageTitle"
-            sx={{ mt: 0 }}
-          >
+          <CustomFormLabel htmlFor="pageTitle" sx={{ mt: 2 }}>
             Page Title
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="pageTitle"
             fullWidth
@@ -640,15 +544,11 @@ const CreateProduct = () => {
           />
         </Grid>
 
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="eachBarcodes"
-            sx={{ mt: 0 }}
-          >
+        {/* Each Barcodes and Pack Barcodes - Two per row */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="eachBarcodes" sx={{ mt: 2 }}>
             Each Barcodes
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="eachBarcodes"
             fullWidth
@@ -658,16 +558,10 @@ const CreateProduct = () => {
             placeholder="Enter Each Barcodes"
           />
         </Grid>
-
-        <Grid size={12}>
-          <CustomFormLabel
-            htmlFor="packBarcodes"
-            sx={{ mt: 0 }}
-          >
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="packBarcodes" sx={{ mt: 2 }}>
             Pack Barcodes
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="packBarcodes"
             fullWidth
@@ -702,7 +596,7 @@ const CreateProduct = () => {
             color="primary"
             onClick={handleSubmit}
             disabled={loading}
-            sx={{ minWidth: '120px' }}
+            sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
           >
             {loading ? 'Creating...' : 'Create Product'}
           </Button>
@@ -776,6 +670,7 @@ const CreateProduct = () => {
             variant="contained"
             disabled={!selectedFile || loading}
             startIcon={<IconFileImport size="1.1rem" />}
+            sx={{ backgroundColor: '#2E2F7F' }}
           >
             {loading ? 'Importing...' : 'Import'}
           </Button>

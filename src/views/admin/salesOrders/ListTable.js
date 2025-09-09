@@ -2,7 +2,7 @@
 // @ts-ignore
 import React, { useContext, useState, useEffect } from 'react';
 import { alpha, useTheme } from '@mui/material/styles';
-import { format } from 'date-fns';
+import { format, formatDate } from 'date-fns';
 import {
   Box,
   Table,
@@ -22,6 +22,7 @@ import {
   TextField,
   InputAdornment,
   Paper,
+  Button,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -30,6 +31,8 @@ import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import axios from 'axios';
+import { max, min } from 'lodash';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -107,7 +110,26 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder } = props;
+  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
+
+  const handleExportCSV = async () => {
+    try {
+      const response = await axiosInstance.get(
+        '/sales-order/export-sales-orders',
+        { responseType: 'blob' }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "sales_orders_export.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+    }
+  };
 
   return (
     <Toolbar
@@ -143,6 +165,7 @@ const EnhancedTableToolbar = (props) => {
           />
         </Box>
       )}
+
       {numSelected > 0 ? (
         <Tooltip title="Delete">
           <IconButton>
@@ -150,15 +173,23 @@ const EnhancedTableToolbar = (props) => {
           </IconButton>
         </Tooltip>
       ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <IconFilter size="1.2rem" />
-          </IconButton>
-        </Tooltip>
+        <>
+          <Tooltip title="Filter list">
+            <IconButton>
+              <IconFilter size="1.2rem" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Export CSV">
+            <IconButton onClick={handleExportCSV}>
+              <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
+            </IconButton>
+          </Tooltip>
+        </>
       )}
     </Toolbar>
   );
 };
+
 
 const ListTable = ({
   showCheckBox,
@@ -178,7 +209,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -266,10 +297,10 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  //delete pricing group
-  const handleDeletePricingGroup = async (id) => {
+  //delete sales order
+  const handleDeleteSalesOrder = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/pricing-groups/delete-pricing-group/${id}`);
+      const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${id}`);
 
       console.log("deleted", res.data);
 
@@ -283,10 +314,30 @@ const ListTable = ({
   };
 
 
-  //edit category
+  //edit sales order
 
-  const handleEditPricingGroup = (id) => {
-    navigate(`/dashboard/pricing-groups/edit/${id}`);
+  const handleEditSalesOrder = (id) => {
+    navigate(`/dashboard/sales-orders/edit/${id}`);
+  };
+
+
+  const columnWidths = {
+    serial: { minWidth: '80px' },
+    date: { minWidth: '200px' },
+    document: { minWidth: '200px' },
+    customer: { minWidth: '300px' },
+    salesChannel: { minWidth: '150px' },
+    tracking: { minWidth: '200px' },
+    shipping: { minWidth: '400px', },
+    billing: { minWidth: '400px', },
+    customerPO: { minWidth: '150px' },
+    itemSku: { minWidth: '150px' },
+    packQuantity: { minWidth: '160px' },
+    unitsQuantity: { minWidth: '160px' },
+    amount: { minWidth: '160px' },
+    finalAmount: { minWidth: '160px' },
+    createdAt: { minWidth: '160px' },
+    actions: { minWidth: '160px' },
   };
 
   return (
@@ -296,12 +347,12 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Pricing Group" : "Search Product"}
+          placeholder={'Search sales order'}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
-          <TableContainer>
+          <TableContainer sx={{ width: "100%" }}>
             <Table
-              sx={{ minWidth: 750 }}
+              sx={{ minWidth: 1550 }}
               aria-labelledby="tableTitle"
               size={dense ? 'small' : 'medium'}
             >
@@ -342,58 +393,158 @@ const ListTable = ({
                           />
                         </TableCell>}
 
-                        {isBrandsList ? (
-                          // Brands List View
-                          <>
-                            <TableCell>
-                              <Box display="flex" alignItems="center">
-                                <Box
-                                  sx={{
-                                    ml: 2,
-                                  }}
-                                >
-                                  <Typography fontWeight="600">
-                                    {index + 1}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Box display="flex" alignItems="center">
-                                <Box
-                                  sx={{
-                                    ml: 2,
-                                  }}
-                                >
-                                  <Typography fontWeight="600">
-                                    {row.name}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            
-                            <TableCell>
-                              <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box display="flex" gap={1}>
-                                <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEditPricingGroup(row._id)}>
-                                    <IconEdit size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDeletePricingGroup(row._id)}>
-                                    <IconTrash size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
-                          </>
-                        ) : (
-                          // Products List View (original code)
-                          ''
-                        )}
+
+                        <TableCell sx={columnWidths.serial}>
+                          <Box display="flex" alignItems="center">
+                            <Box sx={{ ml: 2 }}>
+                              <Typography fontWeight="400">
+                                {index + 1}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.document}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row.date && row.date instanceof Date ? formatDate(new Date(row.date), "dd MMM yyyy") : row.date}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.document}>
+                          <Box display="flex" alignItems="center">
+                            <Box sx={{ ml: 2 }}>
+                              <Typography fontWeight="400">
+                                {row?.documentNumber || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.customer}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.customerName || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.salesChannel}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.salesChannel || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.tracking}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.trackingNumber || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.shipping}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.shippingAddress || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.billing}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.billingAddress || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.customerPO}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.customerPO || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.itemSku}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.itemSku || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.packQuantity}>
+                          <Box display="flex" alignItems="center">
+                            <Box sx={{ ml: 6 }}>
+                              <Typography fontWeight="400">
+                                {row?.packQuantity || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.unitsQuantity}>
+                          <Box display="flex" alignItems="center">
+                            <Box sx={{ ml: 6 }}>
+                              <Typography fontWeight="400">
+                                {row?.unitsQuantity || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.amount}>
+                          <Box display="flex" alignItems="center">
+                            <Box sx={{ ml: 10 }}>
+                              <Typography fontWeight="400">
+                                {row?.amount || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+
+                        <TableCell sx={columnWidths.createdAt}>
+                          <Typography>
+                            {format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.actions}>
+                          <Box display="flex" gap={1}>
+                            <Tooltip title="Edit">
+                              <IconButton size="small" color="primary" onClick={() => handleEditSalesOrder(row._id)}>
+                                <IconEdit size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete">
+                              <IconButton size="small" color="error" onClick={() => handleDeleteSalesOrder(row._id)}>
+                                <IconTrash size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -406,7 +557,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

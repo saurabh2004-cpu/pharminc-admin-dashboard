@@ -5,7 +5,6 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance'
 import ListTable from './ListTable';
-import axios from 'axios';
 
 const BCrumb = [
   {
@@ -13,11 +12,11 @@ const BCrumb = [
     title: 'Home',
   },
   {
-    title: 'Pricing Groups Discounts',
+    title: 'Sales Orders',
   },
 ];
 
-const ListPricingGroupsDiscounts = () => {
+const ListSalesOrders = () => {
   const headCells = [
     {
       id: 'serial',
@@ -26,29 +25,79 @@ const ListPricingGroupsDiscounts = () => {
       label: 'Serial',
     },
     {
-      id: 'productSku',
+      id: 'date',
       numeric: false,
       disablePadding: false,
-      label: 'Product SKU',
+      label: 'Date',
     },
     {
-      id: 'pricingGroup',
+      id: 'documentNumber',
       numeric: false,
       disablePadding: false,
-      label: 'Pricing Group Name',
+      label: 'Document Number',
     },
     {
-      id: 'customerId',
+      id: 'customerName',
       numeric: false,
       disablePadding: false,
-      label: 'Customer ID',
+      label: 'Customer Name',
     },
     {
-      id: 'percentage',
+      id: 'salesChannel',
       numeric: false,
       disablePadding: false,
-      label: 'Percentage',
+      label: 'Sales Channel',
     },
+    {
+      id: 'trackingNumber',
+      numeric: false,
+      disablePadding: false,
+      label: 'Tracking Number',
+    },
+    {
+      id: 'shippingAddress',
+      numeric: false,
+      disablePadding: false,
+      label: 'Shipping Address',
+    },
+    {
+      id: 'billingAddress',
+      numeric: false,
+      disablePadding: false,
+      label: 'Billing Address',
+    },
+    {
+      id: 'customerPO',
+      numeric: false,
+      disablePadding: false,
+      label: 'Customer PO',
+    },
+    {
+      id: 'itemSku',
+      numeric: false,
+      disablePadding: false,
+      label: 'Item SKU',
+    },
+    {
+      id: 'packQuantity',
+      numeric: true,
+      disablePadding: false,
+      label: 'Pack Quantity',
+    },
+    {
+      id: 'unitsQuantity',
+      numeric: true,
+      disablePadding: false,
+      label: 'Units Quantity',
+    },
+    {
+      id: 'amount',
+      numeric: true,
+      disablePadding: false,
+      label: 'Amount',
+    },
+    
+
     {
       id: 'createdAt',
       numeric: false,
@@ -66,13 +115,13 @@ const ListPricingGroupsDiscounts = () => {
   const [tableData, setTableData] = React.useState([]);
   const [error, setError] = React.useState(null);
 
-  const fetchPricingGroupsDiscounts = async () => {
+  const fetchPricingGroups = async () => {
     try {
-      const response = await axiosInstance.get('/item-based-discount/get-all-item-based-discounts');
-      console.log("response item based discounts", response);
+      const response = await axiosInstance.get('/sales-order/get-sales-orders');
+      console.log("response Sales Orders", response);
 
       if (response.data.statusCode === 200) {
-        setTableData(response.data.data);
+        setTableData(response.data.data.salesOrders);
       }
 
     } catch (error) {
@@ -84,14 +133,14 @@ const ListPricingGroupsDiscounts = () => {
 
 
   React.useEffect(() => {
-    fetchPricingGroupsDiscounts();
+    fetchPricingGroups();
   }, []);
 
   return (
     <ProductProvider>
-      <PageContainer title="Pricing Groups List" description="this is Pricing Groups List page">
+      <PageContainer title="Sales Orders List" description="this is Sales Orders List page">
         {/* breadcrumb */}
-        <Breadcrumb title="Pricing Groups List" items={BCrumb} />
+        <Breadcrumb title="Sales Orders List" items={BCrumb} />
         {/* end breadcrumb */}
         <Box>
           <ListTable
@@ -107,4 +156,4 @@ const ListPricingGroupsDiscounts = () => {
   );
 };
 
-export default ListPricingGroupsDiscounts;
+export default ListSalesOrders;

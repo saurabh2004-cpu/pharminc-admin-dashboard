@@ -1,9 +1,9 @@
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { Link } from 'react-router';
-import { ReactComponent as LogoDark } from 'src/assets/images/logos/dark-logo.svg';
+import { ReactComponent as LogoDark } from 'src/assets/images/logos/point-austrelia-logo.svg';
 import { ReactComponent as LogoDarkRTL } from 'src/assets/images/logos/dark-rtl-logo.svg';
-import { ReactComponent as LogoLight } from 'src/assets/images/logos/light-logo.svg';
+import { ReactComponent as LogoLight } from 'src/assets/images/logos/point-austrelia-logo.svg';
 import { ReactComponent as LogoLightRTL } from 'src/assets/images/logos/light-logo-rtl.svg';
 import { styled } from '@mui/material';
 import { useContext } from 'react'

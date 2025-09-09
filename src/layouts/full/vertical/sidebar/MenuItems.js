@@ -2,63 +2,22 @@ import { uniqueId } from 'lodash';
 
 import {
   IconAward,
-  IconBoxMultiple,
   IconPoint,
-  IconAlertCircle,
-  IconNotes,
-  IconCalendar,
-  IconMail,
-  IconTicket,
-  IconEdit,
-  IconCurrencyDollar,
-  IconApps,
   IconFileDescription,
-  IconFileDots,
-  IconFiles,
-  IconBan,
-  IconStar,
-  IconMoodSmile,
-  IconBorderAll,
-  IconBorderHorizontal,
-  IconBorderInner,
-  IconBorderVertical,
-  IconBorderTop,
-  IconUserCircle,
-  IconPackage,
-  IconMessage2,
-  IconBasket,
-  IconChartLine,
-  IconChartArcs,
-  IconChartCandle,
-  IconChartArea,
-  IconChartDots,
-  IconChartDonut3,
-  IconChartRadar,
-  IconLogin,
   IconUserPlus,
-  IconRotate,
   IconBox,
   IconShoppingCart,
   IconAperture,
-  IconLayout,
   IconSettings,
-  IconHelp,
-  IconZoomCode,
-  IconBoxAlignBottom,
-  IconBoxAlignLeft,
-  IconBorderStyle2,
-  IconAppWindow,
   IconNotebook,
-  IconFileCheck,
-  IconChartHistogram,
-  IconChartPie2,
-  IconChartScatter,
-  IconChartPpf,
-  IconChartArcs3,
   IconListTree,
-  IconLanguage,
-  IconFile,
-  IconFileText,
+  IconBuildingStore,
+  IconCategory,
+  IconTags,
+  IconDiscount2,
+  IconReceipt,
+  IconTruck,
+  IconShoppingBag,
 } from '@tabler/icons-react';
 
 const Menuitems = [
@@ -71,20 +30,21 @@ const Menuitems = [
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconAperture,
-    href: '/dashboards/admin',
+    href: '/',
     chip: 'New',
     chipColor: 'secondary',
+    chipBackground :'#E9098D'
   },
   {
     id: uniqueId(),
     title: 'Earning & Revenue',
     icon: IconShoppingCart,
-    href: '/admin/earning-revenue',
+    href: '/',
   },
   {
     id: uniqueId(),
-    title: 'Manage Brand',
-    icon: IconAppWindow,
+    title: 'Brand',
+    icon: IconBuildingStore,
     href: '/dashboard/Brand',
     children: [
       {
@@ -105,7 +65,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Category',
-    icon: IconPackage,
+    icon: IconCategory,
     chip: '2',
     chipColor: 'secondary',
     // href: '/dashboard/category',
@@ -127,7 +87,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Sub Category',
-    icon: IconUserCircle,
+    icon: IconListTree,
     href: '/dashboard/sub-category',
     children: [
       {
@@ -148,7 +108,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Badge',
-    icon: IconUserCircle,
+    icon: IconAward,
     // href: '/admin/manage-widrawa',
     children: [
       {
@@ -169,7 +129,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Pricing Groups',
-    icon: IconUserCircle,
+    icon: IconTags,
     href: '/dashboard/pricing-groups',
     children: [
       {
@@ -187,31 +147,52 @@ const Menuitems = [
     ]
 
   },
-
   {
     id: uniqueId(),
     title: 'Groups Discounts',
-    icon: IconChartDonut3,
-    href: '/dashboard/pricing-groups-discounts',
+    icon: IconTags,
+    href: '/dashboard/groups-discounts',
     children: [
       {
         id: uniqueId(),
-        title: 'Create Discount',
+        title: 'Create Groups Discounts',
         icon: IconPoint,
-        href: '/dashboard/pricing-groups-discounts/create',
+        href: '/dashboard/groups-discounts/create',
       },
       {
         id: uniqueId(),
-        title: 'List Discounts',
+        title: 'List Groups Discounts',
         icon: IconPoint,
-        href: '/dashboard/pricing-groups-discounts/list',
+        href: '/dashboard/groups-discounts/list',
+      },
+    ]
+
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Items Discounts',
+    icon: IconDiscount2,
+    href: '/dashboarditem-based-discounts',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Items Discounts',
+        icon: IconPoint,
+        href: '/dashboard/items-based-discounts/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'List Items Discounts',
+        icon: IconPoint,
+        href: '/dashboard/items-based-discounts/list',
       },
     ],
   },
   {
     id: uniqueId(),
     title: 'Tax',
-    icon: IconBasket,
+    icon: IconReceipt,
     href: '/dashboard/tax',
     children: [
       {
@@ -231,7 +212,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Delivery Vendors',
-    icon: IconMessage2,
+    icon: IconTruck,
     href: '/dashboard/delivery-vendors',
     children: [
       {
@@ -252,7 +233,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Pack Types',
-    icon: IconMessage2,
+    icon: IconBox,
     href: '/dashboard/pack-types',
     children: [
       {
@@ -274,7 +255,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Products',
-    icon: IconNotebook,
+    icon: IconShoppingBag,
     href: '/dashboard/products',
     children: [
       {
@@ -291,74 +272,44 @@ const Menuitems = [
       },
     ]
   },
-  
+
   {
     id: uniqueId(),
-    title: 'Manage Pages',
-    icon: IconNotebook,
-    href: '/admin/manage-page',
+    title: 'Sales order',
+    icon: IconFileDescription,
+    href: '/dashboard/sales-order',
     children: [
       {
         id: uniqueId(),
-        title: 'Contact Us',
+        title: 'Create Sales Order',
         icon: IconPoint,
-        href: '/admin/contact-us',
+        href: '/dashboard/sales-order/create',
       },
       {
         id: uniqueId(),
-        title: 'Terms & Conditions',
+        title: 'Sales Order List',
         icon: IconPoint,
-        href: '/admin/page-list',
+        href: '/dashboard/sales-orders/list',
       },
-      {
-        id: uniqueId(),
-        title: 'Privacy Policy',
-        icon: IconPoint,
-        href: '/admin/privacy-policy',
-      },
-      {
-        id: uniqueId(),
-        title: 'FAQ',
-        icon: IconPoint,
-        href: '/admin/faq',
-      },
-      {
-        id: uniqueId(),
-        title: 'Custom Page',
-        icon: IconPoint,
-        href: '/admin/custom-page',
-      }
     ]
   },
   {
     id: uniqueId(),
-    title: 'Manage Content',
+    title: 'Customers',
     icon: IconNotebook,
-    href: '/admin/manage-payment',
+    href: '/dashboard/customers',
     children: [
       {
         id: uniqueId(),
-        title: 'Frontend Section',
+        title: 'Create Customer',
         icon: IconPoint,
-        href: '/admin/frontend-section',
+        href: '/dashboard/customers/create',
       },
       {
         id: uniqueId(),
-        title: 'Footer Info',
+        title: 'List Customers',
         icon: IconPoint,
-        href: '/admin/footer-info',
-      },
-      {
-        id: uniqueId(),
-        title: 'Testimonial',
-        icon: IconPoint,
-        href: '/admin/testimonial',
-      },
-      {
-        id: uniqueId(),
-        title: 'Partner',
-        icon: IconPoint,
-        href: '/admin/partner',
+        href: '/dashboard/customers/list',
       },
     ]
   },
@@ -372,102 +323,17 @@ const Menuitems = [
     title: 'Settings',
     icon: IconSettings,
     href: '/admin/setting',
-  },
-  {
-    id: uniqueId(),
-    title: 'Multi Currency',
-    icon: IconSettings,
-    href: '/admin/multi-currency',
-  },
-  {
-    id: uniqueId(),
-    title: 'Language',
-    icon: IconLanguage,
-    href: '/admin/language',
     children: [
       {
         id: uniqueId(),
-        title: 'Languages',
-        icon: IconPoint,
-        href: '/admin/languags',
+        title: 'Add Admin',
+        icon: IconUserPlus,
+        href: '/dashboard/CreateAdmin',
       },
-      {
-        id: uniqueId(),
-        title: 'Theme Languages',
-        icon: IconPoint,
-        href: '/admin/theme-languages',
-      }
     ]
-  },
-  {
-    id: uniqueId(),
-    title: 'Email Configuration',
-    icon: IconSettings,
-    href: '/admin/social-media',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Configuration',
-        icon: IconPoint,
-        href: '/admin/configuration',
-      },
-      {
-        id: uniqueId(),
-        title: 'Email Template',
-        icon: IconPoint,
-        href: '/admin/email-template',
-      }
-    ]
-  },
-  {
-    id: uniqueId(),
-    title: 'SEO Setup',
-    icon: IconSettings,
-    href: '/admin/seo-setup',
-  },
-  {
-    id: uniqueId(),
-    title: 'Payment Method',
-    icon: IconSettings,
-    href: '/admin/payment-method',
   },
 
-  {
-    label: true,
-    subheader: 'Others',
-  },
-  {
-    id: uniqueId(),
-    title: 'News Letter',
-    icon: IconFileText,
-    href: '/admin/news-letter',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Subscriber List',
-        icon: IconPoint,
-        href: '/admin/subscriber-list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Send Mail',
-        icon: IconPoint,
-        href: '/admin/send-mail',
-      },
-    ]
-  },
-  {
-    id: uniqueId(),
-    title: 'Cache Clear',
-    icon: IconFileText,
-    href: '/admin/cache-clear',
-  },
-  {
-    id: uniqueId(),
-    title: 'Logout',
-    icon: IconFileText,
-    href: '/admin/logout',
-  },
+
 
 ];
 

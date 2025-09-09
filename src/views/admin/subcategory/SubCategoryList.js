@@ -19,6 +19,12 @@ const BCrumb = [
 const SubCategoryList = () => {
     const headCells = [
         {
+            id: 'serial',
+            numeric: false,
+            disablePadding: false,
+            label: 'Serial',
+        },
+        {
             id: 'name',
             numeric: false,
             disablePadding: false,
@@ -28,7 +34,7 @@ const SubCategoryList = () => {
             id: 'category',
             numeric: false,
             disablePadding: false,
-            label: 'Brand ',
+            label: 'Category',
         },
         
         {

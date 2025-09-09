@@ -2,7 +2,7 @@
 import { ThemeSettings } from './theme/Theme';
 import RTL from './layouts/full/shared/customizer/RTL';
 import { CssBaseline, ThemeProvider } from '@mui/material';
-import { RouterProvider } from 'react-router';
+import { RouterProvider, useNavigate } from 'react-router';
 import router from './routes/Router'
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useContext, useEffect } from 'react';
@@ -26,7 +26,7 @@ function App() {
         const userData = response.data.data;
         dispatch(login(userData));
         console.log("Current user:", response);
-      } else if (response.status === 204) {
+      } else {
         window.location.href = '/auth/login';
       }
     } catch (error) {

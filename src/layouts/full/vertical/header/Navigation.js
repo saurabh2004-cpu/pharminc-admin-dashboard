@@ -21,7 +21,7 @@ const AppDD = () => {
   return (
     <>
       <Box>
-        <Button
+        {/* <Button
           aria-label="show 11 new notifications"
           color="inherit"
           variant="text"
@@ -35,7 +35,7 @@ const AppDD = () => {
           endIcon={<IconChevronDown size="15" style={{ marginLeft: '-5px', marginTop: '2px' }} />}
         >
           Apps
-        </Button>
+        </Button> */}
         {/* ------------------------------------------- */}
         {/* Message Dropdown */}
         {/* ------------------------------------------- */}
@@ -101,7 +101,7 @@ const AppDD = () => {
           </Grid>
         </Menu>
       </Box>
-      <Button
+      {/* <Button
         color="inherit"
         sx={{ color: (theme) => theme.palette.text.secondary }}
         variant="text"
@@ -109,8 +109,8 @@ const AppDD = () => {
         component={Link}
       >
         Chat
-      </Button>
-      <Button
+      </Button> */}
+      {/* <Button
         color="inherit"
         sx={{ color: (theme) => theme.palette.text.secondary }}
         variant="text"
@@ -127,7 +127,7 @@ const AppDD = () => {
         component={Link}
       >
         Email
-      </Button>
+      </Button> */}
     </>
   );
 };

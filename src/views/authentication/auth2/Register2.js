@@ -7,12 +7,12 @@ import Stack from '@mui/material/Stack';
 
 import { Link } from 'react-router';
 import PageContainer from 'src/components/container/PageContainer';
-import Logo from 'src/layouts/full/shared/logo/Logo';
+import { ReactComponent as LogoLight } from 'src/assets/images/logos/point-austrelia-logo.svg';
 
 import AuthRegister from '../authForms/AuthRegister';
 
 const Register2 = () => {
-  
+
 
   return (
     <PageContainer title="Register" description="this is Register page">
@@ -42,6 +42,8 @@ const Register2 = () => {
               {/* <Box display="flex" alignItems="center" justifyContent="center">
               <Logo />
             </Box> */}
+              <LogoLight sx={{ width: '10%' }} />
+              
               <AuthRegister
                 subtitle={
                   <Stack direction="row" spacing={1} mt={3}>
@@ -56,7 +58,7 @@ const Register2 = () => {
                         textDecoration: 'none',
                         color: 'primary.main',
                       }}
-                     
+
                     >
                       Sign In
                     </Typography>

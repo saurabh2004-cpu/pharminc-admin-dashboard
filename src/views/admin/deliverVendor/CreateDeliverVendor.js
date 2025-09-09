@@ -16,7 +16,7 @@ const CreateDeliverVendor = () => {
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const navigate = useNavigate();
-    
+
 
     const handleSubmit = async () => {
         // Validation
@@ -63,7 +63,7 @@ const CreateDeliverVendor = () => {
         }
     };
 
-    
+
 
     return (
         <div>
@@ -73,6 +73,7 @@ const CreateDeliverVendor = () => {
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="vendor-name" sx={{ mt: 2 }}>
                         Vendor Name
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -93,6 +94,7 @@ const CreateDeliverVendor = () => {
                         sx={{ mt: 0 }}
                     >
                         Vendor Tracking Url
+                        {/* <span style={{ color: 'red' }}>*</span> */}
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -130,7 +132,8 @@ const CreateDeliverVendor = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ minWidth: '120px' }}
+                        sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
+
                     >
                         {loading ? 'Creating...' : 'Create Deliver Vendor'}
                     </Button>

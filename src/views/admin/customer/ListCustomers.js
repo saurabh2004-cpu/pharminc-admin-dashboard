@@ -12,11 +12,11 @@ const BCrumb = [
     title: 'Home',
   },
   {
-    title: 'Products',
+    title: 'Customers',
   },
 ];
 
-const ListProduct = () => {
+const ListCustomers = () => {
   const headCells = [
     {
       id: 'serial',
@@ -25,82 +25,88 @@ const ListProduct = () => {
       label: 'Serial',
     },
     {
-      id: 'sku',
+      id: 'customerId',
       numeric: false,
       disablePadding: false,
-      label: 'SKU',
+      label: 'Customer ID',
     },
     {
-      id: 'ProductName', // Corrected to match API response (capital P)
+      id: 'customerName',
       numeric: false,
       disablePadding: false,
-      label: 'Product Name',
+      label: 'Customer Name',
     },
     {
-      id: 'EachPrice', // Corrected to match API response (capital P)
+      id: 'contactName',
       numeric: false,
       disablePadding: false,
-      label: 'Each Price',
+      label: 'Contact Name',
     },
     {
-      id: 'Type', // Corrected to match API response (capital P)
+      id: 'customerEmail',
       numeric: false,
       disablePadding: false,
-      label: 'Type',
+      label: 'Customer Email',
     },
     {
-      id: 'stockLevel',
+      id: 'contactEmail',
+      numeric: false,
+      disablePadding: false,
+      label: 'Contact Email',
+    },
+    {
+      id: 'CustomerPhoneNo',
+      numeric: false,
+      disablePadding: false,
+      label: 'Phone Number',
+    },
+    {
+      id: 'category',
+      numeric: false,
+      disablePadding: false,
+      label: 'Category',
+    },
+    {
+      id: 'primaryBrand',
+      numeric: false,
+      disablePadding: false,
+      label: 'Primary Brand',
+    },
+    {
+      id: 'netTerms',
+      numeric: false,
+      disablePadding: false,
+      label: 'Net Terms',
+    },
+    {
+      id: 'orderApproval',
+      numeric: false,
+      disablePadding: false,
+      label: 'Order Approval',
+    },
+    {
+      id: 'defaultShippingRate',
       numeric: true,
       disablePadding: false,
-      label: 'Stock Level',
+      label: 'Shipping Rate',
     },
     {
-      id: 'pricingGroup',
+      id: 'shippingCity',
       numeric: false,
       disablePadding: false,
-      label: 'Pricing Group',
+      label: 'Shipping City',
     },
     {
-      id: 'commerceCategoriesOne',
+      id: 'shippingState',
       numeric: false,
       disablePadding: false,
-      label: 'Commerce Category One',
+      label: 'Shipping State',
     },
     {
-      id: 'commerceCategoriesTwo',
+      id: 'inactive',
       numeric: false,
       disablePadding: false,
-      label: 'Commerce Category Two',
-    },
-    {
-      id: 'commerceCategoriesThree',
-      numeric: false,
-      disablePadding: false,
-      label: 'Commerce Category Three',
-    },
-    {
-      id: 'storeDescription',
-      numeric: false,
-      disablePadding: false,
-      label: 'Store Description',
-    },
-    {
-      id: 'pageTitle',
-      numeric: false,
-      disablePadding: false,
-      label: 'Page Title',
-    },
-    {
-      id: 'eachBarcodes',
-      numeric: false,
-      disablePadding: false,
-      label: 'Each Barcodes',
-    },
-    {
-      id: 'packBarcodes',
-      numeric: false,
-      disablePadding: false,
-      label: 'Pack Barcodes',
+      label: 'Status',
     },
     {
       id: 'createdAt',
@@ -119,56 +125,57 @@ const ListProduct = () => {
   const [tableData, setTableData] = React.useState([]);
   const [error, setError] = React.useState(null);
 
-  const fetchProductsList = async () => {
+  const fetchCustomersList = async () => {
     try {
-      const response = await axiosInstance.get('/products/get-all-products');
-      console.log("response products", response.data);
+      // Update API endpoint to fetch customers instead of products
+      const response = await axiosInstance.get('/admin/get-all-users'); // or whatever your customer endpoint is
+      console.log("response customers", response.data);
 
       if (response.data.statusCode === 200) {
-         const productsData = response.data.data?.docs || response.data.data || response.data;
+        const customersData = response.data.data?.docs || response.data.data || response.data;
       
-      // Filter out duplicates based on _id
-      const getUniqueProducts = (products) => {
-        if (!Array.isArray(products)) return [];
-        
-        const uniqueProducts = [];
-        const seenIds = new Set();
-        
-        products.forEach(product => {
-          if (product._id && !seenIds.has(product._id)) {
-            seenIds.add(product._id);
-            uniqueProducts.push(product);
-          }
-        });
-        
-        return uniqueProducts;
-      };
+        // Filter out duplicates based on _id
+        const getUniqueCustomers = (customers) => {
+          if (!Array.isArray(customers)) return [];
+          
+          const uniqueCustomers = [];
+          const seenIds = new Set();
+          
+          customers.forEach(customer => {
+            if (customer._id && !seenIds.has(customer._id)) {
+              seenIds.add(customer._id);
+              uniqueCustomers.push(customer);
+            }
+          });
+          
+          return uniqueCustomers;
+        };
 
-      setTableData(getUniqueProducts(productsData));
+        setTableData(getUniqueCustomers(customersData));
       }
 
     } catch (error) {
-      console.error('Error fetching products list:', error);
+      console.error('Error fetching customers list:', error);
       setError(error.message);
     }
   };
 
   React.useEffect(() => {
-    fetchProductsList();
+    fetchCustomersList();
   }, []);
 
   return (
     <ProductProvider>
-      <PageContainer title="Products List" description="this is Products List page">
+      <PageContainer title="Customers List" description="this is Customers List page">
         {/* breadcrumb */}
-        <Breadcrumb title="Products List" items={BCrumb} />
+        <Breadcrumb title="Customers List" items={BCrumb} />
         {/* end breadcrumb */}
         <Box>
           <ListTable
             showCheckBox={false}
             headCells={headCells}
             tableData={tableData}
-            isProductsList={true}
+            isCustomersList={true} // Changed from isProductsList
             setTableData={setTableData}
           />
         </Box>
@@ -177,4 +184,4 @@ const ListProduct = () => {
   );
 };
 
-export default ListProduct;
+export default ListCustomers;

@@ -54,15 +54,6 @@ const UserProfile = () => {
               </Grid>
             </Grid>
           </Grid>
-          {/* Posts Card */}
-          <Grid
-            size={{
-              sm: 12,
-              lg: 8,
-              xs: 12
-            }}>
-            <Post />
-          </Grid>
         </Grid>
       </PageContainer>
     </UserDataProvider>

@@ -16,7 +16,7 @@ const CreatePackTypes = () => {
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const navigate = useNavigate();
-    
+
 
     const handleSubmit = async () => {
         // Validation
@@ -63,7 +63,7 @@ const CreatePackTypes = () => {
         }
     };
 
-    
+
 
     return (
         <div>
@@ -72,7 +72,7 @@ const CreatePackTypes = () => {
                 {/* Pack Name */}
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="pack-name" sx={{ mt: 2 }}>
-                        Pack Name
+                        Pack Name'<span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -93,6 +93,7 @@ const CreatePackTypes = () => {
                         sx={{ mt: 0 }}
                     >
                         Pack quantity
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -130,9 +131,9 @@ const CreatePackTypes = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ minWidth: '120px' }}
+                        sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
                     >
-                        {loading ? 'Creating...' : 'Create Deliver Vendor'}
+                        {loading ? 'Creating...' : 'Create Pack Type'}
                     </Button>
                     <Button
                         variant="outlined"

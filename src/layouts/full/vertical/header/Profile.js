@@ -9,6 +9,7 @@ import { Stack } from '@mui/system';
 import ProfileImg from 'src/assets/images/profile/user-1.jpg';
 import unlimitedImg from 'src/assets/images/backgrounds/unlimited-bg.png';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
+import { useSelector } from 'react-redux';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -18,6 +19,9 @@ const Profile = () => {
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
+
+  const user = useSelector((state) => state.auth.userData);
+
 
   return (
     <Box>
@@ -70,7 +74,7 @@ const Profile = () => {
                   Mathew Anderson
                 </Typography>
                 <Typography variant="subtitle2" color="textSecondary">
-                  Designer
+                  Admin
                 </Typography>
                 <Typography
                   variant="subtitle2"
@@ -80,7 +84,7 @@ const Profile = () => {
                   gap={1}
                 >
                   <IconMail width={15} height={15} />
-                  info@modernize.com
+                  {user?.email || ''}
                 </Typography>
               </Box>
             </Stack>
@@ -138,7 +142,7 @@ const Profile = () => {
               </Box>
             ))}
             <Box mt={2}>
-              <Box bgcolor="primary.light" p={3} mb={3} overflow="hidden" position="relative">
+              {/* <Box bgcolor="primary.light" p={3} mb={3} overflow="hidden" position="relative">
                 <Box display="flex" justifyContent="space-between">
                   <Box>
                     <Typography variant="h5" mb={2}>
@@ -151,7 +155,7 @@ const Profile = () => {
                   </Box>
                   <img src={unlimitedImg} alt="unlimited" className="signup-bg"></img>
                 </Box>
-              </Box>
+              </Box> */}
               <Button
                 to="/auth/login"
                 variant="outlined"

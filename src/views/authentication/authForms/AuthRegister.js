@@ -72,6 +72,7 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
           // component={Link}
           // to="/auth/login"
           onClick={handleSignUp}
+          sx={{ backgroundColor: '#2E2F7F' }}
         >
           Sign Up
         </Button>

@@ -12,18 +12,17 @@ import {
     MenuItem,
     Select
 } from '@mui/material';
-import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
-import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
+import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
+import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 
-const CreatePricingGroupsDiscounts = () => {
+const CreateGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
-        pricingGroupId: '',
         customerId: '',
-        percentage: '',
-        productSku: ''
+        pricingGroupId: '',
+        percentage: ''
     });
     const [error, setError] = React.useState('');
     const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
@@ -31,12 +30,11 @@ const CreatePricingGroupsDiscounts = () => {
     const navigate = useNavigate();
     const [pricingGroups, setPricingGroups] = React.useState([]);
     const [customers, setCustomers] = React.useState([]);
-    const [products, setProducts] = React.useState([]);
     const [loading, setLoading] = React.useState(false);
 
     const handleSubmit = async () => {
         // Form validation
-        if (!formData.customerId || !formData.percentage || !formData.productSku) {
+        if (!formData.customerId || !formData.percentage || !formData.pricingGroupId) {
             setError('Please fill in all required fields');
             return;
         }
@@ -48,7 +46,7 @@ const CreatePricingGroupsDiscounts = () => {
 
         try {
             setLoading(true);
-            const res = await axiosInstance.post('/item-based-discount/create-item-based-discount', formData, {
+            const res = await axiosInstance.post('/pricing-groups-discount/create-pricing-group-discount', formData, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -61,11 +59,10 @@ const CreatePricingGroupsDiscounts = () => {
                     pricingGroupId: '',
                     customerId: '',
                     percentage: '',
-                    productSku: ''
                 });
                 setError('Pricing group discount created successfully!');
                 setTimeout(() => {
-                    navigate('/dashboard/items-based-discounts/list');
+                    navigate('/dashboard/groups-discounts/list');
                 }, 2000);
             }
         } catch (error) {
@@ -96,9 +93,6 @@ const CreatePricingGroupsDiscounts = () => {
         setFormData({ ...formData, customerId: e.target.value });
     };
 
-    const handleProductSkuChange = (e) => {
-        setFormData({ ...formData, productSku: e.target.value });
-    };
 
     const handleImportCsvFile = async () => {
         if (!selectedFile) {
@@ -109,11 +103,10 @@ const CreatePricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const formDataForUpload = new FormData();
-            // Correct field name for pricing groups discounts
-            formDataForUpload.append('discountGroups', selectedFile);
+            formDataForUpload.append('pricingGroupsDiscounts', selectedFile);
 
             // Correct API endpoint for pricing groups discounts import
-            const res = await axiosInstance.post('/item-based-discount/import-items-based-discount', formDataForUpload, {
+            const res = await axiosInstance.post('/pricing-groups-discount/import-pricing-groups-discounts', formDataForUpload, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -130,7 +123,7 @@ const CreatePricingGroupsDiscounts = () => {
                 if (fileInput) fileInput.value = '';
 
                 setTimeout(() => {
-                    navigate('/dashboard/items-based-discounts/list');
+                    navigate('/dashboard/groups-discounts/list');
                 }, 2000);
             }
         } catch (error) {
@@ -188,39 +181,12 @@ const CreatePricingGroupsDiscounts = () => {
         }
     };
 
-    const fetchProducts = async () => {
-        try {
-            setLoading(true);
-            const response = await axiosInstance.get('/products/get-all-products');
-            console.log("response products", response);
-
-            if (response.data.statusCode === 200) {
-                let products = Array.isArray(response.data.data.docs)
-                    ? response.data.data.docs
-                    : [];
-
-                const uniqueProducts = products.filter(
-                    (product, index, self) =>
-                        index === self.findIndex((p) => p.sku === product.sku)
-                );
-
-                setProducts(uniqueProducts);
-            }
-        } catch (error) {
-            console.error('Error fetching products list:', error);
-            setError('Error fetching products: ' + error.message);
-            setProducts([]);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     useEffect(() => {
         const fetchData = async () => {
             await Promise.all([
                 fetchPricingGroups(),
                 fetchCustomers(),
-                fetchProducts()
             ]);
         };
         fetchData();
@@ -229,7 +195,7 @@ const CreatePricingGroupsDiscounts = () => {
     return (
         <div>
             <Grid container>
-                {/* Pricing Group Selection */}
+                {/* Pricing Group Selection */} 
                 <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="pricing-group-select"
@@ -312,47 +278,6 @@ const CreatePricingGroupsDiscounts = () => {
                     </FormControl>
                 </Grid>
 
-                {/* Product SKU Selection */}
-                <Grid size={12}>
-                    <CustomFormLabel
-                        htmlFor="product-sku-select"
-                        sx={{ mt: 2 }}
-                    >
-                        Select Product SKU
-                        <span style={{ color: 'red' }}>*</span>
-                    </CustomFormLabel>
-                </Grid>
-                <Grid size={12}>
-                    <FormControl fullWidth>
-                        <Select
-                            id="product-sku-select"
-                            value={formData.productSku}
-                            onChange={handleProductSkuChange}
-                            disabled={loading || !Array.isArray(products) || products.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(products) || products.length === 0 ? 'Loading products...' : 'Select a product'}
-                            </MenuItem>
-                            {Array.isArray(products) && products.map((product) => (
-                                <MenuItem key={product._id} value={product.sku}>
-                                    {product.sku} - {product.name || ''}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
 
                 {/* Discount Percentage */}
                 <Grid size={12}>
@@ -483,4 +408,4 @@ const CreatePricingGroupsDiscounts = () => {
     );
 };
 
-export default CreatePricingGroupsDiscounts;
+export default CreateGroupsDiscounts;

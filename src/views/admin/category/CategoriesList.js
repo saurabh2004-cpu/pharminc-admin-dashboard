@@ -19,6 +19,12 @@ const BCrumb = [
 const CategoriesList = () => {
     const headCells = [
         {
+            id: 'serial',
+            numeric: false,
+            disablePadding: false,
+            label: 'Serial',
+        },
+        {
             id: 'name',
             numeric: false,
             disablePadding: false,
@@ -30,7 +36,7 @@ const CategoriesList = () => {
             disablePadding: false,
             label: 'Brand ',
         },
-        
+
         {
             id: 'createdAt',
             numeric: false,
@@ -53,7 +59,7 @@ const CategoriesList = () => {
             const response = await axiosInstance.get('/category/get-categories');
             console.log("response categories", response);
 
-            if(response.data.statusCode === 200){
+            if (response.data.statusCode === 200) {
                 setTableData(response.data.data);
             }
 
@@ -63,7 +69,7 @@ const CategoriesList = () => {
         }
     };
 
-    
+
 
     React.useEffect(() => {
         fetchCategoryList();

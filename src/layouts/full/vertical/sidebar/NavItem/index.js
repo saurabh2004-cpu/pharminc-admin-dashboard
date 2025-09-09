@@ -35,14 +35,14 @@ const NavItem = ({ item, level, pathDirect, onClick, hideMenu }) => {
       level > 1 && pathDirect === item.href ? `${theme.palette.primary.main}!important` : theme.palette.text.secondary,
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
     '&:hover': {
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.primary.main,
+      backgroundColor: '#2E2F7F',
+      color: 'white',
     },
     '&.active': {
       color: 'white',
       backgroundColor: theme.palette.primary.main,
       '&:hover': {
-        backgroundColor: theme.palette.primary.main,
+        backgroundColor: theme.palette.primary,
         color: 'white',
       },
     },
@@ -85,6 +85,8 @@ const NavItem = ({ item, level, pathDirect, onClick, hideMenu }) => {
         {!item.chip || hideMenu ? null : (
           <Chip
             color={item.chipColor}
+            sx={{backgroundColor: item.chipBackground}}
+            backgroundColor={item.chipBackground}
             variant={item.variant ? item.variant : 'filled'}
             size="small"
             label={item.chip}

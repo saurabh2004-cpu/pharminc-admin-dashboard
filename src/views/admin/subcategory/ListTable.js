@@ -177,13 +177,13 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
 
-  
-  
-  const [rows, setRows] = useState(sourceData ||tableData || []);
+
+
+  const [rows, setRows] = useState(sourceData || tableData || []);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
@@ -216,35 +216,7 @@ const ListTable = ({
     setOrderBy(property);
   };
 
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.name || n.title);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1),
-      );
-    }
-
-    setSelected(newSelected);
-  };
-
+  
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -268,7 +240,7 @@ const ListTable = ({
   //delete category
   const handleDeleteCategory = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/category/delete-category/${id}`);
+      const res = await axiosInstance.delete(`/subcategory/delete-sub-category/${id}`);
 
       console.log("deleted", res.data);
 
@@ -285,7 +257,7 @@ const ListTable = ({
   //edit category
 
   const handleEditCategory = (id) => {
-      navigate(`/dashboard/category/edit/${id}`);
+    navigate(`/dashboard/subcategory/edit/${id}`);
   };
 
   return (
@@ -295,7 +267,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          placeholder={isBrandsList ? "Search Subcategory" : "Search Product"}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -308,7 +280,7 @@ const ListTable = ({
                 numSelected={selected.length}
                 order={order}
                 orderBy={orderBy}
-                onSelectAllClick={handleSelectAllClick}
+                // onSelectAllClick={handleSelectAllClick}
                 onRequestSort={handleRequestSort}
                 rowCount={rows.length}
                 showCheckBox={showCheckBox}
@@ -351,14 +323,27 @@ const ListTable = ({
                                     ml: 2,
                                   }}
                                 >
-                                  <Typography  fontWeight="600">
+                                  <Typography fontWeight="600">
+                                    {index + 1}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Box
+                                  sx={{
+                                    ml: 2,
+                                  }}
+                                >
+                                  <Typography fontWeight="600">
                                     {row.name}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
                             <TableCell>
-                              <Typography>{row.brand.name}</Typography>
+                              <Typography>{row.category?.name || 'N/A'}</Typography>
                             </TableCell>
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
@@ -394,7 +379,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

@@ -42,3 +42,7 @@ export default defineConfig({
 
   plugins: [svgr(), react()],
 });
+
+
+// Image Width	174
+// Image Height	26

@@ -12,13 +12,13 @@ import {
     MenuItem,
     Select
 } from '@mui/material';
-import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
-import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
+import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
+import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 
-const EditPricingGroupsDiscounts = () => {
+const EditGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
         pricingGroupId: '',
         customerId: '',
@@ -31,8 +31,6 @@ const EditPricingGroupsDiscounts = () => {
     const [loading, setLoading] = React.useState(false);
     const [dataLoaded, setDataLoaded] = React.useState(false); // Track if all data is loaded
     const { id } = useParams();
-
-
 
     const handleSubmit = async () => {
         // Form validation
@@ -48,7 +46,7 @@ const EditPricingGroupsDiscounts = () => {
 
         try {
             setLoading(true);
-            const res = await axiosInstance.put(`/item-based-discount/update-items-based-discount/${id}`, formData, {
+            const res = await axiosInstance.put(`/pricing-groups-discount/update-pricing-group-discount/${id}`, formData, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -59,7 +57,7 @@ const EditPricingGroupsDiscounts = () => {
             if (res.data.statusCode === 200) {
                 setError('Pricing group discount updated successfully!');
                 setTimeout(() => {
-                    navigate('/dashboard/items-based-discounts/list');
+                    navigate('/dashboard/groups-discounts/list');
                 }, 2000);
             }
         } catch (error) {
@@ -81,15 +79,15 @@ const EditPricingGroupsDiscounts = () => {
     const fetchPricingGroupDiscountBYId = async (id) => {
         try {
             setLoading(true);
-            const response = await axiosInstance.get(`/item-based-discount/get-items-based-discount/${id}`);
-            console.log("response items based discount by id", response);
+            const response = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discount/${id}`);
+            console.log("response item based discount by id", response);
 
             if (response.data.statusCode === 200 && response.data.data) {
                 const discountData = response.data.data;
-                
+
                 // Set form data with proper IDs for dropdowns
                 setFormData({
-                    pricingGroupId: discountData.pricingGroup?._id || discountData.pricingGroupId || '',
+                    pricingGroupId: discountData.pricingGroup || '',
                     customerId: discountData.customerId || '',
                     percentage: discountData.percentage || '',
                 });
@@ -97,8 +95,8 @@ const EditPricingGroupsDiscounts = () => {
                 setError('No discount data found');
             }
         } catch (error) {
-            console.error('Error fetching items based discount by id:', error);
-            setError('Error fetching items based discount: ' + error.message);
+            console.error('Error fetching pricing group discount by id:', error);
+            setError('Error fetching pricing group discount: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -135,12 +133,6 @@ const EditPricingGroupsDiscounts = () => {
     };
 
 
-    useEffect(()=>{
-        if(!id){
-            navigate('/dashboard/items-based-discounts/create');
-        }
-    },[id])
-   
     // Load all dropdown data first
     useEffect(() => {
         const fetchData = async () => {
@@ -186,24 +178,9 @@ const EditPricingGroupsDiscounts = () => {
                             id="pricing-group-select"
                             value={formData.pricingGroupId}
                             onChange={handlePricingGroupChange}
-                            disabled={loading || !Array.isArray(pricingGroups) || pricingGroups.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
                         >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'Select a pricing group'}
-                            </MenuItem>
-                            {Array.isArray(pricingGroups) && pricingGroups.map((group) => (
+                            <MenuItem value="" disabled>Select a pricing group</MenuItem>
+                            {pricingGroups.map((group) => (
                                 <MenuItem key={group._id} value={group._id}>
                                     {group.name}
                                 </MenuItem>
@@ -227,27 +204,11 @@ const EditPricingGroupsDiscounts = () => {
                             id="customer-select"
                             value={formData.customerId}
                             onChange={handleCustomerChange}
-                            // selected={formData.customerId}
-                            disabled={loading || !Array.isArray(customers) || customers.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
                         >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'Select a customer'}
-                            </MenuItem>
-                            {Array.isArray(customers) && customers.map((customer) => (
-                                <MenuItem key={customer._id} value={customer.customerId}>
-                                    {customer.customerId} - {customer.customerName }
+                            <MenuItem value="" disabled>Select a customer</MenuItem>
+                            {customers.map((customer) => (
+                                <MenuItem key={customer._id} value={customer._id}>
+                                    {customer.customerId} - {customer.customerName}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -257,8 +218,6 @@ const EditPricingGroupsDiscounts = () => {
                         Current selected: {formData.customerId} | Available customers: {customers.length}
                     </Typography>
                 </Grid>
-
-                
 
                 {/* Discount Percentage */}
                 <Grid size={12}>
@@ -303,15 +262,15 @@ const EditPricingGroupsDiscounts = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ mr: 2 }}
+                        sx={{ mr: 2, backgroundColor: '#2E2F7F' }}
                     >
                         {loading ? 'Updating...' : 'Update'}
                     </Button>
-                    
+
                 </Grid>
             </Grid>
         </div>
     );
 };
 
-export default EditPricingGroupsDiscounts;
+export default EditGroupsDiscounts;

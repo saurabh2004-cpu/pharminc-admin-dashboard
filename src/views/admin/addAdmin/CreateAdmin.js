@@ -1,52 +1,52 @@
 import React from 'react';
-import { Grid } from '@mui/material';
-import InputAdornment from '@mui/material/InputAdornment';
-import Button from '@mui/material/Button';
+import {
+    Grid,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Typography,
+    Box
+} from '@mui/material';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
+import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 
-const CreateBrand = () => {
+const CreateAdmin = () => {
     const [formData, setFormData] = React.useState({
-        name: '',
-        slug: ''
+        email: '',
+        password: '',
     });
     const [error, setError] = React.useState('');
-    const navigate = useNavigate();
-
-    const handleNameChange = (e) => {
-        const name = e.target.value;
-        const slug = name.trim().replace(/\s+/g, '-')?.toLowerCase();
-
-        setFormData({
-            ...formData,
-            name: name,
-            slug: slug
-        });
-    };
 
     const handleSubmit = async () => {
         try {
-            const res = await axiosInstance.post('/brand/create-brand', formData, {
+            const res = await axiosInstance.post('/admin/create-new-admin', formData, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
 
+            console.log("new admin creation response:", res);
+
             if (res.data.statusCode === 200) {
                 setFormData({
-                    name: '',
-                    slug: ''
+                    email: '',
+                    password: '',
                 })
-                navigate('/dashboard/brands/list')
+                setError('admin created successfully!');
+            } else {
+                setError(res.data.message);
             }
         } catch (error) {
-            setError(error.message || 'An error occurred');
+            setError(error.response?.data?.message || error.message || 'An error occurred');
             console.error(error.message);
         }
     };
+
 
     return (
         <div>
@@ -57,7 +57,7 @@ const CreateBrand = () => {
                         htmlFor="bi-name"
                         sx={{ mt: 0 }}
                     >
-                        Brand Name
+                        Email
                         <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
@@ -66,38 +66,45 @@ const CreateBrand = () => {
                         id="bi-name"
                         fullWidth
                         value={formData.name}
-                        onChange={(e) => handleNameChange(e)}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                 </Grid>
-                {/* 2 */}
                 <Grid size={12}>
-                    <CustomFormLabel htmlFor="bi-company">Slug  <span style={{ color: 'red' }}>*</span></CustomFormLabel>
+                    <CustomFormLabel
+                        htmlFor="bi-background-color"
+                        sx={{ mt: 3 }}
+                    >
+                        Password
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
                     <CustomOutlinedInput
-                        id="bi-company"
+                        id="bi-background-color"
                         fullWidth
-                        disabled
-                        value={formData.slug}
+                        value={formData.backgroundColor}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     />
                 </Grid>
 
+
                 {error && (
                     <Grid size={12} mt={2}>
-                        <div style={{ color: 'red' }}>
+                        <div style={{ color: error.includes('success') ? 'green' : 'red' }}>
                             {error}
                         </div>
                     </Grid>
                 )}
 
-                <Grid size={12} mt={3}>
+                <Grid item={12} mt={3}>
                     <Button variant="contained" color="primary" sx={{ backgroundColor: '#2E2F7F' }} onClick={handleSubmit}>
                         Submit
                     </Button>
+                    
                 </Grid>
             </Grid>
         </div>
     );
 };
 
-export default CreateBrand;
+export default CreateAdmin;

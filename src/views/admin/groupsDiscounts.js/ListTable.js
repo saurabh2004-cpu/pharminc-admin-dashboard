@@ -22,6 +22,7 @@ import {
   TextField,
   InputAdornment,
   Paper,
+  Button,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -30,6 +31,7 @@ import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import axios from 'axios';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -107,7 +109,26 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder } = props;
+  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
+
+  const handleExportCSV = async () => {
+    try {
+      const response = await axiosInstance.get(
+        '/pricing-groups-discount/export-pricing-group-discounts',
+        { responseType: 'blob' }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "pricing_group_discounts_export.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+    }
+  };
 
   return (
     <Toolbar
@@ -143,6 +164,7 @@ const EnhancedTableToolbar = (props) => {
           />
         </Box>
       )}
+
       {numSelected > 0 ? (
         <Tooltip title="Delete">
           <IconButton>
@@ -150,15 +172,23 @@ const EnhancedTableToolbar = (props) => {
           </IconButton>
         </Tooltip>
       ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <IconFilter size="1.2rem" />
-          </IconButton>
-        </Tooltip>
+        <>
+          <Tooltip title="Filter list">
+            <IconButton>
+              <IconFilter size="1.2rem" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Export CSV">
+            <IconButton onClick={handleExportCSV}>
+              <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
+            </IconButton>
+          </Tooltip>
+        </>
       )}
     </Toolbar>
   );
 };
+
 
 const ListTable = ({
   showCheckBox,
@@ -178,7 +208,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -269,7 +299,7 @@ const ListTable = ({
   //delete pricing group
   const handleDeletePricingGroup = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/pricing-groups/delete-pricing-group/${id}`);
+      const res = await axiosInstance.delete(`/pricing-groups-discount/delete-pricing-group-discount/${id}`);
 
       console.log("deleted", res.data);
 
@@ -286,7 +316,7 @@ const ListTable = ({
   //edit category
 
   const handleEditPricingGroup = (id) => {
-    navigate(`/dashboard/pricing-groups/edit/${id}`);
+    navigate(`/dashboard/groups-discounts/edit/${id}`);
   };
 
   return (
@@ -296,7 +326,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Pricing Group" : "Search Product"}
+          placeholder={isBrandsList ? "Search Pricing Group Discount" : "Search Product"}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -366,12 +396,23 @@ const ListTable = ({
                                   }}
                                 >
                                   <Typography fontWeight="600">
-                                    {row.name}
+                                    {row?.pricingGroup?.name || 'N/A'}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
-                            
+                            <TableCell>
+                              <Typography fontWeight="600">
+                                {row?.customerId}
+                              </Typography>
+                            </TableCell>
+
+                            <TableCell>
+                              <Typography fontWeight="600">
+                                {row.percentage}%
+                              </Typography>
+                            </TableCell>
+
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
                             </TableCell>
@@ -406,7 +447,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

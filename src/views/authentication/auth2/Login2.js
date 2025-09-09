@@ -8,12 +8,13 @@ import Typography from '@mui/material/Typography';
 
 // components
 import PageContainer from 'src/components/container/PageContainer';
-import Logo from 'src/layouts/full/shared/logo/Logo';
+import { ReactComponent as LogoLight } from 'src/assets/images/logos/point-austrelia-logo.svg';
 import AuthLogin from '../authForms/AuthLogin';
 
 const Login2 = () => {
   return (
     <PageContainer title="Login" description="this is Login page">
+      logo
       <Box
         sx={{
           position: 'relative',
@@ -37,7 +38,7 @@ const Login2 = () => {
             alignItems="center"
           >
             <Card elevation={9} sx={{ p: 4, zIndex: 1, width: '100%', maxWidth: '450px' }}>
-              
+              <LogoLight sx={{width: '10%'}}/>
               <AuthLogin
                 
               />

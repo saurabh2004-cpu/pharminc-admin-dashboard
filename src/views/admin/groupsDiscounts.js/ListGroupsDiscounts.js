@@ -17,19 +17,13 @@ const BCrumb = [
   },
 ];
 
-const ListPricingGroupsDiscounts = () => {
+const ListGroupsDiscounts = () => {
   const headCells = [
     {
       id: 'serial',
       numeric: false,
       disablePadding: false,
       label: 'Serial',
-    },
-    {
-      id: 'productSku',
-      numeric: false,
-      disablePadding: false,
-      label: 'Product SKU',
     },
     {
       id: 'pricingGroup',
@@ -68,8 +62,8 @@ const ListPricingGroupsDiscounts = () => {
 
   const fetchPricingGroupsDiscounts = async () => {
     try {
-      const response = await axiosInstance.get('/item-based-discount/get-all-item-based-discounts');
-      console.log("response item based discounts", response);
+      const response = await axiosInstance.get('/pricing-groups-discount/get-all-pricing-group-discounts');
+      console.log("response pricing groups", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -107,4 +101,4 @@ const ListPricingGroupsDiscounts = () => {
   );
 };
 
-export default ListPricingGroupsDiscounts;
+export default ListGroupsDiscounts;

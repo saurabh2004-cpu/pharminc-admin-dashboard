@@ -28,7 +28,7 @@ const CreatePricingGroups = () => {
         });
     };
 
-   
+
 
     const handleSubmit = async () => {
         // Validation
@@ -36,7 +36,7 @@ const CreatePricingGroups = () => {
             setError('Category name is required');
             return;
         }
-       
+
 
         setLoading(true);
         setError('');
@@ -72,7 +72,7 @@ const CreatePricingGroups = () => {
         }
     };
 
-   
+
     return (
         <div>
             <Grid container spacing={2}>
@@ -83,6 +83,7 @@ const CreatePricingGroups = () => {
                         sx={{ mt: 0 }}
                     >
                         Pricing Group Name
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -100,6 +101,7 @@ const CreatePricingGroups = () => {
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="pricing-group-slug" sx={{ mt: 2 }}>
                         Slug
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>

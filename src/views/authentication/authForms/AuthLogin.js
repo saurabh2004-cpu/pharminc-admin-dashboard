@@ -82,14 +82,14 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           </FormGroup>
           <Typography
             component={Link}
-            to="/auth/forgot-password"
+            to="/auth/register"
             fontWeight="500"
             sx={{
               textDecoration: 'none',
               color: 'primary.main',
             }}
           >
-            Forgot Password ?
+            Register 
           </Typography>
         </Stack>
       </Stack>
@@ -103,6 +103,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           // to="/"
           onClick={handleLogin}
           type="submit"
+          sx={{ backgroundColor: '#2E2F7F' }}
         >
           Sign In
         </Button>

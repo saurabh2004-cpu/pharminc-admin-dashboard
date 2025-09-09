@@ -19,21 +19,46 @@ const CreateCategory = () => {
     const navigate = useNavigate();
     const [brandsList, setBrandsList] = React.useState([]);
 
+    // Helper function to generate slug from text
+    const generateSlug = (text) => {
+        return text.trim().replace(/\s+/g, '-').toLowerCase();
+    };
+
+    // Helper function to get brand slug by ID
+    const getBrandSlug = (brandId) => {
+        const brand = brandsList.find(b => b._id === brandId);
+        return brand ? generateSlug(brand.name) : '';
+    };
+
+    // Generate complete slug
+    const generateCompleteSlug = (categoryName, brandId) => {
+        if (!categoryName.trim() || !brandId) return '';
+
+        const brandSlug = getBrandSlug(brandId);
+        const categorySlug = generateSlug(categoryName);
+
+        return brandSlug ? `${brandSlug}/${categorySlug}` : categorySlug;
+    };
+
     const handleNameChange = (e) => {
         const name = e.target.value;
-        const slug = name.trim().replace(/\s+/g, '-')?.toLowerCase();
+        const completeSlug = generateCompleteSlug(name, formData.brand);
 
         setFormData({
             ...formData,
             name: name,
-            slug: slug,
+            slug: completeSlug,
         });
     };
 
     const handleBrandChange = (e) => {
+        const selectedBrandId = e.target.value;
+        const completeSlug = generateCompleteSlug(formData.name, selectedBrandId);
+
         setFormData({
             ...formData,
-            brand: e.target.value // This will be the brand ID
+            brand: selectedBrandId,
+            slug: completeSlug,
         });
     };
 
@@ -74,7 +99,6 @@ const CreateCategory = () => {
                 console.log("Create category error:", res.data.message);
             }
 
-
         } catch (error) {
             console.error('Create category error:', error);
             setError(error.response?.data?.message || error.message || 'Failed to create category');
@@ -111,6 +135,7 @@ const CreateCategory = () => {
                         sx={{ mt: 0 }}
                     >
                         Category Name
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -131,6 +156,7 @@ const CreateCategory = () => {
                         sx={{ mt: 2 }}
                     >
                         Select Brand
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -169,6 +195,7 @@ const CreateCategory = () => {
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="category-slug" sx={{ mt: 2 }}>
                         Slug
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -177,7 +204,7 @@ const CreateCategory = () => {
                         fullWidth
                         disabled
                         value={formData.slug}
-                        placeholder="Auto-generated from category name"
+                        placeholder="Auto-generated as brand-name/category-name"
                     />
                 </Grid>
 
@@ -205,7 +232,7 @@ const CreateCategory = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ minWidth: '120px' }}
+                        sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
                     >
                         {loading ? 'Creating...' : 'Create Category'}
                     </Button>

@@ -180,7 +180,7 @@ const EditBadge = Loadable(lazy(() => import('../views/admin/badge/EditBadge')))
 const ListPricingGroups = Loadable(lazy(() => import('../views/admin/pricingGroups/ListPricingGroups')));
 const CreatePricingGroups = Loadable(lazy(() => import('../views/admin/pricingGroups/CreatePricingGroups')));
 const EditPricingGroups = Loadable(lazy(() => import('../views/admin/pricingGroups/EditPricingGroups')));
-const CreatePricingGroupsDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/createPricingGroupsDiscounts')));
+const CreatePricingGroupsDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/CreatePricingGroupsDiscounts')));
 const ListPricingGroupsDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/ListPricingGroupsDiscounts')));
 const EditPricingGroupsDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/EditPricingGroupsDiscounts')));
 const CreateTax = Loadable(lazy(() => import('../views/admin/tax/CreateTax')));
@@ -195,6 +195,20 @@ const EditPackTypes = Loadable(lazy(() => import('../views/admin/packTypes/EditP
 const CreateProduct = Loadable(lazy(() => import('../views/admin/products/CreateProduct')));
 const ListProduct = Loadable(lazy(() => import('../views/admin/products/ListProduct')));
 const EditProduct = Loadable(lazy(() => import('../views/admin/products/EditProduct')));
+const CreateSalesOrders = Loadable(lazy(() => import('../views/admin/salesOrders/CreateSalesOrders')));
+const ListSalesOrders = Loadable(lazy(() => import('../views/admin/salesOrders/ListSalesOrders')));
+const EditSalesOrder = Loadable(lazy(() => import('../views/admin/salesOrders/EditSalesOrder')));
+const CreateCustomer = Loadable(lazy(() => import('../views/admin/customer/CreateCustomer')));
+const ListCustomers = Loadable(lazy(() => import('../views/admin/customer/ListCustomers')));
+const EditCustomer = Loadable(lazy(() => import('../views/admin/customer/EditCustomers')));
+const ChnagePassword = Loadable(lazy(() => import('../views/admin/customer/ChnagePassword')));
+const CreateGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/CreateGroupsDiscounts')));
+const ListGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/ListGroupsDiscounts')));
+const EditGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/EditGroupsDiscounts')));
+
+const CreateAdmin  = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAdmin')));
+
+
 
 
 
@@ -308,6 +322,8 @@ const Router = [
 
 
       // my routes
+
+
       { path: '/dashboard/Brand', element: <EcommerceDash /> },
       { path: '/dashboard/Brand/create', element: <CreateBrand /> },
       { path: '/dashboard/brands/list', element: <BrandsList /> },
@@ -328,10 +344,17 @@ const Router = [
       { path: '/dashboard/pricing-groups/create', element: <CreatePricingGroups /> },
       { path: '/dashboard/pricing-groups/list', element: <ListPricingGroups /> },
       { path: '/dashboard/pricing-groups/edit/:id', element: <EditPricingGroups /> },
+      
+      
+      { path: '/dashboard/groups-discounts/create', element: <CreateGroupsDiscounts /> },
+      { path: '/dashboard/groups-discounts/list', element: <ListGroupsDiscounts /> },
+      { path: '/dashboard/groups-discounts/edit/:id', element: <EditGroupsDiscounts /> },
 
-      { path: '/dashboard/pricing-groups-discounts/create', element: <CreatePricingGroupsDiscounts /> },
-      { path: '/dashboard/pricing-groups-discounts/list', element: <ListPricingGroupsDiscounts /> },
-      { path: '/dashboard/pricing-groups-discounts/edit/:id', element: <EditPricingGroupsDiscounts /> },
+
+
+      { path: '/dashboard/items-based-discounts/create', element: <CreatePricingGroupsDiscounts /> },
+      { path: '/dashboard/items-based-discounts/list', element: <ListPricingGroupsDiscounts /> },
+      { path: '/dashboard/items-based-discounts/edit/:id', element: <EditPricingGroupsDiscounts /> },
 
 
       { path: '/dashboard/tax/create', element: <CreateTax /> },
@@ -349,6 +372,19 @@ const Router = [
       { path: '/dashboard/products/create', element: <CreateProduct /> },
       { path: '/dashboard/products/list', element: <ListProduct /> },
       { path: '/dashboard/products/edit/:id', element: <EditProduct /> },
+
+      { path: '/dashboard/sales-order/create', element: <CreateSalesOrders /> },
+      { path: '/dashboard/sales-orders/list', element: <ListSalesOrders /> },
+      { path: '/dashboard/sales-order/edit/:id', element: <EditSalesOrder /> },
+
+      { path: '/dashboard/customers/create', element: <CreateCustomer /> },
+      { path: '/dashboard/customers/list', element: <ListCustomers /> },
+      { path: '/dashboard/customers/edit/:id', element: <EditCustomer /> },
+      { path: '/dashboard/customers/change-password/:id', element: <ChnagePassword /> },
+      
+      { path: '/dashboard/CreateAdmin', element: <CreateAdmin /> },
+
+
     ],
   },
   {

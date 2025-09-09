@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  Grid,
-  Button, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions,
-  Typography,
-  Box
+import {
+    Grid,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Typography,
+    Box
 } from '@mui/material';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
@@ -46,7 +46,7 @@ const CreateBadge = () => {
                 }
             });
 
-            console.log("Badge creation response:", res.data);
+            console.log("Badge creation response:", res.data.message);
 
             if (res.data.statusCode === 200) {
                 setFormData({
@@ -57,6 +57,8 @@ const CreateBadge = () => {
                 });
                 setError('Badge created successfully!');
                 navigate('/dashboard/badge/list');
+            } else {
+                setError(res.data.message);
             }
         } catch (error) {
             setError(error.response?.data?.message || error.message || 'An error occurred');
@@ -124,7 +126,8 @@ const CreateBadge = () => {
                         htmlFor="bi-name"
                         sx={{ mt: 0 }}
                     >
-                        Brand Name
+                        Badge Name
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -138,9 +141,10 @@ const CreateBadge = () => {
                 <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="bi-background-color"
-                        sx={{ mt: 0 }}
+                        sx={{ mt: 3 }}
                     >
                         Background Color
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -152,14 +156,12 @@ const CreateBadge = () => {
                     />
                 </Grid>
                 <Grid size={12}>
-                    <CustomFormLabel
-                        htmlFor="bi-text"
-                        sx={{ mt: 0 }}
-                    >
-                        Text
+                    <CustomFormLabel htmlFor="bi-text">
+                        Text <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
+
                     <CustomOutlinedInput
                         id="bi-text"
                         fullWidth
@@ -169,7 +171,7 @@ const CreateBadge = () => {
                 </Grid>
                 {/* 2 */}
                 <Grid size={12}>
-                    <CustomFormLabel htmlFor="bi-company">Slug</CustomFormLabel>
+                    <CustomFormLabel htmlFor="bi-company">Slug  <span style={{ color: 'red' }}>*</span></CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
                     <CustomOutlinedInput
@@ -189,12 +191,12 @@ const CreateBadge = () => {
                 )}
 
                 <Grid item={12} mt={3}>
-                    <Button variant="contained" color="primary" onClick={handleSubmit}>
+                    <Button variant="contained" color="primary" sx={{ backgroundColor: '#2E2F7F' }} onClick={handleSubmit}>
                         Submit
                     </Button>
-                    <Button 
-                        variant="outlined" 
-                        color="secondary" 
+                    <Button
+                        variant="outlined"
+                        color="secondary"
                         onClick={() => setCsvDialogOpen(true)}
                         sx={{ ml: 2 }}
                     >
@@ -204,8 +206,8 @@ const CreateBadge = () => {
             </Grid>
 
             {/* CSV Import Dialog */}
-            <Dialog 
-                open={csvDialogOpen} 
+            <Dialog
+                open={csvDialogOpen}
                 onClose={handleCloseCsvDialog}
                 maxWidth="sm"
                 fullWidth
@@ -218,7 +220,7 @@ const CreateBadge = () => {
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                             Select a CSV file to import multiple badges at once.
                         </Typography>
-                        
+
                         <input
                             id="csv-file-input"
                             type="file"
@@ -226,7 +228,7 @@ const CreateBadge = () => {
                             onChange={handleFileChange}
                             style={{ display: 'none' }}
                         />
-                        
+
                         <Box display="flex" alignItems="center" gap={2}>
                             <Button
                                 variant="outlined"
@@ -236,7 +238,7 @@ const CreateBadge = () => {
                             >
                                 Choose File
                             </Button>
-                            
+
                             {selectedFile && (
                                 <Typography variant="body2" color="primary">
                                     {selectedFile.name}
@@ -249,11 +251,13 @@ const CreateBadge = () => {
                     <Button onClick={handleCloseCsvDialog}>
                         Cancel
                     </Button>
-                    <Button 
+                    <Button
                         onClick={handleImportCsvFile}
-                        variant="contained"
+                        // variant="contained"
                         disabled={!selectedFile}
                         startIcon={<IconFileImport size="1.1rem" />}
+                        sx={{ backgroundColor: '#2E2F7F' }}
+                        backgroundColor="#2E2F7F"
                     >
                         Import
                     </Button>
