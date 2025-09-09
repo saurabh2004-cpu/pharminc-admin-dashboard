@@ -178,7 +178,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -406,7 +406,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Grid } from '@mui/material';
 
 import PageContainer from 'src/components/container/PageContainer';
@@ -16,8 +16,38 @@ import Sales from 'src/components/dashboards/ecommerce/Sales';
 import MonthlyEarnings from 'src/components/dashboards/ecommerce/MonthlyEarnings';
 import ProductPerformances from 'src/components/dashboards/ecommerce/ProductPerformances';
 import RecentTransactions from 'src/components/dashboards/ecommerce/RecentTransactions';
+import { useDispatch } from 'react-redux';
+import axiosInstance from '../../axios/axiosInstance';
+import{login} from '../../store/authSlice';
 
 const Ecommerce = () => {
+
+  const dispatch = useDispatch();
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/get-current-admin');
+
+      console.log('current user', response);
+
+      if (response.data.statusCode === 200) {
+        const userData = response.data.data;
+        dispatch(login(userData));
+        console.log("Current user:", response);
+      } else {
+        window.location.href = '/auth/login';
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
+
+
   return (
     <PageContainer title="eCommerce Dashboard" description="this is eCommerce Dashboard page">
       <Grid container spacing={3}>

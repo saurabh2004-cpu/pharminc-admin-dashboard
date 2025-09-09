@@ -4,13 +4,38 @@ import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useContext } from 'react';
 import img1 from 'src/assets/images/profile/user-1.jpg';
 import { IconPower } from '@tabler/icons';
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../../../../store/authSlice';
+import axiosInstance from '../../../../../axios/axiosInstance';
 
 export const Profile = () => {
   const { isSidebarHover, isCollapse } = useContext(CustomizerContext);
+  const [error,setError] = React.useState(null);
 
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? isCollapse == 'mini-sidebar' && !isSidebarHover : '';
+
+  const user = useSelector((state) => state.auth.userData);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    setError(null); // clear previous error
+    try {
+      const res = await axiosInstance.post('/admin/logout', {});
+
+      if (res.data.statusCode === 200) {
+        dispatch(logout());
+        navigate('/auth/login');
+      } else {
+        setError(res.data.message || 'Logout failed');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'An error occurred');
+    }
+  };
+
 
   return (
     <Box
@@ -24,12 +49,13 @@ export const Profile = () => {
           <Avatar alt="Remy Sharp" src={img1} />
 
           <Box>
-            <Typography variant="h6" color="textPrimary">Mathew</Typography>
-            <Typography variant="caption" color="textSecondary">Designer</Typography>
+            <Typography variant="h6" color="textPrimary"> {user?.username || 'Admin'}</Typography>
+            <Typography variant="caption" color="textSecondary">admin</Typography>
           </Box>
           <Box sx={{ ml: 'auto' }}>
-            <Tooltip title="Logout" placement="top">
-              <IconButton color="primary" component={Link} to="/auth/login" aria-label="logout" size="small">
+            <Tooltip title="Logout" placement="top" onClick={handleLogout}>
+              <IconButton color="primary" component={Link} to="/auth/login" aria-label="logout" size="small"
+              >
                 <IconPower size="20" />
               </IconButton>
             </Tooltip>

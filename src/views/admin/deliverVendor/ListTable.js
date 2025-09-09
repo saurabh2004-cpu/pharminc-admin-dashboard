@@ -111,24 +111,6 @@ function EnhancedTableHead(props) {
 const EnhancedTableToolbar = (props) => {
   const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
 
-  const handleExportCSV = async () => {
-    try {
-      const response = await axios.get(
-        'http://localhost:3000/api/v1/pricing-groups-discount/export-pricing-group-discounts',
-        { responseType: 'blob' }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "pricing_group_discounts_export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error exporting CSV:", error);
-    }
-  };
 
   return (
     <Toolbar
@@ -178,11 +160,11 @@ const EnhancedTableToolbar = (props) => {
               <IconFilter size="1.2rem" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Export CSV">
+          {/* <Tooltip title="Export CSV">
             <IconButton onClick={handleExportCSV}>
               <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
             </IconButton>
-          </Tooltip>
+          </Tooltip> */}
         </>
       )}
     </Toolbar>

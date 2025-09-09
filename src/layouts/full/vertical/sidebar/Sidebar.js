@@ -1,11 +1,14 @@
 import { useMediaQuery, Box, Drawer, useTheme } from '@mui/material';
 import SidebarItems from './SidebarItems';
-import Logo from '../../shared/logo/Logo';
+// import Logo from '../../shared/logo/Logo';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useContext } from 'react';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
 import { Profile } from './SidebarProfile/Profile';
+import Logo from 'src/assets/images/logos/poiunt-aus-logo.png';
+
+
 
 const Sidebar = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
@@ -86,7 +89,10 @@ const Sidebar = () => {
             {/* Logo */}
             {/* ------------------------------------------- */}
             <Box px={3}>
-              <Logo />
+              {/* <Logo /> */}
+              <Box px={3}>
+                <img src={Logo} alt="logo" style={{ height: 80,marginTop: 10}} />
+              </Box>
             </Box>
             <Scrollbar sx={{ height: 'calc(100% - 190px)' }}>
               {/* ------------------------------------------- */}

@@ -7,13 +7,11 @@ import Stack from '@mui/material/Stack';
 
 import { Link } from 'react-router';
 import PageContainer from 'src/components/container/PageContainer';
-import { ReactComponent as LogoLight } from 'src/assets/images/logos/point-austrelia-logo.svg';
 
 import AuthRegister from '../authForms/AuthRegister';
+import Logo from 'src/assets/images/logos/poiunt-aus-logo.png';
 
 const Register2 = () => {
-
-
   return (
     <PageContainer title="Register" description="this is Register page">
       <Box
@@ -39,10 +37,29 @@ const Register2 = () => {
             alignItems="center"
           >
             <Card elevation={9} sx={{ p: 4, m: 3, zIndex: 1, width: '100%', maxWidth: '450px' }}>
-              {/* <Box display="flex" alignItems="center" justifyContent="center">
-              <Logo />
-            </Box> */}
-              <LogoLight sx={{ width: '10%' }} />
+              {/* Centered Logo */}
+              <Box 
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                  mb: 3,
+                  textAlign: 'center'
+                }}
+              >
+                <img 
+                  src={Logo} 
+                  alt="logo" 
+                  style={{ 
+                    height: 80,
+                    width: 'auto',
+                    objectFit: 'contain',
+                    display: 'block',
+                    margin: '0 auto'
+                  }} 
+                />
+              </Box>
               
               <AuthRegister
                 subtitle={
@@ -58,13 +75,10 @@ const Register2 = () => {
                         textDecoration: 'none',
                         color: 'primary.main',
                       }}
-
                     >
                       Sign In
                     </Typography>
                   </Stack>
-
-
                 }
               />
             </Card>
@@ -72,7 +86,7 @@ const Register2 = () => {
         </Grid>
       </Box>
     </PageContainer>
-  )
+  );
 };
 
 export default Register2;

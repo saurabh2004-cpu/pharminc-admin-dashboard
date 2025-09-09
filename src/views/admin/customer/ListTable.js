@@ -111,24 +111,6 @@ function EnhancedTableHead(props) {
 const EnhancedTableToolbar = (props) => {
   const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
 
-  const handleExportCSV = async () => {
-    try {
-      const response = await axiosInstance.get(
-        '/admin/export-users',
-        { responseType: 'blob' }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "pricing_group_discounts_export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error exporting CSV:", error);
-    }
-  };
 
   return (
     <Toolbar
@@ -178,11 +160,11 @@ const EnhancedTableToolbar = (props) => {
               <IconFilter size="1.2rem" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Export CSV">
+          {/* <Tooltip title="Export CSV">
             <IconButton onClick={handleExportCSV}>
               <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
             </IconButton>
-          </Tooltip>
+          </Tooltip> */}
         </>
       )}
     </Toolbar>
@@ -208,7 +190,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -595,7 +577,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 30]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

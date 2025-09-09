@@ -138,7 +138,7 @@ const CreatePricingGroups = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ minWidth: '120px' }}
+                        sx={{ minWidth: '120px',backgroundColor: '#2E2F7F' }}
                     >
                         {loading ? 'Creating...' : 'Create Pricing Group'}
                     </Button>
