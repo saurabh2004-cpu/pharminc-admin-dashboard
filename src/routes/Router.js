@@ -205,6 +205,7 @@ const ChnagePassword = Loadable(lazy(() => import('../views/admin/customer/Chnag
 const CreateGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/CreateGroupsDiscounts')));
 const ListGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/ListGroupsDiscounts')));
 const EditGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/EditGroupsDiscounts')));
+const ListNetTerms = Loadable(lazy(() => import('../views/admin/netTerms/ListNetTerms')));
 
 const CreateAdmin  = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAdmin')));
 
@@ -381,6 +382,9 @@ const Router = [
       { path: '/dashboard/customers/list', element: <ListCustomers /> },
       { path: '/dashboard/customers/edit/:id', element: <EditCustomer /> },
       { path: '/dashboard/customers/change-password/:id', element: <ChnagePassword /> },
+      
+      
+      { path: '/dashboard/NetTerms/List', element: <ListNetTerms /> },
       
       { path: '/dashboard/CreateAdmin', element: <CreateAdmin /> },
 

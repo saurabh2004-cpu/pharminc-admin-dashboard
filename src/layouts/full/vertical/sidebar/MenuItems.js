@@ -18,6 +18,7 @@ import {
   IconReceipt,
   IconTruck,
   IconShoppingBag,
+  IconCalendar,
 } from '@tabler/icons-react';
 
 const Menuitems = [
@@ -310,6 +311,20 @@ const Menuitems = [
         title: 'List Customers',
         icon: IconPoint,
         href: '/dashboard/customers/list',
+      },
+    ]
+  },
+  {
+    id: uniqueId(),
+    title: 'NetTerms',
+    icon: IconCalendar,
+    href: '/dashboard/NetTerms',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Net Terms',
+        icon: IconPoint,
+        href: '/dashboard/NetTerms/List',
       },
     ]
   },

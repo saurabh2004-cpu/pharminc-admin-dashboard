@@ -632,7 +632,7 @@ const EditCustomers = () => {
             color="primary"
             onClick={handleSubmit}
             disabled={loading}
-            sx={{ minWidth: '120px' }}
+            sx={{ minWidth: '120px',backgroundColor: '#2E2F7F' }}
           >
             {loading ? 'Updating...' : 'Update Customer Details'}
           </Button>
