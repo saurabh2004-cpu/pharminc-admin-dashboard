@@ -127,7 +127,6 @@ const ListCustomers = () => {
 
   const fetchCustomersList = async () => {
     try {
-      // Update API endpoint to fetch customers instead of products
       const response = await axiosInstance.get('/admin/get-all-users'); // or whatever your customer endpoint is
       console.log("response customers", response.data);
 

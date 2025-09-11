@@ -91,7 +91,7 @@ const Sidebar = () => {
             <Box px={3}>
               {/* <Logo /> */}
               <Box px={3}>
-                <img src={Logo} alt="logo" style={{ height: 80,marginTop: 10}} />
+                <img src={Logo} alt="logo" style={{ height: 65,marginTop: 10}} />
               </Box>
             </Box>
             <Scrollbar sx={{ height: 'calc(100% - 190px)' }}>

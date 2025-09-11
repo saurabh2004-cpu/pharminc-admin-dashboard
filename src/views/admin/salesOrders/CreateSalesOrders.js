@@ -35,6 +35,7 @@ const CreateSalesOrders = () => {
   const [packTypes, setPackTypes] = React.useState([]);
   const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState(null);
+  const [customers, setCustomers] = React.useState([]);
 
 
   const handleSubmit = async () => {
@@ -159,7 +160,43 @@ const CreateSalesOrders = () => {
     }
   };
 
+  const fetchCustomersList = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/get-all-users'); // or whatever your customer endpoint is
+      console.log("response customers", response.data);
 
+      if (response.data.statusCode === 200) {
+        const customersData = response.data.data?.docs || response.data.data || response.data;
+
+        // Filter out duplicates based on _id
+        const getUniqueCustomers = (customers) => {
+          if (!Array.isArray(customers)) return [];
+
+          const uniqueCustomers = [];
+          const seenIds = new Set();
+
+          customers.forEach(customer => {
+            if (customer._id && !seenIds.has(customer._id)) {
+              seenIds.add(customer._id);
+              uniqueCustomers.push(customer);
+            }
+          });
+
+          return uniqueCustomers;
+        };
+
+        setCustomers(getUniqueCustomers(customersData));
+      }
+
+    } catch (error) {
+      console.error('Error fetching customers list:', error);
+      setError(error.message);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchCustomersList();
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -233,7 +270,7 @@ const CreateSalesOrders = () => {
 
   React.useEffect(() => {
     fetchProductsList();
-  }, []);
+  }, [])
 
 
   return (
@@ -262,7 +299,7 @@ const CreateSalesOrders = () => {
         </Grid>
 
         {/* Document Number and Customer Name - Two per row */}
-        <Grid size={6}>
+        {/* <Grid size={6}>
           <CustomFormLabel htmlFor="document-number" sx={{ mt: 2 }}>
             Document Number
             <span style={{ color: 'red' }}>*</span>
@@ -274,7 +311,46 @@ const CreateSalesOrders = () => {
             onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
             placeholder="Enter document number"
           />
+        </Grid> */}
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="item-sku" sx={{ mt: 2 }}>
+            Select Customer Id
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Autocomplete
+              id="item-sku-autocomplete"
+              options={customers}
+              getOptionLabel={(customer) =>
+                customer ? `${customer.customerId} (Name: ${customer.contactName})` : ""
+              }
+              value={
+                customers.find((c) => c.customerId === formData.documentNumber) || null
+              }
+              onChange={(event, newValue) => {
+                setFormData({
+                  ...formData,
+                  documentNumber: newValue ? newValue.customerId : "",
+                  customerName: newValue ? newValue.contactName : "",
+                });
+                
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={
+                    productsList.length === 0
+                      ? "Loading products..."
+                      : "Search or select a Customer"
+                  }
+                  size="small"
+                />
+              )}
+            />
+          </FormControl>
         </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="customer-name" sx={{ mt: 2 }}>
             Customer Name

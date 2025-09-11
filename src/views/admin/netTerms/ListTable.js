@@ -593,15 +593,7 @@ const ListTable = ({
                           )}
                         </TableCell>
 
-                        {/* Net Terms */}
-                        <TableCell sx={columnWidths.netTerms}>
-                          <Chip
-                            label={row.netTerms ? `Net ${row.netTerms}` : 'N/A'}
-                            size="small"
-                            variant="outlined"
-                            color="primary"
-                          />
-                        </TableCell>
+                        
 
                         {/* Customer Name */}
                         <TableCell sx={columnWidths.customerName}>
@@ -613,14 +605,16 @@ const ListTable = ({
                         {/* Customer Email */}
                         <TableCell sx={columnWidths.customerEmail}>
                           <Typography fontWeight="400">
-                            {row.orderDate || 'N/A'}
+                            {/* {row.orderDate || 'N/A'} */}
+                            {format(parseISO(row.orderDate), 'mm/dd/yyyy')}
                           </Typography>
                         </TableCell>
 
                         {/* Phone Number */}
                         <TableCell sx={columnWidths.phone}>
                           <Typography fontWeight="400">
-                            {row.dueDate|| 'N/A'}
+                            {/* {row.dueDate|| 'N/A'} */}
+                            {format(parseISO(row.dueDate), 'mm/dd/yyyy')}
                           </Typography>
                         </TableCell>
                         <TableCell sx={columnWidths.phone}>
@@ -639,17 +633,7 @@ const ListTable = ({
                           </Typography>
                         </TableCell>
 
-                        {/* Due Date (if available) */}
-                        {row.dueDate && (
-                          <TableCell sx={columnWidths.dueDate}>
-                            <Typography variant="body2" fontWeight="500">
-                              {format(parseISO(row.dueDate), 'dd/MM/yyyy')}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {format(parseISO(row.dueDate), 'HH:mm')}
-                            </Typography>
-                          </TableCell>
-                        )}
+                        
 
                         {/* Amount (if available) */}
                         {row.amount !== undefined && (
@@ -660,19 +644,7 @@ const ListTable = ({
                           </TableCell>
                         )}
 
-                        {/* Status (if available) */}
-                        {row.status && (
-                          <TableCell sx={columnWidths.status}>
-                            <Chip
-                              icon={statusDisplay.icon}
-                              label={statusDisplay.label}
-                              size="small"
-                              color={statusDisplay.color}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                        )}
-
+                        
                         {/* Actions */}
                         <TableCell sx={columnWidths.actions}>
                           <Box display="flex" gap={1}>

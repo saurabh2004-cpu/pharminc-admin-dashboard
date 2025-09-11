@@ -100,7 +100,7 @@ const CreateProduct = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.name.toLowerCase().endsWith('.csv')) {
+      if (!file.name.toLowerCase().endsWith('.csv') ) {
         setError('Please select a valid CSV file');
         return;
       }
@@ -631,7 +631,7 @@ const CreateProduct = () => {
             <input
               id="csv-file-input"
               type="file"
-              accept=".csv"
+              accept=".csv/xlsx"
               onChange={handleFileChange}
               style={{ display: 'none' }}
             />
