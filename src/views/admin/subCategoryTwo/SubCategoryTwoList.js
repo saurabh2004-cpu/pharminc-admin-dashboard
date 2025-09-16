@@ -12,7 +12,7 @@ const BCrumb = [
         title: 'Home',
     },
     {
-        title: 'Brands',
+        title: 'Sub Category Two',
     },
 ];
 
@@ -31,10 +31,10 @@ const SubCategoryList = () => {
             label: 'Category Name',
         },
         {
-            id: 'category',
+            id: 'subCategory',
             numeric: false,
             disablePadding: false,
-            label: 'Category',
+            label: 'Sub Category',
         },
         
         {
@@ -49,9 +49,9 @@ const SubCategoryList = () => {
     const [tableData, setTableData] = React.useState([]);
     const [error, setError] = React.useState(null);
 
-    const fetchSubCategoryList = async () => {
+    const fetchSubCategoryTwoList = async () => {
         try {
-            const response = await axiosInstance.get('/subcategory/get-sub-categories');
+            const response = await axiosInstance.get('/subcategoryTwo/get-sub-categories-two');
             console.log("response sub categories", response.data.data);
 
             if(response.data.statusCode === 200){
@@ -66,7 +66,7 @@ const SubCategoryList = () => {
     
 
     React.useEffect(() => {
-        fetchSubCategoryList();
+        fetchSubCategoryTwoList();
     }, []);
 
     return (

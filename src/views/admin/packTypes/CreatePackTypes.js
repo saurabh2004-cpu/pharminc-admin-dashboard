@@ -229,7 +229,7 @@ const CreatePackTypes = () => {
                 fullWidth
             >
                 <DialogTitle>
-                    Import Pricing Group Discounts from CSV
+                    Import Pack Types from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>

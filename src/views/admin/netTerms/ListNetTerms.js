@@ -19,10 +19,10 @@ const BCrumb = [
 const ListNetTerms = () => {
   const headCells = [
     {
-      id: 'serial',
-      numeric: true,
+      id: 'Actions',
+      numeric: false,
       disablePadding: false,
-      label: 'Serial',
+      label: 'Actions',
     },
     {
       id: 'salesOrderId',
@@ -74,12 +74,7 @@ const ListNetTerms = () => {
       label: 'Status',
     },
 
-    {
-      id: 'Actions',
-      numeric: false,
-      disablePadding: false,
-      label: 'Actions',
-    },
+    
   ];
 
   const [tableData, setTableData] = React.useState([]);

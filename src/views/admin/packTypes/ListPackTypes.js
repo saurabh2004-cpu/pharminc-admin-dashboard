@@ -20,10 +20,10 @@ const BCrumb = [
 const ListPackTypes = () => {
     const headCells = [
         {
-            id: 'serial',
+            id: 'Actions',
             numeric: false,
             disablePadding: false,
-            label: 'Serial',
+            label: 'Actions',
         },
         {
             id: 'name',
@@ -43,12 +43,7 @@ const ListPackTypes = () => {
             disablePadding: false,
             label: 'Created Date',
         },
-        {
-            id: 'Actions',
-            numeric: false,
-            disablePadding: false,
-            label: 'Actions',
-        },
+        
     ];
 
     const [tableData, setTableData] = React.useState([]);

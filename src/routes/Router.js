@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
+import { Create } from '@mui/icons-material';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -207,7 +208,13 @@ const ListGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDis
 const EditGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/EditGroupsDiscounts')));
 const ListNetTerms = Loadable(lazy(() => import('../views/admin/netTerms/ListNetTerms')));
 
-const CreateAdmin  = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAdmin')));
+const CreateAdmin = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAdmin')));
+
+const CreateSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/CreateSubCategoryTwo')));
+const SubCategoryTwoList = Loadable(lazy(() => import('../views/admin/subCategoryTwo/SubCategoryTwoList')));
+const EditSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/EditSubCategoryTwo')));
+const CustomersPricingGroups = Loadable(lazy(()=> import ('../views/admin/groupsDiscounts.js/CustomersPricingGroups')))
+const CustomersItemsBasedDiscounts = Loadable(lazy(()=> import ('../views/admin/pricingGroupsDiscounts/CustomersItemsBasedDiscounts')))
 
 
 
@@ -345,17 +352,19 @@ const Router = [
       { path: '/dashboard/pricing-groups/create', element: <CreatePricingGroups /> },
       { path: '/dashboard/pricing-groups/list', element: <ListPricingGroups /> },
       { path: '/dashboard/pricing-groups/edit/:id', element: <EditPricingGroups /> },
-      
-      
+
+
       { path: '/dashboard/groups-discounts/create', element: <CreateGroupsDiscounts /> },
       { path: '/dashboard/groups-discounts/list', element: <ListGroupsDiscounts /> },
       { path: '/dashboard/groups-discounts/edit/:id', element: <EditGroupsDiscounts /> },
+      { path: '/dashboard/customers-pricing-groups/:id', element: <CustomersPricingGroups /> },
 
 
 
       { path: '/dashboard/items-based-discounts/create', element: <CreatePricingGroupsDiscounts /> },
       { path: '/dashboard/items-based-discounts/list', element: <ListPricingGroupsDiscounts /> },
       { path: '/dashboard/items-based-discounts/edit/:id', element: <EditPricingGroupsDiscounts /> },
+      { path: '/dashboard/customers-items-based-discounts/:id', element: <CustomersItemsBasedDiscounts /> },
 
 
       { path: '/dashboard/tax/create', element: <CreateTax /> },
@@ -365,11 +374,11 @@ const Router = [
       { path: '/dashboard/delivery-vendors/create', element: <CreateDeliverVendor /> },
       { path: '/dashboard/delivery-vendors/list', element: <ListDeliveryVendor /> },
       { path: '/dashboard/delivery-vendors/edit/:id', element: <EditDeliveryVendor /> },
-      
+
       { path: '/dashboard/pack-types/create', element: <CreatePackTypes /> },
       { path: '/dashboard/pack-types/list', element: <ListPackTypes /> },
       { path: '/dashboard/pack-types/edit/:id', element: <EditPackTypes /> },
-      
+
       { path: '/dashboard/products/create', element: <CreateProduct /> },
       { path: '/dashboard/products/list', element: <ListProduct /> },
       { path: '/dashboard/products/edit/:id', element: <EditProduct /> },
@@ -382,11 +391,15 @@ const Router = [
       { path: '/dashboard/customers/list', element: <ListCustomers /> },
       { path: '/dashboard/customers/edit/:id', element: <EditCustomer /> },
       { path: '/dashboard/customers/change-password/:id', element: <ChnagePassword /> },
-      
-      
+
+
       { path: '/dashboard/NetTerms/List', element: <ListNetTerms /> },
-      
+
       { path: '/dashboard/CreateAdmin', element: <CreateAdmin /> },
+
+      { path: '/dashboard/sub-category-two/create', element: <CreateSubCategoryTwo /> },
+      { path: '/dashboard/sub-category-two/list', element: <SubCategoryTwoList /> },
+      { path: '/dashboard/sub-category-two/edit/:id', element: <EditSubCategoryTwo /> },
 
 
     ],

@@ -19,6 +19,12 @@ const BCrumb = [
 const BrandsList = () => {
     const headCells = [
         {
+            id: 'Actions',
+            numeric: false,
+            disablePadding: false,
+            label: 'Actions',
+        },
+        {
             id: 'name',
             numeric: false,
             disablePadding: false,
@@ -36,12 +42,7 @@ const BrandsList = () => {
             disablePadding: false,
             label: 'Created Date',
         },
-        {
-            id: 'Actions',
-            numeric: false,
-            disablePadding: false,
-            label: 'Actions',
-        },
+
     ];
 
     const [tableData, setTableData] = React.useState([]);
@@ -52,7 +53,7 @@ const BrandsList = () => {
             const response = await axiosInstance.get('/brand/get-brands-list');
             console.log("response brands", response);
 
-            if(response.data.statusCode === 200){
+            if (response.data.statusCode === 200) {
                 // Extract the data array from the response
                 setTableData(response.data.data);
             }
@@ -63,7 +64,7 @@ const BrandsList = () => {
         }
     };
 
-    
+
 
     React.useEffect(() => {
         fetchBrandsList();

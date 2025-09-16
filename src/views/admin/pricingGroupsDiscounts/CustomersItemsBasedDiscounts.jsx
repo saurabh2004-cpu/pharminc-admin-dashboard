@@ -30,7 +30,7 @@ import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheck
 import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import axios from 'axios';
 
 function descendingComparator(a, b, orderBy) {
@@ -81,7 +81,6 @@ function EnhancedTableHead(props) {
     zIndex: 4, // slightly lower than sticky so sticky overlaps
   };
 
-
   return (
     <TableHead>
       <TableRow>
@@ -95,16 +94,19 @@ function EnhancedTableHead(props) {
             }}
           />
         </TableCell>}
+
+        {/* Actions column */}
+        <TableCell sx={{ ...headCellStyle, ...stickyCellStyle }}>
+          Actions
+        </TableCell>
+
         {headCells.map((headCell, index) => (
           <TableCell
-            key={headCell.id}
+            key={headCell.key || headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={{
-              ...headCellStyle,
-              ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
-            }}
+            sx={headCellStyle}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -120,6 +122,11 @@ function EnhancedTableHead(props) {
             </TableSortLabel>
           </TableCell>
         ))}
+
+        {/* Created At column */}
+        <TableCell sx={headCellStyle}>
+          Created At
+        </TableCell>
       </TableRow>
     </TableHead>
   );
@@ -130,8 +137,8 @@ const EnhancedTableToolbar = (props) => {
 
   const handleExportCSV = async () => {
     try {
-      const response = await axios.get(
-        'http://localhost:3000/api/v1/pricing-groups-discount/export-pricing-group-discounts',
+      const response = await axiosInstance.get(
+        '/pricing-groups-discount/export-pricing-group-discounts',
         { responseType: 'blob' }
       );
 
@@ -195,30 +202,19 @@ const EnhancedTableToolbar = (props) => {
               <IconFilter size="1.2rem" />
             </IconButton>
           </Tooltip>
-          {/* <Tooltip title="Export CSV">
-            <IconButton onClick={handleExportCSV}>
-              <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
-            </IconButton>
-          </Tooltip> */}
+          <Tooltip title="Export CSV">
+            <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
+          </Tooltip>
         </>
       )}
     </Toolbar>
   );
 };
 
-
-const ListTable = ({
-  showCheckBox,
-  headCells,
-  tableData,
-  isBrandsList = false,
-  setTableData
-}) => {
-
+const CustomersItemsBasedDiscounts = () => {
   const {
     filteredAndSortedProducts,
   } = useContext(ProductContext);
-
 
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
@@ -226,12 +222,58 @@ const ListTable = ({
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(30);
+  const isBrandsList = true;
 
+  const [tableData, setTableData] = React.useState([]);
+  const [error, setError] = useState(''); // Added missing error state
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const { id } = useParams();
 
+  // Define headCells for the table
+  const headCells = [
+    {
+      id: 'productSku',
+      label: 'Product SKU',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'percentage',
+      label: 'Discount',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'pricingGroup',
+      label: 'Pricing Group Name',
+      numeric: false,
+      disablePadding: false,
+    },
+  ];
+
+
+  const fetchItemsDiscounts = async () => {
+    try {
+      const response = await axiosInstance.get(`/item-based-discount/get-items-based-discount-by-customer-id/${id}`);
+      console.log("response item discounts ", response);
+
+      if (response.data.statusCode === 200) {
+        setTableData(response.data.data);
+      }
+
+    } catch (error) {
+      console.error('Error fetching pricing groups list:', error);
+      setError(error.message);
+    }
+  };
+
+
+  React.useEffect(() => {
+    fetchItemsDiscounts();
+  }, [id]);
 
   useEffect(() => {
     if (isBrandsList) {
@@ -247,7 +289,10 @@ const ListTable = ({
 
     if (isBrandsList) {
       const filteredRows = sourceData.filter((row) => {
-        return row.name.toLowerCase().includes(searchValue);
+        return (
+          row?.productSku?.toLowerCase().includes(searchValue) ||
+          row?.pricingGroup?.name?.toLowerCase().includes(searchValue)
+        );
       });
       setRows(filteredRows);
     } else {
@@ -257,6 +302,7 @@ const ListTable = ({
       setRows(filteredRows);
     }
   };
+
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -313,34 +359,36 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  //delete pack
-  const handleDeletePack = async (id) => {
+  //delete pricing group
+  const handleDeleteItemDiscounts = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/packs-types/delete-packs-type/${id}`);
+      const res = await axiosInstance.delete(`/item-based-discount/delete-items-based-discount/${id}`);
 
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== id));
         setRows((prevRows) => prevRows.filter((item) => item._id !== id));
+        
       }
     } catch (error) {
-      console.error('Error deleting pack:', error);
+      console.error('Error deleting item discounts:', error);
     }
   };
 
-
-  //edit pack
-  const handleEditPack = (id) => {
-    navigate(`/dashboard/pack-types/edit/${id}`);
+  //edit pricing group
+  const handleEditItemDiscounts = (id) => {
+    navigate(`/dashboard/items-based-discounts/edit/${id}`);
   };
 
-   const stickyCellStyle = {
+  const stickyCellStyle = {
     position: "sticky",
     left: 0,
     zIndex: 5, // higher than other cells so it stays on top
     backgroundColor: '#f0f8ff', // keeps background clean while scrolling
   };
+
+ 
 
   return (
     <Box>
@@ -349,7 +397,9 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={'Search by pack name'}
+          placeholder={isBrandsList ? "Search Pricing Group Discount" : "Search Product"}
+          rows={rows}
+          headCells={headCells}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -374,7 +424,7 @@ const ListTable = ({
                 onSelectAllClick={handleSelectAllClick}
                 onRequestSort={handleRequestSort}
                 rowCount={rows.length}
-                showCheckBox={showCheckBox}
+                showCheckBox={false}
                 headCells={headCells}
               />
               <TableBody>
@@ -387,74 +437,76 @@ const ListTable = ({
                     return (
                       <TableRow
                         hover
-                        // onClick={(event) => handleClick(event, row.name || row.title)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
                         key={row._id || row.title}
                         selected={isItemSelected}
                       >
-                        {showCheckBox && <TableCell padding="checkbox">
-                          <CustomCheckbox
-                            color="primary"
-                            checked={isItemSelected}
-                            inputProps={{
-                              'aria-labelledby': labelId,
-                            }}
-                          />
-                        </TableCell>}
-
                         {isBrandsList ? (
                           // Brands List View
                           <>
-                            <TableCell sx={stickyCellStyle}>
+                            <TableCell sx={stickyCellStyle} >
                               <Box display="flex" gap={1}>
                                 <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEditPack(row._id)}>
+                                  <IconButton size="small" color="primary" onClick={() => handleEditItemDiscounts(row?._id)}>
                                     <IconEdit size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDeletePack(row._id)}>
+                                  <IconButton size="small" color="error" onClick={() => handleDeleteItemDiscounts(row?._id)}>
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
                               </Box>
                             </TableCell>
-                            <TableCell>
+
+                            <TableCell onClick={() => handleEditItemDiscounts(row._id)} sx={{ cursor: 'pointer' }}>
                               <Box display="flex" alignItems="center">
-                                <Box
-                                  sx={{
-                                    ml: 2,
-                                  }}
-                                >
+                                <Box sx={{ ml: 2 }}>
                                   <Typography fontWeight="600">
-                                    {row.name}
+                                    {row?.productSku || 'N/A'}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
+                            <TableCell onClick={() => handleEditItemDiscounts(row._id)} sx={{ cursor: 'pointer' }}>
+                              <Box display="flex" alignItems="center">
+                                <Box sx={{ ml: 2 }}>
+                                  <Typography fontWeight="600">
+                                    {row?.percentage || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell onClick={() => handleEditItemDiscounts(row._id)} sx={{ cursor: 'pointer' }}>
+                              <Box display="flex" alignItems="center">
+                                <Box sx={{ ml: 2 }}>
+                                  <Typography fontWeight="600">
+                                    {row?.pricingGroup?.name || 'ANY'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
                             <TableCell>
-                              <Typography fontWeight="600">
-                                {row.quantity}
+                              <Typography>
+                                {row.createdAt ? format(new Date(row.createdAt), 'E, MMM d yyyy') : 'N/A'}
                               </Typography>
                             </TableCell>
-
-                            <TableCell>
-                              <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
-                            </TableCell>
-
                           </>
                         ) : (
                           // Products List View (original code)
-                          ''
+                          <TableCell colSpan={headCells.length + 2}>
+                            <Typography>No product view implemented</Typography>
+                          </TableCell>
                         )}
                       </TableRow>
                     );
                   })}
                 {emptyRows > 0 && (
                   <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                    <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
+                    <TableCell colSpan={headCells.length + 2} />
                   </TableRow>
                 )}
               </TableBody>
@@ -471,8 +523,15 @@ const ListTable = ({
           />
         </Paper>
       </Box>
+
+      {/* Show error if any */}
+      {error && (
+        <Box sx={{ p: 2 }}>
+          <Typography color="error">Error: {error}</Typography>
+        </Box>
+      )}
     </Box>
   );
 };
 
-export default ListTable;
+export default CustomersItemsBasedDiscounts;

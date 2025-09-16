@@ -180,7 +180,7 @@ const CreateBrand = () => {
                 fullWidth
             >
                 <DialogTitle>
-                    Import Pricing Group Discounts from CSV
+                    Import Commerce Categories from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>

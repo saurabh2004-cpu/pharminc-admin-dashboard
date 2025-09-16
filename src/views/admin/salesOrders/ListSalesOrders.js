@@ -19,10 +19,10 @@ const BCrumb = [
 const ListSalesOrders = () => {
   const headCells = [
     {
-      id: 'serial',
+      id: 'Actions',
       numeric: false,
       disablePadding: false,
-      label: 'Serial',
+      label: 'Actions',
     },
     {
       id: 'date',
@@ -96,7 +96,7 @@ const ListSalesOrders = () => {
       disablePadding: false,
       label: 'Amount',
     },
-    
+
 
     {
       id: 'createdAt',
@@ -104,12 +104,7 @@ const ListSalesOrders = () => {
       disablePadding: false,
       label: 'Created Date',
     },
-    {
-      id: 'Actions',
-      numeric: false,
-      disablePadding: false,
-      label: 'Actions',
-    },
+
   ];
 
   const [tableData, setTableData] = React.useState([]);

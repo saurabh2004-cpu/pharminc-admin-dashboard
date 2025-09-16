@@ -583,7 +583,7 @@ const CreateSalesOrders = () => {
         fullWidth
       >
         <DialogTitle>
-          Import Pricing Group Discounts from CSV
+          Import Sales Orders from CSV
         </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>

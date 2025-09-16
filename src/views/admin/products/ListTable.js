@@ -68,11 +68,24 @@ function EnhancedTableHead(props) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5, // higher than other cells so it stays on top
+    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
+
+  const headCellStyle = {
+    backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+    fontWeight: 600,
+    zIndex: 4, // slightly lower than sticky so sticky overlaps
+  };
+
 
   return (
     <TableHead>
       <TableRow>
-        {showCheckBox && <TableCell padding="checkbox"  >
+        {showCheckBox && <TableCell padding="checkbox">
           <CustomCheckbox
             color="primary"
             checked={rowCount > 0 && numSelected === rowCount}
@@ -82,12 +95,16 @@ function EnhancedTableHead(props) {
             }}
           />
         </TableCell>}
-        {headCells.map((headCell) => (
+        {headCells.map((headCell, index) => (
           <TableCell
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
+            sx={{
+              ...headCellStyle,
+              ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
+            }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -107,6 +124,7 @@ function EnhancedTableHead(props) {
     </TableHead>
   );
 }
+
 
 const EnhancedTableToolbar = (props) => {
   const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
@@ -179,9 +197,9 @@ const EnhancedTableToolbar = (props) => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Export CSV">
-            <IconButton onClick={handleExportCSV}>
+            {/* <IconButton onClick={handleExportCSV}> */}
               <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
-            </IconButton>
+            {/* </IconButton> */}
           </Tooltip>
         </>
       )}
@@ -334,6 +352,13 @@ const ListTable = ({
     navigate(`/dashboard/products/edit/${id}`);
   };
 
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5, // higher than other cells so it stays on top
+    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
+
   return (
     <Box>
       <Box>
@@ -346,9 +371,18 @@ const ListTable = ({
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer sx={{ width: "100%" }}>
             <Table
-              sx={{ minWidth: 1800 }} // Increased minimum width for products table
+              sx={{
+                minWidth: 1800,
+                borderCollapse: "collapse", // ensures borders connect
+                "& td, & th": {
+                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                },
+                "& td:last-child, & th:last-child": {
+                  borderRight: "none", // no border on last column
+                },
+              }}
               aria-labelledby="tableTitle"
-              size={dense ? 'small' : 'medium'}
+              size={dense ? "small" : "medium"}
             >
               <EnhancedTableHead
                 numSelected={selected.length}
@@ -389,13 +423,18 @@ const ListTable = ({
                         {isProductsList ? (
                           // Products List View with enhanced styling and widths
                           <>
-                            <TableCell sx={columnWidths.serial}>
-                              <Box display="flex" alignItems="center">
-                                <Box sx={{ ml: 1 }}>
-                                  <Typography fontWeight="400">
-                                    {index + 1}
-                                  </Typography>
-                                </Box>
+                            <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }} >
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="Edit">
+                                  <IconButton size="small" color="primary" onClick={() => handleEdit(row._id)}>
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton size="small" color="error" onClick={() => handleDelete(row._id)}>
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
                               </Box>
                             </TableCell>
 
@@ -542,20 +581,7 @@ const ListTable = ({
                               </Box>
                             </TableCell>
 
-                            <TableCell sx={columnWidths.actions}>
-                              <Box display="flex" gap={1}>
-                                <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEdit(row._id)}>
-                                    <IconEdit size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDelete(row._id)}>
-                                    <IconTrash size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
+
                           </>
                         ) : (
                           ''

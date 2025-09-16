@@ -55,26 +55,43 @@ function EnhancedTableHead(props) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5, // higher than other cells so it stays on top
+    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
+
+  const headCellStyle = {
+    backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+    fontWeight: 600,
+    zIndex: 4, // slightly lower than sticky so sticky overlaps
+  };
+
 
   return (
     <TableHead>
       <TableRow>
-        {showCheckBox && (
-          <TableCell padding="checkbox">
-            <CustomCheckbox
-              color="primary"
-              checked={rowCount > 0 && numSelected === rowCount}
-              onChange={onSelectAllClick}
-              inputProps={{ 'aria-label': 'select all rows' }}
-            />
-          </TableCell>
-        )}
-        {headCells.map((headCell) => (
+        {showCheckBox && <TableCell padding="checkbox">
+          <CustomCheckbox
+            color="primary"
+            checked={rowCount > 0 && numSelected === rowCount}
+            onChange={onSelectAllClick}
+            inputProps={{
+              'aria-label': 'select all desserts',
+            }}
+          />
+        </TableCell>}
+        {headCells.map((headCell, index) => (
           <TableCell
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
+            sx={{
+              ...headCellStyle,
+              ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
+            }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -241,6 +258,13 @@ const ListTable = ({
     navigate(`/dashboard/badge/edit/${id}`);
   };
 
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5, // higher than other cells so it stays on top
+    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
+
   return (
     <Box>
       <Box>
@@ -252,7 +276,20 @@ const ListTable = ({
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
-            <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
+            <Table
+              sx={{
+                minWidth: 1000,
+                borderCollapse: "collapse", // ensures borders connect
+                "& td, & th": {
+                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                },
+                "& td:last-child, & th:last-child": {
+                  borderRight: "none", // no border on last column
+                },
+              }}
+              aria-labelledby="tableTitle"
+            // size={dense ? "small" : "medium"}
+            >
               <EnhancedTableHead
                 numSelected={selected.length}
                 order={order}
@@ -289,28 +326,7 @@ const ListTable = ({
 
                         {isBrandsList ? (
                           <>
-                            <TableCell>
-                              <Typography>{index + 1 + page * rowsPerPage}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box display="flex" alignItems="center">
-                                <Box sx={{ ml: 2 }}>
-                                  <Typography fontWeight="600">{row.name}</Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Typography>{row?.backgroundColor || 'No Background'}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Typography>{row?.text || 'No Text'}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Typography>
-                                {format(new Date(row.createdAt), 'E, MMM d yyyy')}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
+                            <TableCell sx={stickyCellStyle}>
                               <Box display="flex" gap={1}>
                                 <Tooltip title="Edit">
                                   <IconButton
@@ -332,6 +348,25 @@ const ListTable = ({
                                 </Tooltip>
                               </Box>
                             </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Box sx={{ ml: 2 }}>
+                                  <Typography fontWeight="600">{row.name}</Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row?.backgroundColor || 'No Background'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row?.text || 'No Text'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>
+                                {format(new Date(row.createdAt), 'E, MMM d yyyy')}
+                              </Typography>
+                            </TableCell>
+
                           </>
                         ) : (
                           ''

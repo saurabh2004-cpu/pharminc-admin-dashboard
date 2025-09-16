@@ -19,10 +19,10 @@ const BCrumb = [
 const ListProduct = () => {
   const headCells = [
     {
-      id: 'serial',
-      numeric: true,
+      id: 'Actions',
+      numeric: false,
       disablePadding: false,
-      label: 'Serial',
+      label: 'Actions',
     },
     {
       id: 'sku',
@@ -108,12 +108,7 @@ const ListProduct = () => {
       disablePadding: false,
       label: 'Created Date',
     },
-    {
-      id: 'Actions',
-      numeric: false,
-      disablePadding: false,
-      label: 'Actions',
-    },
+    
   ];
 
   const [tableData, setTableData] = React.useState([]);

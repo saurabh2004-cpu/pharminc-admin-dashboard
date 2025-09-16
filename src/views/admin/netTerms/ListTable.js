@@ -31,12 +31,12 @@ import {
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import { 
-  IconDotsVertical, 
-  IconFilter, 
-  IconSearch, 
-  IconTrash, 
-  IconEdit, 
+import {
+  IconDotsVertical,
+  IconFilter,
+  IconSearch,
+  IconTrash,
+  IconEdit,
   IconCalendarEvent,
   IconCalendar,
   IconClearAll,
@@ -83,6 +83,19 @@ function EnhancedTableHead(props) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5, // higher than other cells so it stays on top
+    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
+
+  const headCellStyle = {
+    backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+    fontWeight: 600,
+    zIndex: 4, // slightly lower than sticky so sticky overlaps
+  };
+
 
   return (
     <TableHead>
@@ -93,16 +106,20 @@ function EnhancedTableHead(props) {
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
             inputProps={{
-              'aria-label': 'select all',
+              'aria-label': 'select all desserts',
             }}
           />
         </TableCell>}
-        {headCells.map((headCell) => (
+        {headCells.map((headCell, index) => (
           <TableCell
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
+            sx={{
+              ...headCellStyle,
+              ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
+            }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -124,11 +141,11 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { 
-    numSelected, 
-    handleSearch, 
-    search, 
-    placeholder, 
+  const {
+    numSelected,
+    handleSearch,
+    search,
+    placeholder,
     netTermsFilter,
     setNetTermsFilter,
     filterCount,
@@ -215,7 +232,7 @@ const EnhancedTableToolbar = (props) => {
               }
             }}
           />
-          
+
           {/* Active Filter Chip */}
           {netTermsFilter !== 'all' && (
             <Chip
@@ -245,7 +262,7 @@ const EnhancedTableToolbar = (props) => {
               <IconFilter size="1.2rem" color={netTermsFilter !== 'all' ? 'primary' : 'inherit'} />
             </IconButton>
           </Tooltip>
-          
+
           <Menu
             anchorEl={filterMenuAnchor}
             open={Boolean(filterMenuAnchor)}
@@ -343,7 +360,7 @@ const ListTable = ({
   // Apply search filter
   const applySearchFilter = (data, searchValue) => {
     if (!searchValue) return data;
-    
+
     return data.filter((row) => {
       return (
         row.customerId?.toLowerCase().includes(searchValue) ||
@@ -459,6 +476,13 @@ const ListTable = ({
     return { total, count };
   };
 
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5, // higher than other cells so it stays on top
+    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
+
   const { total: totalAmount, count: totalCount } = calculateTotals();
 
   return (
@@ -493,7 +517,7 @@ const ListTable = ({
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card variant="outlined">
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
@@ -533,9 +557,18 @@ const ListTable = ({
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer sx={{ width: "100%" }}>
             <Table
-              sx={{ minWidth: 1200 }}
+              sx={{
+                minWidth: 1000,
+                borderCollapse: "collapse", // ensures borders connect
+                "& td, & th": {
+                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                },
+                "& td:last-child, & th:last-child": {
+                  borderRight: "none", // no border on last column
+                },
+              }}
               aria-labelledby="tableTitle"
-              size={dense ? 'small' : 'medium'}
+              size={dense ? "small" : "medium"}
             >
               <EnhancedTableHead
                 numSelected={selected.length}
@@ -575,10 +608,19 @@ const ListTable = ({
                         </TableCell>}
 
                         {/* Serial */}
-                        <TableCell sx={columnWidths.serial}>
-                          <Typography fontWeight="400">
-                            {page * rowsPerPage + index + 1}
-                          </Typography>
+                        <TableCell sx={stickyCellStyle}>
+                          <Box display="flex" gap={1}>
+                            <Tooltip title="Edit">
+                              <IconButton size="small" color="primary" onClick={() => navigate(`/dashboard/customers/edit/${row._id || row.customerData?._id}`)}>
+                                <IconEdit size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="View Details">
+                              <IconButton size="small" color="info">
+                                <IconDotsVertical size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         </TableCell>
 
                         {/* Customer ID */}
@@ -593,7 +635,7 @@ const ListTable = ({
                           )}
                         </TableCell>
 
-                        
+
 
                         {/* Customer Name */}
                         <TableCell sx={columnWidths.customerName}>
@@ -619,47 +661,27 @@ const ListTable = ({
                         </TableCell>
                         <TableCell sx={columnWidths.phone}>
                           <Typography fontWeight="400">
-                            {row.amount|| 'N/A'}
+                            {row.amount || 'N/A'}
                           </Typography>
                         </TableCell>
                         <TableCell sx={columnWidths.phone}>
                           <Typography fontWeight="400">
-                            {row.netTerms|| 'N/A'}
+                            {row.netTerms || 'N/A'}
                           </Typography>
                         </TableCell>
                         <TableCell sx={columnWidths.phone}>
                           <Typography fontWeight="400">
-                            {row.status|| 'N/A'}
+                            {row.status || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        
 
-                        {/* Amount (if available) */}
-                        {row.amount !== undefined && (
-                          <TableCell sx={columnWidths.amount}>
-                            <Typography fontWeight="500" color="primary">
-                              ${row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </Typography>
-                          </TableCell>
-                        )}
 
-                        
+
+
+
                         {/* Actions */}
-                        <TableCell sx={columnWidths.actions}>
-                          <Box display="flex" gap={1}>
-                            <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => navigate(`/dashboard/customers/edit/${row._id || row.customerData?._id}`)}>
-                                <IconEdit size="1.1rem" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="View Details">
-                              <IconButton size="small" color="info">
-                                <IconDotsVertical size="1.1rem" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
+
                       </TableRow>
                     );
                   })}

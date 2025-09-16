@@ -22,7 +22,6 @@ import {
   TextField,
   InputAdornment,
   Paper,
-  Button,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -31,7 +30,6 @@ import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
-import axios from 'axios';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -126,26 +124,7 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
-
-  const handleExportCSV = async () => {
-    try {
-      const response = await axios.get(
-        'http://localhost:3000/api/v1/pricing-groups-discount/export-pricing-group-discounts',
-        { responseType: 'blob' }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "pricing_group_discounts_export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error exporting CSV:", error);
-    }
-  };
+  const { numSelected, handleSearch, search, placeholder } = props;
 
   return (
     <Toolbar
@@ -181,7 +160,6 @@ const EnhancedTableToolbar = (props) => {
           />
         </Box>
       )}
-
       {numSelected > 0 ? (
         <Tooltip title="Delete">
           <IconButton>
@@ -189,23 +167,15 @@ const EnhancedTableToolbar = (props) => {
           </IconButton>
         </Tooltip>
       ) : (
-        <>
-          <Tooltip title="Filter list">
-            <IconButton>
-              <IconFilter size="1.2rem" />
-            </IconButton>
-          </Tooltip>
-          {/* <Tooltip title="Export CSV">
-            <IconButton onClick={handleExportCSV}>
-              <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
-            </IconButton>
-          </Tooltip> */}
-        </>
+        <Tooltip title="Filter list">
+          <IconButton>
+            <IconFilter size="1.2rem" />
+          </IconButton>
+        </Tooltip>
       )}
     </Toolbar>
   );
 };
-
 
 const ListTable = ({
   showCheckBox,
@@ -219,7 +189,6 @@ const ListTable = ({
     filteredAndSortedProducts,
   } = useContext(ProductContext);
 
-
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
   const [selected, setSelected] = useState([]);
@@ -228,16 +197,16 @@ const ListTable = ({
   const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const sourceData = tableData || [];
-  const [rows, setRows] = useState(sourceData);
+
+
+
+  const [rows, setRows] = useState(sourceData || tableData || []);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-
 
   useEffect(() => {
     if (isBrandsList) {
       setRows(sourceData);
-    } else {
-      setRows(filteredAndSortedProducts);
     }
   }, [sourceData, filteredAndSortedProducts, isBrandsList]);
 
@@ -264,34 +233,6 @@ const ListTable = ({
     setOrderBy(property);
   };
 
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.name || n.title);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1),
-      );
-    }
-
-    setSelected(newSelected);
-  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -313,10 +254,10 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  //delete pack
-  const handleDeletePack = async (id) => {
+  //delete category
+  const handleDeleteCategory = async (id) => {
     try {
-      const res = await axiosInstance.delete(`/packs-types/delete-packs-type/${id}`);
+      const res = await axiosInstance.delete(`/subcategoryTwo/delete-sub-category-two/${id}`);
 
       console.log("deleted", res.data);
 
@@ -325,17 +266,17 @@ const ListTable = ({
         setRows((prevRows) => prevRows.filter((item) => item._id !== id));
       }
     } catch (error) {
-      console.error('Error deleting pack:', error);
+      console.error('Error deleting category:', error);
     }
   };
 
 
-  //edit pack
-  const handleEditPack = (id) => {
-    navigate(`/dashboard/pack-types/edit/${id}`);
-  };
+  //edit category
 
-   const stickyCellStyle = {
+  const handleEditCategory = (id) => {
+    navigate(`/dashboard/sub-category-two/edit/${id}`);
+  };
+  const stickyCellStyle = {
     position: "sticky",
     left: 0,
     zIndex: 5, // higher than other cells so it stays on top
@@ -349,7 +290,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={'Search by pack name'}
+          placeholder={isBrandsList ? "Search Subcategory" : "Search Product"}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -371,7 +312,7 @@ const ListTable = ({
                 numSelected={selected.length}
                 order={order}
                 orderBy={orderBy}
-                onSelectAllClick={handleSelectAllClick}
+                // onSelectAllClick={handleSelectAllClick}
                 onRequestSort={handleRequestSort}
                 rowCount={rows.length}
                 showCheckBox={showCheckBox}
@@ -379,8 +320,8 @@ const ListTable = ({
               />
               <TableBody>
                 {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
+                  ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  ?.map((row, index) => {
                     const isItemSelected = isSelected(row.name || row.title);
                     const labelId = `enhanced-table-checkbox-${index}`;
 
@@ -410,12 +351,12 @@ const ListTable = ({
                             <TableCell sx={stickyCellStyle}>
                               <Box display="flex" gap={1}>
                                 <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEditPack(row._id)}>
+                                  <IconButton size="small" color="primary" onClick={() => handleEditCategory(row._id)}>
                                     <IconEdit size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDeletePack(row._id)}>
+                                  <IconButton size="small" color="error" onClick={() => handleDeleteCategory(row._id)}>
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
@@ -435,11 +376,8 @@ const ListTable = ({
                               </Box>
                             </TableCell>
                             <TableCell>
-                              <Typography fontWeight="600">
-                                {row.quantity}
-                              </Typography>
+                              <Typography>{row.subCategory.name || 'N/A'}</Typography>
                             </TableCell>
-
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
                             </TableCell>

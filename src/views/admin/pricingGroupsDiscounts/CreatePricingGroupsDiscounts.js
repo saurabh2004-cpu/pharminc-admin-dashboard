@@ -422,7 +422,7 @@ const CreatePricingGroupsDiscounts = () => {
                 fullWidth
             >
                 <DialogTitle>
-                    Import Pricing Group Discounts from CSV
+                    Import Items Discounts from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>

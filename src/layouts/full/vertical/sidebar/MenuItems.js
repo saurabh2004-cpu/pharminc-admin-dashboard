@@ -34,7 +34,7 @@ const Menuitems = [
     href: '/',
     chip: 'New',
     chipColor: 'secondary',
-    chipBackground :'#E9098D'
+    chipBackground: '#E9098D'
   },
   {
     id: uniqueId(),
@@ -85,6 +85,7 @@ const Menuitems = [
       },
     ]
   },
+
   {
     id: uniqueId(),
     title: 'Sub Category',
@@ -106,6 +107,29 @@ const Menuitems = [
     ]
 
   },
+
+  {
+    id: uniqueId(),
+    title: 'Sub Category Two',
+    icon: IconListTree,
+    href: '/dashboard/sub-categoryTwo',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Sub Category Two',
+        icon: IconPoint,
+        href: '/dashboard/sub-category-two/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Sub Category Two List',
+        icon: IconPoint,
+        href: '/dashboard/sub-category-two/list',
+      },
+    ]
+
+  },
+
   {
     id: uniqueId(),
     title: 'Badge',

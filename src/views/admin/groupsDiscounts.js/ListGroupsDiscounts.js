@@ -20,16 +20,10 @@ const BCrumb = [
 const ListGroupsDiscounts = () => {
   const headCells = [
     {
-      id: 'serial',
+      id: 'Actions',
       numeric: false,
       disablePadding: false,
-      label: 'Serial',
-    },
-    {
-      id: 'pricingGroup',
-      numeric: false,
-      disablePadding: false,
-      label: 'Pricing Group Name',
+      label: 'Actions',
     },
     {
       id: 'customerId',
@@ -37,6 +31,13 @@ const ListGroupsDiscounts = () => {
       disablePadding: false,
       label: 'Customer ID',
     },
+    {
+      id: 'pricingGroup',
+      numeric: false,
+      disablePadding: false,
+      label: 'Pricing Group Name',
+    },
+    
     {
       id: 'percentage',
       numeric: false,
@@ -49,12 +50,7 @@ const ListGroupsDiscounts = () => {
       disablePadding: false,
       label: 'Created Date',
     },
-    {
-      id: 'Actions',
-      numeric: false,
-      disablePadding: false,
-      label: 'Actions',
-    },
+
   ];
 
   const [tableData, setTableData] = React.useState([]);

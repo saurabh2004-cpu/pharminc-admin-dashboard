@@ -19,10 +19,10 @@ const BCrumb = [
 const ListCustomers = () => {
   const headCells = [
     {
-      id: 'serial',
-      numeric: true,
+      id: 'Actions',
+      numeric: false,
       disablePadding: false,
-      label: 'Serial',
+      label: 'Actions',
     },
     {
       id: 'customerId',
@@ -114,12 +114,7 @@ const ListCustomers = () => {
       disablePadding: false,
       label: 'Created Date',
     },
-    {
-      id: 'Actions',
-      numeric: false,
-      disablePadding: false,
-      label: 'Actions',
-    },
+
   ];
 
   const [tableData, setTableData] = React.useState([]);
@@ -132,21 +127,21 @@ const ListCustomers = () => {
 
       if (response.data.statusCode === 200) {
         const customersData = response.data.data?.docs || response.data.data || response.data;
-      
+
         // Filter out duplicates based on _id
         const getUniqueCustomers = (customers) => {
           if (!Array.isArray(customers)) return [];
-          
+
           const uniqueCustomers = [];
           const seenIds = new Set();
-          
+
           customers.forEach(customer => {
             if (customer._id && !seenIds.has(customer._id)) {
               seenIds.add(customer._id);
               uniqueCustomers.push(customer);
             }
           });
-          
+
           return uniqueCustomers;
         };
 
