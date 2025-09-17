@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router';
 
 const CreatePricingGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
-        pricingGroupId: '',
+        // pricingGroupId: '',
         customerId: '',
         percentage: '',
         productSku: ''
@@ -88,9 +88,9 @@ const CreatePricingGroupsDiscounts = () => {
         }
     };
 
-    const handlePricingGroupChange = (e) => {
-        setFormData({ ...formData, pricingGroupId: e.target.value });
-    };
+    // const handlePricingGroupChange = (e) => {
+    //     setFormData({ ...formData, pricingGroupId: e.target.value });
+    // };
 
     const handleCustomerChange = (e) => {
         setFormData({ ...formData, customerId: e.target.value });
@@ -195,11 +195,12 @@ const CreatePricingGroupsDiscounts = () => {
             console.log("response products", response);
 
             if (response.data.statusCode === 200) {
-                let products = Array.isArray(response.data.data.docs)
-                    ? response.data.data.docs
+                // Correct: products are inside response.data.data (not .docs)
+                const productsArray = Array.isArray(response.data.data)
+                    ? response.data.data
                     : [];
 
-                const uniqueProducts = products.filter(
+                const uniqueProducts = productsArray.filter(
                     (product, index, self) =>
                         index === self.findIndex((p) => p.sku === product.sku)
                 );
@@ -214,6 +215,7 @@ const CreatePricingGroupsDiscounts = () => {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -230,7 +232,7 @@ const CreatePricingGroupsDiscounts = () => {
         <div>
             <Grid container>
                 {/* Pricing Group Selection */}
-                <Grid size={12}>
+                {/* <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="pricing-group-select"
                         sx={{ mt: 2 }}
@@ -268,7 +270,7 @@ const CreatePricingGroupsDiscounts = () => {
                             ))}
                         </Select>
                     </FormControl>
-                </Grid>
+                </Grid> */}
 
                 {/* Customer Selection */}
                 <Grid size={12}>

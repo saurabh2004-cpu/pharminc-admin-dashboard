@@ -341,6 +341,10 @@ const ListTable = ({
     navigate(`/dashboard/sales-order/edit/${id}`);
   };
 
+  const handleDocumentClick = (documentNo) => {
+    navigate(`/dashboard/sales-order-product-list/${documentNo}`);
+  };
+
 
   const columnWidths = {
     serial: { minWidth: '80px' },
@@ -357,7 +361,7 @@ const ListTable = ({
     unitsQuantity: { minWidth: '160px' },
     amount: { minWidth: '160px' },
     finalAmount: { minWidth: '160px' },
-    createdAt: { minWidth: '160px' },
+    createdAt: { minWidth: '200px' },
     actions: { minWidth: '160px' },
   };
 
@@ -367,6 +371,10 @@ const ListTable = ({
     zIndex: 5, // higher than other cells so it stays on top
     backgroundColor: '#f0f8ff', // keeps background clean while scrolling
   };
+
+  const hadleDocumentClick = (documentNo, orderId) => {
+    navigate(`/dashboard/sales-order-by-customer/${documentNo}`);
+  }
 
   return (
     <Box>
@@ -384,6 +392,8 @@ const ListTable = ({
                 minWidth: 1800,
                 borderCollapse: "collapse", // ensures borders connect
                 "& td, & th": {
+                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
                 },
                 "& td:last-child, & th:last-child": {
@@ -431,7 +441,7 @@ const ListTable = ({
                         </TableCell>}
 
 
-                        <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
+                        {/* <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
                           <Box display="flex" gap={1}>
                             <Tooltip title="Edit">
                               <IconButton size="small" color="primary" onClick={() => handleEditSalesOrder(row._id)}>
@@ -443,6 +453,16 @@ const ListTable = ({
                                 <IconTrash size="1.1rem" />
                               </IconButton>
                             </Tooltip>
+                          </Box>
+                        </TableCell> */}
+
+                        <TableCell sx={{ ...columnWidths.document, cursor: "pointer", ":hover": { color: "blue" } }} onClick={() => handleDocumentClick(row.documentNumber)}>
+                          <Box display="flex" alignItems="center">
+                            <Box sx={{ ml: 2 }}>
+                              <Typography fontWeight="500" variant="subtitle2"  >
+                                {row?.documentNumber || 'N/A'}
+                              </Typography>
+                            </Box>
                           </Box>
                         </TableCell>
 
@@ -456,21 +476,13 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={columnWidths.document}>
-                          <Box display="flex" alignItems="center">
-                            <Box sx={{ ml: 2 }}>
-                              <Typography fontWeight="400">
-                                {row?.documentNumber || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
 
-                        <TableCell sx={columnWidths.customer}>
+
+                        <TableCell sx={{ ...columnWidths.customer, cursor: "pointer" }} onClick={() => hadleDocumentClick(row.customerName, row._id)}>
                           <Box display="flex" alignItems="center">
                             <Box >
                               <Typography fontWeight="400">
-                                {row?.customerName || 'N/A'}
+                                {row?.customerName || ''}
                               </Typography>
                             </Box>
                           </Box>
@@ -526,50 +538,12 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={columnWidths.itemSku}>
-                          <Box display="flex" alignItems="center">
-                            <Box >
-                              <Typography fontWeight="400">
-                                {row?.itemSku || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
 
-                        <TableCell sx={columnWidths.packQuantity}>
-                          <Box display="flex" alignItems="center">
-                            <Box sx={{ ml: 6 }}>
-                              <Typography fontWeight="400">
-                                {row?.packQuantity || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell sx={columnWidths.unitsQuantity}>
-                          <Box display="flex" alignItems="center">
-                            <Box sx={{ ml: 6 }}>
-                              <Typography fontWeight="400">
-                                {row?.unitsQuantity || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell sx={columnWidths.amount}>
-                          <Box display="flex" alignItems="center">
-                            <Box sx={{ ml: 10 }}>
-                              <Typography fontWeight="400">
-                                {row?.amount || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
 
 
                         <TableCell sx={columnWidths.createdAt}>
                           <Typography>
-                            {format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}
+                            {format(new Date(row.updatedAt), 'E, MMM d yyyy')}
                           </Typography>
                         </TableCell>
 

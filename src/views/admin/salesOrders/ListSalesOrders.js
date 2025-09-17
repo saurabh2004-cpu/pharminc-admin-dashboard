@@ -18,11 +18,17 @@ const BCrumb = [
 
 const ListSalesOrders = () => {
   const headCells = [
+    // {
+    //   id: 'Actions',
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: 'Actions',
+    // },
     {
-      id: 'Actions',
+      id: 'documentNumber',
       numeric: false,
       disablePadding: false,
-      label: 'Actions',
+      label: 'Document Number',
     },
     {
       id: 'date',
@@ -30,12 +36,7 @@ const ListSalesOrders = () => {
       disablePadding: false,
       label: 'Date',
     },
-    {
-      id: 'documentNumber',
-      numeric: false,
-      disablePadding: false,
-      label: 'Document Number',
-    },
+
     {
       id: 'customerName',
       numeric: false,
@@ -72,37 +73,14 @@ const ListSalesOrders = () => {
       disablePadding: false,
       label: 'Customer PO',
     },
-    {
-      id: 'itemSku',
-      numeric: false,
-      disablePadding: false,
-      label: 'Item SKU',
-    },
-    {
-      id: 'packQuantity',
-      numeric: true,
-      disablePadding: false,
-      label: 'Pack Quantity',
-    },
-    {
-      id: 'unitsQuantity',
-      numeric: true,
-      disablePadding: false,
-      label: 'Units Quantity',
-    },
-    {
-      id: 'amount',
-      numeric: true,
-      disablePadding: false,
-      label: 'Amount',
-    },
+    
 
 
     {
-      id: 'createdAt',
+      id: 'LastUpdatedDate',
       numeric: false,
       disablePadding: false,
-      label: 'Created Date',
+      label: 'Last Updated Date',
     },
 
   ];

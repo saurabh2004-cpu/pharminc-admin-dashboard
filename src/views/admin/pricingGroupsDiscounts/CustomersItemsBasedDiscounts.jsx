@@ -125,7 +125,7 @@ function EnhancedTableHead(props) {
 
         {/* Created At column */}
         <TableCell sx={headCellStyle}>
-          Created At
+          Last Updated Date
         </TableCell>
       </TableRow>
     </TableHead>
@@ -483,7 +483,7 @@ const CustomersItemsBasedDiscounts = () => {
                               <Box display="flex" alignItems="center">
                                 <Box sx={{ ml: 2 }}>
                                   <Typography fontWeight="600">
-                                    {row?.pricingGroup?.name || 'ANY'}
+                                    {row?.pricingGroup?.name || ''}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -491,7 +491,7 @@ const CustomersItemsBasedDiscounts = () => {
 
                             <TableCell>
                               <Typography>
-                                {row.createdAt ? format(new Date(row.createdAt), 'E, MMM d yyyy') : 'N/A'}
+                                {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
                               </Typography>
                             </TableCell>
                           </>

@@ -97,7 +97,7 @@ function EnhancedTableHead(props) {
           <TableCell
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
-            padding={headCell.disablePadding ? 'none' : 'normal'}
+            padding={headCell.disablePadding ? 'none' : '2'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
               ...headCellStyle,
@@ -326,17 +326,20 @@ const ProductTableList = ({
             <Table
               sx={{
                 minWidth: 1000,
-                borderCollapse: "collapse", // ensures borders connect
+                borderCollapse: "collapse",
                 "& td, & th": {
-                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingBottom: "4px", // 👈 reduce vertical padding
+                  borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
-                  borderRight: "none", // no border on last column
+                  borderRight: "none",
                 },
               }}
               aria-labelledby="tableTitle"
-              size={dense ? "small" : "medium"}
+              size="small"   // 👈 also makes rows more compact
             >
+
               <EnhancedTableHead
                 numSelected={selected.length}
                 order={order}
@@ -378,66 +381,66 @@ const ProductTableList = ({
                           // Brands List View
                           <>
                             <TableCell sx={stickyCellStyle}>
-                            <Box display="flex" gap={1}>
-                              <Tooltip title="Edit">
-                                <IconButton size="small" color="primary" onClick={() => handleEditBrand(row._id)}>
-                                  <IconEdit size="1.1rem" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Delete">
-                                <IconButton size="small" color="error" onClick={() => handleDeleteBrand(row._id)}>
-                                  <IconTrash size="1.1rem" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        <TableCell>
-                          <Box display="flex" alignItems="center">
-                            <Box
-                              sx={{
-                                ml: 2,
-                              }}
-                            >
-                              <Typography fontWeight="600">
-                                {row.name}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography>{row.slug}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
-                        </TableCell>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="Edit">
+                                  <IconButton size="small" color="primary" onClick={() => handleEditBrand(row._id)}>
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton size="small" color="error" onClick={() => handleDeleteBrand(row._id)}>
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Box
+                                  sx={{
+                                    ml: 2,
+                                  }}
+                                >
+                                  <Typography fontWeight="600">
+                                    {row.name}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.slug}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
 
-                      </>
-                    ) : (
-                // Products List View (original code)
-                ''
+                          </>
+                        ) : (
+                          // Products List View (original code)
+                          ''
                         )}
-              </TableRow>
-              );
+                      </TableRow>
+                    );
                   })}
-              {emptyRows > 0 && (
-                <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                  <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 30]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-    </Box>
+                {emptyRows > 0 && (
+                  <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
+                    <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 30]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      </Box>
     </Box >
   );
 };

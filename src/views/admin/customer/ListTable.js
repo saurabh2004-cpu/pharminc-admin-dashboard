@@ -340,7 +340,7 @@ const ListTable = ({
     navigate(`/dashboard/customers/change-password/${id}`);
   };
 
-   const stickyCellStyle = {
+  const stickyCellStyle = {
     position: "sticky",
     left: 0,
     zIndex: 5, // higher than other cells so it stays on top
@@ -363,6 +363,8 @@ const ListTable = ({
                 minWidth: 1800,
                 borderCollapse: "collapse", // ensures borders connect
                 "& td, & th": {
+                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
                 },
                 "& td:last-child, & th:last-child": {
@@ -585,7 +587,7 @@ const ListTable = ({
                               </Box>
                             </TableCell>
 
-                            
+
                           </>
                         ) : (
                           ''

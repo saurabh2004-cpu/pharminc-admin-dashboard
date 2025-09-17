@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router';
 const CreateBrand = () => {
     const [formData, setFormData] = React.useState({
         name: '',
+        brandImage: '',
         slug: ''
     });
     const [error, setError] = React.useState('');
@@ -112,6 +113,17 @@ const CreateBrand = () => {
         }
     };
 
+    const handleBrandImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFormData({
+                ...formData,
+                brandImage: file
+            })
+            setError('');
+        }
+    }
+
     return (
         <div>
             <Grid container>
@@ -125,6 +137,7 @@ const CreateBrand = () => {
                         <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
+
                 <Grid size={12}>
                     <CustomOutlinedInput
                         id="bi-name"
@@ -133,6 +146,27 @@ const CreateBrand = () => {
                         onChange={(e) => handleNameChange(e)}
                     />
                 </Grid>
+
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="bi-name"
+                        sx={{ mt: 0 }}
+                    >
+                        Brand Image
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                </Grid>
+                <Grid size={12}>
+                    <CustomOutlinedInput
+                        id="bi-name"
+                        fullWidth
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.svg"
+                        value={formData.brandImage}
+                        onChange={(e) => handleBrandImageChange(e)}
+                    />
+                </Grid>
+
                 {/* 2 */}
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="bi-company">Slug  <span style={{ color: 'red' }}>*</span></CustomFormLabel>

@@ -19,12 +19,7 @@ const BCrumb = [
 
 const ListGroupsDiscounts = () => {
   const headCells = [
-    {
-      id: 'Actions',
-      numeric: false,
-      disablePadding: false,
-      label: 'Actions',
-    },
+    
     {
       id: 'customerId',
       numeric: false,
@@ -32,23 +27,18 @@ const ListGroupsDiscounts = () => {
       label: 'Customer ID',
     },
     {
-      id: 'pricingGroup',
+      id: 'CustomerName',
       numeric: false,
       disablePadding: false,
-      label: 'Pricing Group Name',
+      label: 'Customer Name',
     },
     
+    
     {
-      id: 'percentage',
+      id: 'Last Updated Date',
       numeric: false,
       disablePadding: false,
-      label: 'Percentage',
-    },
-    {
-      id: 'createdAt',
-      numeric: false,
-      disablePadding: false,
-      label: 'Created Date',
+      label: 'Last Updated Date',
     },
 
   ];

@@ -318,39 +318,51 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  //delete pricing group
-  const handleDeletePricingGroup = async (id) => {
-    try {
-      const res = await axiosInstance.delete(`/item-based-discount/delete-items-based-discount/${id}`);
 
-      console.log("deleted", res.data);
-
-      if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.filter((item) => item._id !== id));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== id));
-      }
-    } catch (error) {
-      console.error('Error deleting category:', error);
-    }
-  };
-
-
-  //edit category
-
-  const handleEditPricingGroup = (id) => {
-    navigate(`/dashboard/items-based-discounts/edit/${id}`);
-  };
 
   const handleCustomerIdClick = (id) => {
     navigate(`/dashboard/customers-items-based-discounts/${id}`);
   }
 
-  const stickyCellStyle = {
-    position: "sticky",
-    left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+
+  const [customerMap, setCustomerMap] = useState({});
+
+  const fetchCustomerDetails = async () => {
+    try {
+      const uniqueCustomerIds = [...new Set(rows.map((r) => r.customerId))].filter(Boolean);
+
+      const responses = await Promise.all(
+        uniqueCustomerIds.map((id) =>
+          axiosInstance.get(`/admin/get-user-by-customerId/${id}`).catch((err) => {
+            console.error("API error for id:", id, err);
+            return null;
+          })
+        )
+      );
+
+      const map = {};
+      responses.forEach((res, idx) => {
+        if (res?.data?.statusCode === 200) {
+          console.log("API Response for", uniqueCustomerIds[idx], res.data); // 👈 check here
+          const id = uniqueCustomerIds[idx];
+          // adjust this if API structure is different
+          map[id] = res.data.data?.name || "N/A";
+        }
+      });
+
+      console.log("Final customer map:", map);
+      setCustomerMap(map);
+    } catch (error) {
+      console.error("Error fetching customer details:", error);
+    }
   };
+
+  useEffect(() => {
+    if (rows.length > 0) {
+      fetchCustomerDetails();
+    }
+  }, [rows]);
+
 
   return (
     <Box>
@@ -365,9 +377,11 @@ const ListTable = ({
           <TableContainer>
             <Table
               sx={{
-                minWidth: 1800,
+                minWidth: 1000,
                 borderCollapse: "collapse", // ensures borders connect
                 "& td, & th": {
+                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
                 },
                 "& td:last-child, & th:last-child": {
@@ -417,21 +431,8 @@ const ListTable = ({
                         {isBrandsList ? (
                           // Brands List View
                           <>
-                            <TableCell sx={stickyCellStyle}>
-                              <Box display="flex" gap={1}>
-                                <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEditPricingGroup(row._id)}>
-                                    <IconEdit size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDeletePricingGroup(row._id)}>
-                                    <IconTrash size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
-                            <TableCell sx={{ cursor: "pointer" }} >
+
+                            {/* <TableCell sx={{ cursor: "pointer" }} onClick={() => handleEditPricingGroup(row._id)}>
                               <Box display="flex" alignItems="center">
                                 <Box
                                   sx={{
@@ -443,26 +444,33 @@ const ListTable = ({
                                   </Typography>
                                 </Box>
                               </Box>
-                            </TableCell>
-                            <TableCell sx={{ cursor: "pointer" }} onClick={() => handleCustomerIdClick(row.customerId)}>
+                            </TableCell> */}
+                            <TableCell sx={{ cursor: "pointer", ":hover": { color: "blue" } }} onClick={() => handleCustomerIdClick(row.customerId)}>
                               <Typography fontWeight="600">
                                 {row.customerId}
                               </Typography>
                             </TableCell>
-                            <TableCell>
-                              <Typography fontWeight="600">
-                                {row?.pricingGroup?.name || 'ANY'}
+
+                            <TableCell sx={{ cursor: "pointer" }}>
+                              <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
+                                {customerMap[row.customerId] || "Loading..."}
                               </Typography>
                             </TableCell>
 
-                            <TableCell>
+                            {/* <TableCell>
+                              <Typography fontWeight="600">
+                                {row?.productSku || 'ANY'}
+                              </Typography>
+                            </TableCell> */}
+
+                            {/* <TableCell>
                               <Typography fontWeight="600">
                                 {row.percentage}%
                               </Typography>
-                            </TableCell>
+                            </TableCell> */}
 
                             <TableCell>
-                              <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
+                              <Typography>{format(new Date(row.updatedAt), 'E, MMM d yyyy')}</Typography>
                             </TableCell>
 
                           </>

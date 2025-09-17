@@ -79,6 +79,12 @@ const ListProduct = () => {
       label: 'Commerce Category Three',
     },
     {
+      id: 'commerceCategoriesFour',
+      numeric: false,
+      disablePadding: false,
+      label: 'Commerce Category Four',
+    },
+    {
       id: 'storeDescription',
       numeric: false,
       disablePadding: false,

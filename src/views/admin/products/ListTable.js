@@ -198,7 +198,7 @@ const EnhancedTableToolbar = (props) => {
           </Tooltip>
           <Tooltip title="Export CSV">
             {/* <IconButton onClick={handleExportCSV}> */}
-              <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
+            <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
             {/* </IconButton> */}
           </Tooltip>
         </>
@@ -375,6 +375,8 @@ const ListTable = ({
                 minWidth: 1800,
                 borderCollapse: "collapse", // ensures borders connect
                 "& td, & th": {
+                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
                 },
                 "& td:last-child, & th:last-child": {
@@ -438,7 +440,7 @@ const ListTable = ({
                               </Box>
                             </TableCell>
 
-                            <TableCell sx={columnWidths.sku}>
+                            <TableCell sx={{ ...columnWidths.sku, cursor: "pointer" }} onClick={() => handleEdit(row._id)}>
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="500" variant="subtitle2">
@@ -492,7 +494,7 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400">
-                                    {row.pricingGroup?.name || 'N/A'}
+                                    {row.pricingGroup?.name || 'ANY'}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -502,7 +504,7 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400">
-                                    {row.commerceCategoriesOne?.name || 'N/A'}
+                                    {row.commerceCategoriesOne?.name || 'ANY'}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -512,7 +514,7 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400">
-                                    {row.commerceCategoriesTwo?.name || 'N/A'}
+                                    {row.commerceCategoriesTwo?.name || 'ANY'}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -522,7 +524,17 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400">
-                                    {row.commerceCategoriesThree?.name || 'N/A'}
+                                    {row.commerceCategoriesThree?.name || 'ANY'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.subCategory}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row.commerceCategoriesFour?.name || 'ANY'}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -545,7 +557,7 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400">
-                                    {row.pageTitle || 'N/A'}
+                                    {row.pageTitle || ''}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -555,7 +567,7 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400">
-                                    {row.eachBarcodes || 'N/A'}
+                                    {row.eachBarcodes || ''}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -565,7 +577,7 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400">
-                                    {row.packBarcodes || 'N/A'}
+                                    {row.packBarcodes || ''}
                                   </Typography>
                                 </Box>
                               </Box>

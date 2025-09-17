@@ -64,7 +64,7 @@ function stableSort(array, comparator) {
 }
 
 function EnhancedTableHead(props) {
-    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort, showCheckBox, headCells } = props;
+    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort, headCells } = props;
     const createSortHandler = (property) => (event) => {
         onRequestSort(event, property);
     };
@@ -84,16 +84,7 @@ function EnhancedTableHead(props) {
     return (
         <TableHead>
             <TableRow>
-                {showCheckBox && <TableCell padding="checkbox">
-                    <CustomCheckbox
-                        color="primary"
-                        checked={rowCount > 0 && numSelected === rowCount}
-                        onChange={onSelectAllClick}
-                        inputProps={{
-                            'aria-label': 'select all desserts',
-                        }}
-                    />
-                </TableCell>}
+                {/*  */}
 
                 {/* Actions column */}
                 <TableCell sx={{ ...headCellStyle, ...stickyCellStyle }}>
@@ -123,7 +114,10 @@ function EnhancedTableHead(props) {
                     </TableCell>
                 ))}
 
-
+                {/* Created At column */}
+                <TableCell sx={headCellStyle}>
+                    Created At
+                </TableCell>
             </TableRow>
         </TableHead>
     );
@@ -208,7 +202,7 @@ const EnhancedTableToolbar = (props) => {
     );
 };
 
-const CustomersPricingGroups = () => {
+const CustomersSalesOrders = () => {
     const {
         filteredAndSortedProducts,
     } = useContext(ProductContext);
@@ -232,32 +226,93 @@ const CustomersPricingGroups = () => {
     // Define headCells for the table
     const headCells = [
         {
-            key: 1,
-            id: 'pricingGroup',
-            label: 'Pricing Group',
+            id: 'documentNumber',
             numeric: false,
-            disablePadding: false
+            disablePadding: false,
+            label: 'Document Number',
         },
         {
-            key: 1,
-            id: 'percentage',
-            label: 'Percentage',
+            id: 'date',
             numeric: false,
-            disablePadding: false
+            disablePadding: false,
+            label: 'Date',
         },
         {
-            key: 1,
-            id: 'lastUpdatedDate',
-            label: 'Last Updated Date',
+            id: 'customerName',
             numeric: false,
-            disablePadding: false
-        }
+            disablePadding: false,
+            label: 'Customer Name',
+        },
+        {
+            id: 'salesChannel',
+            numeric: false,
+            disablePadding: false,
+            label: 'Sales Channel',
+        },
+        {
+            id: 'trackingNumber',
+            numeric: false,
+            disablePadding: false,
+            label: 'Tracking Number',
+        },
+        {
+            id: 'shippingAddress',
+            numeric: false,
+            disablePadding: false,
+            label: 'Shipping Address',
+        },
+        {
+            id: 'billingAddress',
+            numeric: false,
+            disablePadding: false,
+            label: 'Billing Address',
+        },
+        {
+            id: 'customerPO',
+            numeric: false,
+            disablePadding: false,
+            label: 'Customer PO',
+        },
+        {
+            id: 'itemSku',
+            numeric: false,
+            disablePadding: false,
+            label: 'Item SKU',
+        },
+        {
+            id: 'packQuantity',
+            numeric: true,
+            disablePadding: false,
+            label: 'Pack Quantity',
+        },
+        {
+            id: 'unitsQuantity',
+            numeric: true,
+            disablePadding: false,
+            label: 'Units Quantity',
+        },
+        {
+            id: 'amount',
+            numeric: true,
+            disablePadding: false,
+            label: 'Amount',
+        },
+
+
+        {
+            id: 'createdAt',
+            numeric: false,
+            disablePadding: false,
+            label: 'Created Date',
+        },
+
     ];
 
-    const fetchPricingGroupsDiscounts = async () => {
+
+    const fetchCustomerSalesOrder = async () => {
         try {
-            const response = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discounts-by-customer-id/${id}`);
-            console.log("response pricing groups", response);
+            const response = await axiosInstance.get(`/sales-order/get-sales-order-by-customer/${id}`);
+            console.log("response item discounts ", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);
@@ -269,8 +324,9 @@ const CustomersPricingGroups = () => {
         }
     };
 
+
     React.useEffect(() => {
-        fetchPricingGroupsDiscounts();
+        fetchCustomerSalesOrder();
     }, [id]);
 
     useEffect(() => {
@@ -288,8 +344,8 @@ const CustomersPricingGroups = () => {
         if (isBrandsList) {
             const filteredRows = sourceData.filter((row) => {
                 return (
-                    row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-                    row?.customerId?.toString().toLowerCase().includes(searchValue)
+                    row?.productSku?.toLowerCase().includes(searchValue) ||
+                    row?.pricingGroup?.name?.toLowerCase().includes(searchValue)
                 );
             });
             setRows(filteredRows);
@@ -300,6 +356,7 @@ const CustomersPricingGroups = () => {
             setRows(filteredRows);
         }
     };
+
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -356,10 +413,10 @@ const CustomersPricingGroups = () => {
     const theme = useTheme();
     const borderColor = theme.palette.divider;
 
-    //delete pricing group
-    const handleDeletePricingGroup = async (id) => {
+    //delete sales order
+    const handleDeleteSalesOrder = async (id) => {
         try {
-            const res = await axiosInstance.delete(`/pricing-groups/delete-pricing-group/${id}`);
+            const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${id}`);
 
             console.log("deleted", res.data);
 
@@ -372,10 +429,18 @@ const CustomersPricingGroups = () => {
         }
     };
 
-    //edit pricing group
-    const handleEditPricingGroup = (id) => {
-        navigate(`/dashboard/groups-discounts/edit/${id}`);
+
+    //edit sales order
+    const handleEditSalesOrder = (id) => {
+        navigate(`/dashboard/sales-order/edit/${id}`);
     };
+
+    const handleDocumentClick = (documentNo,customerName) => {
+        navigate(`/dashboard/sales-order-product-list/${documentNo}/${customerName}`);
+    };
+
+
+
     const stickyCellStyle = {
         position: "sticky",
         left: 0,
@@ -383,10 +448,24 @@ const CustomersPricingGroups = () => {
         backgroundColor: '#f0f8ff', // keeps background clean while scrolling
     };
 
-    const handleCustomerIdClick = (id) => {
-        navigate(`/dashboard/customers-pricing-groups/${id}`);
+    const columnWidths = {
+        serial: { minWidth: '80px' },
+        date: { minWidth: '200px' },
+        document: { minWidth: '200px' },
+        customer: { minWidth: '300px' },
+        salesChannel: { minWidth: '150px' },
+        tracking: { minWidth: '200px' },
+        shipping: { minWidth: '400px', },
+        billing: { minWidth: '400px', },
+        customerPO: { minWidth: '150px' },
+        itemSku: { minWidth: '150px' },
+        packQuantity: { minWidth: '160px' },
+        unitsQuantity: { minWidth: '160px' },
+        amount: { minWidth: '160px' },
+        finalAmount: { minWidth: '160px' },
+        createdAt: { minWidth: '160px' },
+        actions: { minWidth: '160px' },
     };
-
 
 
     return (
@@ -404,7 +483,7 @@ const CustomersPricingGroups = () => {
                     <TableContainer>
                         <Table
                             sx={{
-                                minWidth: 1000,
+                                minWidth: 1800,
                                 borderCollapse: "collapse", // ensures borders connect
                                 "& td, & th": {
                                     borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
@@ -423,7 +502,6 @@ const CustomersPricingGroups = () => {
                                 onSelectAllClick={handleSelectAllClick}
                                 onRequestSort={handleRequestSort}
                                 rowCount={rows.length}
-                                showCheckBox={false}
                                 headCells={headCells}
                             />
                             <TableBody>
@@ -436,66 +514,164 @@ const CustomersPricingGroups = () => {
                                         return (
                                             <TableRow
                                                 hover
+                                                // onClick={(event) => handleClick(event, row.name || row.title)}
                                                 role="checkbox"
                                                 aria-checked={isItemSelected}
                                                 tabIndex={-1}
                                                 key={row._id || row.title}
                                                 selected={isItemSelected}
                                             >
-                                                {isBrandsList ? (
-                                                    // Brands List View
-                                                    <>
-                                                        <TableCell sx={stickyCellStyle} >
-                                                            <Box display="flex" gap={1}>
-                                                                <Tooltip title="Edit">
-                                                                    <IconButton size="small" color="primary" onClick={() => handleEditPricingGroup(row?._id)}>
-                                                                        <IconEdit size="1.1rem" />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                                <Tooltip title="Delete">
-                                                                    <IconButton size="small" color="error" onClick={() => handleDeletePricingGroup(row?.pricingGroup?._id)}>
-                                                                        <IconTrash size="1.1rem" />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                            </Box>
-                                                        </TableCell>
 
-                                                        <TableCell onClick={() => handleEditPricingGroup(row._id)} sx={{ cursor: 'pointer' }}>
-                                                            <Box display="flex" alignItems="center">
-                                                                <Box sx={{ ml: 2 }}>
-                                                                    <Typography fontWeight="600">
-                                                                        {row?.pricingGroup?.name || 'N/A'}
-                                                                    </Typography>
-                                                                </Box>
-                                                            </Box>
-                                                        </TableCell>
 
-                                                        <TableCell>
-                                                            <Typography>
-                                                                {row.percentage || ''}
+                                                <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
+                                                    <Box display="flex" gap={1}>
+                                                        <Tooltip title="Edit">
+                                                            <IconButton size="small" color="primary" onClick={() => handleEditSalesOrder(row._id)}>
+                                                                <IconEdit size="1.1rem" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Delete">
+                                                            <IconButton size="small" color="error" onClick={() => handleDeleteSalesOrder(row._id)}>
+                                                                <IconTrash size="1.1rem" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={{ ...columnWidths.document, cursor: "pointer" }} onClick={() => handleDocumentClick(row.documentNumber, row.customerName)}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box sx={{ ml: 2 }}>
+                                                            <Typography fontWeight="500" variant="subtitle2">
+                                                                {row?.documentNumber || 'N/A'}
                                                             </Typography>
-                                                        </TableCell>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
 
-                                                        <TableCell>
-                                                            <Typography>
-                                                                {row.updatedAt ? format(new Date(row.createdAt), 'E, MMM d yyyy') : 'N/A'}
+                                                <TableCell sx={columnWidths.document}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row.date && row.date instanceof Date ? formatDate(new Date(row.date), "dd MMM yyyy") : row.date}
                                                             </Typography>
-                                                        </TableCell>
-                                                    </>
-                                                ) : (
-                                                    // Products List View (original code)
-                                                    <TableCell colSpan={headCells.length + 2}>
-                                                        <Typography>No product view implemented</Typography>
-                                                    </TableCell>
-                                                )}
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+
+
+                                                <TableCell sx={{ ...columnWidths.customer, cursor: "pointer" }} onClick={() => hadleDocumentClick(row.customerName)}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row?.customerName || ''}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.salesChannel}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row?.salesChannel || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.tracking}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row?.trackingNumber || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.shipping}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row?.shippingAddress || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.billing}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row?.billingAddress || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.customerPO}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row?.customerPO || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.itemSku}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box >
+                                                            <Typography fontWeight="400">
+                                                                {row?.itemSku || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.packQuantity}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box sx={{ ml: 6 }}>
+                                                            <Typography fontWeight="400">
+                                                                {row?.packQuantity || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.unitsQuantity}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box sx={{ ml: 6 }}>
+                                                            <Typography fontWeight="400">
+                                                                {row?.unitsQuantity || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell sx={columnWidths.amount}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box sx={{ ml: 10 }}>
+                                                            <Typography fontWeight="400">
+                                                                {row?.amount || 'N/A'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+
+
+                                                <TableCell sx={columnWidths.createdAt}>
+                                                    <Typography>
+                                                        {format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}
+                                                    </Typography>
+                                                </TableCell>
+
+
                                             </TableRow>
                                         );
                                     })}
-                                {emptyRows > 0 && (
-                                    <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                                        <TableCell colSpan={headCells.length + 2} />
-                                    </TableRow>
-                                )}
+
                             </TableBody>
                         </Table>
                     </TableContainer>
@@ -521,4 +697,4 @@ const CustomersPricingGroups = () => {
     );
 };
 
-export default CustomersPricingGroups;
+export default CustomersSalesOrders;

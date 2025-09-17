@@ -20,23 +20,22 @@ import { useNavigate, useParams } from 'react-router';
 
 const EditPricingGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
-        pricingGroupId: '',
         customerId: '',
+        productSku: '',
         percentage: '',
     });
     const [error, setError] = React.useState('');
     const navigate = useNavigate();
     const [pricingGroups, setPricingGroups] = React.useState([]);
     const [customers, setCustomers] = React.useState([]);
+    const [productList, setProductList] = React.useState([]);
     const [loading, setLoading] = React.useState(false);
     const [dataLoaded, setDataLoaded] = React.useState(false); // Track if all data is loaded
     const { id } = useParams();
 
-
-
     const handleSubmit = async () => {
         // Form validation
-        if (!formData.pricingGroupId || !formData.customerId || !formData.percentage ) {
+        if ( !formData.customerId || !formData.percentage || !formData.productSku) {
             setError('Please fill in all required fields');
             return;
         }
@@ -78,6 +77,10 @@ const EditPricingGroupsDiscounts = () => {
         setFormData({ ...formData, customerId: e.target.value });
     };
 
+    const handleProductSkuChange = (e) => {
+        setFormData({ ...formData, productSku: e.target.value });
+    };
+
     const fetchPricingGroupDiscountBYId = async (id) => {
         try {
             setLoading(true);
@@ -86,11 +89,20 @@ const EditPricingGroupsDiscounts = () => {
 
             if (response.data.statusCode === 200 && response.data.data) {
                 const discountData = response.data.data;
-                
+
                 // Set form data with proper IDs for dropdowns
                 setFormData({
+                    // pricingGroupId: discountData.pricingGroup?._id || discountData.pricingGroupId || '',
+                    customerId: discountData.customerId || '',
+                    productSku: discountData.productSku || discountData.sku || '', // Added productSku handling
+                    percentage: discountData.percentage || '',
+                });
+
+                // Log the data for debugging
+                console.log("Setting form data:", {
                     pricingGroupId: discountData.pricingGroup?._id || discountData.pricingGroupId || '',
                     customerId: discountData.customerId || '',
+                    productSku: discountData.productSku || discountData.sku || '',
                     percentage: discountData.percentage || '',
                 });
             } else {
@@ -134,13 +146,46 @@ const EditPricingGroupsDiscounts = () => {
         }
     };
 
+    const fetchAllProducts = async () => {
+        try {
+            const response = await axiosInstance.get('/products/get-all-products');
+            console.log("response products", response.data);
 
-    useEffect(()=>{
-        if(!id){
+            if (response.data.statusCode === 200) {
+                const productsData = response.data.data?.docs || response.data.data || response.data;
+
+                // Filter out duplicates based on _id
+                const getUniqueProducts = (products) => {
+                    if (!Array.isArray(products)) return [];
+
+                    const uniqueProducts = [];
+                    const seenIds = new Set();
+
+                    products.forEach(product => {
+                        if (product._id && !seenIds.has(product._id)) {
+                            seenIds.add(product._id);
+                            uniqueProducts.push(product);
+                        }
+                    });
+
+                    return uniqueProducts;
+                };
+
+                setProductList(getUniqueProducts(productsData));
+            }
+
+        } catch (error) {
+            console.error('Error fetching products list:', error);
+            setError(error.message);
+        }
+    }
+
+    useEffect(() => {
+        if (!id) {
             navigate('/dashboard/items-based-discounts/create');
         }
-    },[id])
-   
+    }, [id])
+
     // Load all dropdown data first
     useEffect(() => {
         const fetchData = async () => {
@@ -149,6 +194,7 @@ const EditPricingGroupsDiscounts = () => {
                 await Promise.all([
                     fetchPricingGroups(),
                     fetchCustomers(),
+                    fetchAllProducts()
                 ]);
                 setDataLoaded(true);
             } catch (error) {
@@ -172,7 +218,7 @@ const EditPricingGroupsDiscounts = () => {
         <div>
             <Grid container>
                 {/* Pricing Group Selection */}
-                <Grid size={12}>
+                {/* <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="pricing-group-select"
                         sx={{ mt: 2 }}
@@ -210,7 +256,7 @@ const EditPricingGroupsDiscounts = () => {
                             ))}
                         </Select>
                     </FormControl>
-                </Grid>
+                </Grid> */}
 
                 {/* Customer Selection */}
                 <Grid size={12}>
@@ -227,7 +273,6 @@ const EditPricingGroupsDiscounts = () => {
                             id="customer-select"
                             value={formData.customerId}
                             onChange={handleCustomerChange}
-                            // selected={formData.customerId}
                             disabled={loading || !Array.isArray(customers) || customers.length === 0}
                             displayEmpty
                             sx={{
@@ -247,7 +292,7 @@ const EditPricingGroupsDiscounts = () => {
                             </MenuItem>
                             {Array.isArray(customers) && customers.map((customer) => (
                                 <MenuItem key={customer._id} value={customer.customerId}>
-                                    {customer.customerId} - {customer.customerName }
+                                    {customer.customerId} - {customer.customerName}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -258,7 +303,50 @@ const EditPricingGroupsDiscounts = () => {
                     </Typography>
                 </Grid>
 
-                
+                {/* SKU Selection */}
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="sku-select"
+                        sx={{ mt: 2 }}
+                    >
+                        Select ProductSku *
+                    </CustomFormLabel>
+                </Grid>
+                <Grid size={12}>
+                    <FormControl fullWidth>
+                        <Select
+                            id="sku-select"
+                            value={formData.productSku}
+                            onChange={handleProductSkuChange}
+                            disabled={loading || !Array.isArray(productList) || productList.length === 0}
+                            displayEmpty
+                            sx={{
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.23)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.87)',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'primary.main',
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>
+                                {!Array.isArray(productList) || productList.length === 0 ? 'Loading Products...' : 'Select a SKU'}
+                            </MenuItem>
+                            {Array.isArray(productList) && productList.map((product) => (
+                                <MenuItem key={product._id} value={product.sku}>
+                                    {product.sku} - {product.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    {/* Debug info - remove this after fixing */}
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 1 }}>
+                        Current selected: {formData.productSku} | Available Products: {productList.length}
+                    </Typography>
+                </Grid>
 
                 {/* Discount Percentage */}
                 <Grid size={12}>
@@ -307,7 +395,6 @@ const EditPricingGroupsDiscounts = () => {
                     >
                         {loading ? 'Updating...' : 'Update'}
                     </Button>
-                    
                 </Grid>
             </Grid>
         </div>

@@ -21,6 +21,7 @@ const CreateProduct = () => {
     commerceCategoriesOne: '',
     commerceCategoriesTwo: '',
     commerceCategoriesThree: '',
+    commerceCategoriesFour: '',
     pageTitle: '',
     storeDescription: '',
     eachBarcodes: '',
@@ -100,7 +101,7 @@ const CreateProduct = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.name.toLowerCase().endsWith('.csv') ) {
+      if (!file.name.toLowerCase().endsWith('.csv')) {
         setError('Please select a valid CSV file');
         return;
       }
@@ -165,6 +166,8 @@ const CreateProduct = () => {
   const [categoryOne, setCategoryOne] = useState([]);
   const [categoryTwo, setCategoryTwo] = useState([]);
   const [categoryThree, setCategoryThree] = useState([]);
+  const [categoryFour, setCategoryFour] = useState([]);
+
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
 
   const fetchPackTypesList = async () => {
@@ -242,10 +245,24 @@ const CreateProduct = () => {
     }
   };
 
+  const fetchSubCategoryTwoList = async () => {
+    try {
+      const response = await axiosInstance.get('/subcategoryTwo/get-sub-categories-two');
+      console.log("response sub categories", response.data.data);
+
+      if (response.data.statusCode === 200) {
+        setCategoryFour(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching sub category list:', error);
+      setError(error.message);
+    }
+  };
 
 
 
   React.useEffect(() => {
+    fetchSubCategoryTwoList();
     fetchPackTypesList();
     fetchPricingGroups();
     fetchBrandsList();
@@ -506,6 +523,41 @@ const CreateProduct = () => {
                 {categoryThree.length === 0 ? 'Loading types...' : 'Select a type'}
               </MenuItem>
               {categoryThree.map((category) => (
+                <MenuItem key={category.name} value={category._id}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
+            Select Commerce category four
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="commerceCategoryThree-select"
+              value={formData.commerceCategoriesFour}
+              onChange={(e) => setFormData({ ...formData, commerceCategoriesFour: e.target.value })}
+              disabled={loading || categoryFour.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                {categoryFour.length === 0 ? 'NO CATEGORY' : 'Select a type'}
+              </MenuItem>
+              {categoryFour.map((category) => (
                 <MenuItem key={category.name} value={category._id}>
                   {category.name}
                 </MenuItem>

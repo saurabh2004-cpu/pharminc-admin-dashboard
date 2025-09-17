@@ -358,6 +358,8 @@ const ListTable = ({
                 minWidth: 1000,
                 borderCollapse: "collapse", // ensures borders connect
                 "& td, & th": {
+                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
                 },
                 "& td:last-child, & th:last-child": {
@@ -443,7 +445,7 @@ const ListTable = ({
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
                             </TableCell>
-                            
+
                           </>
                         ) : (
                           // Products List View (original code)
