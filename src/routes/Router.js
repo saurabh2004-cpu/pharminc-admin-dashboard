@@ -175,7 +175,7 @@ const EditCategory = Loadable(lazy(() => import('../views/admin/category/EditCat
 const CreateSubCategory = Loadable(lazy(() => import('../views/admin/subcategory/CreateSubCategory')));
 const SubCategoryList = Loadable(lazy(() => import('../views/admin/subcategory/SubCategoryList')));
 const EditSubCategory = Loadable(lazy(() => import('../views/admin/subcategory/EditSubCategory')));
-const CreateBadge = Loadable(lazy(() => import('../views/admin/badge/createBadge')));
+const CreateBadge = Loadable(lazy(() => import('../views/admin/badge/CreateBadge')));
 const BadgeList = Loadable(lazy(() => import('../views/admin/badge/BadgeList')));
 const EditBadge = Loadable(lazy(() => import('../views/admin/badge/EditBadge')));
 const ListPricingGroups = Loadable(lazy(() => import('../views/admin/pricingGroups/ListPricingGroups')));
