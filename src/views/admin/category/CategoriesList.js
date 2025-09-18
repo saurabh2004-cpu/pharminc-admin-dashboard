@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance'
 import ListTable from './ListTable';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
     {
@@ -64,6 +65,8 @@ const CategoriesList = () => {
         }
     };
 
+    const { isCollapse } = React.useContext(CustomizerContext);
+
 
 
     React.useEffect(() => {
@@ -74,9 +77,15 @@ const CategoriesList = () => {
         <ProductProvider>
             <PageContainer title="Categories List" description="this is Brands List page">
                 {/* breadcrumb */}
-                <Breadcrumb  title="Categories List" items={BCrumb} />
+                <Breadcrumb title="Categories List" items={BCrumb} />
                 {/* end breadcrumb */}
-                <Box sx={{minWidth:'105%', marginLeft:'-20px'}}>
+                <Box
+                // sx={{
+                //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+                //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+                //     transition: "margin-left 0.3s ease", // smooth animation
+                // }}
+                >
                     <ListTable
                         showCheckBox={false}
                         headCells={headCells}
@@ -86,7 +95,7 @@ const CategoriesList = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider>
+        </ProductProvider >
     );
 };
 

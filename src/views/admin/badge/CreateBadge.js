@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Grid,
     Button,
@@ -14,6 +14,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import { CircularProgress, Backdrop } from '@mui/material';
 
 const CreateBadge = () => {
     const [formData, setFormData] = React.useState({
@@ -22,9 +23,11 @@ const CreateBadge = () => {
         backgroundColor: '',
         text: ''
     });
+
     const [error, setError] = React.useState('');
     const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
     const [selectedFile, setSelectedFile] = React.useState(null);
+    const [loading, setLoading] = useState()
     const navigate = useNavigate();
 
     const handleNameChange = (e) => {
@@ -55,7 +58,6 @@ const CreateBadge = () => {
                     backgroundColor: '',
                     text: ''
                 });
-                setError('Badge created successfully!');
                 navigate('/dashboard/badge/list');
             } else {
                 setError(res.data.message);
@@ -75,6 +77,7 @@ const CreateBadge = () => {
     };
 
     const handleImportCsvFile = async () => {
+        setLoading(true)
         if (!selectedFile) {
             setError('Please select a CSV file first');
             return;
@@ -105,6 +108,8 @@ const CreateBadge = () => {
         } catch (error) {
             setError(error.response?.data?.message || error.message || 'An error occurred while importing CSV');
             console.error('CSV import error:', error);
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -212,8 +217,26 @@ const CreateBadge = () => {
                 maxWidth="sm"
                 fullWidth
             >
+                {/* Loading Backdrop */}
+                <Backdrop
+                    sx={{
+                        color: '#fff',
+                        zIndex: (theme) => theme.zIndex.drawer + 1,
+                        position: 'absolute',
+                        borderRadius: 1
+                    }}
+                    open={loading}
+                >
+                    <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                        <CircularProgress color="inherit" size={50} />
+                        <Typography variant="body2" color="inherit">
+                            Importing CSV file, please wait...
+                        </Typography>
+                    </Box>
+                </Backdrop>
+
                 <DialogTitle>
-                    Import Badges from CSV
+                    Import Commerce Categories from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>
@@ -224,7 +247,7 @@ const CreateBadge = () => {
                         <input
                             id="csv-file-input"
                             type="file"
-                            accept=".csv"
+                            accept=".csv,.xls,.xlsx"
                             onChange={handleFileChange}
                             style={{ display: 'none' }}
                         />
@@ -234,32 +257,42 @@ const CreateBadge = () => {
                                 variant="outlined"
                                 component="label"
                                 htmlFor="csv-file-input"
-                                startIcon={<IconUpload size="1.1rem" />}
+                                startIcon={loading ? <CircularProgress size={16} /> : <IconUpload size="1.1rem" />}
+                                disabled={loading}
                             >
-                                Choose File
+                                {loading ? 'Processing...' : 'Choose File'}
                             </Button>
 
-                            {selectedFile && (
+                            {selectedFile && !loading && (
                                 <Typography variant="body2" color="primary">
                                     {selectedFile.name}
                                 </Typography>
                             )}
                         </Box>
+
+                        {error && !error.includes('success') && (
+                            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                                {error}
+                            </Typography>
+                        )}
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseCsvDialog}>
+                    <Button
+                        onClick={handleCloseCsvDialog}
+                        disabled={loading}
+                        sx={{ opacity: loading ? 0.5 : 1 }}
+                    >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleImportCsvFile}
-                        // variant="contained"
-                        disabled={!selectedFile}
-                        startIcon={<IconFileImport size="1.1rem" />}
+                        variant="contained"
+                        disabled={!selectedFile || loading}
+                        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <IconFileImport size="1.1rem" />}
                         sx={{ backgroundColor: '#2E2F7F' }}
-                        backgroundColor="#2E2F7F"
                     >
-                        Import
+                        {loading ? 'Importing...' : 'Import'}
                     </Button>
                 </DialogActions>
             </Dialog>

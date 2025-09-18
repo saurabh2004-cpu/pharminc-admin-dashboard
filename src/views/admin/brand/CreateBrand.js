@@ -1,12 +1,12 @@
 import React from 'react';
-import { Grid, MenuItem, Select, FormControl, Dialog, DialogTitle, DialogContent, Typography, Box, DialogActions } from '@mui/material';
-import InputAdornment from '@mui/material/InputAdornment';
+import { Grid, Dialog, DialogTitle, DialogContent, Typography, Box, DialogActions } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-import { IconBuildingArch, IconFileImport, IconMail, IconMessage2, IconPhone, IconUpload, IconUser } from '@tabler/icons';
+import { IconFileImport, IconUpload } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import { CircularProgress, Backdrop } from '@mui/material';
 
 const CreateBrand = () => {
     const [formData, setFormData] = React.useState({
@@ -213,20 +213,38 @@ const CreateBrand = () => {
                 maxWidth="sm"
                 fullWidth
             >
+                {/* Loading Backdrop */}
+                <Backdrop
+                    sx={{
+                        color: '#fff',
+                        zIndex: (theme) => theme.zIndex.drawer + 1,
+                        position: 'absolute',
+                        borderRadius: 1
+                    }}
+                    open={loading}
+                >
+                    <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                        <CircularProgress color="inherit" size={50} />
+                        <Typography variant="body2" color="inherit">
+                            Importing CSV file, please wait...
+                        </Typography>
+                    </Box>
+                </Backdrop>
+
                 <DialogTitle>
                     Import Commerce Categories from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                            Select a CSV file to import multiple pricing group discounts at once.
-                            Expected format: pricingGroupId, customerId, productSku, percentage
+                            Select a CSV file to import multiple commerce categories  at once.
+                            Expected format: commerceCategoryOne, commerceCategoryTwo, commerceCategoryThree
                         </Typography>
 
                         <input
                             id="csv-file-input"
                             type="file"
-                            accept=".csv/xls/xlsx"
+                            accept=".csv,.xls,.xlsx"
                             onChange={handleFileChange}
                             style={{ display: 'none' }}
                         />
@@ -236,13 +254,13 @@ const CreateBrand = () => {
                                 variant="outlined"
                                 component="label"
                                 htmlFor="csv-file-input"
-                                startIcon={<IconUpload size="1.1rem" />}
+                                startIcon={loading ? <CircularProgress size={16} /> : <IconUpload size="1.1rem" />}
                                 disabled={loading}
                             >
-                                Choose File
+                                {loading ? 'Processing...' : 'Choose File'}
                             </Button>
 
-                            {selectedFile && (
+                            {selectedFile && !loading && (
                                 <Typography variant="body2" color="primary">
                                     {selectedFile.name}
                                 </Typography>
@@ -257,14 +275,18 @@ const CreateBrand = () => {
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseCsvDialog} disabled={loading}>
+                    <Button
+                        onClick={handleCloseCsvDialog}
+                        disabled={loading}
+                        sx={{ opacity: loading ? 0.5 : 1 }}
+                    >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleImportCsvFile}
                         variant="contained"
                         disabled={!selectedFile || loading}
-                        startIcon={<IconFileImport size="1.1rem" />}
+                        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <IconFileImport size="1.1rem" />}
                         sx={{ backgroundColor: '#2E2F7F' }}
                     >
                         {loading ? 'Importing...' : 'Import'}

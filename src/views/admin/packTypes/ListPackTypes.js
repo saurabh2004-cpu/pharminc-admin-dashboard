@@ -5,7 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance'
 import ListTable from './ListTable';
-import axios from 'axios';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
     {
@@ -43,7 +43,7 @@ const ListPackTypes = () => {
             disablePadding: false,
             label: 'Created Date',
         },
-        
+
     ];
 
     const [tableData, setTableData] = React.useState([]);
@@ -64,7 +64,7 @@ const ListPackTypes = () => {
         }
     };
 
-
+    const { isCollapse } = React.useContext(CustomizerContext);
 
     React.useEffect(() => {
         fetchPackTypesList();
@@ -76,8 +76,14 @@ const ListPackTypes = () => {
                 {/* breadcrumb */}
                 <Breadcrumb title="Pack Types List" items={BCrumb} />
                 {/* end breadcrumb */}
-                <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
-                    <ListTable
+                <Box
+                // sx={{
+                //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+                //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+                //     transition: "margin-left 0.3s ease", // smooth animation
+                // }}
+                >
+                    < ListTable
                         showCheckBox={false}
                         headCells={headCells}
                         tableData={tableData}
@@ -86,7 +92,7 @@ const ListPackTypes = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider>
+        </ProductProvider >
     );
 };
 

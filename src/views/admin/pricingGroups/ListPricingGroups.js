@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance'
 import ListTable from './ListTable';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
   {
@@ -18,7 +19,7 @@ const BCrumb = [
 
 const ListPricingGroups = () => {
   const headCells = [
-     {
+    {
       id: 'Actions',
       numeric: false,
       disablePadding: false,
@@ -30,14 +31,14 @@ const ListPricingGroups = () => {
       disablePadding: false,
       label: 'Pricing Group Name',
     },
-    
+
     {
       id: 'createdAt',
       numeric: false,
       disablePadding: false,
       label: 'Created Date',
     },
-   
+
   ];
 
   const [tableData, setTableData] = React.useState([]);
@@ -57,6 +58,7 @@ const ListPricingGroups = () => {
       setError(error.message);
     }
   };
+  const { isCollapse } = React.useContext(CustomizerContext);
 
 
 
@@ -70,7 +72,13 @@ const ListPricingGroups = () => {
         {/* breadcrumb */}
         <Breadcrumb title="Pricing Groups List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
+        <Box
+        // sx={{
+        //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+        //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+        //     transition: "margin-left 0.3s ease", // smooth animation
+        // }}
+        >
           <ListTable
             showCheckBox={false}
             headCells={headCells}
@@ -80,7 +88,7 @@ const ListPricingGroups = () => {
           />
         </Box>
       </PageContainer>
-    </ProductProvider>
+    </ProductProvider >
   );
 };
 

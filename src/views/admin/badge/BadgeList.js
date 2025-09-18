@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance'
 import ListTable from './ListTable';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
     {
@@ -42,14 +43,14 @@ const BadgeList = () => {
             disablePadding: false,
             label: 'Text ',
         },
-        
+
         {
             id: 'createdAt',
             numeric: false,
             disablePadding: false,
             label: 'Created Date',
         },
-        
+
     ];
 
     const [tableData, setTableData] = React.useState([]);
@@ -60,7 +61,7 @@ const BadgeList = () => {
             const response = await axiosInstance.get('/badge/get-badges');
             console.log("response badges", response);
 
-            if(response.data.statusCode === 200){
+            if (response.data.statusCode === 200) {
                 setTableData(response.data.data);
             }
 
@@ -70,7 +71,7 @@ const BadgeList = () => {
         }
     };
 
-    
+    const { isCollapse } = React.useContext(CustomizerContext);
 
     React.useEffect(() => {
         fetchBadges();
@@ -82,7 +83,13 @@ const BadgeList = () => {
                 {/* breadcrumb */}
                 <Breadcrumb title="Brands List" items={BCrumb} />
                 {/* end breadcrumb */}
-                <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
+                <Box
+                    // sx={{
+                    //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+                    //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+                    //     transition: "margin-left 0.3s ease", // smooth animation
+                    // }}
+                >
                     <ListTable
                         showCheckBox={false}
                         headCells={headCells}

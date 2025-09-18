@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 // FC Component For Dropdown Menu
 const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hideMenu }) => {
   const { isBorderRadius } = useContext(CustomizerContext);
+  const { isCollapse, setIsCollapse } = useContext(CustomizerContext);
   
   const Icon = menu.icon;
   const theme = useTheme();

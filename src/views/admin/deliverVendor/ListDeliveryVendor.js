@@ -5,7 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance'
 import ListTable from './ListTable';
-import axios from 'axios';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
     {
@@ -43,7 +43,7 @@ const ListDeliveryVendor = () => {
             disablePadding: false,
             label: 'Created Date',
         },
-        
+
     ];
 
     const [tableData, setTableData] = React.useState([]);
@@ -64,6 +64,8 @@ const ListDeliveryVendor = () => {
         }
     };
 
+    const { isCollapse } = React.useContext(CustomizerContext);
+
 
 
     React.useEffect(() => {
@@ -76,7 +78,13 @@ const ListDeliveryVendor = () => {
                 {/* breadcrumb */}
                 <Breadcrumb title="Delivery Vendor Kist" items={BCrumb} />
                 {/* end breadcrumb */}
-                <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
+                <Box
+                // sx={{
+                //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+                //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+                //     transition: "margin-left 0.3s ease", // smooth animation
+                // }}
+                >
                     <ListTable
                         showCheckBox={false}
                         headCells={headCells}

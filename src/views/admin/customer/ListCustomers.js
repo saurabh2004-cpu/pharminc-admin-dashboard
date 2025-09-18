@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance';
 import ListTable from './ListTable';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
   {
@@ -158,6 +159,8 @@ const ListCustomers = () => {
     }
   };
 
+  const { isCollapse } = React.useContext(CustomizerContext);
+
   React.useEffect(() => {
     fetchCustomersList();
   }, []);
@@ -168,7 +171,13 @@ const ListCustomers = () => {
         {/* breadcrumb */}
         <Breadcrumb title="Customers List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box sx={{ minWidth: '109.5%', marginLeft: '-60px' }}>
+        <Box
+          // sx={{
+          //   minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+          //   marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+          //   transition: "margin-left 0.3s ease", // smooth animation
+          // }}
+        >
           <ListTable
             showCheckBox={false}
             headCells={headCells}

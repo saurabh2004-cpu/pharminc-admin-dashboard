@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance';
 import ListTable from './ListTable';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
   {
@@ -114,7 +115,7 @@ const ListProduct = () => {
       disablePadding: false,
       label: 'Created Date',
     },
-    
+
   ];
 
   const [tableData, setTableData] = React.useState([]);
@@ -126,26 +127,26 @@ const ListProduct = () => {
       console.log("response products", response.data);
 
       if (response.data.statusCode === 200) {
-         const productsData = response.data.data?.docs || response.data.data || response.data;
-      
-      // Filter out duplicates based on _id
-      const getUniqueProducts = (products) => {
-        if (!Array.isArray(products)) return [];
-        
-        const uniqueProducts = [];
-        const seenIds = new Set();
-        
-        products.forEach(product => {
-          if (product._id && !seenIds.has(product._id)) {
-            seenIds.add(product._id);
-            uniqueProducts.push(product);
-          }
-        });
-        
-        return uniqueProducts;
-      };
+        const productsData = response.data.data?.docs || response.data.data || response.data;
 
-      setTableData(getUniqueProducts(productsData));
+        // Filter out duplicates based on _id
+        const getUniqueProducts = (products) => {
+          if (!Array.isArray(products)) return [];
+
+          const uniqueProducts = [];
+          const seenIds = new Set();
+
+          products.forEach(product => {
+            if (product._id && !seenIds.has(product._id)) {
+              seenIds.add(product._id);
+              uniqueProducts.push(product);
+            }
+          });
+
+          return uniqueProducts;
+        };
+
+        setTableData(getUniqueProducts(productsData));
       }
 
     } catch (error) {
@@ -153,6 +154,8 @@ const ListProduct = () => {
       setError(error.message);
     }
   };
+
+  const { isCollapse } = React.useContext(CustomizerContext);
 
   React.useEffect(() => {
     fetchProductsList();
@@ -164,7 +167,13 @@ const ListProduct = () => {
         {/* breadcrumb */}
         <Breadcrumb title="Products List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
+        <Box
+        // sx={{
+        //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+        //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+        //     transition: "margin-left 0.3s ease", // smooth animation
+        // }}
+        >
           <ListTable
             showCheckBox={false}
             headCells={headCells}

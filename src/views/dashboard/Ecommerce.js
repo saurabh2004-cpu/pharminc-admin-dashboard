@@ -49,15 +49,15 @@ const Ecommerce = () => {
 
 
   return (
-    <PageContainer title="eCommerce Dashboard" description="this is eCommerce Dashboard page">
-      <Grid container spacing={3}>
+    <PageContainer  title="eCommerce Dashboard" description="this is eCommerce Dashboard page">
+      <Grid  container spacing={3}>
         {/* column */}
         <Grid size={{ xs: 12, lg: 8 }}>
           <WelcomeCard />
         </Grid>
 
         {/* column */}
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid  size={{ xs: 12, lg: 4 }}>
           <Grid spacing={3} container columns={{ xs: 12, sm: 6 }}>
             <Grid size={{ xs: 12, md: 6, lg: 'grow' }}>
               <Expence />

@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance';
 import ListTable from './ListTable';
+import { CustomizerContext } from '../../../context/CustomizerContext'
 
 const BCrumb = [
   {
@@ -81,6 +82,8 @@ const ListNetTerms = () => {
   const [error, setError] = React.useState(null);
   const [filter, setFilter] = React.useState('get-net-terms-by-month');
   const [loading, setLoading] = React.useState(false)
+  const { isCollapse } = React.useContext(CustomizerContext);
+
 
   const fetchCustomersList = async () => {
     setLoading(true)
@@ -110,7 +113,13 @@ const ListNetTerms = () => {
         {/* breadcrumb */}
         <Breadcrumb title="Net Terms List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box sx={{ minWidth: '109.5%', marginLeft: '-60px' }}>
+        <Box
+        // sx={{
+        //   minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+        //   marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+        //   transition: "margin-left 0.3s ease", // smooth animation
+        // }}
+        >
           <ListTable
             showCheckBox={false}
             headCells={headCells}
