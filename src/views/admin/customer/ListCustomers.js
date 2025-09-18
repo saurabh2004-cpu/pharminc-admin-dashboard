@@ -119,8 +119,10 @@ const ListCustomers = () => {
 
   const [tableData, setTableData] = React.useState([]);
   const [error, setError] = React.useState(null);
+  const [loading, setLoading] = React.useState(false)
 
   const fetchCustomersList = async () => {
+    setLoading(true)
     try {
       const response = await axiosInstance.get('/admin/get-all-users'); // or whatever your customer endpoint is
       console.log("response customers", response.data);
@@ -151,6 +153,8 @@ const ListCustomers = () => {
     } catch (error) {
       console.error('Error fetching customers list:', error);
       setError(error.message);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -164,13 +168,14 @@ const ListCustomers = () => {
         {/* breadcrumb */}
         <Breadcrumb title="Customers List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box>
+        <Box sx={{ minWidth: '109.5%', marginLeft: '-60px' }}>
           <ListTable
             showCheckBox={false}
             headCells={headCells}
             tableData={tableData}
             isCustomersList={true} // Changed from isProductsList
             setTableData={setTableData}
+            loading={loading}
           />
         </Box>
       </PageContainer>

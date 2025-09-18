@@ -71,22 +71,18 @@ const BrandsList = () => {
     }, []);
 
     return (
-        <ProductProvider>
-            <PageContainer title="Brands List" description="this is Brands List page">
-                {/* breadcrumb */}
-                <Breadcrumb title="Brands List" items={BCrumb} />
-                {/* end breadcrumb */}
-                <Box>
-                    <ProductTableList
-                        showCheckBox={false}
-                        headCells={headCells}
-                        tableData={tableData}
-                        isBrandsList={true} // Add this prop to identify it's brands data
-                        setTableData={setTableData}
-                    />
-                </Box>
-            </PageContainer>
-        </ProductProvider>
+        <PageContainer title="Brands List" description="this is Brands List page">
+            <Breadcrumb title="Brands List" items={BCrumb} />
+            <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
+                <ProductTableList
+                    showCheckBox={false}
+                    headCells={headCells}
+                    tableData={tableData}
+                    isBrandsList={true} // Add this prop to identify it's brands data
+                    setTableData={setTableData}
+                />
+            </Box>
+        </PageContainer>
     );
 };
 

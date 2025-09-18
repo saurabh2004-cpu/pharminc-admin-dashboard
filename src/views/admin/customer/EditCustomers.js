@@ -42,8 +42,6 @@ const EditCustomers = () => {
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const navigate = useNavigate();
-  const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
-  const [selectedFile, setSelectedFile] = React.useState(null);
   const { id } = useParams();
 
   const handleSubmit = async () => {
@@ -112,12 +110,12 @@ const EditCustomers = () => {
         navigate('/dashboard/customers/list');
 
       } else if (res.data.statusCode === 400) {
-        console.log("Create Customer error:", res.data.message);
+        console.log("Update Customer error:", res.data.message);
       }
 
     } catch (error) {
-      console.error('Create Customer error:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to create Customer');
+      console.error('Update Customer error:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to update Customer');
     } finally {
       setLoading(false);
     }
@@ -127,7 +125,7 @@ const EditCustomers = () => {
     try {
       const res = await axiosInstance.get(`/admin/get-user/${id}`);
 
-      console.log("res uset", res)
+      console.log("res user", res)
 
       if (res.data.statusCode === 200) {
         setFormData(res.data.data);
@@ -140,19 +138,18 @@ const EditCustomers = () => {
 
   useEffect(() => {
     fetchCustomer();
-  },[id]);
+  }, [id]);
 
   return (
     <div>
       <Grid container spacing={2}>
 
-        {/* Customer ID */}
-        <Grid size={12}>
+        {/* Customer ID and Customer Name - Row 1 */}
+        <Grid size={6}>
           <CustomFormLabel htmlFor="customerId" sx={{ mt: 2 }}>
             Customer ID
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="customerId"
             fullWidth
@@ -163,14 +160,11 @@ const EditCustomers = () => {
             disabled={loading}
           />
         </Grid>
-
-        {/* Customer Name */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="customerName" sx={{ mt: 0 }}>
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="customerName" sx={{ mt: 2 }}>
             Customer Name
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="customerName"
             fullWidth
@@ -181,13 +175,12 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Contact Name */}
-        <Grid size={12}>
+        {/* Contact Name and Contact Email - Row 2 */}
+        <Grid size={6}>
           <CustomFormLabel htmlFor="contactName" sx={{ mt: 0 }}>
             Contact Name
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="contactName"
             fullWidth
@@ -197,14 +190,11 @@ const EditCustomers = () => {
             placeholder="Enter Contact Name"
           />
         </Grid>
-
-        {/* Contact Email */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="contactEmail" sx={{ mt: 0 }}>
             Contact Email
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="contactEmail"
             fullWidth
@@ -216,13 +206,11 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Customer Email */}
-        <Grid size={12}>
+        {/* Customer Email and Customer Phone Number - Row 3 */}
+        <Grid size={6}>
           <CustomFormLabel htmlFor="customerEmail" sx={{ mt: 0 }}>
             Customer Email
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="customerEmail"
             fullWidth
@@ -233,14 +221,11 @@ const EditCustomers = () => {
             placeholder="Enter Customer Email"
           />
         </Grid>
-
-        {/* Customer Phone Number */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="CustomerPhoneNo" sx={{ mt: 0 }}>
             Customer Phone Number
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="CustomerPhoneNo"
             fullWidth
@@ -252,13 +237,11 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Primary Brand */}
-        <Grid size={12}>
+        {/* Primary Brand and Default Shipping Rate - Row 4 */}
+        <Grid size={6}>
           <CustomFormLabel htmlFor="primaryBrand" sx={{ mt: 0 }}>
             Primary Brand
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="primaryBrand"
             fullWidth
@@ -268,14 +251,11 @@ const EditCustomers = () => {
             placeholder="Enter Primary Brand"
           />
         </Grid>
-
-        {/* Default Shipping Rate */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="defaultShippingRate" sx={{ mt: 0 }}>
             Default Shipping Rate
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="defaultShippingRate"
             fullWidth
@@ -287,13 +267,11 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Order Approval */}
-        <Grid size={12}>
+        {/* Order Approval and Category - Row 5 */}
+        <Grid size={6}>
           <CustomFormLabel htmlFor="orderApproval" sx={{ mt: 0 }}>
             Order Approval
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <FormControl fullWidth>
             <Select
               value={formData.orderApproval}
@@ -308,14 +286,10 @@ const EditCustomers = () => {
             </Select>
           </FormControl>
         </Grid>
-
-        {/* Category */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="category" sx={{ mt: 0 }}>
             Category
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="category"
             fullWidth
@@ -326,13 +300,12 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Net Terms */}
+        {/* Net Terms - Single field in row 6 */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="netTerms" sx={{ mt: 0 }}>
             Net Terms
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="netTerms"
             fullWidth
@@ -347,6 +320,7 @@ const EditCustomers = () => {
         <Grid size={12}>
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
             Shipping Address
+            <span style={{ color: 'red' }}>*</span>
           </Typography>
         </Grid>
 
@@ -401,15 +375,17 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Shipping City */}
+        {/* Shipping City and State */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="shippingCity" sx={{ mt: 0 }}>
             Shipping City
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
         </Grid>
         <Grid size={6}>
           <CustomFormLabel htmlFor="shippingState" sx={{ mt: 0 }}>
             Shipping State
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
         </Grid>
         <Grid size={6}>
@@ -437,6 +413,7 @@ const EditCustomers = () => {
         <Grid size={12}>
           <CustomFormLabel htmlFor="shippingZip" sx={{ mt: 0 }}>
             Shipping ZIP Code
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
         </Grid>
         <Grid size={12}>
@@ -508,7 +485,7 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Billing City */}
+        {/* Billing City and State */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="billingCity" sx={{ mt: 0 }}>
             Billing City
@@ -540,13 +517,11 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Billing Zip */}
-        <Grid size={12}>
+        {/* Billing Zip and Password - Two fields in one row */}
+        <Grid size={6}>
           <CustomFormLabel htmlFor="billingZip" sx={{ mt: 0 }}>
             Billing ZIP Code
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="billingZip"
             fullWidth
@@ -556,14 +531,11 @@ const EditCustomers = () => {
             placeholder="Enter Billing ZIP Code"
           />
         </Grid>
-
-        {/* Password */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="password" sx={{ mt: 0 }}>
             Password
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="password"
             fullWidth
@@ -632,15 +604,12 @@ const EditCustomers = () => {
             color="primary"
             onClick={handleSubmit}
             disabled={loading}
-            sx={{ minWidth: '120px',backgroundColor: '#2E2F7F' }}
+            sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
           >
-            {loading ? 'Updating...' : 'Update Customer Details'}
+            {loading ? 'Updating...' : 'Update Customer'}
           </Button>
-
         </Grid>
       </Grid>
-
-
     </div>
   );
 };

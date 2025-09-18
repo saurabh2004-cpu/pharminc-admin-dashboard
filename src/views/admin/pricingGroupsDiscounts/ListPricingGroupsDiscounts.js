@@ -13,7 +13,7 @@ const BCrumb = [
     title: 'Home',
   },
   {
-    title: 'Pricing Groups Discounts',
+    title: 'Item Discounts',
   },
 ];
 
@@ -68,11 +68,11 @@ const ListPricingGroupsDiscounts = () => {
 
   return (
     <ProductProvider>
-      <PageContainer title="Pricing Groups List" description="this is Pricing Groups List page">
+      <PageContainer title="Item Discounts List" description="this is Item Discounts List page">
         {/* breadcrumb */}
-        <Breadcrumb title="Pricing Groups List" items={BCrumb} />
+        <Breadcrumb title="Item Discounts" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box>
+        <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
           <ListTable
             showCheckBox={false}
             headCells={headCells}

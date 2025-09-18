@@ -71,11 +71,11 @@ const SubCategoryList = () => {
 
     return (
         <ProductProvider>
-            <PageContainer title="Brands List" description="this is Brands List page">
+            <PageContainer title="Sub Category Two List" description="this is Brands List page">
                 {/* breadcrumb */}
-                <Breadcrumb title="Brands List" items={BCrumb} />
+                <Breadcrumb title="Sub Category Two List" items={BCrumb} />
                 {/* end breadcrumb */}
-                <Box>
+                <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
                     <ListTable
                         showCheckBox={false}
                         headCells={headCells}

@@ -70,7 +70,7 @@ const ListPricingGroups = () => {
         {/* breadcrumb */}
         <Breadcrumb title="Pricing Groups List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box>
+        <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
           <ListTable
             showCheckBox={false}
             headCells={headCells}

@@ -12,7 +12,7 @@ const BCrumb = [
     title: 'Home',
   },
   {
-    title: 'Customers',
+    title: 'Net Terms',
   },
 ];
 
@@ -66,7 +66,7 @@ const ListNetTerms = () => {
       disablePadding: false,
       label: 'Net Terms',
     },
-   
+
     {
       id: 'status',
       numeric: false,
@@ -74,16 +74,17 @@ const ListNetTerms = () => {
       label: 'Status',
     },
 
-    
+
   ];
 
   const [tableData, setTableData] = React.useState([]);
   const [error, setError] = React.useState(null);
   const [filter, setFilter] = React.useState('get-net-terms-by-month');
+  const [loading, setLoading] = React.useState(false)
 
   const fetchCustomersList = async () => {
+    setLoading(true)
     try {
-      // Update API endpoint to fetch customers instead of products
       const response = await axiosInstance.get(`/netTerms/${filter}`); // or whatever your customer endpoint is
       console.log("response net termsssss", response);
 
@@ -94,6 +95,8 @@ const ListNetTerms = () => {
     } catch (error) {
       console.error('Error fetching customers list:', error);
       setError(error.message);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -103,11 +106,11 @@ const ListNetTerms = () => {
 
   return (
     <ProductProvider>
-      <PageContainer title="Customers List" description="this is Customers List page">
+      <PageContainer title="Net Terms List" description="this is Customers List page">
         {/* breadcrumb */}
-        <Breadcrumb title="Customers List" items={BCrumb} />
+        <Breadcrumb title="Net Terms List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box>
+        <Box sx={{ minWidth: '109.5%', marginLeft: '-60px' }}>
           <ListTable
             showCheckBox={false}
             headCells={headCells}
@@ -115,6 +118,7 @@ const ListNetTerms = () => {
             isCustomersList={true} // Changed from isProductsList
             setTableData={setTableData}
             setFilter={setFilter}
+            loading={loading}
           />
         </Box>
       </PageContainer>

@@ -313,7 +313,9 @@ const ProductTableList = ({
   };
 
   return (
-    <Box>
+    <Box sx={{
+      width: '100%',
+    }}>
       <Box>
         <EnhancedTableToolbar
           numSelected={selected.length}
@@ -321,15 +323,23 @@ const ProductTableList = ({
           handleSearch={handleSearch}
           placeholder={isBrandsList ? "Search Brand" : "Search Product"}
         />
-        <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
-          <TableContainer>
+        <Paper variant="outlined" sx={{
+          mt: 1,
+          border: `1px solid ${borderColor}`,
+          borderRadius: 0, // Remove border radius for full edge-to-edge
+        }}>
+          <TableContainer sx={{
+            overflowX: "auto",
+          }}>
+            {/* Rest of your table code remains the same */}
             <Table
               sx={{
-                minWidth: 1000,
+                minWidth: "100%",
+                tableLayout: "fixed",
                 borderCollapse: "collapse",
                 "& td, & th": {
-                  paddingTop: "4px",    // 👈 reduce vertical padding
-                  paddingBottom: "4px", // 👈 reduce vertical padding
+                  paddingTop: "4px",
+                  paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
@@ -337,7 +347,7 @@ const ProductTableList = ({
                 },
               }}
               aria-labelledby="tableTitle"
-              size="small"   // 👈 also makes rows more compact
+              size="small"
             >
 
               <EnhancedTableHead

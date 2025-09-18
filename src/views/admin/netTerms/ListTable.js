@@ -2,7 +2,7 @@
 // @ts-ignore
 import React, { useContext, useState, useEffect } from 'react';
 import { alpha, useTheme } from '@mui/material/styles';
-import { format, isToday, isThisMonth, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
   Box,
   Table,
@@ -47,10 +47,9 @@ import {
   IconCopyCheckFilled
 } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
-import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
-import axios from 'axios';
 import { IconClock, IconClock2 } from '@tabler/icons';
+import { IconLoader2 } from '@tabler/icons-react';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -321,6 +320,7 @@ const ListTable = ({
   isProductsList = true,
   isBrandsList = true,
   setTableData,
+  loading,
   setFilter
 }) => {
 
@@ -483,6 +483,8 @@ const ListTable = ({
     backgroundColor: '#f0f8ff', // keeps background clean while scrolling
   };
 
+ 
+
   const { total: totalAmount, count: totalCount } = calculateTotals();
 
   return (
@@ -582,117 +584,132 @@ const ListTable = ({
                 showCheckBox={showCheckBox}
                 headCells={headCells}
               />
-              <TableBody>
-                {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = isSelected(row?.customerName || row._id);
-                    const labelId = `enhanced-table-checkbox-${index}`;
-                    const statusDisplay = getStatusDisplay(row);
+              {
+                loading ?
+                  <>
+                    < Box sx={{
+                      display: 'flex',
+                      width:'100%',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      p: 3
+                    }}>
+                      <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        Loading ...
+                      </Typography>
+                    </Box>
+                  </>
+                  : <TableBody>
+                    {stableSort(rows, getComparator(order, orderBy))
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((row, index) => {
+                        const isItemSelected = isSelected(row?.customerName || row._id);
+                        const labelId = `enhanced-table-checkbox-${index}`;
+                        const statusDisplay = getStatusDisplay(row);
 
-                    return (
-                      <TableRow
-                        hover
-                        role="checkbox"
-                        aria-checked={isItemSelected}
-                        tabIndex={-1}
-                        key={row._id || row.salesOrderId || `${row.customerName}-${index}`}
-                        selected={isItemSelected}
-                      >
-                        {showCheckBox && <TableCell padding="checkbox">
-                          <CustomCheckbox
-                            color="primary"
-                            checked={isItemSelected}
-                            inputProps={{
-                              'aria-labelledby': labelId,
-                            }}
-                          />
-                        </TableCell>}
+                        return (
+                          <TableRow
+                            hover
+                            role="checkbox"
+                            aria-checked={isItemSelected}
+                            tabIndex={-1}
+                            key={row._id || row.salesOrderId || `${row.customerName}-${index}`}
+                            selected={isItemSelected}
+                          >
+                            {showCheckBox && <TableCell padding="checkbox">
+                              <CustomCheckbox
+                                color="primary"
+                                checked={isItemSelected}
+                                inputProps={{
+                                  'aria-labelledby': labelId,
+                                }}
+                              />
+                            </TableCell>}
 
-                        {/* Serial */}
-                        <TableCell sx={stickyCellStyle}>
-                          <Box display="flex" gap={1}>
-                            <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => navigate(`/dashboard/customers/edit/${row._id || row.customerData?._id}`)}>
-                                <IconEdit size="1.1rem" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="View Details">
-                              <IconButton size="small" color="info">
-                                <IconDotsVertical size="1.1rem" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
+                            {/* Serial */}
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="Edit">
+                                  <IconButton size="small" color="primary" onClick={() => navigate(`/dashboard/customers/edit/${row._id || row.customerData?._id}`)}>
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="View Details">
+                                  <IconButton size="small" color="info">
+                                    <IconDotsVertical size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
 
-                        {/* Customer ID */}
-                        <TableCell sx={columnWidths.customerId}>
-                          <Typography fontWeight="500" variant="subtitle2">
-                            {row.salesOrderId || 'N/A'}
-                          </Typography>
-                          {row.documentNumber && (
-                            <Typography variant="caption" color="text.secondary">
-                              Doc: {row.documentNumber}
-                            </Typography>
-                          )}
-                        </TableCell>
-
-
-
-                        {/* Customer Name */}
-                        <TableCell sx={columnWidths.customerName}>
-                          <Typography fontWeight="500">
-                            {row.customerName}
-                          </Typography>
-                        </TableCell>
-
-                        {/* Customer Email */}
-                        <TableCell sx={columnWidths.customerEmail}>
-                          <Typography fontWeight="400">
-                            {/* {row.orderDate || 'N/A'} */}
-                            {format(parseISO(row.orderDate), 'mm/dd/yyyy')}
-                          </Typography>
-                        </TableCell>
-
-                        {/* Phone Number */}
-                        <TableCell sx={columnWidths.phone}>
-                          <Typography fontWeight="400">
-                            {/* {row.dueDate|| 'N/A'} */}
-                            {format(parseISO(row.dueDate), 'mm/dd/yyyy')}
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={columnWidths.phone}>
-                          <Typography fontWeight="400">
-                            {row.amount || 'N/A'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={columnWidths.phone}>
-                          <Typography fontWeight="400">
-                            {row.netTerms || 'N/A'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={columnWidths.phone}>
-                          <Typography fontWeight="400">
-                            {row.status || 'N/A'}
-                          </Typography>
-                        </TableCell>
+                            {/* Customer ID */}
+                            <TableCell sx={columnWidths.customerId}>
+                              <Typography fontWeight="500" variant="subtitle2">
+                                {row.salesOrderId || 'N/A'}
+                              </Typography>
+                              {row.documentNumber && (
+                                <Typography variant="caption" color="text.secondary">
+                                  Doc: {row.documentNumber}
+                                </Typography>
+                              )}
+                            </TableCell>
 
 
 
+                            {/* Customer Name */}
+                            <TableCell sx={columnWidths.customerName}>
+                              <Typography fontWeight="500">
+                                {row.customerName}
+                              </Typography>
+                            </TableCell>
+
+                            {/* Customer Email */}
+                            <TableCell sx={columnWidths.customerEmail}>
+                              <Typography fontWeight="400">
+                                {/* {row.orderDate || 'N/A'} */}
+                                {format(parseISO(row.orderDate), 'mm/dd/yyyy')}
+                              </Typography>
+                            </TableCell>
+
+                            {/* Phone Number */}
+                            <TableCell sx={columnWidths.phone}>
+                              <Typography fontWeight="400">
+                                {/* {row.dueDate|| 'N/A'} */}
+                                {format(parseISO(row.dueDate), 'mm/dd/yyyy')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={columnWidths.phone}>
+                              <Typography fontWeight="400">
+                                {row.amount || 'N/A'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={columnWidths.phone}>
+                              <Typography fontWeight="400">
+                                {row.netTerms || 'N/A'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={columnWidths.phone}>
+                              <Typography fontWeight="400">
+                                {row.status || 'N/A'}
+                              </Typography>
+                            </TableCell>
 
 
 
-                        {/* Actions */}
 
+
+
+                            {/* Actions */}
+
+                          </TableRow>
+                        );
+                      })}
+                    {emptyRows > 0 && (
+                      <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
+                        <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
                       </TableRow>
-                    );
-                  })}
-                {emptyRows > 0 && (
-                  <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                    <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
-                  </TableRow>
-                )}
-              </TableBody>
+                    )}
+                  </TableBody>}
             </Table>
           </TableContainer>
           <TablePagination
@@ -705,8 +722,8 @@ const ListTable = ({
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
-      </Box>
-    </Box>
+      </Box >
+    </Box >
   );
 };
 

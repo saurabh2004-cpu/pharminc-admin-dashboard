@@ -195,7 +195,8 @@ const ListTable = ({
   tableData,
   isProductsList = true,
   isBrandsList = true,
-  setTableData
+  setTableData,
+  loading
 }) => {
 
   const {
@@ -384,223 +385,237 @@ const ListTable = ({
                 showCheckBox={showCheckBox}
                 headCells={headCells}
               />
-              <TableBody>
-                {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = isSelected(row?.ProductName || row.title);
-                    const labelId = `enhanced-table-checkbox-${index}`;
+              {loading ?
+                <>
+                  < Box sx={{
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    p: 3
+                  }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      Loading ...
+                    </Typography>
+                  </Box>
+                </>
+                : <TableBody>
+                  {stableSort(rows, getComparator(order, orderBy))
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row, index) => {
+                      const isItemSelected = isSelected(row?.ProductName || row.title);
+                      const labelId = `enhanced-table-checkbox-${index}`;
 
-                    return (
-                      <TableRow
-                        hover
-                        role="checkbox"
-                        aria-checked={isItemSelected}
-                        tabIndex={-1}
-                        key={row._id || row.title}
-                        selected={isItemSelected}
-                      >
-                        {showCheckBox && <TableCell padding="checkbox">
-                          <CustomCheckbox
-                            color="primary"
-                            checked={isItemSelected}
-                            inputProps={{
-                              'aria-labelledby': labelId,
-                            }}
-                          />
-                        </TableCell>}
+                      return (
+                        <TableRow
+                          hover
+                          role="checkbox"
+                          aria-checked={isItemSelected}
+                          tabIndex={-1}
+                          key={row._id || row.title}
+                          selected={isItemSelected}
+                        >
+                          {showCheckBox && <TableCell padding="checkbox">
+                            <CustomCheckbox
+                              color="primary"
+                              checked={isItemSelected}
+                              inputProps={{
+                                'aria-labelledby': labelId,
+                              }}
+                            />
+                          </TableCell>}
 
-                        {isProductsList ? (
-                          // Products List View with enhanced styling and widths
-                          <>
-                            <TableCell sx={stickyCellStyle}>
-                              <Box display="flex" gap={1}>
-                                <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEdit(row._id)}>
-                                    <IconEdit size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDelete(row._id)}>
-                                    <IconTrash size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
+                          {isProductsList ? (
+                            // Products List View with enhanced styling and widths
+                            <>
+                              <TableCell sx={stickyCellStyle}>
+                                <Box display="flex" gap={1}>
+                                  <Tooltip title="Edit">
+                                    <IconButton size="small" color="primary" onClick={() => handleEdit(row._id)}>
+                                      <IconEdit size="1.1rem" />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Delete">
+                                    <IconButton size="small" color="error" onClick={() => handleDelete(row._id)}>
+                                      <IconTrash size="1.1rem" />
+                                    </IconButton>
+                                  </Tooltip>
 
-                                {/* Change Password */}
-                                <Tooltip title="Change Password">
-                                  <IconButton
-                                    size="small"
-                                    color="secondary"
-                                    onClick={() => handleChangePassword(row._id)}
-                                  >
-                                    <IconKey size="1.1rem" /> {/* Use a key/lock icon */}
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
-
-                            <TableCell sx={columnWidths.sku}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="500" variant="subtitle2">
-                                    {row.customerId}
-                                  </Typography>
+                                  {/* Change Password */}
+                                  <Tooltip title="Change Password">
+                                    <IconButton
+                                      size="small"
+                                      color="secondary"
+                                      onClick={() => handleChangePassword(row._id)}
+                                    >
+                                      <IconKey size="1.1rem" /> {/* Use a key/lock icon */}
+                                    </IconButton>
+                                  </Tooltip>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.productName}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400" >
-                                    {row.customerName}
-                                  </Typography>
+                              <TableCell sx={columnWidths.sku}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="500" variant="subtitle2">
+                                      {row.customerId}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.stockLevel}>
-                              <Box display="flex" alignItems="center">
-                                <Box >
-                                  <Typography fontWeight="400">
-                                    {row.contactName}
-                                  </Typography>
+                              <TableCell sx={columnWidths.productName}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400" >
+                                      {row.customerName}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.pricingGroup}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400" sx={{ ml: 2 }}>
-                                    {row.customerEmail || 'N/A'}
-                                  </Typography>
+                              <TableCell sx={columnWidths.stockLevel}>
+                                <Box display="flex" alignItems="center">
+                                  <Box >
+                                    <Typography fontWeight="400">
+                                      {row.contactName}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.brand}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {row.contactEmail || 'N/A'}
-                                  </Typography>
+                              <TableCell sx={columnWidths.pricingGroup}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400" sx={{ ml: 2 }}>
+                                      {row.customerEmail || 'N/A'}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.category}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {row.CustomerPhoneNo || 'N/A'}
-                                  </Typography>
+                              <TableCell sx={columnWidths.brand}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.contactEmail || 'N/A'}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.subCategory}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {row.category || 'N/A'}
-                                  </Typography>
+                              <TableCell sx={columnWidths.category}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.CustomerPhoneNo || 'N/A'}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.storeDescription}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400" >
-                                    {row.primaryBrand || 'N/A'}
-                                  </Typography>
+                              <TableCell sx={columnWidths.subCategory}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.category || 'N/A'}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.pageTitle}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {isNaN(row.netTerms) ? 'N/A' : row.netTerms}
-                                  </Typography>
+                              <TableCell sx={columnWidths.storeDescription}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400" >
+                                      {row.primaryBrand || 'N/A'}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.eachBarcodes}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {row.orderApproval || 'N/A'}
-                                  </Typography>
+                              <TableCell sx={columnWidths.pageTitle}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {isNaN(row.netTerms) ? 'N/A' : row.netTerms}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.defaultShippingRate}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400" sx={{ ml: 10 }}>
-                                    {isNaN(row.defaultShippingRate) ? 'N/A' : row.defaultShippingRate}
-                                  </Typography>
+                              <TableCell sx={columnWidths.eachBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.orderApproval || 'N/A'}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.packBarcodes}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {row.shippingCity || 'N/A'}
-                                  </Typography>
+                              <TableCell sx={columnWidths.defaultShippingRate}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400" sx={{ ml: 10 }}>
+                                      {isNaN(row.defaultShippingRate) ? 'N/A' : row.defaultShippingRate}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell sx={columnWidths.packBarcodes}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {row.shippingState || 'N/A'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell sx={columnWidths.packBarcodes}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {row.inactive === true ? 'Inactive' : 'Active' || 'N/A'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
 
-                            <TableCell sx={columnWidths.createdAt}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Typography fontWeight="400">
-                                    {format(new Date(row.createdAt), 'E, MMM d yyyy')}
-                                  </Typography>
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.shippingCity || 'N/A'}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </TableCell>
+                              </TableCell>
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.shippingState || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.inactive === true ? 'Inactive' : 'Active' || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.createdAt}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {format(new Date(row.createdAt), 'E, MMM d yyyy')}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
 
 
-                          </>
-                        ) : (
-                          ''
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                {emptyRows > 0 && (
-                  <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                    <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
-                  </TableRow>
-                )}
-              </TableBody>
+                            </>
+                          ) : (
+                            ''
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  {emptyRows > 0 && (
+                    <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
+                      <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
+                    </TableRow>
+                  )}
+                </TableBody>}
             </Table>
           </TableContainer>
           <TablePagination

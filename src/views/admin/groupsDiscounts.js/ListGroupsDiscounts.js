@@ -69,11 +69,11 @@ const ListGroupsDiscounts = () => {
 
   return (
     <ProductProvider>
-      <PageContainer title="Pricing Groups List" description="this is Pricing Groups List page">
+      <PageContainer title="Pricing Groups Discounts List" description="this is Pricing Groups List page">
         {/* breadcrumb */}
-        <Breadcrumb title="Pricing Groups List" items={BCrumb} />
+        <Breadcrumb title="Pricing Groups Discounts List" items={BCrumb} />
         {/* end breadcrumb */}
-        <Box>
+        <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
           <ListTable
             showCheckBox={false}
             headCells={headCells}

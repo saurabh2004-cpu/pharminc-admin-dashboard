@@ -72,11 +72,11 @@ const ListDeliveryVendor = () => {
 
     return (
         <ProductProvider>
-            <PageContainer title="Delivery Vendor" description="this is Delivery Vendor page">
+            <PageContainer title="Delivery Vendor List" description="this is Delivery Vendor page">
                 {/* breadcrumb */}
-                <Breadcrumb title="Delivery Vendor" items={BCrumb} />
+                <Breadcrumb title="Delivery Vendor Kist" items={BCrumb} />
                 {/* end breadcrumb */}
-                <Box>
+                <Box sx={{ minWidth: '105', marginLeft: '-24px' }}>
                     <ListTable
                         showCheckBox={false}
                         headCells={headCells}
