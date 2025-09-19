@@ -236,29 +236,68 @@ const ListTable = ({
   };
 
   useEffect(() => {
-    if (isBrandsList) {
-      setRows(sourceData);
+    if (search.trim()) {
+      // 🔎 Reapply filtering if search is active
+      const filteredRows = sourceData.filter((row) => {
+        const searchValue = search.toLowerCase();
+        return (
+          row.customerId?.toLowerCase().includes(searchValue) ||
+          row.customerName?.toLowerCase().includes(searchValue) ||
+          row.contactName?.toLowerCase().includes(searchValue) ||
+          row.customerEmail?.toLowerCase().includes(searchValue) ||
+          row.contactEmail?.toLowerCase().includes(searchValue) ||
+          row.CustomerPhoneNo?.toString().toLowerCase().includes(searchValue) ||
+          row.category?.toLowerCase().includes(searchValue) ||
+          row.primaryBrand?.toLowerCase().includes(searchValue) ||
+          row.netTerms?.toString().toLowerCase().includes(searchValue) ||
+          row.orderApproval?.toLowerCase().includes(searchValue) ||
+          row.defaultShippingRate?.toString().toLowerCase().includes(searchValue) ||
+          row.shippingCity?.toLowerCase().includes(searchValue) ||
+          row.shippingState?.toLowerCase().includes(searchValue) ||
+          (row.inactive ? "inactive" : "active").includes(searchValue) ||
+          (row.createdAt
+            ? new Date(row.createdAt).toLocaleDateString().toLowerCase().includes(searchValue)
+            : false)
+        );
+      });
+      setRows(filteredRows);
     } else {
-      setRows(filteredAndSortedProducts);
+      // 📦 No search → reset to full dataset
+      if (isBrandsList) {
+        setRows(sourceData);
+      } else {
+        setRows(filteredAndSortedProducts);
+      }
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList]);
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    if (isProductsList) {
-      const filteredRows = sourceData.filter((row) => {
-        return (
-          row.sku?.toLowerCase().includes(searchValue) ||
-          row.ProductName?.toLowerCase().includes(searchValue) ||
-          row.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-          row.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue)
-        );
-      });
-      setRows(filteredRows);
-    }
+    const filteredRows = sourceData.filter((row) => {
+      return (
+        row.customerId?.toLowerCase().includes(searchValue) ||
+        row.customerName?.toLowerCase().includes(searchValue) ||
+        row.contactName?.toLowerCase().includes(searchValue) ||
+        row.customerEmail?.toLowerCase().includes(searchValue) ||
+        row.contactEmail?.toLowerCase().includes(searchValue) ||
+        row.CustomerPhoneNo?.toString().toLowerCase().includes(searchValue) ||
+        row.category?.toLowerCase().includes(searchValue) ||
+        row.primaryBrand?.toLowerCase().includes(searchValue) ||
+        row.netTerms?.toString().toLowerCase().includes(searchValue) ||
+        row.orderApproval?.toLowerCase().includes(searchValue) ||
+        row.defaultShippingRate?.toString().toLowerCase().includes(searchValue) ||
+        row.shippingCity?.toLowerCase().includes(searchValue) ||
+        row.shippingState?.toLowerCase().includes(searchValue) ||
+        (row.inactive ? "inactive" : "active").includes(searchValue) ||
+        (row.createdAt ? new Date(row.createdAt).toLocaleDateString().toLowerCase().includes(searchValue) : false)
+      );
+    });
+
+    setRows(filteredRows);
   };
+
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';

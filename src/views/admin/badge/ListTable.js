@@ -204,7 +204,8 @@ const ListTable = ({
       setRows(filteredRows);
     } else {
       const filteredRows = filteredAndSortedProducts.filter((row) =>
-        row.title.toLowerCase().includes(searchValue)
+        row?.text.toLowerCase().includes(searchValue) ||
+        row?.backgroundColor.toLowerCase().includes(searchValue)
       );
       setRows(filteredRows);
     }
@@ -281,7 +282,7 @@ const ListTable = ({
                 minWidth: 1000,
                 borderCollapse: "collapse", // ensures borders connect
                 "& td, & th": {
-                   paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingTop: "4px",    // 👈 reduce vertical padding
                   paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
                 },

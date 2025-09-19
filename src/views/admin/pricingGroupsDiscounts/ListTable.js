@@ -247,10 +247,12 @@ const ListTable = ({
 
     if (isBrandsList) {
       const filteredRows = sourceData.filter((row) => {
+        const customerIdStr = row?.customerId?.toString().toLowerCase() || "";
+        const customerName = customerMap[row?.customerId]?.toLowerCase() || "";
+
         return (
-          row?.productSku?.toLowerCase().includes(searchValue) ||
-          row?.pricingGroup?.name?.toString().toLowerCase().includes(searchValue) ||
-          row?.customerId?.toString().toLowerCase().includes(searchValue)
+          customerIdStr.includes(searchValue) ||
+          customerName.includes(searchValue)
         );
       });
       setRows(filteredRows);

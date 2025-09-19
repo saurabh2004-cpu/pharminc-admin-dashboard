@@ -103,7 +103,7 @@ function EnhancedTableHead(props) {
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
-              ...headCellStyle,
+              // ...headCellStyle,
               ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
             }}
           >
@@ -235,12 +235,33 @@ const ListTable = ({
 
 
   useEffect(() => {
-    if (isBrandsList) {
-      setRows(sourceData);
+    let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
+
+    if (search) {
+      const searchValue = search.toLowerCase();
+
+      const filteredRows = baseData.filter((row) => {
+        const values = [
+          row?.documentNumber,
+          row?.customerName,
+          row?.itemSku,
+          row?.salesChannel,
+          row?.status,
+          row?.trackingNumber,
+          row?.customerPO,
+        ];
+
+        return values.some((val) =>
+          (val || "").toString().toLowerCase().includes(searchValue)
+        );
+      });
+
+      setRows(filteredRows);
     } else {
-      setRows(filteredAndSortedProducts);
+      setRows(baseData);
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList]);
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
+
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
@@ -251,7 +272,12 @@ const ListTable = ({
         return (
           row?.documentNumber?.toLowerCase().includes(searchValue) ||
           row?.customerName?.toLowerCase().includes(searchValue) ||
-          row?.itemSku?.toLowerCase().includes(searchValue)
+          row?.itemSku?.toLowerCase().includes(searchValue) ||
+          row?.salesChannel?.toLowerCase().includes(searchValue) ||
+          row?.status?.toLowerCase().includes(searchValue) ||
+          row?.trackingNumber?.toLowerCase().includes(searchValue) ||
+          row?.customerPO?.toLowerCase().includes(searchValue)
+
         )
       });
       setRows(filteredRows);
@@ -512,7 +538,10 @@ const ListTable = ({
                           <Box display="flex" alignItems="center">
                             <Box >
                               <Typography fontWeight="400">
-                                {row?.shippingAddress || 'N/A'}
+                                {row?.shippingAddress instanceof Object ?
+                                  `${row?.shippingAddress.shippingAddressLineOne || ''} , ${row?.shippingAddress.shippingAddressLineTwo || ''} , ${row?.shippingAddress.shippingAddressLineThree || ''} , ${row?.shippingAddress.shippingCity || ''} , ${row?.shippingAddress.shippingState || ''} , ${row?.shippingAddress.shippingZip || ''}`.trim()
+                                  : `${row?.shippingAddress}`
+                                }
                               </Typography>
                             </Box>
                           </Box>
@@ -522,7 +551,10 @@ const ListTable = ({
                           <Box display="flex" alignItems="center">
                             <Box >
                               <Typography fontWeight="400">
-                                {row?.billingAddress || 'N/A'}
+                                {row?.billingAddress instanceof Object ?
+                                  `${row?.billingAddress.billingAddressLineOne || ''}, ${row?.billingAddress.billingAddressLineTwo || ''}, ${row?.billingAddress.billingAddressLineThree || ''}, ${row?.billingAddress.billingCity || ''}, ${row?.billingAddress.billingState || ''}, ${row?.billingAddress.billingZip || ''}`.trim()
+                                  : `${row?.billingAddress}`
+                                }
                               </Typography>
                             </Box>
                           </Box>
@@ -537,9 +569,6 @@ const ListTable = ({
                             </Box>
                           </Box>
                         </TableCell>
-
-
-
 
                         <TableCell sx={columnWidths.createdAt}>
                           <Typography>

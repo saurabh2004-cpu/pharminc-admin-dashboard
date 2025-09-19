@@ -252,29 +252,65 @@ const ListTable = ({
   };
 
   useEffect(() => {
-    if (isBrandsList) {
-      setRows(sourceData);
+    let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
+
+    if (search) {
+      const searchValue = search.toLowerCase();
+      const filteredRows = baseData.filter((row) => {
+        const values = [
+          ...Object.values(row).map((val) => (typeof val === "object" ? "" : String(val))),
+          row.pricingGroup?.name,
+          row.commerceCategoriesOne?.name,
+          row.commerceCategoriesTwo?.name,
+          row.commerceCategoriesThree?.name,
+          row.commerceCategoriesFour?.name,
+          format(new Date(row.createdAt), "E, MMM d yyyy"), // also searchable date
+        ];
+
+        return values.some((val) =>
+          String(val || "")
+            .toLowerCase()
+            .includes(searchValue)
+        );
+      });
+      setRows(filteredRows);
     } else {
-      setRows(filteredAndSortedProducts);
+      setRows(baseData);
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList]);
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
+
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    if (isProductsList) {
-      const filteredRows = sourceData.filter((row) => {
-        return (
-          row.sku?.toLowerCase().includes(searchValue) ||
-          row.ProductName?.toLowerCase().includes(searchValue) ||
-          row.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-          row.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue)
-        );
-      });
-      setRows(filteredRows);
+    if (!searchValue) {
+      // Reset
+      setRows(sourceData);
+      return;
     }
+
+    const filteredRows = sourceData.filter((row) => {
+      // Collect all primitive + nested fields
+      const values = [
+        ...Object.values(row).map((val) => (typeof val === "object" ? "" : String(val))),
+        row.pricingGroup?.name,
+        row.commerceCategoriesOne?.name,
+        row.commerceCategoriesTwo?.name,
+        row.commerceCategoriesThree?.name,
+        row.commerceCategoriesFour?.name,
+      ];
+
+      return values.some((val) =>
+        String(val || "")
+          .toLowerCase()
+          .includes(searchValue)
+      );
+    });
+
+    setRows(filteredRows);
   };
+
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';

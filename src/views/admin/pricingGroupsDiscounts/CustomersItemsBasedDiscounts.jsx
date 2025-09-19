@@ -291,7 +291,8 @@ const CustomersItemsBasedDiscounts = () => {
       const filteredRows = sourceData.filter((row) => {
         return (
           row?.productSku?.toLowerCase().includes(searchValue) ||
-          row?.pricingGroup?.name?.toLowerCase().includes(searchValue)
+          row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
+          row?.percentage?.includes(searchValue)
         );
       });
       setRows(filteredRows);
@@ -369,7 +370,7 @@ const CustomersItemsBasedDiscounts = () => {
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== id));
         setRows((prevRows) => prevRows.filter((item) => item._id !== id));
-        
+
       }
     } catch (error) {
       console.error('Error deleting item discounts:', error);
@@ -388,7 +389,7 @@ const CustomersItemsBasedDiscounts = () => {
     backgroundColor: '#f0f8ff', // keeps background clean while scrolling
   };
 
- 
+
 
   return (
     <Box>

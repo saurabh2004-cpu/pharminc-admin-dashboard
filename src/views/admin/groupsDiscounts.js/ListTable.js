@@ -210,6 +210,8 @@ const ListTable = ({
   showCheckBox,
   headCells,
   tableData,
+  allPricingGroupDiscounts = [], // New prop for all discounts
+  pricingGroupsMap = {}, // New prop for pricing group name mapping
   isBrandsList = false,
   setTableData
 }) => {
@@ -240,25 +242,25 @@ const ListTable = ({
     }
   }, [sourceData, filteredAndSortedProducts, isBrandsList]);
 
-  const handleSearch = (event) => {
-    const searchValue = event.target.value.toLowerCase();
-    setSearch(searchValue);
+  // const handleSearch = (event) => {
+  //   const searchValue = event.target.value.toLowerCase();
+  //   setSearch(searchValue);
 
-    if (isBrandsList) {
-      const filteredRows = sourceData.filter((row) => {
-        return (
-          row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-          row?.customerId?.toString().toLowerCase().includes(searchValue)
-        );
-      });
-      setRows(filteredRows);
-    } else {
-      const filteredRows = filteredAndSortedProducts.filter((row) => {
-        return row.title.toLowerCase().includes(searchValue);
-      });
-      setRows(filteredRows);
-    }
-  };
+  //   if (isBrandsList) {
+  //     const filteredRows = sourceData.filter((row) => {
+  //       return (
+  //         row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
+  //         row?.customerId?.toString().toLowerCase().includes(searchValue)
+  //       );
+  //     });
+  //     setRows(filteredRows);
+  //   } else {
+  //     const filteredRows = filteredAndSortedProducts.filter((row) => {
+  //       return row.title.toLowerCase().includes(searchValue);
+  //     });
+  //     setRows(filteredRows);
+  //   }
+  // };
 
 
   const handleRequestSort = (event, property) => {
@@ -384,7 +386,54 @@ const ListTable = ({
       fetchCustomerDetails();
     }
   }, [rows]);
+  const handleSearch = (event) => {
+    const searchValue = event.target.value.toLowerCase();
+    setSearch(searchValue);
 
+    if (isBrandsList) {
+      if (searchValue.trim() === '') {
+        // If search is empty, show all tableData
+        setRows(tableData);
+        return;
+      }
+
+      // Filter based on customer ID, customer name, or pricing group names
+      const filteredRows = tableData.filter((row) => {
+        const customerIdMatch = row?.customerId?.toString().toLowerCase().includes(searchValue);
+        const customerNameMatch = customerMap[row.customerId]?.toLowerCase().includes(searchValue);
+
+        // Check if any pricing group name for this customer matches
+        const pricingGroupNames = getCustomerPricingGroupNames(row.customerId).toLowerCase();
+        const pricingGroupMatch = pricingGroupNames.includes(searchValue);
+
+        return customerIdMatch || customerNameMatch || pricingGroupMatch;
+      });
+
+      setRows(filteredRows);
+    } else {
+      // Existing product search logic
+      const filteredRows = filteredAndSortedProducts.filter((row) => {
+        return row.title.toLowerCase().includes(searchValue);
+      });
+      setRows(filteredRows);
+    }
+  };
+
+  const getCustomerPricingGroupNames = (customerId) => {
+    const customerDiscounts = allPricingGroupDiscounts.filter(
+      discount => discount.customerId === customerId
+    );
+
+    return customerDiscounts.map(discount => {
+      const groupId = discount.pricingGroup;
+      // If pricingGroup is an object, use its name directly
+      if (typeof groupId === 'object' && groupId !== null) {
+        return groupId.name;
+      }
+      // If it's a string ID, look it up in the map
+      return pricingGroupsMap[groupId] || `Group ${groupId}`;
+    }).join(', ');
+  };
 
   return (
     <Box>
@@ -393,7 +442,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Pricing Group Discount" : "Search Product"}
+          placeholder="Search Customer ID, Name, or Pricing Group"
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -450,32 +499,22 @@ const ListTable = ({
                           />
                         </TableCell>}
 
-                        {isBrandsList ? (
-                          // Brands List View
-                          <>
+                        <TableCell sx={{ cursor: "pointer", ":hover": { color: "blue" } }}>
+                          <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
+                            {row?.customerId}
+                          </Typography>
+                        </TableCell>
 
+                        <TableCell sx={{ cursor: "pointer" }}>
+                          <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
+                            {customerMap[row.customerId] || ""}
+                          </Typography>
+                        </TableCell>
 
-                            <TableCell sx={{ cursor: "pointer", ":hover": { color: "blue" } }}>
-                              <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
-                                {row?.customerId}
-                              </Typography>
-                            </TableCell>
+                        <TableCell>
+                          <Typography>{format(new Date(row.updatedAt), 'E, MMM d yyyy')}</Typography>
+                        </TableCell>
 
-                            <TableCell sx={{ cursor: "pointer" }}>
-                              <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
-                                {customerMap[row.customerId] || "Loading..."}
-                              </Typography>
-                            </TableCell>
-
-                            <TableCell>
-                              <Typography>{format(new Date(row.updatedAt), 'E, MMM d yyyy')}</Typography>
-                            </TableCell>
-
-                          </>
-                        ) : (
-                          // Products List View (original code)
-                          ''
-                        )}
                       </TableRow>
                     );
                   })}

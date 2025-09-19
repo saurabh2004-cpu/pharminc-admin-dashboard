@@ -199,9 +199,9 @@ const EnhancedTableToolbar = (props) => {
                             <IconFilter size="1.2rem" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Export CSV">
+                    {/* <Tooltip title="Export CSV">
                         <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
-                    </Tooltip>
+                    </Tooltip> */}
                 </>
             )}
         </Toolbar>
@@ -289,7 +289,8 @@ const CustomersPricingGroups = () => {
             const filteredRows = sourceData.filter((row) => {
                 return (
                     row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-                    row?.customerId?.toString().toLowerCase().includes(searchValue)
+                    row?.customerId?.toString().toLowerCase().includes(searchValue) ||
+                    row?.percentage?.includes(searchValue)
                 );
             });
             setRows(filteredRows);
@@ -460,7 +461,9 @@ const CustomersPricingGroups = () => {
                                                             </Box>
                                                         </TableCell>
 
-                                                        <TableCell onClick={() => handleEditPricingGroup(row._id)} sx={{ cursor: 'pointer' }}>
+                                                        <TableCell
+                                                        // onClick={() => handleEditPricingGroup(row._id)} sx={{ cursor: 'pointer' }}
+                                                        >
                                                             <Box display="flex" alignItems="center">
                                                                 <Box sx={{ ml: 2 }}>
                                                                     <Typography fontWeight="600">

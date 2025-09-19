@@ -19,24 +19,20 @@ const BCrumb = [
 
 const ListNetTerms = () => {
   const headCells = [
+
     {
-      id: 'Actions',
+      id: 'documentNumber',
       numeric: false,
       disablePadding: false,
-      label: 'Actions',
+      label: 'Document Number',
     },
     {
-      id: 'salesOrderId',
+      id: 'date',
       numeric: false,
       disablePadding: false,
-      label: 'Sales Order ID',
+      label: 'Date',
     },
-    // {
-    //   id: 'documentNumber',
-    //   numeric: false,
-    //   disablePadding: false,
-    //   label: 'Document Number',
-    // },
+
     {
       id: 'customerName',
       numeric: false,
@@ -44,51 +40,70 @@ const ListNetTerms = () => {
       label: 'Customer Name',
     },
     {
-      id: 'orderDate',
+      id: 'salesChannel',
       numeric: false,
       disablePadding: false,
-      label: 'Order Date',
+      label: 'Sales Channel',
     },
     {
-      id: 'dueDate',
+      id: 'trackingNumber',
       numeric: false,
       disablePadding: false,
-      label: 'Due Date',
+      label: 'Tracking Number',
     },
     {
-      id: 'amount',
+      id: 'shippingAddress',
       numeric: false,
       disablePadding: false,
-      label: 'Amount',
+      label: 'Shipping Address',
     },
     {
-      id: 'netTerms',
+      id: 'billingAddress',
       numeric: false,
       disablePadding: false,
-      label: 'Net Terms',
+      label: 'Billing Address',
+    },
+    {
+      id: 'customerPO',
+      numeric: false,
+      disablePadding: false,
+      label: 'Customer PO',
     },
 
+
+
     {
-      id: 'status',
+      id: 'LastUpdatedDate',
       numeric: false,
       disablePadding: false,
-      label: 'Status',
+      label: 'Last Updated Date',
     },
-
 
   ];
 
   const [tableData, setTableData] = React.useState([]);
   const [error, setError] = React.useState(null);
-  const [filter, setFilter] = React.useState('get-net-terms-by-month');
+  const [filter, setFilter] = React.useState('');
   const [loading, setLoading] = React.useState(false)
   const { isCollapse } = React.useContext(CustomizerContext);
+  const [date, setdate] = React.useState('');
 
+
+
+  React.useEffect(() => {
+    // Get current date
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // Adding 1 since getMonth() returns 0-11
+
+    // Set initial filter with current month and year
+    setFilter(`get-net-terms-by-month/${currentMonth}/${currentYear}`);
+  }, []);
 
   const fetchCustomersList = async () => {
     setLoading(true)
     try {
-      const response = await axiosInstance.get(`/netTerms/${filter}`); // or whatever your customer endpoint is
+      const response = await axiosInstance.get(`/netTerms/${filter}`); 
       console.log("response net termsssss", response);
 
       if (response.data.statusCode === 200) {

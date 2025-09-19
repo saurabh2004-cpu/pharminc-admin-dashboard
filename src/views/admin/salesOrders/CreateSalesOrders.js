@@ -9,6 +9,9 @@ import { useNavigate } from 'react-router';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Autocomplete } from '@mui/material'
+import { CircularProgress, Backdrop } from '@mui/material';
+import { set } from 'lodash';
+import { Card, CardContent, Radio } from "@mui/material";
 
 
 const CreateSalesOrders = () => {
@@ -18,14 +21,14 @@ const CreateSalesOrders = () => {
     customerName: '',
     salesChannel: '',
     trackingNumber: '',
-    shippingAddress: '',
-    billingAddress: '',
+    shippingAddress: {},
+    billingAddress: {},
     customerPO: '',
     itemSku: '',
-    packQuantity: 0,
-    unitsQuantity: 0,
-    finalAmount: 0,
-    amount: 0
+    packQuantity: null,
+    unitsQuantity: null,
+    finalAmount: null,
+    amount: null
   });
 
   const [error, setError] = React.useState('');
@@ -36,7 +39,10 @@ const CreateSalesOrders = () => {
   const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState(null);
   const [customers, setCustomers] = React.useState([]);
-
+  const [billingAddress, setBillingAddress] = React.useState('');
+  const [shippingAddress, setShippingAddress] = React.useState('');
+  const [selectedShippingAddress, setSelectedShippingAddress] = React.useState(null);
+  const [selectedBillingAddress, setSelectedBillingAddress] = React.useState(null);
 
   const handleSubmit = async () => {
     // Validation
@@ -194,6 +200,31 @@ const CreateSalesOrders = () => {
     }
   };
 
+  const fetchCustomerAddresses = async () => {
+    try {
+      const response = await axiosInstance.get(`/admin/customer-addresses/${formData.customerName}`);
+      console.log("response customer addresses", response.data);
+
+      if (response.data.statusCode === 200) {
+        if (response.data.data.billingAddresses.length > 0) {
+          setBillingAddress(response.data.data.billingAddresses);
+        }
+
+        if (response.data.data.shippingAddresses) {
+          setShippingAddress(response.data.data.shippingAddresses);
+        }
+      }
+
+    } catch (error) {
+      console.error('Error fetching customer addresses:', error);
+      // setError(error.message);
+    }
+  }
+
+  useEffect(() => {
+    fetchCustomerAddresses();
+  }, [formData.customerName]);
+
   React.useEffect(() => {
     fetchCustomersList();
   }, []);
@@ -209,7 +240,6 @@ const CreateSalesOrders = () => {
       setError('');
     }
   };
-
 
   const handleImportCsvFile = async () => {
     if (!selectedFile) {
@@ -315,7 +345,7 @@ const CreateSalesOrders = () => {
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="item-sku" sx={{ mt: 2 }}>
-            Select Customer Id
+            Select Customer Name
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
@@ -323,16 +353,15 @@ const CreateSalesOrders = () => {
               id="item-sku-autocomplete"
               options={customers}
               getOptionLabel={(customer) =>
-                customer ? `${customer.customerId} (Name: ${customer.contactName})` : ""
+                customer ? ` ${customer.customerName}` : ""
               }
               value={
-                customers.find((c) => c.customerId === formData.documentNumber) || null
+                customers.find((c) => c.customerName === formData.customerName) || null
               }
               onChange={(event, newValue) => {
                 setFormData({
                   ...formData,
-                  documentNumber: newValue ? newValue.customerId : "",
-                  customerName: newValue ? newValue.contactName : "",
+                  customerName: newValue ? newValue.customerName : "",
                 });
 
               }}
@@ -341,7 +370,7 @@ const CreateSalesOrders = () => {
                   {...params}
                   placeholder={
                     productsList.length === 0
-                      ? "Loading products..."
+                      ? "Loading Customers..."
                       : "Search or select a Customer"
                   }
                   size="small"
@@ -352,16 +381,16 @@ const CreateSalesOrders = () => {
         </Grid>
 
         <Grid size={6}>
-          <CustomFormLabel htmlFor="customer-name" sx={{ mt: 2 }}>
-            Customer Name
+          <CustomFormLabel htmlFor="doc-no" sx={{ mt: 2 }}>
+            Document Number
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="customer-name"
+            id="doc-no"
             fullWidth
-            value={formData.customerName}
-            onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-            placeholder="Enter customer name"
+            value={formData.documentNumber}
+            onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
+            placeholder="Enter Document Number"
           />
         </Grid>
 
@@ -369,7 +398,6 @@ const CreateSalesOrders = () => {
         <Grid size={6}>
           <CustomFormLabel htmlFor="sales-channel" sx={{ mt: 2 }}>
             Sales Channel
-            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
             id="sales-channel"
@@ -393,7 +421,7 @@ const CreateSalesOrders = () => {
           />
         </Grid>
 
-        {/* Shipping Address - Full Width */}
+        {/* Shipping Address - Full Width
         <Grid size={12}>
           <CustomFormLabel htmlFor="shipping-address" sx={{ mt: 2 }}>
             Shipping Address
@@ -409,7 +437,7 @@ const CreateSalesOrders = () => {
         </Grid>
 
         {/* Billing Address - Full Width */}
-        <Grid size={12}>
+        {/* <Grid size={12}>
           <CustomFormLabel htmlFor="billing-address" sx={{ mt: 2 }}>
             Billing Address
           </CustomFormLabel>
@@ -420,10 +448,129 @@ const CreateSalesOrders = () => {
             onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
             placeholder="Enter billing address"
           />
+        </Grid> */ }
+
+        {/* Shipping Address Selection */}
+        <Grid item xs={12}>
+          {shippingAddress.length > 0 && <CustomFormLabel>Choose Shipping Address</CustomFormLabel>}
+          {shippingAddress.length > 0 && <Grid container spacing={2}>
+            {shippingAddress?.map((addr, index) => (
+              <Grid item xs={6} key={index}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    border: selectedShippingAddress === index ? "2px solid #2E2F7F" : "1px solid #ccc",
+                    borderRadius: "8px",
+                    cursor: "pointer"
+                  }}
+                  onClick={() => {
+                    setSelectedShippingAddress(index);
+                    setFormData({
+                      ...formData,
+                      shippingAddress: {
+                        shippingAddressLineOne: addr.shippingAddressOne,
+                        shippingAddressLineTwo: addr.shippingAddressTwo,
+                        shippingAddressLineThree: addr.shippingAddressThree,
+                        shippingCity: addr.shippingCity,
+                        shippingState: addr.shippingState,
+                        shippingZip: addr.shippingZip
+                      }
+                    });
+                  }}
+                >
+                  <CardContent>
+                    <Radio
+                      checked={selectedShippingAddress === index}
+                      onChange={() => {
+                        setSelectedShippingAddress(index);
+                        setFormData({
+                          ...formData,
+                          shippingAddress: {
+                            shippingAddressLineOne: addr.shippingAddressOne,
+                            shippingAddressLineTwo: addr.shippingAddressTwo,
+                            shippingAddressLineThree: addr.shippingAddressThree,
+                            shippingCity: addr.shippingCity,
+                            shippingState: addr.shippingState,
+                            shippingZip: addr.shippingZip
+                          }
+                        });
+                      }}
+                    />
+                    <Typography variant="subtitle1">{addr.shippingAddressOne}</Typography>
+                    {addr.shippingAddressTwo && <Typography>{addr.shippingAddressTwo}</Typography>}
+                    {addr.shippingAddressThree && <Typography>{addr.shippingAddressThree}</Typography>}
+                    <Typography>
+                      {addr.shippingCity}, {addr.shippingState} {addr.shippingZip}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>}
         </Grid>
 
+        {/* Billing Address Selection */}
+        <Grid item xs={12} sx={{ mt: 2 }}>
+          {billingAddress.length > 0 && <CustomFormLabel>Choose Billing Address</CustomFormLabel>}
+          {billingAddress.length > 0 && <Grid container spacing={2}>
+            {billingAddress?.map((addr, index) => (
+              <Grid item xs={6} key={index}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    border: selectedBillingAddress === index ? "2px solid #2E2F7F" : "1px solid #ccc",
+                    borderRadius: "8px",
+                    cursor: "pointer"
+                  }}
+                  onClick={() => {
+                    setSelectedBillingAddress(index);
+                    setFormData({
+                      ...formData,
+                      billingAddress: {
+                        billingAddressLineOne: addr.billingAddressOne,
+                        billingAddressLineTwo: addr.billingAddressTwo,
+                        billingAddressLineThree: addr.billingAddressThree,
+                        billingCity: addr.billingCity,
+                        billingState: addr.billingState,
+                        billingZip: addr.billingZip
+                      }
+                    });
+                  }}
+                >
+                  <CardContent>
+                    <Radio
+                      checked={selectedBillingAddress === index}
+                      onChange={() => {
+                        setSelectedBillingAddress(index);
+                        setFormData({
+                          ...formData,
+                          billingAddress: {
+                            billingAddressLineOne: addr.billingAddressOne,
+                            billingAddressLineTwo: addr.billingAddressTwo,
+                            billingAddressLineThree: addr.billingAddressThree,
+                            billingCity: addr.billingCity,
+                            billingState: addr.billingState,
+                            billingZip: addr.billingZip
+                          }
+                        });
+                      }}
+                    />
+                    <Typography variant="subtitle1">{addr.billingAddressOne}</Typography>
+                    {addr.billingAddressTwo && <Typography>{addr.billingAddressTwo}</Typography>}
+                    {addr.billingAddressThree && <Typography>{addr.billingAddressThree}</Typography>}
+                    <Typography>
+                      {addr.billingCity}, {addr.billingState} {addr.billingZip}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>}
+        </Grid>
+
+
         {/* Customer PO and Item SKU - Two per row */}
-        <Grid size={6}>
+        <Grid size={12}>
           <CustomFormLabel htmlFor="customer-po" sx={{ mt: 2 }}>
             Customer PO
           </CustomFormLabel>
@@ -601,12 +748,12 @@ const CreateSalesOrders = () => {
         </Backdrop>
 
         <DialogTitle>
-          Import Commerce Categories from CSV
+          Import Sales Orders from CSV
         </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Select a CSV file to import multiple badges at once.
+              Select a CSV file to import multiple sales orders at once.
             </Typography>
 
             <input

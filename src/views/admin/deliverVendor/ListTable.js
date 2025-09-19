@@ -229,7 +229,10 @@ const ListTable = ({
 
     if (isBrandsList) {
       const filteredRows = sourceData.filter((row) => {
-        return row.name.toLowerCase().includes(searchValue);
+        return (
+          row.name.toLowerCase().includes(searchValue) ||
+          row.vendorTrackingUrl.toLowerCase().includes(searchValue)
+        );
       });
       setRows(filteredRows);
     } else {

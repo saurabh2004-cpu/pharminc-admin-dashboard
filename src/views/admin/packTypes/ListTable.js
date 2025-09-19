@@ -247,16 +247,23 @@ const ListTable = ({
 
     if (isBrandsList) {
       const filteredRows = sourceData.filter((row) => {
-        return row.name.toLowerCase().includes(searchValue);
+        return (
+          row?.name?.toLowerCase().includes(searchValue) ||
+          row?.quantity?.toString().toLowerCase().includes(searchValue) // ✅ search by quantity
+        );
       });
       setRows(filteredRows);
     } else {
       const filteredRows = filteredAndSortedProducts.filter((row) => {
-        return row.title.toLowerCase().includes(searchValue);
+        return (
+          row?.title?.toLowerCase().includes(searchValue) ||
+          row?.quantity?.toString().toLowerCase().includes(searchValue) // ✅ also check here
+        );
       });
       setRows(filteredRows);
     }
   };
+
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';

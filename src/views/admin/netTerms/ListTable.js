@@ -347,9 +347,16 @@ const ListTable = ({
   const columnWidths = {
     serial: { minWidth: '80px' },
     customerId: { minWidth: '150px' },
+    document: { minWidth: '250px' },
     netTerms: { minWidth: '120px' },
-    customerName: { minWidth: '200px' },
+    customer: { minWidth: '300px' },
+    customerPO: { minWidth: '200px' },
+    updatedAt: { minWidth: '200px' },
+    salesChannel: { minWidth: '150px' },
     customerEmail: { minWidth: '220px' },
+    shipping: { minWidth: '420px' },
+    billing: { minWidth: '420px' },
+    tracking: { minWidth: '220px' },
     phone: { minWidth: '150px' },
     dueDate: { minWidth: '140px' },
     amount: { minWidth: '120px' },
@@ -358,31 +365,59 @@ const ListTable = ({
   };
 
   // Apply search filter
+  // Apply search filter
   const applySearchFilter = (data, searchValue) => {
     if (!searchValue) return data;
 
     return data.filter((row) => {
-      return (
-        row.customerId?.toLowerCase().includes(searchValue) ||
-        row.customerName?.toLowerCase().includes(searchValue) ||
-        row.customerEmail?.toLowerCase().includes(searchValue) ||
-        row.documentNumber?.toLowerCase().includes(searchValue) ||
-        row.netTerms?.toString().toLowerCase().includes(searchValue)
+      const doc = row?.salesOrder || {}; // handle nested structure
+
+      const searchIn = [
+        row.customerId,
+        row.customerName,
+        row.customerEmail,
+        row.netTerms,
+        row.status,
+        row.salesChannel,
+        row.trackingNumber,
+        row.customerPO,
+        doc.documentNumber,
+        doc.customerName,
+        doc.customerPO,
+        doc.salesChannel,
+        doc.trackingNumber,
+        doc.shippingAddress?.shippingCity,
+        doc.shippingAddress?.shippingState,
+        doc.shippingAddress?.shippingZip,
+        doc.billingAddress?.billingCity,
+        doc.billingAddress?.billingState,
+        doc.billingAddress?.billingZip,
+        doc.updatedAt ? new Date(doc.updatedAt).toLocaleDateString() : null,
+        doc.date ? new Date(doc.date).toLocaleDateString() : null,
+      ];
+
+      return searchIn.some((field) =>
+        field?.toString().toLowerCase().includes(searchValue)
       );
     });
   };
 
+
   // Update filtered data when source data or search changes
   useEffect(() => {
-    const searchFiltered = applySearchFilter(sourceData, search.toLowerCase());
+    const searchValue = search.toLowerCase();
+    const searchFiltered = applySearchFilter(sourceData, searchValue);
+
     setFilteredRows(searchFiltered);
-    setRows(searchFiltered);
-    setPage(0);
+    setRows(searchFiltered); // keep table rows synced
+    setPage(0); // reset pagination on new search/sourceData
   }, [sourceData, search]);
+
 
   const handleSearch = (event) => {
     setSearch(event.target.value);
   };
+
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -483,9 +518,26 @@ const ListTable = ({
     backgroundColor: '#f0f8ff', // keeps background clean while scrolling
   };
 
- 
+
+  const formatDate = (dateString) => {
+    try {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return format(date, 'MMM dd, yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
+  };
 
   const { total: totalAmount, count: totalCount } = calculateTotals();
+
+  const handleDocumentClick = (documentNo) => {
+    navigate(`/dashboard/sales-order-product-list/${documentNo}`);
+  };
+
 
   return (
     <Box>
@@ -589,7 +641,7 @@ const ListTable = ({
                   <>
                     < Box sx={{
                       display: 'flex',
-                      width:'100%',
+                      width: '100%',
                       justifyContent: 'center',
                       alignItems: 'center',
                       p: 3
@@ -613,7 +665,8 @@ const ListTable = ({
                             role="checkbox"
                             aria-checked={isItemSelected}
                             tabIndex={-1}
-                            key={row._id || row.salesOrderId || `${row.customerName}-${index}`}
+                            key={row._id || row.salesOrderId ||
+                              `${row.customer.customerName}-${index}`}
                             selected={isItemSelected}
                           >
                             {showCheckBox && <TableCell padding="checkbox">
@@ -626,81 +679,99 @@ const ListTable = ({
                               />
                             </TableCell>}
 
-                            {/* Serial */}
-                            <TableCell sx={stickyCellStyle}>
-                              <Box display="flex" gap={1}>
-                                <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => navigate(`/dashboard/customers/edit/${row._id || row.customerData?._id}`)}>
-                                    <IconEdit size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="View Details">
-                                  <IconButton size="small" color="info">
-                                    <IconDotsVertical size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
+                            <TableCell sx={{ ...columnWidths.document, cursor: "pointer", ":hover": { color: "blue" } }} onClick={() => handleDocumentClick(row?.salesOrder.documentNumber)}>
+                              <Box display="flex" alignItems="center">
+                                <Box sx={{ ml: 2 }}>
+                                  <Typography fontWeight="500" variant="subtitle2"  >
+                                    {row?.salesOrder.documentNumber || ''}
+                                  </Typography>
+                                </Box>
                               </Box>
                             </TableCell>
 
-                            {/* Customer ID */}
-                            <TableCell sx={columnWidths.customerId}>
-                              <Typography fontWeight="500" variant="subtitle2">
-                                {row.salesOrderId || 'N/A'}
-                              </Typography>
-                              {row.documentNumber && (
-                                <Typography variant="caption" color="text.secondary">
-                                  Doc: {row.documentNumber}
-                                </Typography>
-                              )}
+                            <TableCell sx={columnWidths.document}>
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {formatDate(row?.salesOrder?.date)}
+                                  </Typography>
+                                </Box>
+                              </Box>
                             </TableCell>
 
-
-
-                            {/* Customer Name */}
-                            <TableCell sx={columnWidths.customerName}>
-                              <Typography fontWeight="500">
-                                {row.customerName}
-                              </Typography>
+                            <TableCell sx={{ ...columnWidths.customer, cursor: "pointer" }}
+                            //  onClick={() => hadleDocumentClick(row.customer.customerName, row._id)}
+                            >
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {row?.customer.customerName || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
                             </TableCell>
 
-                            {/* Customer Email */}
-                            <TableCell sx={columnWidths.customerEmail}>
-                              <Typography fontWeight="400">
-                                {/* {row.orderDate || 'N/A'} */}
-                                {format(parseISO(row.orderDate), 'mm/dd/yyyy')}
-                              </Typography>
+                            <TableCell sx={columnWidths.salesChannel}>
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {row?.salesOrder?.salesChannel || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
                             </TableCell>
 
-                            {/* Phone Number */}
-                            <TableCell sx={columnWidths.phone}>
-                              <Typography fontWeight="400">
-                                {/* {row.dueDate|| 'N/A'} */}
-                                {format(parseISO(row.dueDate), 'mm/dd/yyyy')}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={columnWidths.phone}>
-                              <Typography fontWeight="400">
-                                {row.amount || 'N/A'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={columnWidths.phone}>
-                              <Typography fontWeight="400">
-                                {row.netTerms || 'N/A'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={columnWidths.phone}>
-                              <Typography fontWeight="400">
-                                {row.status || 'N/A'}
-                              </Typography>
+                            <TableCell sx={columnWidths.tracking}>
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {row?.salesOrder.trackingNumber || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
                             </TableCell>
 
+                            <TableCell sx={columnWidths.shipping}>
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {row?.salesOrder.shippingAddress instanceof Object ?
+                                      `${row?.salesOrder.shippingAddress.shippingAddressLineOne || ''} , ${row?.salesOrder.shippingAddress.shippingAddressLineTwo || ''} , ${row?.salesOrder.shippingAddress.shippingAddressLineThree || ''} , ${row?.salesOrder.shippingAddress.shippingCity || ''} , ${row?.salesOrder.shippingAddress.shippingState || ''} , ${row?.salesOrder.shippingAddress.shippingZip || ''}`.trim()
+                                      : `${row?.salesOrder.shippingAddress}`
+                                    }
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
 
+                            <TableCell sx={columnWidths.billing}>
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {row?.salesOrder?.billingAddress instanceof Object ?
+                                      `${row?.salesOrder.billingAddress.billingAddressLineOne || ''}, ${row?.salesOrder.billingAddress.billingAddressLineTwo || ''}, ${row?.salesOrder.billingAddress.billingAddressLineThree || ''}, ${row?.salesOrder.billingAddress.billingCity || ''}, ${row?.salesOrder.billingAddress.billingState || ''}, ${row?.salesOrder.billingAddress.billingZip || ''}`.trim()
+                                      : `${row?.salesOrder.billingAddress}`
+                                    }
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
 
+                            <TableCell sx={columnWidths.customerPO}>
+                              <Box display="flex" alignItems="center">
+                                <Box >
+                                  <Typography fontWeight="400">
+                                    {row?.salesOrder.customerPO || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
 
-
-
-                            {/* Actions */}
-
+                            <TableCell sx={columnWidths.updatedAt}>
+                              <Typography>
+                                {formatDate(row?.salesOrder?.updatedAt)}
+                              </Typography>
+                            </TableCell>
                           </TableRow>
                         );
                       })}

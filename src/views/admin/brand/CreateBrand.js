@@ -238,7 +238,6 @@ const CreateBrand = () => {
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                             Select a CSV file to import multiple commerce categories  at once.
-                            Expected format: commerceCategoryOne, commerceCategoryTwo, commerceCategoryThree
                         </Typography>
 
                         <input

@@ -690,12 +690,12 @@ const CreateProduct = () => {
         </Backdrop>
 
         <DialogTitle>
-          Import Commerce Categories from CSV
+          Import Products from CSV
         </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Select a CSV file to import multiple badges at once.
+              Select a CSV file to import multiple products at once.
             </Typography>
 
             <input

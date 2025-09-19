@@ -330,8 +330,14 @@ const CustomersSalesOrders = () => {
             console.log("response sales order products ", response);
 
             if (response.data.statusCode === 200) {
-                setTableData(response.data.data);
-                setRows(response.data.data);
+                const data = response.data.data;
+
+                const uniqueData = Array.from(
+                    new Map(data.map(item => [item.itemSku, item])).values()
+                );
+
+                setTableData(uniqueData);
+                setRows(uniqueData);
             }
         } catch (error) {
             console.error('Error fetching products by sales order list:', error);
@@ -716,7 +722,9 @@ const CustomersSalesOrders = () => {
                                             Billing Address:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
-                                            {tableData[0]?.billingAddress || 'N/A'}
+                                            {tableData[0]?.billingAddress instanceof Object ?
+                                                `${tableData[0]?.billingAddress.billingAddressLineOne || ''}, ${tableData[0]?.billingAddress.billingAddressLineTwo || ''}, ${tableData[0]?.billingAddress.billingAddressLineThree || ''}, ${tableData[0]?.billingAddress.billingCity || ''}, ${tableData[0]?.billingAddress.billingState || ''}, ${tableData[0]?.billingAddress.billingZip || ''}`.trim()
+                                                : `${tableData[0]?.billingAddress || ''}`}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -724,7 +732,10 @@ const CustomersSalesOrders = () => {
                                             Shipping Address:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
-                                            {tableData[0]?.shippingAddress || 'N/A'}
+                                            {tableData[0]?.shippingAddress instanceof Object ?
+                                                `${tableData[0]?.shippingAddress.shippingAddressLineOne || ''}, ${tableData[0]?.shippingAddress.shippingAddressLineTwo || ''}, ${tableData[0]?.shippingAddress.shippingAddressLineThree || ''}, ${tableData[0]?.shippingAddress.shippingCity || ''}, ${tableData[0]?.shippingAddress.shippingState || ''}, ${tableData[0]?.shippingAddress.shippingZip || ''}`.trim()
+                                                : `${tableData[0]?.shippingAddress || ''}`
+                                            }
                                         </Typography>
                                     </Box>
 

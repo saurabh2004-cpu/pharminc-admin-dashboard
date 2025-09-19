@@ -247,7 +247,7 @@ const CreatePackTypes = () => {
                 </Backdrop>
 
                 <DialogTitle>
-                    Import Commerce Categories from CSV
+                    Import Pack Types from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>

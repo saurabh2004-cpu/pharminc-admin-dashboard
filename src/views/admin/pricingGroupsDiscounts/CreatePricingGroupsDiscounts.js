@@ -443,7 +443,7 @@ const CreatePricingGroupsDiscounts = () => {
                 </Backdrop>
 
                 <DialogTitle>
-                    Import Commerce Categories from CSV
+                    Import Item Discounts from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>

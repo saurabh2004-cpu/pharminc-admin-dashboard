@@ -353,7 +353,6 @@ const CreateGroupsDiscounts = () => {
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                             Select a CSV file to import multiple pricing group discounts at once.
-                            Expected format: pricingGroupId, customerId, productSku, percentage
                         </Typography>
 
                         <input
