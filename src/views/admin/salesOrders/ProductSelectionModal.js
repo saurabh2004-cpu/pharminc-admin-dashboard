@@ -66,12 +66,15 @@ const ProductSelectionModal = ({
         amount: 0
     });
 
-    
+
 
     // Initialize form data with existing order data
     useEffect(() => {
         if (tableData && tableData.length > 0) {
             const firstOrder = tableData[0];
+
+            console.log("First orderiiiiiiiiiiiii:", firstOrder.customerName);
+
             setFormData(prev => ({
                 ...prev,
                 documentNumber: documentNo || firstOrder.documentNumber || '',
@@ -81,7 +84,10 @@ const ProductSelectionModal = ({
                 shippingAddress: firstOrder.shippingAddress || '',
                 billingAddress: firstOrder.billingAddress || '',
                 customerPO: firstOrder.customerPO || '',
-                date: firstOrder.date ? firstOrder.date.split('T')[0] : new Date().toISOString().split('T')[0]
+                date: firstOrder.date,
+                trackingNumber: firstOrder.trackingNumber,
+                customerPO: firstOrder.customerPO
+
             }));
         }
     }, [tableData, documentNo]);
@@ -123,6 +129,29 @@ const ProductSelectionModal = ({
             setLoading(false);
         }
     };
+
+    const fetchProductsAvailablePackTypes = async () => {
+        try {
+            const response = await axiosInstance.get(`/products/get-products-pack-types/${formData.itemSku}`);
+            console.log("response products pack types", response);
+
+            if (response.status === 200) {
+                setFormData(prev => ({
+                    ...prev,
+                    packType: response.data.data
+                }))
+            }
+
+        } catch (error) {
+            console.error('Error fetching products pack types:', error);
+            setError(error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchProductsAvailablePackTypes();
+    }, [formData.itemSku]);
+
 
     // Filter products based on search
     useEffect(() => {
@@ -256,6 +285,15 @@ const ProductSelectionModal = ({
             fetchProductsList();
         }
     }, [open]);
+
+    useEffect(() => {
+        const totalItems = formData.packQuantity * formData.unitsQuantity;
+        const totalAmount = selectedProduct.eachPrice * totalItems;
+        setFormData(prev => ({
+            ...prev,
+            amount: totalAmount
+        }))
+    }, [formData.packQuantity, formData.unitsQuantity])
 
     // Handle modal close
     const handleClose = () => {
@@ -404,7 +442,7 @@ const ProductSelectionModal = ({
                             <Divider sx={{ mb: 2 }} />
                         </Grid>
 
-                        <Grid size={12}>
+                        {/* <Grid size={12}>
                             <CustomFormLabel htmlFor="date" sx={{ mt: 0 }}>
                                 Date
                             </CustomFormLabel>
@@ -422,21 +460,22 @@ const ProductSelectionModal = ({
                                     }}
                                 />
                             </LocalizationProvider>
-                        </Grid>
+                        </Grid> */}
 
-                        <Grid size={6}>
+                        {/* <Grid size={6}>
                             <CustomFormLabel htmlFor="customer-po" sx={{ mt: 2 }}>
                                 Document Number
                             </CustomFormLabel>
                             <CustomOutlinedInput
                                 id="customer-po"
                                 fullWidth
+                                disabled
                                 value={formData.documentNumber}
                                 onChange={(e) => handleInputChange('documentNumber', e.target.value)}
                             />
-                        </Grid>
+                        </Grid> */}
 
-                        <Grid size={6}>
+                        {/* <Grid size={6}>
                             <CustomFormLabel htmlFor="customer-name" sx={{ mt: 2 }}>
                                 Customer Name *
                             </CustomFormLabel>
@@ -447,8 +486,8 @@ const ProductSelectionModal = ({
                                 value={formData.customerName}
                                 onChange={(e) => handleInputChange('customerName', e.target.value)}
                             />
-                        </Grid>
-                        <Grid size={6}>
+                        </Grid> */}
+                        {/* <Grid size={6}>
                             <CustomFormLabel htmlFor="Sales-Channel" sx={{ mt: 2 }}>
                                 Sales Channel  *
                             </CustomFormLabel>
@@ -459,8 +498,8 @@ const ProductSelectionModal = ({
                                 value={formData.salesChannel}
                                 onChange={(e) => handleInputChange('salesChannel', e.target.value)}
                             />
-                        </Grid>
-                        <Grid size={6}>
+                        </Grid> */}
+                        {/* <Grid size={6}>
                             <CustomFormLabel htmlFor="Shipping-address" sx={{ mt: 2 }}>
                                 Shipping Address *
                             </CustomFormLabel>
@@ -471,8 +510,8 @@ const ProductSelectionModal = ({
                                 value={formData.shippingAddress}
                                 onChange={(e) => handleInputChange('shippingAddress', e.target.value)}
                             />
-                        </Grid>
-                        <Grid size={6}>
+                        </Grid> */}
+                        {/* <Grid size={6}>
                             <CustomFormLabel htmlFor="billing-address" sx={{ mt: 2 }}>
                                 Billing Address *
                             </CustomFormLabel>
@@ -483,30 +522,32 @@ const ProductSelectionModal = ({
                                 value={formData.billingAddress}
                                 onChange={(e) => handleInputChange('billingAddress', e.target.value)}
                             />
-                        </Grid>
-                        <Grid size={6}>
+                        </Grid> */}
+                        {/* <Grid size={6}>
                             <CustomFormLabel htmlFor="tracking-no" sx={{ mt: 2 }}>
                                 Tracking Number *
                             </CustomFormLabel>
                             <CustomOutlinedInput
                                 id="tracking-no"
                                 fullWidth
+                                disabled
                                 value={formData.trackingNumber}
                                 onChange={(e) => handleInputChange('trackingNumber', e.target.value)}
                             />
-                        </Grid>
+                        </Grid> */}
 
-                        <Grid size={6}>
+                        {/* <Grid size={6}>
                             <CustomFormLabel htmlFor="customner-po" sx={{ mt: 2 }}>
                                 Customer PO *
                             </CustomFormLabel>
                             <CustomOutlinedInput
                                 id="customer-po"
                                 fullWidth
+                                disabled
                                 value={formData.customerPO}
                                 onChange={(e) => handleInputChange('customerPO', e.target.value)}
                             />
-                        </Grid>
+                        </Grid> */}
 
                         <Grid size={6}>
                             <CustomFormLabel htmlFor="pricing-group-select" sx={{ mt: 2 }}>
@@ -563,7 +604,12 @@ const ProductSelectionModal = ({
                                 id="Amount"
                                 fullWidth
                                 value={formData.amount}
-                                onChange={(e) => handleInputChange('amount', e.target.value)}
+                                disabled
+                                onChange={(e) => {
+                                    const totalItems = formData.unitsQuantity * formData.packQuantity;
+                                    const totalAmount = formData.eachPrice * totalItems;
+                                    handleInputChange('amount', totalAmount);
+                                }}
                             />
                         </Grid>
                     </Grid>

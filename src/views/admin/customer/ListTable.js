@@ -376,8 +376,8 @@ const ListTable = ({
   };
 
   //chnage password
-  const handleChangePassword = (id) => {
-    navigate(`/dashboard/customers/change-password/${id}`);
+  const handleChangePassword = (email) => {
+    navigate(`/dashboard/customers/change-password/${email}`);
   };
 
   const stickyCellStyle = {
@@ -485,7 +485,7 @@ const ListTable = ({
                                     <IconButton
                                       size="small"
                                       color="secondary"
-                                      onClick={() => handleChangePassword(row._id)}
+                                      onClick={() => handleChangePassword(row.customerEmail ? row.customerEmail : row.contactEmail)}
                                     >
                                       <IconKey size="1.1rem" /> {/* Use a key/lock icon */}
                                     </IconButton>

@@ -25,6 +25,7 @@ import {
     Button,
     Grid,
     Divider,
+    MenuItem,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -33,6 +34,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import ProductSelectionModal from './ProductSelectionModal'; // Import the modal
+import { use } from 'react';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -231,12 +233,7 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Amount',
         },
-        {
-            id: 'date',
-            numeric: false,
-            disablePadding: false,
-            label: 'Date',
-        },
+
         {
             id: 'packQuantity',
             numeric: false,
@@ -255,17 +252,22 @@ const CustomersSalesOrders = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
-        customerName: "",
+        customerName: tableData[0]?.customerName || "",
         salesChannel: "",
         itemSku: "",
         packQuantity: "",
         amount: "",
-        billingAddress: "",
-        shippingAddress: "",
+        billingAddress: {},
+        shippingAddress: {},
         trackingNumber: "",
         date: "",
     });
     const [loading, setLoading] = useState(false);
+    const [editingRowId, setEditingRowId] = useState(null);  // Track which row is being edited
+    const [packTypes, setPackTypes] = useState([]);
+
+    // Update form data to handle individual row updates
+    const [updateFormData, setUpdateFormData] = React.useState({});
 
     useEffect(() => {
         if (tableData[0]) {
@@ -379,6 +381,21 @@ const CustomersSalesOrders = () => {
         }
     };
 
+    const fetchProductsAvailablePackTypes = async (itemSku) => {
+        try {
+            const response = await axiosInstance.get(`/products/get-products-pack-types/${itemSku}`);
+            console.log("response products pack types", response);
+
+            if (response.status === 200) {
+                setPackTypes(response.data.data);
+            }
+
+        } catch (error) {
+            console.error('Error fetching products pack types:', error);
+            setError(error.message);
+        }
+    };
+
     React.useEffect(() => {
         fetchProductsList();
     }, []);
@@ -464,9 +481,93 @@ const CustomersSalesOrders = () => {
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
     const theme = useTheme();
     const borderColor = theme.palette.divider;
+    const [rowId, setRowId] = React.useState(null);
+    const [billingAddresses, setBillingAddresses] = useState([]);
+    const [shippingAddresses, setShippingAddresses] = useState([]);
+    const [selectedBillingAddress, setSelectedBillingAddress] = useState('');
+    const [selectedShippingAddress, setSelectedShippingAddress] = useState('');
 
-    const handleEditSalesOrder = (id) => {
-        navigate(`/dashboard/sales-order/edit/${id}`);
+
+
+    // Add this function to fetch customer addresses
+    const fetchCustomerAddresses = async (customerName) => {
+        try {
+            const response = await axiosInstance.get(`/admin/customer-addresses/${customerName}`);
+            console.log("response customer addresses", response.data);
+
+            if (response.data.statusCode === 200) {
+                setBillingAddresses(response.data.data.billingAddresses || []);
+                setShippingAddresses(response.data.data.shippingAddresses || []);
+            }
+        } catch (error) {
+            console.error('Error fetching customer addresses:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (formData.customerName) {
+            fetchCustomerAddresses(formData.customerName);
+        }
+    }, [formData.customerName]);
+
+    // Add these handler functions for address selection
+    const handleBillingAddressChange = (event) => {
+        const addressId = event.target.value;
+        setSelectedBillingAddress(addressId);
+
+        const selectedAddress = billingAddresses.find(addr => addr._id === addressId);
+        if (selectedAddress) {
+            setFormData(prev => ({
+                ...prev,
+                billingAddress: selectedAddress
+            }));
+        }
+    };
+
+    const handleShippingAddressChange = (event) => {
+        const addressId = event.target.value;
+        setSelectedShippingAddress(addressId);
+
+        const selectedAddress = shippingAddresses.find(addr => addr._id === addressId);
+        if (selectedAddress) {
+            setFormData(prev => ({
+                ...prev,
+                shippingAddress: selectedAddress
+            }));
+        }
+    };
+
+    useEffect(() => {
+        if (formData.billingAddress && formData.billingAddress._id) {
+            setSelectedBillingAddress(formData.billingAddress._id);
+        }
+        if (formData.shippingAddress && formData.shippingAddress._id) {
+            setSelectedShippingAddress(formData.shippingAddress._id);
+        }
+    }, [formData.billingAddress, formData.shippingAddress]);
+
+
+    const handleEditSalesOrder = (order) => {
+        setRowId(order._id);
+        setEditingRowId(order._id);
+        fetchProductsAvailablePackTypes(order.itemSku);
+
+        // Initialize form data for this specific row
+        setUpdateFormData({
+            date: order?.date || null,
+            documentNumber: order.documentNumber || '',
+            customerName: order.customerName || '',
+            salesChannel: order.salesChannel || '',
+            trackingNumber: order.trackingNumber || '',
+            shippingAddress: order.shippingAddress || '',
+            billingAddress: order.billingAddress || '',
+            customerPO: order.customerPO || '',
+            itemSku: order.itemSku || '',
+            packQuantity: order.packQuantity || 1,
+            unitsQuantity: order.unitsQuantity || 0,
+            finalAmount: order.finalAmount || 0,
+            amount: order.amount || 0,
+        });
     };
 
     const handleDeleteSalesOrder = async (id) => {
@@ -489,6 +590,105 @@ const CustomersSalesOrders = () => {
         left: 0,
         zIndex: 5,
         backgroundColor: '#f0f8ff',
+    };
+
+    // Updated handleSaveUpdate function with correct amount calculation
+    const handleSaveUpdate = async (rowId) => {
+        try {
+            setLoading(true);
+            setError('');
+
+            // Get the current row data
+            const currentRow = rows.find(row => row._id === rowId);
+            if (!currentRow) {
+                setError('Row not found');
+                return;
+            }
+
+            // Calculate the new amount based on the formula:
+            // First get the unit price: previousAmount / (previousPackQuantity * previousUnitsQuantity)
+            // Then calculate new amount: unitPrice * (newPackQuantity * newUnitsQuantity)
+            const previousAmount = currentRow.amount || 0;
+            const previousPackQuantity = currentRow.packQuantity || 1;
+            const previousUnitsQuantity = currentRow.unitsQuantity || 1;
+
+            // Get unit price
+            const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
+
+            // Calculate new amount with updated quantities
+            const newPackQuantity = updateFormData.packQuantity || previousPackQuantity;
+            const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
+            const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
+
+            const updatedData = {
+                ...updateFormData,
+                amount: newAmount
+            };
+
+            const res = await axiosInstance.put(`/sales-order/update-sales-order-item/${rowId}`, updatedData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log("Update sales order response:", res);
+
+            if (res.data.statusCode === 200) {
+                // Update the rows with the new data
+                setRows(prevRows =>
+                    prevRows.map(row =>
+                        row._id === rowId
+                            ? { ...row, ...updatedData, amount: newAmount }
+                            : row
+                    )
+                );
+
+                // Exit edit mode
+                setEditingRowId(null);
+                setUpdateFormData({});
+
+                // Refresh the data
+                fetchSalesOrdersProducts();
+            } else {
+                setError(res.data.message || 'Update failed');
+            }
+
+        } catch (error) {
+            console.error('Update sales order error:', error);
+            setError(error.response?.data?.message || error.message || 'Failed to update sales order');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (editingRowId && updateFormData.packQuantity !== undefined && updateFormData.unitsQuantity !== undefined) {
+            const currentRow = rows.find(row => row._id === editingRowId);
+            if (!currentRow) return;
+
+            // Calculate the new amount based on the formula:
+            // First get the unit price: previousAmount / (previousPackQuantity * previousUnitsQuantity)
+            // Then calculate new amount: unitPrice * (newPackQuantity * newUnitsQuantity)
+            const previousAmount = currentRow.amount || 0;
+            const previousPackQuantity = currentRow.packQuantity || 1;
+            const previousUnitsQuantity = currentRow.unitsQuantity || 1;
+
+            // Get unit price
+            const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
+
+            // Calculate new amount with updated quantities
+            const newPackQuantity = updateFormData.packQuantity || previousPackQuantity;
+            const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
+            const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
+
+            // Update the form data with the new amount
+            setUpdateFormData(prev => ({ ...prev, amount: newAmount }));
+        }
+    }, [updateFormData.packQuantity, updateFormData.unitsQuantity, editingRowId, rows]);
+
+    // Helper function to update form data for specific fields
+    const handleUpdateFormChange = (field, value) => {
+        setUpdateFormData(prev => ({ ...prev, [field]: value }));
     };
 
     return (
@@ -544,7 +744,7 @@ const CustomersSalesOrders = () => {
                                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                         .map((row, index) => {
                                             const isItemSelected = isSelected(row?.ProductName || row.title);
-                                            const labelId = `enhanced-table-checkbox-${index}`;
+                                            const isRowEditing = editingRowId === row._id;
 
                                             return (
                                                 <TableRow
@@ -558,52 +758,95 @@ const CustomersSalesOrders = () => {
                                                     {/* Actions Column */}
                                                     <TableCell sx={{ ...stickyCellStyle, width: 100 }}>
                                                         <Box display="flex" gap={0.5}>
-                                                            <Tooltip title="Edit">
-                                                                <IconButton size="small" color="primary" onClick={() => handleEditSalesOrder(row._id)}>
-                                                                    <IconEdit size="1rem" />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                            <Tooltip title="Delete">
-                                                                <IconButton size="small" color="error" onClick={() => handleDeleteSalesOrder(row._id)}>
-                                                                    <IconTrash size="1rem" />
-                                                                </IconButton>
-                                                            </Tooltip>
+                                                            {isRowEditing ? (
+                                                                <Button
+                                                                    size="small"
+                                                                    variant="contained"
+                                                                    color="primary"
+                                                                    onClick={() => handleSaveUpdate(row._id)}
+                                                                    disabled={loading}
+                                                                >
+                                                                    Save
+                                                                </Button>
+                                                            ) : (
+                                                                <>
+                                                                    <Tooltip title="Edit">
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            color="primary"
+                                                                            onClick={() => handleEditSalesOrder(row)}
+                                                                        >
+                                                                            <IconEdit size="1rem" />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                    <Tooltip title="Delete">
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            color="error"
+                                                                            onClick={() => handleDeleteSalesOrder(row._id)}
+                                                                        >
+                                                                            <IconTrash size="1rem" />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                </>
+                                                            )}
                                                         </Box>
                                                     </TableCell>
 
-                                                    {/* SKU */}
+                                                    {/* SKU - stays readonly */}
                                                     <TableCell sx={{ width: 120 }}>
                                                         <Typography fontWeight="500" variant="body2">
-                                                            {row.itemSku || 'N/A'}
+                                                            {row.itemSku || "N/A"}
                                                         </Typography>
                                                     </TableCell>
 
                                                     {/* Amount */}
                                                     <TableCell sx={{ width: 100 }}>
-                                                        <Typography variant="body2">
-                                                            ${row.amount || '0.00'}
-                                                        </Typography>
-                                                    </TableCell>
-
-                                                    {/* Date */}
-                                                    <TableCell sx={{ width: 100 }}>
-                                                        <Typography variant="body2">
-                                                            {row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}
-                                                        </Typography>
+                                                        {isRowEditing ? (
+                                                            <Typography variant="body2">
+                                                                ${updateFormData.amount ? updateFormData.amount.toFixed(2) : row.amount || "0.00"}
+                                                            </Typography>
+                                                        ) : (
+                                                            <Typography variant="body2">${row.amount || "0.00"}</Typography>
+                                                        )}
                                                     </TableCell>
 
                                                     {/* Pack Quantity */}
                                                     <TableCell sx={{ width: 100 }}>
-                                                        <Typography variant="body2">
-                                                            {row.packQuantity || 'N/A'}
-                                                        </Typography>
+                                                        {isRowEditing ? (
+                                                            <TextField
+                                                                select
+                                                                size="small"
+                                                                value={updateFormData.packQuantity || row.packQuantity || ""}
+                                                                onChange={(e) => handleUpdateFormChange('packQuantity', e.target.value)}
+                                                            >
+                                                                {packTypes?.map((pack) => (
+                                                                    <MenuItem key={pack._id} value={pack.quentity}>
+                                                                        {pack.name}
+                                                                    </MenuItem>
+                                                                ))}
+                                                            </TextField>
+                                                        ) : (
+                                                            <Typography variant="body2">
+                                                                {row.packQuantity || "N/A"}
+                                                            </Typography>
+                                                        )}
                                                     </TableCell>
 
                                                     {/* Units Quantity */}
                                                     <TableCell sx={{ width: 100 }}>
-                                                        <Typography variant="body2">
-                                                            {row.unitsQuantity || 'N/A'}
-                                                        </Typography>
+                                                        {isRowEditing ? (
+                                                            <TextField
+                                                                type="number"
+                                                                size="small"
+                                                                value={updateFormData.unitsQuantity || row.unitsQuantity || ""}
+                                                                onChange={(e) => handleUpdateFormChange('unitsQuantity', e.target.value)}
+                                                            />
+                                                        ) : (
+                                                            <Typography variant="body2">
+                                                                {row.unitsQuantity || "N/A"}
+                                                            </Typography>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -614,6 +857,7 @@ const CustomersSalesOrders = () => {
                                         </TableRow>
                                     )}
                                 </TableBody>
+
                             </Table>
                         </TableContainer>
                         <TablePagination
@@ -786,33 +1030,6 @@ const CustomersSalesOrders = () => {
                                 />
                             </Box>
 
-                            {/* Item SKU */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
-                                    Item SKU :
-                                </Typography>
-                                <TextField
-                                    size="small"
-                                    value={formData.itemSku}
-                                    onChange={(e) => handleInputChange("itemSku", e.target.value)}
-                                    sx={{ minWidth: 270 }}
-                                />
-                            </Box>
-
-                            {/* Pack Quantity */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
-                                    Pack Quantity:
-                                </Typography>
-                                <TextField
-                                    type="number"
-                                    size="small"
-                                    value={formData.packQuantity}
-                                    onChange={(e) => handleInputChange("packQuantity", e.target.value)}
-                                    sx={{ minWidth: 270 }}
-                                />
-                            </Box>
-
                             {/* Amount */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
@@ -828,61 +1045,50 @@ const CustomersSalesOrders = () => {
                             </Box>
 
                             {/* Billing Address */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
                                     Billing Address :
                                 </Typography>
                                 <TextField
+                                    select
                                     size="small"
-                                    multiline
-                                    rows={2}
-                                    value={formData.billingAddress}
-                                    onChange={(e) => handleInputChange("billingAddress", e.target.value)}
+                                    value={selectedBillingAddress}
+                                    onChange={handleBillingAddressChange}
                                     sx={{ minWidth: 270 }}
-                                />
+                                >
+                                    <MenuItem value="">
+                                        <em>Select Billing Address</em>
+                                    </MenuItem>
+                                    {billingAddresses.map((address) => (
+                                        <MenuItem key={address._id} value={address._id}>
+                                            {`${address.billingAddressOne}, ${address.billingCity}, ${address.billingState}`}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
                             </Box>
 
+                            {/* // Replace the Shipping Address section in the editable form with this: */}
                             {/* Shipping Address */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
                                     Shipping Address :
                                 </Typography>
                                 <TextField
+                                    select
                                     size="small"
-                                    multiline
-                                    rows={2}
-                                    value={formData.shippingAddress}
-                                    onChange={(e) => handleInputChange("shippingAddress", e.target.value)}
+                                    value={selectedShippingAddress}
+                                    onChange={handleShippingAddressChange}
                                     sx={{ minWidth: 270 }}
-                                />
-                            </Box>
-
-                            {/* Tracking Number */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
-                                    Tracking Number :
-                                </Typography>
-                                <TextField
-                                    size="small"
-                                    value={formData.trackingNumber}
-                                    onChange={(e) => handleInputChange("trackingNumber", e.target.value)}
-                                    sx={{ minWidth: 270 }}
-                                />
-                            </Box>
-
-                            {/* Order Date */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
-                                    Order Date :
-                                </Typography>
-                                <TextField
-                                    type="date"
-                                    size="small"
-                                    value={formData.date}
-                                    onChange={(e) => handleInputChange("date", e.target.value)}
-                                    sx={{ minWidth: 270 }}
-                                    InputLabelProps={{ shrink: true }}
-                                />
+                                >
+                                    <MenuItem value="">
+                                        <em>Select Shipping Address</em>
+                                    </MenuItem>
+                                    {shippingAddresses.map((address) => (
+                                        <MenuItem key={address._id} value={address._id}>
+                                            {`${address.shippingAddressOne}, ${address.shippingCity}, ${address.shippingState}`}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
                             </Box>
 
                             {/* Error */}

@@ -213,10 +213,11 @@ const CreateAdmin = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAd
 const CreateSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/CreateSubCategoryTwo')));
 const SubCategoryTwoList = Loadable(lazy(() => import('../views/admin/subCategoryTwo/SubCategoryTwoList')));
 const EditSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/EditSubCategoryTwo')));
-const CustomersPricingGroups = Loadable(lazy(()=> import ('../views/admin/groupsDiscounts.js/CustomersPricingGroups')))
-const CustomersItemsBasedDiscounts = Loadable(lazy(()=> import ('../views/admin/pricingGroupsDiscounts/CustomersItemsBasedDiscounts')))
-const CustomersSalesOrders = Loadable(lazy(()=> import ('../views/admin/salesOrders/CustomersSalesOrders')))
-const SalesOrderProductsList = Loadable(lazy(()=> import ('../views/admin/salesOrders/SalesOrderProductsList')))
+const CustomersPricingGroups = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/CustomersPricingGroups')))
+const CustomersItemsBasedDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/CustomersItemsBasedDiscounts')))
+const CustomersSalesOrders = Loadable(lazy(() => import('../views/admin/salesOrders/CustomersSalesOrders')))
+const SalesOrderProductsList = Loadable(lazy(() => import('../views/admin/salesOrders/SalesOrderProductsList')))
+const Reset = Loadable(lazy(() => import('../views/admin/ResetPassword/Reset')));
 
 
 
@@ -394,7 +395,7 @@ const Router = [
       { path: '/dashboard/customers/create', element: <CreateCustomer /> },
       { path: '/dashboard/customers/list', element: <ListCustomers /> },
       { path: '/dashboard/customers/edit/:id', element: <EditCustomer /> },
-      { path: '/dashboard/customers/change-password/:id', element: <ChnagePassword /> },
+      { path: '/dashboard/customers/change-password/:email', element: <ChnagePassword /> },
 
 
       { path: '/dashboard/NetTerms/List', element: <ListNetTerms /> },
@@ -415,6 +416,8 @@ const Router = [
       { path: '/auth/404', element: <Error /> },
       { path: '/auth/login', element: <Login2 /> },
       { path: '/auth/register', element: <Register2 /> },
+      { path: '/reset-password', element: <Reset /> },
+
 
 
       // { path: '/auth/forgot-password', element: <ForgotPassword /> },

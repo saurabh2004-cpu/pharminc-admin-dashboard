@@ -25,11 +25,13 @@ const CreateSalesOrders = () => {
     billingAddress: {},
     customerPO: '',
     itemSku: '',
-    packQuantity: null,
-    unitsQuantity: null,
+    packQuantity: 1,
+    unitsQuantity: 1,
     finalAmount: null,
-    amount: null
+    amount: 0
   });
+
+
 
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -43,6 +45,17 @@ const CreateSalesOrders = () => {
   const [shippingAddress, setShippingAddress] = React.useState('');
   const [selectedShippingAddress, setSelectedShippingAddress] = React.useState(null);
   const [selectedBillingAddress, setSelectedBillingAddress] = React.useState(null);
+  const [selectedProduct, setSelectedProduct] = React.useState(null);
+
+  useEffect(() => {
+    const totalItems = formData?.packQuantity* formData.unitsQuantity;
+    const totalAmount = selectedProduct?.eachPrice * totalItems;
+    setFormData(prev => ({
+      ...prev,
+      amount: totalAmount
+    }))
+  }, [formData.packQuantity, formData.unitsQuantity, selectedProduct]);
+
 
   const handleSubmit = async () => {
     // Validation
@@ -290,6 +303,8 @@ const CreateSalesOrders = () => {
     const fileInput = document.getElementById('csv-file-input');
     if (fileInput) fileInput.value = '';
   };
+
+
 
 
   useEffect(() => {
@@ -602,6 +617,7 @@ const CreateSalesOrders = () => {
                   ...formData,
                   itemSku: newValue ? newValue.sku : "",
                 });
+                setSelectedProduct(newValue);
               }}
               renderInput={(params) => (
                 <TextField
