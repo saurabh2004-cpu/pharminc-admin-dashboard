@@ -236,7 +236,7 @@ const CreateBadge = () => {
                 </Backdrop>
 
                 <DialogTitle>
-                    Import Commerce Categories from CSV
+                    Import Badges from CSV
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>
