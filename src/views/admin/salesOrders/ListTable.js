@@ -539,7 +539,7 @@ const ListTable = ({
                             <Box >
                               <Typography fontWeight="400">
                                 {row?.shippingAddress instanceof Object ?
-                                  `${row?.shippingAddress.shippingAddressLineOne || ''} , ${row?.shippingAddress.shippingAddressLineTwo || ''} , ${row?.shippingAddress.shippingAddressLineThree || ''} , ${row?.shippingAddress.shippingCity || ''} , ${row?.shippingAddress.shippingState || ''} , ${row?.shippingAddress.shippingZip || ''}`.trim()
+                                  `${row?.shippingAddress.shippingAddressLineOne || ''}  ${row?.shippingAddress.shippingAddressLineTwo || ''}  ${row?.shippingAddress.shippingAddressLineThree || ''}  ${row?.shippingAddress.shippingCity || ''}  ${row?.shippingAddress.shippingState || ''}  ${row?.shippingAddress.shippingZip || ''}`.trim()
                                   : `${row?.shippingAddress}`
                                 }
                               </Typography>
@@ -552,7 +552,7 @@ const ListTable = ({
                             <Box >
                               <Typography fontWeight="400">
                                 {row?.billingAddress instanceof Object ?
-                                  `${row?.billingAddress.billingAddressLineOne || ''}, ${row?.billingAddress.billingAddressLineTwo || ''}, ${row?.billingAddress.billingAddressLineThree || ''}, ${row?.billingAddress.billingCity || ''}, ${row?.billingAddress.billingState || ''}, ${row?.billingAddress.billingZip || ''}`.trim()
+                                  `${row?.billingAddress.billingAddressLineOne || ''} ${row?.billingAddress.billingAddressLineTwo || ''} ${row?.billingAddress.billingAddressLineThree || ''} ${row?.billingAddress.billingCity || ''} ${row?.billingAddress.billingState || ''} ${row?.billingAddress.billingZip || ''}`.trim()
                                   : `${row?.billingAddress}`
                                 }
                               </Typography>

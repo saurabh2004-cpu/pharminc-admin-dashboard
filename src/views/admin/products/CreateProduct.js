@@ -27,6 +27,7 @@ const CreateProduct = () => {
     storeDescription: '',
     eachBarcodes: '',
     packBarcodes: '',
+    productImg: '',
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -34,6 +35,14 @@ const CreateProduct = () => {
   const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState(null);
 
+  const [packTypes, setPackTypes] = useState([]);
+  const [pricingGroups, setPricingGroups] = useState([]);
+  const [categoryOne, setCategoryOne] = useState([]);
+  const [categoryTwo, setCategoryTwo] = useState([]);
+  const [categoryThree, setCategoryThree] = useState([]);
+  const [categoryFour, setCategoryFour] = useState([]);
+
+  const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
 
   const handleSubmit = async () => {
     // Validation
@@ -78,6 +87,7 @@ const CreateProduct = () => {
           commerceCategoriesOne: '',
           commerceCategoriesTwo: '',
           commerceCategoriesThree: '',
+          commerceCategoriesFour: '',
           storeDescription: '',
           pageTitle: '',
           eachBarcodes: '',
@@ -88,8 +98,8 @@ const CreateProduct = () => {
 
       } else if (res.data.statusCode === 400) {
         console.log("Create product error:", res.data.message);
+        setError(res.data.message);
       }
-
 
     } catch (error) {
       console.error('Create product error:', error);
@@ -111,7 +121,6 @@ const CreateProduct = () => {
     }
   };
 
-
   const handleImportCsvFile = async () => {
     if (!selectedFile) {
       setError('Please select a CSV file first');
@@ -121,10 +130,8 @@ const CreateProduct = () => {
     try {
       setLoading(true);
       const formDataForUpload = new FormData();
-      // Correct field name for products
       formDataForUpload.append('products', selectedFile);
 
-      // Correct API endpoint for products import
       const res = await axiosInstance.post('/products/import-products', formDataForUpload, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -137,7 +144,6 @@ const CreateProduct = () => {
         setCsvDialogOpen(false);
         setSelectedFile(null);
         setError('CSV imported successfully!');
-        // Reset file input
         const fileInput = document.getElementById('csv-file-input');
         if (fileInput) fileInput.value = '';
 
@@ -157,20 +163,11 @@ const CreateProduct = () => {
     setCsvDialogOpen(false);
     setSelectedFile(null);
     setError('');
-    // Reset file input
     const fileInput = document.getElementById('csv-file-input');
     if (fileInput) fileInput.value = '';
   };
 
-  const [packTypes, setPackTypes] = useState([]);
-  const [pricingGroups, setPricingGroups] = useState([]);
-  const [categoryOne, setCategoryOne] = useState([]);
-  const [categoryTwo, setCategoryTwo] = useState([]);
-  const [categoryThree, setCategoryThree] = useState([]);
-  const [categoryFour, setCategoryFour] = useState([]);
-
-  const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
-
+  // Fetch functions with proper error handling
   const fetchPackTypesList = async () => {
     try {
       const response = await axiosInstance.get('/packs-types/get-all-packs-types');
@@ -179,10 +176,9 @@ const CreateProduct = () => {
       if (response.status === 200) {
         setPackTypes(response.data.data.packs);
       }
-
     } catch (error) {
       console.error('Error fetching pack types list:', error);
-      setError(error.message);
+      setError('Failed to fetch pack types');
     }
   };
 
@@ -194,10 +190,9 @@ const CreateProduct = () => {
       if (response.data.statusCode === 200) {
         setPricingGroups(response.data.data);
       }
-
     } catch (error) {
       console.error('Error fetching pricing groups list:', error);
-      setError(error.message);
+      setError('Failed to fetch pricing groups');
     }
   };
 
@@ -207,70 +202,125 @@ const CreateProduct = () => {
       console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
-        // Extract the data array from the response
         setCategoryOne(response.data.data);
       }
-
     } catch (error) {
       console.error('Error fetching brands list:', error);
-      setError(error.message);
+      setError('Failed to fetch brands');
     }
   };
 
   const fetchCategoryList = async () => {
+    if (!formData.commerceCategoriesOne) return;
+    
     try {
-      const response = await axiosInstance.get('/category/get-categories');
+      console.log("Fetching categories for brand ID:", formData.commerceCategoriesOne);
+      const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${formData.commerceCategoriesOne}`);
       console.log("response categories", response);
 
       if (response.data.statusCode === 200) {
         setCategoryTwo(response.data.data);
+      } else {
+        setCategoryTwo([]);
       }
-
     } catch (error) {
       console.error('Error fetching category list:', error);
-      setError(error.message);
+      setCategoryTwo([]);
+      setError('Failed to fetch categories');
     }
   };
 
   const fetchSubCategoryList = async () => {
+    if (!formData.commerceCategoriesTwo) return;
+    
     try {
-      const response = await axiosInstance.get('/subcategory/get-sub-categories');
+      console.log("Fetching subcategories for category ID:", formData.commerceCategoriesTwo);
+      const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${formData.commerceCategoriesTwo}`);
       console.log("response sub categories", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryThree(response.data.data);
+      } else {
+        setCategoryThree([]);
       }
     } catch (error) {
       console.error('Error fetching sub category list:', error);
-      setError(error.message);
+      setCategoryThree([]);
+      setError('Failed to fetch subcategories');
     }
   };
 
   const fetchSubCategoryTwoList = async () => {
+    if (!formData.commerceCategoriesThree) return;
+    
     try {
-      const response = await axiosInstance.get('/subcategoryTwo/get-sub-categories-two');
-      console.log("response sub categories", response.data.data);
+      console.log("Fetching sub-subcategories for subcategory ID:", formData.commerceCategoriesThree);
+      const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${formData.commerceCategoriesThree}`);
+      console.log("response sub categories two", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryFour(response.data.data);
+      } else {
+        setCategoryFour([]);
       }
     } catch (error) {
-      console.error('Error fetching sub category list:', error);
-      setError(error.message);
+      console.error('Error fetching sub category two list:', error);
+      setCategoryFour([]);
+      setError('Failed to fetch sub-subcategories');
     }
   };
 
+  // Fixed useEffect hooks with proper dependencies and cleanup
+  useEffect(() => {
+    if (formData.commerceCategoriesOne) {
+      fetchCategoryList();
+    } else {
+      // Clear child categories when brand is not selected
+      setCategoryTwo([]);
+      setCategoryThree([]);
+      setCategoryFour([]);
+      setFormData(prev => ({
+        ...prev,
+        commerceCategoriesTwo: '',
+        commerceCategoriesThree: '',
+        commerceCategoriesFour: ''
+      }));
+    }
+  }, [formData.commerceCategoriesOne]);
 
+  useEffect(() => {
+    if (formData.commerceCategoriesTwo) {
+      fetchSubCategoryList();
+    } else {
+      // Clear child categories when category is not selected
+      setCategoryThree([]);
+      setCategoryFour([]);
+      setFormData(prev => ({
+        ...prev,
+        commerceCategoriesThree: '',
+        commerceCategoriesFour: ''
+      }));
+    }
+  }, [formData.commerceCategoriesTwo]);
+
+  useEffect(() => {
+    if (formData.commerceCategoriesThree) {
+      fetchSubCategoryTwoList();
+    } else {
+      // Clear child categories when subcategory is not selected
+      setCategoryFour([]);
+      setFormData(prev => ({
+        ...prev,
+        commerceCategoriesFour: ''
+      }));
+    }
+  }, [formData.commerceCategoriesThree]);
 
   React.useEffect(() => {
-    fetchSubCategoryTwoList();
     fetchPackTypesList();
     fetchPricingGroups();
     fetchBrandsList();
-    fetchCategoryList();
-    fetchSubCategoryList();
   }, []);
-
 
   return (
     <div>
@@ -344,10 +394,9 @@ const CreateProduct = () => {
           <FormControl fullWidth>
             <Select
               id="types-of-packs-select"
-              multiple // Enable multiple selection
-              value={formData.typesOfPacks} // This should be an array
+              multiple
+              value={formData.typesOfPacks}
               onChange={(e) => {
-                // For multiple select, the value is always an array
                 const value = e.target.value;
                 setFormData({ ...formData, typesOfPacks: Array.isArray(value) ? value : [value] });
               }}
@@ -357,7 +406,6 @@ const CreateProduct = () => {
                 if (selected.length === 0) {
                   return 'Select pack types';
                 }
-                // Get the names of selected pack types
                 const selectedNames = selected.map(id => {
                   const pack = packTypes.find(p => p._id === id);
                   return pack ? pack.name : id;
@@ -381,7 +429,6 @@ const CreateProduct = () => {
               </MenuItem>
               {packTypes.map((type) => (
                 <MenuItem key={type._id} value={type._id}>
-                  {/* Use Checkbox to indicate selection */}
                   <Checkbox checked={formData.typesOfPacks.indexOf(type._id) > -1} />
                   {type.name}
                 </MenuItem>
@@ -400,7 +447,7 @@ const CreateProduct = () => {
               id="pricing-group-select"
               value={formData.pricingGroup}
               onChange={(e) => setFormData({ ...formData, pricingGroup: e.target.value })}
-              disabled={loading || packTypes.length === 0}
+              disabled={loading || pricingGroups.length === 0}
               displayEmpty
               sx={{
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -427,15 +474,24 @@ const CreateProduct = () => {
         </Grid>
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
-            Select Commerce category One
+            Select Commerce category One (Brand)
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
             <Select
               id="commerce-category-one-select"
               value={formData.commerceCategoriesOne}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesOne: e.target.value })}
-              disabled={loading || packTypes.length === 0}
+              onChange={(e) => {
+                setFormData({ 
+                  ...formData, 
+                  commerceCategoriesOne: e.target.value,
+                  // Clear child categories when brand changes
+                  commerceCategoriesTwo: '',
+                  commerceCategoriesThree: '',
+                  commerceCategoriesFour: ''
+                });
+              }}
+              disabled={loading || categoryOne.length === 0}
               displayEmpty
               sx={{
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -450,10 +506,10 @@ const CreateProduct = () => {
               }}
             >
               <MenuItem value="" disabled>
-                {categoryOne.length === 0 ? 'Loading types...' : 'Select a type'}
+                {categoryOne.length === 0 ? 'Loading brands...' : 'Select a brand'}
               </MenuItem>
               {categoryOne.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
+                <MenuItem key={category._id} value={category._id}>
                   {category.name}
                 </MenuItem>
               ))}
@@ -471,7 +527,15 @@ const CreateProduct = () => {
             <Select
               id="commerce-category-two-select"
               value={formData.commerceCategoriesTwo}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesTwo: e.target.value })}
+              onChange={(e) => {
+                setFormData({ 
+                  ...formData, 
+                  commerceCategoriesTwo: e.target.value,
+                  // Clear child categories when category changes
+                  commerceCategoriesThree: '',
+                  commerceCategoriesFour: ''
+                });
+              }}
               disabled={loading || categoryTwo.length === 0}
               displayEmpty
               sx={{
@@ -487,10 +551,10 @@ const CreateProduct = () => {
               }}
             >
               <MenuItem value="" disabled>
-                {categoryTwo.length === 0 ? 'Loading types...' : 'Select a type'}
+                {categoryTwo.length === 0 ? 'Select brand first...' : 'Select a category'}
               </MenuItem>
               {categoryTwo.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
+                <MenuItem key={category._id} value={category._id}>
                   {category.name}
                 </MenuItem>
               ))}
@@ -505,7 +569,14 @@ const CreateProduct = () => {
             <Select
               id="commerceCategoryThree-select"
               value={formData.commerceCategoriesThree}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesThree: e.target.value })}
+              onChange={(e) => {
+                setFormData({ 
+                  ...formData, 
+                  commerceCategoriesThree: e.target.value,
+                  // Clear child categories when subcategory changes
+                  commerceCategoriesFour: ''
+                });
+              }}
               disabled={loading || categoryThree.length === 0}
               displayEmpty
               sx={{
@@ -521,10 +592,10 @@ const CreateProduct = () => {
               }}
             >
               <MenuItem value="" disabled>
-                {categoryThree.length === 0 ? 'Loading types...' : 'Select a type'}
+                {categoryThree.length === 0 ? 'Select category first...' : 'Select a subcategory'}
               </MenuItem>
               {categoryThree.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
+                <MenuItem key={category._id} value={category._id}>
                   {category.name}
                 </MenuItem>
               ))}
@@ -533,14 +604,16 @@ const CreateProduct = () => {
         </Grid>
 
         <Grid size={6}>
-          <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
             Select Commerce category four
           </CustomFormLabel>
           <FormControl fullWidth>
             <Select
-              id="commerceCategoryThree-select"
+              id="commerceCategoryFour-select"
               value={formData.commerceCategoriesFour}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesFour: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, commerceCategoriesFour: e.target.value });
+              }}
               disabled={loading || categoryFour.length === 0}
               displayEmpty
               sx={{
@@ -556,10 +629,10 @@ const CreateProduct = () => {
               }}
             >
               <MenuItem value="" disabled>
-                {categoryFour.length === 0 ? 'NO CATEGORY' : 'Select a type'}
+                {categoryFour.length === 0 ? 'No SubCategory TWo Available' : 'Select a sub-subcategory'}
               </MenuItem>
               {categoryFour.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
+                <MenuItem key={category._id} value={category._id}>
                   {category.name}
                 </MenuItem>
               ))}
@@ -630,11 +703,11 @@ const CreateProduct = () => {
           <Grid size={12} mt={2}>
             <div
               style={{
-                color: 'red',
+                color: error.includes('success') ? 'green' : 'red',
                 padding: '10px',
-                backgroundColor: '#ffebee',
+                backgroundColor: error.includes('success') ? '#e8f5e8' : '#ffebee',
                 borderRadius: '4px',
-                border: '1px solid #ffcdd2'
+                border: error.includes('success') ? '1px solid #4caf50' : '1px solid #ffcdd2'
               }}
             >
               {error}
@@ -671,7 +744,6 @@ const CreateProduct = () => {
         maxWidth="sm"
         fullWidth
       >
-        {/* Loading Backdrop */}
         <Backdrop
           sx={{
             color: '#fff',

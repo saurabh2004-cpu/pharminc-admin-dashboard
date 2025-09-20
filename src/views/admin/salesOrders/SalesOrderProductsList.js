@@ -261,6 +261,7 @@ const CustomersSalesOrders = () => {
         shippingAddress: {},
         trackingNumber: "",
         date: "",
+        trackingNumber: "",
     });
     const [loading, setLoading] = useState(false);
     const [editingRowId, setEditingRowId] = useState(null);  // Track which row is being edited
@@ -804,10 +805,10 @@ const CustomersSalesOrders = () => {
                                                     <TableCell sx={{ width: 100 }}>
                                                         {isRowEditing ? (
                                                             <Typography variant="body2">
-                                                                ${updateFormData.amount ? updateFormData.amount.toFixed(2) : row.amount || "0.00"}
+                                                                ${updateFormData.amount ? updateFormData.amount.toFixed(2) : row.amount.toFixed(2) || "0.00"}
                                                             </Typography>
                                                         ) : (
-                                                            <Typography variant="body2">${row.amount || "0.00"}</Typography>
+                                                            <Typography variant="body2">${row.amount.toFixed(2) || "0.00"}</Typography>
                                                         )}
                                                     </TableCell>
 
@@ -1040,6 +1041,19 @@ const CustomersSalesOrders = () => {
                                     size="small"
                                     value={formData.amount}
                                     onChange={(e) => handleInputChange("amount", e.target.value)}
+                                    sx={{ minWidth: 270 }}
+                                />
+                            </Box>
+                            {/* trackingNumber number */}
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
+                                    trackingNumber: 
+                                </Typography>
+                                <TextField
+                                    type="text"
+                                    size="small"
+                                    value={formData.trackingNumber}
+                                    onChange={(e) => handleInputChange("trackingNumber", e.target.value)}
                                     sx={{ minWidth: 270 }}
                                 />
                             </Box>
