@@ -80,10 +80,8 @@ const ProductSelectionModal = ({
                 documentNumber: documentNo || firstOrder.documentNumber || '',
                 customerName: firstOrder.customerName || '',
                 salesChannel: firstOrder.salesChannel || '',
-                trackingNumber: firstOrder.trackingNumber || '',
                 shippingAddress: firstOrder.shippingAddress || '',
                 billingAddress: firstOrder.billingAddress || '',
-                customerPO: firstOrder.customerPO || '',
                 date: firstOrder.date,
                 trackingNumber: firstOrder.trackingNumber,
                 customerPO: firstOrder.customerPO

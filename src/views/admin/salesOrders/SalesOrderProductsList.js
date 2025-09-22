@@ -261,7 +261,6 @@ const CustomersSalesOrders = () => {
         shippingAddress: {},
         trackingNumber: "",
         date: "",
-        trackingNumber: "",
     });
     const [loading, setLoading] = useState(false);
     const [editingRowId, setEditingRowId] = useState(null);  // Track which row is being edited
