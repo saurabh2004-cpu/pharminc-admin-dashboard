@@ -87,9 +87,27 @@ const ListCustomers = () => {
     },
     {
       id: 'defaultShippingRate',
-      numeric: true,
+      numeric: false,
       disablePadding: false,
       label: 'Shipping Rate',
+    },
+    {
+      id: 'shippingAddressOne',
+      numeric: false,
+      disablePadding: false,
+      label: 'shipping Address One',
+    },
+    {
+      id: 'shippingAddressTwo',
+      numeric: false,
+      disablePadding: false,
+      label: 'shipping Address Two',
+    },
+    {
+      id: 'shippingAddressThree',
+      numeric: false,
+      disablePadding: false,
+      label: 'shipping Address Three',
     },
     {
       id: 'shippingCity',
@@ -102,6 +120,48 @@ const ListCustomers = () => {
       numeric: false,
       disablePadding: false,
       label: 'Shipping State',
+    },
+    {
+      id: 'shippingZip',
+      numeric: false,
+      disablePadding: false,
+      label: 'Shipping Zip',
+    },
+    {
+      id: 'billingAddressOne',
+      numeric: false,
+      disablePadding: false,
+      label: 'billing Address One',
+    },
+    {
+      id: 'billingAddressTwo',
+      numeric: false,
+      disablePadding: false,
+      label: 'billing Address Two',
+    },
+    {
+      id: 'billingAddressThree',
+      numeric: false,
+      disablePadding: false,
+      label: 'billing Address Three',
+    },
+    {
+      id: 'billingCity',
+      numeric: false,
+      disablePadding: false,
+      label: 'billing City',
+    },
+    {
+      id: 'billingState',
+      numeric: false,
+      disablePadding: false,
+      label: 'billing State',
+    },
+    {
+      id: 'billingZip',
+      numeric: false,
+      disablePadding: false,
+      label: 'billing Zip',
     },
     {
       id: 'inactive',
@@ -172,11 +232,11 @@ const ListCustomers = () => {
         <Breadcrumb title="Customers List" items={BCrumb} />
         {/* end breadcrumb */}
         <Box
-          // sx={{
-          //   minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-          //   marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-          //   transition: "margin-left 0.3s ease", // smooth animation
-          // }}
+        // sx={{
+        //   minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+        //   marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+        //   transition: "margin-left 0.3s ease", // smooth animation
+        // }}
         >
           <ListTable
             showCheckBox={false}

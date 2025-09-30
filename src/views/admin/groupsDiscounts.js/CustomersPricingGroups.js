@@ -32,6 +32,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import axios from 'axios';
+import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -218,7 +219,7 @@ const CustomersPricingGroups = () => {
     const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
     const [dense, setDense] = useState(false);
-    const [rowsPerPage, setRowsPerPage] = useState(30);
+    const [rowsPerPage, setRowsPerPage] = useState(50);
     const isBrandsList = true;
 
     const [tableData, setTableData] = React.useState([]);
@@ -357,19 +358,51 @@ const CustomersPricingGroups = () => {
     const theme = useTheme();
     const borderColor = theme.palette.divider;
 
-    //delete pricing group
-    const handleDeletePricingGroup = async (id) => {
+    const [deleteDialog, setDeleteDialog] = useState({
+        open: false,
+        itemId: null,
+        itemName: '',
+        isDeleting: false
+    });
+
+    const handleDeleteCancel = () => {
+        setDeleteDialog({
+            open: false,
+            itemId: null,
+            itemName: '',
+            isDeleting: false
+        });
+    };
+
+    const handleDeleteClick = (event, id, name) => {
+        event.stopPropagation(); // Prevent row selection
+        setDeleteDialog({
+            open: true,
+            itemId: id,
+            itemName: name,
+            isDeleting: false
+        });
+    };
+
+    //delete pricing group discount
+    const handleDeletePricingGroupDiscount = async () => {
         try {
-            const res = await axiosInstance.delete(`/pricing-groups/delete-pricing-group/${id}`);
+            setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
+
+            const res = await axiosInstance.delete(
+                `/pricing-groups-discount/delete-pricing-group-discount/${deleteDialog.itemId}`
+            );
 
             console.log("deleted", res.data);
 
             if (res.data.statusCode === 200) {
-                setTableData((prevData) => prevData.filter((item) => item._id !== id));
-                setRows((prevRows) => prevRows.filter((item) => item._id !== id));
+                setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+                setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+                handleDeleteCancel();
             }
         } catch (error) {
-            console.error('Error deleting category:', error);
+            console.error('Error deleting pricing group discount:', error);
+            setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
         }
     };
 
@@ -383,11 +416,6 @@ const CustomersPricingGroups = () => {
         zIndex: 5, // higher than other cells so it stays on top
         backgroundColor: '#f0f8ff', // keeps background clean while scrolling
     };
-
-    const handleCustomerIdClick = (id) => {
-        navigate(`/dashboard/customers-pricing-groups/${id}`);
-    };
-
 
 
     return (
@@ -454,7 +482,11 @@ const CustomersPricingGroups = () => {
                                                                     </IconButton>
                                                                 </Tooltip>
                                                                 <Tooltip title="Delete">
-                                                                    <IconButton size="small" color="error" onClick={() => handleDeletePricingGroup(row?.pricingGroup?._id)}>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        color="error"
+                                                                        onClick={(e) => handleDeleteClick(e, row._id, row?.pricingGroup?.name)} 
+                                                                    >
                                                                         <IconTrash size="1.1rem" />
                                                                     </IconButton>
                                                                 </Tooltip>
@@ -503,7 +535,7 @@ const CustomersPricingGroups = () => {
                         </Table>
                     </TableContainer>
                     <TablePagination
-                        rowsPerPageOptions={[5, 10, 30]}
+                        rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
                         component="div"
                         count={rows.length}
                         rowsPerPage={rowsPerPage}
@@ -520,6 +552,15 @@ const CustomersPricingGroups = () => {
                     <Typography color="error">Error: {error}</Typography>
                 </Box>
             )}
+
+            <DeleteConfirmationDialog
+                open={deleteDialog.open}
+                onClose={handleDeleteCancel}
+                onConfirm={handleDeletePricingGroupDiscount} // Changed to the new function
+                itemName={deleteDialog.itemName}
+                isDeleting={deleteDialog.isDeleting}
+                itemType="Pricing Group Discount" // Updated item type
+            />
         </Box>
     );
 };

@@ -35,6 +35,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import ProductSelectionModal from './ProductSelectionModal'; // Import the modal
 import { use } from 'react';
+import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -209,7 +210,7 @@ const CustomersSalesOrders = () => {
     const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
     const [dense, setDense] = useState(false);
-    const [rowsPerPage, setRowsPerPage] = useState(30);
+    const [rowsPerPage, setRowsPerPage] = useState(50);
     const [tableData, setTableData] = React.useState([]);
     const [error, setError] = useState('');
     const [rows, setRows] = useState([]);
@@ -268,6 +269,7 @@ const CustomersSalesOrders = () => {
 
     // Update form data to handle individual row updates
     const [updateFormData, setUpdateFormData] = React.useState({});
+    const [productQuentity, setProductQuantity] = useState(0);
 
     useEffect(() => {
         if (tableData[0]) {
@@ -396,6 +398,27 @@ const CustomersSalesOrders = () => {
         }
     };
 
+    const fetchProductBySku = async (itemSku) => {
+        try {
+            const response = await axiosInstance.get(`/products/get-product-by-sku/${itemSku}`);
+            console.log("response product by sku", response);
+
+            if (response.status === 200) {
+                setProductQuantity(response.data.data.stockLevel);
+            }
+
+        } catch (error) {
+            console.error('Error fetching product by sku:', error);
+            setError(error.message);
+        }
+    }
+
+    useEffect(() => {
+        if (formData.itemSku !== "") {
+            fetchProductBySku(updateFormData.itemSku);
+        }
+    }, [updateFormData.itemSku]);
+
     React.useEffect(() => {
         fetchProductsList();
     }, []);
@@ -486,8 +509,7 @@ const CustomersSalesOrders = () => {
     const [shippingAddresses, setShippingAddresses] = useState([]);
     const [selectedBillingAddress, setSelectedBillingAddress] = useState('');
     const [selectedShippingAddress, setSelectedShippingAddress] = useState('');
-
-
+    const [validationError, setValidationError] = useState('');
 
     // Add this function to fetch customer addresses
     const fetchCustomerAddresses = async (customerName) => {
@@ -546,11 +568,11 @@ const CustomersSalesOrders = () => {
         }
     }, [formData.billingAddress, formData.shippingAddress]);
 
-
     const handleEditSalesOrder = (order) => {
         setRowId(order._id);
         setEditingRowId(order._id);
         fetchProductsAvailablePackTypes(order.itemSku);
+        fetchProductBySku(order.itemSku); // Fetch current stock level
 
         // Initialize form data for this specific row
         setUpdateFormData({
@@ -570,15 +592,50 @@ const CustomersSalesOrders = () => {
         });
     };
 
-    const handleDeleteSalesOrder = async (id) => {
+    // Add this function to handle canceling the update
+    const handleCancelUpdate = (rowId) => {
+        setEditingRowId(null);
+        setUpdateFormData({});
+        setValidationError('');
+        setError('');
+    };
+
+    const [deleteDialog, setDeleteDialog] = useState({
+        open: false,
+        itemId: null,
+        itemName: '',
+        isDeleting: false
+    });
+
+    const handleDeleteCancel = () => {
+        setDeleteDialog({
+            open: false,
+            itemId: null,
+            itemName: '',
+            isDeleting: false
+        });
+    };
+
+    const handleDeleteClick = (event, id, name) => {
+        event.stopPropagation(); // Prevent row selection
+        setDeleteDialog({
+            open: true,
+            itemId: id,
+            itemName: name,
+            isDeleting: false
+        });
+    };
+
+    const handleDeleteSalesOrder = async () => {
         try {
-            const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${id}`);
+            const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${deleteDialog.itemId}`);
 
             console.log("deleted", res.data);
 
             if (res.data.statusCode === 200) {
-                setTableData((prevData) => prevData.filter((item) => item._id !== id));
-                setRows((prevRows) => prevRows.filter((item) => item._id !== id));
+                setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+                setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+                handleDeleteCancel();
             }
         } catch (error) {
             console.error('Error deleting category:', error);
@@ -595,6 +652,23 @@ const CustomersSalesOrders = () => {
     // Updated handleSaveUpdate function with correct amount calculation
     const handleSaveUpdate = async (rowId) => {
         try {
+            // Validation
+            if (!updateFormData.unitsQuantity || updateFormData.unitsQuantity < 1) {
+                setError('Units quantity must be at least 1');
+                return;
+            }
+
+            if (!updateFormData.packQuantity || updateFormData.packQuantity < 1) {
+                setError('Pack quantity must be at least 1');
+                return;
+            }
+
+            const totalOrderQuantity = updateFormData.packQuantity * updateFormData.unitsQuantity;
+            if (totalOrderQuantity > productQuentity) {
+                setError(`Cannot save: Order quantity (${totalOrderQuantity}) exceeds available stock (${productQuentity})`);
+                return;
+            }
+
             setLoading(true);
             setError('');
 
@@ -644,8 +718,7 @@ const CustomersSalesOrders = () => {
                 );
 
                 // Exit edit mode
-                setEditingRowId(null);
-                setUpdateFormData({});
+                handleCancelUpdate(rowId);
 
                 // Refresh the data
                 fetchSalesOrdersProducts();
@@ -660,6 +733,27 @@ const CustomersSalesOrders = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (editingRowId && updateFormData.packQuantity && updateFormData.unitsQuantity) {
+            const totalOrderQuantity = updateFormData.packQuantity * updateFormData.unitsQuantity;
+
+            // Check if units quantity is less than 1
+            if (updateFormData.unitsQuantity < 1) {
+                setValidationError('Units quantity must be at least 1');
+                return;
+            }
+
+            // Check if total quantity exceeds available stock
+            if (totalOrderQuantity > productQuentity) {
+                setValidationError(
+                    `Warning: Order quantity (${totalOrderQuantity}) exceeds available stock (${productQuentity})`
+                );
+            } else {
+                setValidationError('');
+            }
+        }
+    }, [updateFormData.packQuantity, updateFormData.unitsQuantity, productQuentity, editingRowId]);
 
     useEffect(() => {
         if (editingRowId && updateFormData.packQuantity !== undefined && updateFormData.unitsQuantity !== undefined) {
@@ -688,6 +782,7 @@ const CustomersSalesOrders = () => {
 
     // Helper function to update form data for specific fields
     const handleUpdateFormChange = (field, value) => {
+        console.log("handleUpdateFormChange", field, value);
         setUpdateFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -759,15 +854,27 @@ const CustomersSalesOrders = () => {
                                                     <TableCell sx={{ ...stickyCellStyle, width: 100 }}>
                                                         <Box display="flex" gap={0.5}>
                                                             {isRowEditing ? (
-                                                                <Button
-                                                                    size="small"
-                                                                    variant="contained"
-                                                                    color="primary"
-                                                                    onClick={() => handleSaveUpdate(row._id)}
-                                                                    disabled={loading}
-                                                                >
-                                                                    Save
-                                                                </Button>
+                                                                <>
+                                                                    <Button
+                                                                        size="small"
+                                                                        variant="contained"
+                                                                        color="primary"
+                                                                        onClick={() => handleSaveUpdate(row._id)}
+                                                                        disabled={loading || !!validationError || (updateFormData.unitsQuantity !== undefined && updateFormData.unitsQuantity < 1)}
+                                                                    >
+                                                                        {loading ? 'Saving...' : 'Save'}
+                                                                    </Button>
+
+                                                                    <Button
+                                                                        size="small"
+                                                                        variant="outlined"
+                                                                        color="secondary"
+                                                                        onClick={() => handleCancelUpdate(row._id)}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        Cancel
+                                                                    </Button>
+                                                                </>
                                                             ) : (
                                                                 <>
                                                                     <Tooltip title="Edit">
@@ -783,7 +890,7 @@ const CustomersSalesOrders = () => {
                                                                         <IconButton
                                                                             size="small"
                                                                             color="error"
-                                                                            onClick={() => handleDeleteSalesOrder(row._id)}
+                                                                            onClick={(e) => handleDeleteClick(e, row._id, row.itemSku)}
                                                                         >
                                                                             <IconTrash size="1rem" />
                                                                         </IconButton>
@@ -804,10 +911,10 @@ const CustomersSalesOrders = () => {
                                                     <TableCell sx={{ width: 100 }}>
                                                         {isRowEditing ? (
                                                             <Typography variant="body2">
-                                                                ${updateFormData.amount ? updateFormData.amount.toFixed(2) : row.amount.toFixed(2) || "0.00"}
+                                                                ${updateFormData.amount ? updateFormData.amount.toFixed(2) : (row.amount || 0).toFixed(2)}
                                                             </Typography>
                                                         ) : (
-                                                            <Typography variant="body2">${row.amount.toFixed(2) || "0.00"}</Typography>
+                                                            <Typography variant="body2">${(row.amount || 0).toFixed(2)}</Typography>
                                                         )}
                                                     </TableCell>
 
@@ -818,10 +925,11 @@ const CustomersSalesOrders = () => {
                                                                 select
                                                                 size="small"
                                                                 value={updateFormData.packQuantity || row.packQuantity || ""}
-                                                                onChange={(e) => handleUpdateFormChange('packQuantity', e.target.value)}
+                                                                onChange={(e) => handleUpdateFormChange('packQuantity', parseInt(e.target.value))}
+                                                                error={!!validationError}
                                                             >
                                                                 {packTypes?.map((pack) => (
-                                                                    <MenuItem key={pack._id} value={pack.quentity}>
+                                                                    <MenuItem key={pack._id} value={pack.quantity}>
                                                                         {pack.name}
                                                                     </MenuItem>
                                                                 ))}
@@ -834,14 +942,49 @@ const CustomersSalesOrders = () => {
                                                     </TableCell>
 
                                                     {/* Units Quantity */}
-                                                    <TableCell sx={{ width: 100 }}>
+                                                    <TableCell sx={{ width: 150 }}>
                                                         {isRowEditing ? (
-                                                            <TextField
-                                                                type="number"
-                                                                size="small"
-                                                                value={updateFormData.unitsQuantity || row.unitsQuantity || ""}
-                                                                onChange={(e) => handleUpdateFormChange('unitsQuantity', e.target.value)}
-                                                            />
+                                                            <Box>
+                                                                <TextField
+                                                                    type="number"
+                                                                    size="small"
+                                                                    value={updateFormData.unitsQuantity || row.unitsQuantity || ""}
+                                                                    onChange={(e) => {
+                                                                        const value = parseInt(e.target.value);
+                                                                        if (value >= 1 || e.target.value === '') {
+                                                                            handleUpdateFormChange('unitsQuantity', value);
+                                                                        }
+                                                                    }}
+                                                                    inputProps={{ min: 1 }}
+                                                                    error={!!validationError}
+                                                                />
+                                                                {validationError && (
+                                                                    <Typography
+                                                                        variant="caption"
+                                                                        color="error"
+                                                                        sx={{
+                                                                            display: 'block',
+                                                                            mt: 0.5,
+                                                                            fontSize: '0.7rem'
+                                                                        }}
+                                                                    >
+                                                                        {validationError}
+                                                                    </Typography>
+                                                                )}
+                                                                {productQuentity > 0 && (
+                                                                    <Typography
+                                                                        variant="caption"
+                                                                        color="textSecondary"
+                                                                        sx={{
+                                                                            display: 'block',
+                                                                            mt: 0.5,
+                                                                            fontSize: '0.7rem'
+                                                                        }}
+                                                                    >
+                                                                        Available: {productQuentity}
+                                                                    </Typography>
+                                                                )}
+                                                            </Box>
                                                         ) : (
                                                             <Typography variant="body2">
                                                                 {row.unitsQuantity || "N/A"}
@@ -916,10 +1059,16 @@ const CustomersSalesOrders = () => {
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
-                                            Order Date :
+                                            Order Time :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            {tableData[0]?.date ? new Date(tableData[0].date).toLocaleDateString() : 'N/A'}
+                                            {tableData[0]?.date
+                                                ? new Date(tableData[0].date).toLocaleTimeString([], {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                    hour12: true, // set to false if you want 24-hour format
+                                                })
+                                                : "N/A"}
                                         </Typography>
                                     </Box>
 
@@ -967,7 +1116,7 @@ const CustomersSalesOrders = () => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
                                             {tableData[0]?.billingAddress instanceof Object ?
-                                                `${tableData[0]?.billingAddress.billingAddressLineOne || ''}, ${tableData[0]?.billingAddress.billingAddressLineTwo || ''}, ${tableData[0]?.billingAddress.billingAddressLineThree || ''}, ${tableData[0]?.billingAddress.billingCity || ''}, ${tableData[0]?.billingAddress.billingState || ''}, ${tableData[0]?.billingAddress.billingZip || ''}`.trim()
+                                                `${tableData[0]?.billingAddress.billingAddressLineOne || ''} ${tableData[0]?.billingAddress.billingAddressLineTwo || ''} ${tableData[0]?.billingAddress.billingAddressLineThree || ''} ${tableData[0]?.billingAddress.billingCity || ''} ${tableData[0]?.billingAddress.billingState || ''} ${tableData[0]?.billingAddress.billingZip || ''}`.trim()
                                                 : `${tableData[0]?.billingAddress || ''}`}
                                         </Typography>
                                     </Box>
@@ -977,7 +1126,7 @@ const CustomersSalesOrders = () => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
                                             {tableData[0]?.shippingAddress instanceof Object ?
-                                                `${tableData[0]?.shippingAddress.shippingAddressLineOne || ''}, ${tableData[0]?.shippingAddress.shippingAddressLineTwo || ''}, ${tableData[0]?.shippingAddress.shippingAddressLineThree || ''}, ${tableData[0]?.shippingAddress.shippingCity || ''}, ${tableData[0]?.shippingAddress.shippingState || ''}, ${tableData[0]?.shippingAddress.shippingZip || ''}`.trim()
+                                                `${tableData[0]?.shippingAddress.shippingAddressLineOne || ''} ${tableData[0]?.shippingAddress.shippingAddressLineTwo || ''} ${tableData[0]?.shippingAddress.shippingAddressLineThree || ''} ${tableData[0]?.shippingAddress.shippingCity || ''} ${tableData[0]?.shippingAddress.shippingState || ''} ${tableData[0]?.shippingAddress.shippingZip || ''}`.trim()
                                                 : `${tableData[0]?.shippingAddress || ''}`
                                             }
                                         </Typography>
@@ -1046,7 +1195,7 @@ const CustomersSalesOrders = () => {
                             {/* trackingNumber number */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
-                                    trackingNumber: 
+                                    trackingNumber:
                                 </Typography>
                                 <TextField
                                     type="text"
@@ -1116,7 +1265,7 @@ const CustomersSalesOrders = () => {
                                     variant="contained"
                                     color="primary"
                                     onClick={handleSubmit}
-                                    disabled={loading}
+                                    disabled={loading || !!validationError || updateFormData.unitsQuantity < 1}
                                 >
                                     {loading ? "Saving..." : "Save Changes"}
                                 </Button>
@@ -1142,6 +1291,15 @@ const CustomersSalesOrders = () => {
                     <Typography color="error">Error: {error}</Typography>
                 </Box>
             )}
+
+            <DeleteConfirmationDialog
+                open={deleteDialog.open}
+                onClose={handleDeleteCancel}
+                onConfirm={handleDeleteSalesOrder}
+                itemName={deleteDialog.itemName}
+                isDeleting={deleteDialog.isDeleting}
+                itemType={"Pact Types"}
+            />
         </Box>
     );
 };

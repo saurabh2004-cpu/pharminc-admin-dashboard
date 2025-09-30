@@ -19,12 +19,12 @@ const BCrumb = [
 
 const ListSalesOrders = () => {
   const headCells = [
-    // {
-    //   id: 'Actions',
-    //   numeric: false,
-    //   disablePadding: false,
-    //   label: 'Actions',
-    // },
+    {
+      id: 'Actions',
+      numeric: false,
+      disablePadding: false,
+      label: 'Actions',
+    },
     {
       id: 'documentNumber',
       numeric: false,

@@ -27,6 +27,7 @@ import { IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) return -1;
@@ -177,7 +178,7 @@ const ListTable = ({
   const [orderBy, setOrderBy] = useState('calories');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -241,18 +242,7 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  // Delete category
-  const handleDeleteCategory = async (id) => {
-    try {
-      const res = await axiosInstance.delete(`/badge/delete-badge/${id}`);
-      if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.filter((item) => item._id !== id));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== id));
-      }
-    } catch (error) {
-      console.error('Error deleting category:', error);
-    }
-  };
+
 
   // Edit category
   const handleEditCategory = (id) => {
@@ -264,6 +254,46 @@ const ListTable = ({
     left: 0,
     zIndex: 5, // higher than other cells so it stays on top
     backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
+
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    itemId: null,
+    itemName: '',
+    isDeleting: false
+  });
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      open: false,
+      itemId: null,
+      itemName: '',
+      isDeleting: false
+    });
+  };
+
+  const handleDeleteClick = (event, id, name) => {
+    event.stopPropagation(); // Prevent row selection
+    setDeleteDialog({
+      open: true,
+      itemId: id,
+      itemName: name,
+      isDeleting: false
+    });
+  };
+
+  // Delete category
+  const handleDeleteBadge = async (id) => {
+    try {
+      const res = await axiosInstance.delete(`/badge/delete-badge/${deleteDialog.itemId}`);
+      if (res.data.statusCode === 200) {
+        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+        handleDeleteCancel()
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+    }
   };
 
   return (
@@ -344,7 +374,7 @@ const ListTable = ({
                                   <IconButton
                                     size="small"
                                     color="error"
-                                    onClick={() => handleDeleteCategory(row._id)}
+                                    onClick={(e) => handleDeleteClick(e, row._id, row.name)}
                                   >
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
@@ -381,7 +411,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30]}
+            rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}
@@ -391,6 +421,15 @@ const ListTable = ({
           />
         </Paper>
       </Box>
+
+      <DeleteConfirmationDialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteBadge}
+        itemName={deleteDialog.itemName}
+        isDeleting={deleteDialog.isDeleting}
+        itemType={isBrandsList ? "Badge" : ""}
+      />
     </Box>
   );
 };

@@ -32,6 +32,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
+import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -129,6 +130,25 @@ const EnhancedTableToolbar = (props) => {
   const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
 
 
+  const handleExportCSV = async () => {
+    try {
+      const response = await axiosInstance.get(
+        '/admin/export-users',
+        { responseType: 'blob' }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "customers-list.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+    }
+  };
+
   return (
     <Toolbar
       sx={{
@@ -177,11 +197,11 @@ const EnhancedTableToolbar = (props) => {
               <IconFilter size="1.2rem" />
             </IconButton>
           </Tooltip>
-          {/* <Tooltip title="Export CSV">
+          <Tooltip title="Export CSV">
             <IconButton onClick={handleExportCSV}>
-              <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
+              <Button size="small" variant="outlined" >Export</Button>
             </IconButton>
-          </Tooltip> */}
+          </Tooltip>
         </>
       )}
     </Toolbar>
@@ -208,7 +228,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -233,6 +253,7 @@ const ListTable = ({
     defaultShippingRate: { minWidth: '200px' },
     createdAt: { minWidth: '160px' },
     actions: { minWidth: '160px' },
+    packBarcodes: { minWidth: '250px' },
   };
 
   useEffect(() => {
@@ -354,16 +375,43 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    itemId: null,
+    itemName: '',
+    isDeleting: false
+  });
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      open: false,
+      itemId: null,
+      itemName: '',
+      isDeleting: false
+    });
+  };
+
+  const handleDeleteClick = (event, id, name) => {
+    event.stopPropagation(); // Prevent row selection
+    setDeleteDialog({
+      open: true,
+      itemId: id,
+      itemName: name,
+      isDeleting: false
+    });
+  };
+
   //delete product
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
     try {
-      const res = await axiosInstance.delete(`/admin/delete-user/${id}`);
+      const res = await axiosInstance.delete(`/admin/delete-user/${deleteDialog.itemId}`);
 
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.filter((item) => item._id !== id));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== id));
+        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+        handleDeleteCancel();
       }
     } catch (error) {
       console.error('Error deleting pack:', error);
@@ -475,7 +523,7 @@ const ListTable = ({
                                     </IconButton>
                                   </Tooltip>
                                   <Tooltip title="Delete">
-                                    <IconButton size="small" color="error" onClick={() => handleDelete(row._id)}>
+                                    <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row._id, row.customerName)}>
                                       <IconTrash size="1.1rem" />
                                     </IconButton>
                                   </Tooltip>
@@ -596,7 +644,7 @@ const ListTable = ({
                               <TableCell sx={columnWidths.defaultShippingRate}>
                                 <Box display="flex" alignItems="center">
                                   <Box>
-                                    <Typography fontWeight="400" sx={{ ml: 10 }}>
+                                    <Typography fontWeight="400" >
                                       {isNaN(row.defaultShippingRate) ? 'N/A' : row.defaultShippingRate}
                                     </Typography>
                                   </Box>
@@ -607,7 +655,37 @@ const ListTable = ({
                                 <Box display="flex" alignItems="center">
                                   <Box>
                                     <Typography fontWeight="400">
-                                      {row.shippingCity || 'N/A'}
+                                      {row.shippingAddresses[0].shippingAddressOne || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.shippingAddresses[0].shippingAddressTwo || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.shippingAddresses[0].shippingAddressThree || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.shippingAddresses[0].shippingCity || 'N/A'}
                                     </Typography>
                                   </Box>
                                 </Box>
@@ -616,11 +694,83 @@ const ListTable = ({
                                 <Box display="flex" alignItems="center">
                                   <Box>
                                     <Typography fontWeight="400">
-                                      {row.shippingState || 'N/A'}
+                                      {row.shippingAddresses[0].shippingState || 'N/A'}
                                     </Typography>
                                   </Box>
                                 </Box>
                               </TableCell>
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.shippingAddresses[0].shippingZip || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              {/* billing addresses  */}
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.billingAddresses[0].billingAddressOne || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.billingAddresses[0].billingAddressTwo || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.billingAddresses[0].billingAddressThree || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.billingAddresses[0].billingCity || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.billingAddresses[0].billingState || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={columnWidths.packBarcodes}>
+                                <Box display="flex" alignItems="center">
+                                  <Box>
+                                    <Typography fontWeight="400">
+                                      {row.billingAddresses[0].billingZip || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+
                               <TableCell sx={columnWidths.packBarcodes}>
                                 <Box display="flex" alignItems="center">
                                   <Box>
@@ -658,7 +808,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30]}
+            rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}
@@ -668,6 +818,15 @@ const ListTable = ({
           />
         </Paper>
       </Box>
+
+      <DeleteConfirmationDialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDelete}
+        itemName={deleteDialog.itemName}
+        isDeleting={deleteDialog.isDeleting}
+        itemType={"Customers"}
+      />
     </Box>
   );
 };

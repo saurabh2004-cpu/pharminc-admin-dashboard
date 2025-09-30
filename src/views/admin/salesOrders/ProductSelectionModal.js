@@ -333,7 +333,7 @@ const ProductSelectionModal = ({
                 </Typography>
             </DialogTitle>
 
-            <DialogContent dividers>
+            <DialogContent dividers  sx={{ overflow: 'hidden' }}>
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}

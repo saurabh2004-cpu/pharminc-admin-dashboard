@@ -22,6 +22,13 @@ import {
   TextField,
   InputAdornment,
   Paper,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+  CircularProgress,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../forms/theme-elements/CustomCheckbox';
@@ -30,6 +37,7 @@ import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@
 import { ProductContext } from "src/context/EcommerceContext";
 import axiosInstance from '../../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import { DeleteConfirmationDialog } from '../utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -78,7 +86,6 @@ function EnhancedTableHead(props) {
     fontWeight: 600,
     zIndex: 4, // slightly lower than sticky so sticky overlaps
   };
-
 
   return (
     <TableHead>
@@ -177,6 +184,9 @@ const EnhancedTableToolbar = (props) => {
   );
 };
 
+// Confirmation Dialog Component
+
+
 const ProductTableList = ({
   showCheckBox,
   headCells,
@@ -194,7 +204,15 @@ const ProductTableList = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+
+  // Delete confirmation dialog state
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    itemId: null,
+    itemName: '',
+    isDeleting: false
+  });
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -281,29 +299,61 @@ const ProductTableList = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  //delete brand
-  const handleDeleteBrand = async (id) => {
+  // Open delete confirmation dialog
+  const handleDeleteClick = (event, id, name) => {
+    event.stopPropagation(); // Prevent row selection
+    setDeleteDialog({
+      open: true,
+      itemId: id,
+      itemName: name,
+      isDeleting: false
+    });
+  };
+
+  // Close delete confirmation dialog
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      open: false,
+      itemId: null,
+      itemName: '',
+      isDeleting: false
+    });
+  };
+
+  // Confirm delete action
+  const handleDeleteConfirm = async () => {
+    setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
+
     try {
-      const res = await axiosInstance.delete(`/brand/delete-brand/${id}`);
+      const res = await axiosInstance.delete(`/brand/delete-brand/${deleteDialog.itemId}`);
 
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.filter((item) => item._id !== id));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== id));
+        // Remove item from both table data and rows
+        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+        
+        // Close dialog
+        handleDeleteCancel();
+        
+        // You might want to show a success message here
+        console.log("Brand deleted successfully");
       }
     } catch (error) {
       console.error('Error deleting brand:', error);
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
+      
+      // You might want to show an error message here
+      alert("Failed to delete brand. Please try again.");
     }
   };
 
-
-  //edit brand
-
-  const handleEditBrand = (id) => {
+  // Edit brand
+  const handleEditBrand = (event, id) => {
+    event.stopPropagation(); // Prevent row selection
     navigate(`/dashboard/brand/edit/${id}`);
   };
-
 
   const stickyCellStyle = {
     position: "sticky",
@@ -393,12 +443,20 @@ const ProductTableList = ({
                             <TableCell sx={stickyCellStyle}>
                               <Box display="flex" gap={1}>
                                 <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEditBrand(row._id)}>
+                                  <IconButton 
+                                    size="small" 
+                                    color="primary" 
+                                    onClick={(event) => handleEditBrand(event, row._id)}
+                                  >
                                     <IconEdit size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDeleteBrand(row._id)}>
+                                  <IconButton 
+                                    size="small" 
+                                    color="error" 
+                                    onClick={(event) => handleDeleteClick(event, row._id, row.name)}
+                                  >
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
@@ -441,7 +499,7 @@ const ProductTableList = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30]}
+            rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}
@@ -451,7 +509,17 @@ const ProductTableList = ({
           />
         </Paper>
       </Box>
-    </Box >
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        itemName={deleteDialog.itemName}
+        isDeleting={deleteDialog.isDeleting}
+        itemType={isBrandsList ? "Brand" : "Product"}
+      />
+    </Box>
   );
 };
 

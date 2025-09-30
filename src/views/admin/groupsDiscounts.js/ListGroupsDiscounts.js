@@ -20,6 +20,12 @@ const BCrumb = [
 const ListGroupsDiscounts = () => {
   const headCells = [
     {
+      id: 'Actions',
+      numeric: false,
+      disablePadding: false,
+      label: 'Actions',
+    },
+    {
       id: 'customerId',
       numeric: false,
       disablePadding: false,
@@ -47,14 +53,14 @@ const ListGroupsDiscounts = () => {
   // Create a comprehensive mapping of pricing group IDs to names from BOTH APIs
   const buildPricingGroupsMap = (uniqueData, allData) => {
     const groupsMap = {};
-    
+
     // Extract from unique API (has full pricingGroup objects)
     uniqueData.forEach(item => {
       if (item.pricingGroup && typeof item.pricingGroup === 'object') {
         groupsMap[item.pricingGroup._id] = item.pricingGroup.name;
       }
     });
-    
+
     // Extract from all API (now has populated pricingGroup objects)
     allData.forEach(item => {
       if (item.pricingGroup && typeof item.pricingGroup === 'object') {
@@ -64,7 +70,7 @@ const ListGroupsDiscounts = () => {
         groupsMap[item.pricingGroup] = `Group ${item.pricingGroup}`;
       }
     });
-    
+
     return groupsMap;
   };
 
@@ -76,7 +82,7 @@ const ListGroupsDiscounts = () => {
 
       if (response.data.statusCode === 200) {
         setAllPricingGroupDiscounts(response.data.data);
-        
+
         // Build pricing groups map after we have the data
         if (tableData.length > 0) {
           const groupsMap = buildPricingGroupsMap(tableData, response.data.data);
@@ -96,7 +102,7 @@ const ListGroupsDiscounts = () => {
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
-        
+
         // Build pricing groups map after both APIs have data
         if (allPricingGroupDiscounts.length > 0) {
           const groupsMap = buildPricingGroupsMap(response.data.data, allPricingGroupDiscounts);

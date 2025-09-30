@@ -32,6 +32,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
+import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -207,7 +208,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -298,16 +299,43 @@ const ListTable = ({
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    itemId: null,
+    itemName: '',
+    isDeleting: false
+  });
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      open: false,
+      itemId: null,
+      itemName: '',
+      isDeleting: false
+    });
+  };
+
+  const handleDeleteClick = (event, id, name) => {
+    event.stopPropagation(); // Prevent row selection
+    setDeleteDialog({
+      open: true,
+      itemId: id,
+      itemName: name,
+      isDeleting: false
+    });
+  };
+
   //delete tax
-  const handleDeleteTax = async (id) => {
+  const handleDeleteVendor = async () => {
     try {
-      const res = await axiosInstance.delete(`/delivery-vendor/delete-delivery-vendor/${id}`);
+      const res = await axiosInstance.delete(`/delivery-vendor/delete-delivery-vendor/${deleteDialog.itemId}`);
 
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.filter((item) => item._id !== id));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== id));
+        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+        handleDeleteCancel();
       }
     } catch (error) {
       console.error('Error deleting category:', error);
@@ -402,7 +430,7 @@ const ListTable = ({
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={() => handleDeleteTax(row._id)}>
+                                  <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row._id, row.vendorName)}>
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
@@ -448,7 +476,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30]}
+            rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}
@@ -458,6 +486,15 @@ const ListTable = ({
           />
         </Paper>
       </Box>
+
+      <DeleteConfirmationDialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteVendor}
+        itemName={deleteDialog.itemName}
+        isDeleting={deleteDialog.isDeleting}
+        itemType={"Delivery Vendor"}
+      />
     </Box>
   );
 };

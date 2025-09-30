@@ -333,7 +333,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [netTermsFilter, setNetTermsFilter] = useState('all');
 
   // Handle both direct array and nested data structure
@@ -509,13 +509,6 @@ const ListTable = ({
     const total = filteredRows.reduce((sum, row) => sum + (row.amount || 0), 0);
     const count = filteredRows.length;
     return { total, count };
-  };
-
-  const stickyCellStyle = {
-    position: "sticky",
-    left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
   };
 
 
@@ -784,7 +777,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30, 50]}
+            rowsPerPageOptions={[5, 10, 30, 50,100,200]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

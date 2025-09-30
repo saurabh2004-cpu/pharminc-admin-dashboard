@@ -6,7 +6,7 @@ import CustomFormLabel from '../.../../../../components/forms/theme-elements/Cus
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 // import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
-import { IconUpload, IconFileImport } from '@tabler/icons-react';
+import { IconUpload, IconFileImport, IconPhoto, IconX } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 
@@ -28,6 +28,7 @@ const CreateProduct = () => {
     eachBarcodes: '',
     packBarcodes: '',
     productImg: '',
+    taxable : false,
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -35,17 +36,82 @@ const CreateProduct = () => {
   const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState(null);
 
+  const [thumbnailFile, setThumbnailFile] = React.useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = React.useState(null);
+  const [imageFiles, setImageFiles] = React.useState([]);
+  const [imagePreviews, setImagePreviews] = React.useState([]);
+
+  // New state for image import dialog
+  const [imageDialogOpen, setImageDialogOpen] = React.useState(false);
+  const [selectedImages, setSelectedImages] = React.useState([]);
+
   const [packTypes, setPackTypes] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [categoryOne, setCategoryOne] = useState([]);
   const [categoryTwo, setCategoryTwo] = useState([]);
   const [categoryThree, setCategoryThree] = useState([]);
   const [categoryFour, setCategoryFour] = useState([]);
+  const [taxOptions, setTaxOptions] = useState([true, false]);
 
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
 
+
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file for thumbnail');
+        return;
+      }
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+      setError('');
+    }
+  };
+
+  // Handle multiple images selection
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 10) {
+      setError('You can upload a maximum of 10 images');
+      return;
+    }
+
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      setError('Please select only image files');
+      return;
+    }
+
+    setImageFiles(files);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
+    setError('');
+  };
+
+  // Remove thumbnail
+  const handleRemoveThumbnail = () => {
+    setThumbnailFile(null);
+    if (thumbnailPreview) {
+      URL.revokeObjectURL(thumbnailPreview);
+      setThumbnailPreview(null);
+    }
+  };
+
+  // Remove specific image
+  const handleRemoveImage = (index) => {
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    setImageFiles(newFiles);
+    setImagePreviews(newPreviews);
+  };
+
+
+
   const handleSubmit = async () => {
-    // Validation
     if (!formData.sku.trim()) {
       setError('Please enter a SKU');
       return;
@@ -58,18 +124,54 @@ const CreateProduct = () => {
       setError('Please enter a price');
       return;
     }
-    if (!formData.pricingGroup) {
-      setError('Please enter a pricing group');
+
+
+    if (!thumbnailFile) {
+      setError('Please select a thumbnail image');
       return;
     }
 
     setLoading(true);
     setError('');
 
+    // Create FormData object for multipart form submission
+    const formDataToSend = new FormData();
+
+    // Append all text fields
+    formDataToSend.append('sku', formData.sku);
+    formDataToSend.append('ProductName', formData.ProductName);
+    formDataToSend.append('eachPrice', formData.eachPrice);
+    formDataToSend.append('stockLevel', formData.stockLevel);
+    formDataToSend.append('pricingGroup', formData.pricingGroup);
+
+    // Append array fields
+    formData.typesOfPacks.forEach(pack => {
+      formDataToSend.append('typesOfPacks', pack);
+    });
+
+    // Append optional fields
+    if (formData.commerceCategoriesOne) formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
+    if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
+    if (formData.commerceCategoriesThree) formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree);
+    if (formData.commerceCategoriesFour) formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour);
+    if (formData.storeDescription) formDataToSend.append('storeDescription', formData.storeDescription);
+    if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
+    if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
+    if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
+    if (formData.taxable) formDataToSend.append('taxable', formData.taxable);
+
+    // Append thumbnail image
+    formDataToSend.append('thumbnail', thumbnailFile);
+
+    // Append multiple images
+    imageFiles.forEach((file) => {
+      formDataToSend.append('images', file);
+    });
+
     try {
-      const res = await axiosInstance.post('/products/create-product', formData, {
+      const res = await axiosInstance.post('/products/create-product', formDataToSend, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       });
 
@@ -94,6 +196,11 @@ const CreateProduct = () => {
           packBarcodes: ''
         });
 
+        handleRemoveThumbnail();
+        setImageFiles([]);
+        imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
+        setImagePreviews([]);
+
         navigate('/dashboard/products/list');
 
       } else if (res.data.statusCode === 400) {
@@ -117,6 +224,21 @@ const CreateProduct = () => {
         return;
       }
       setSelectedFile(file);
+      setError('');
+    }
+  };
+
+  // New function to handle image file selection
+  const handleImageFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // Validate that all files are images
+      const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+      if (invalidFiles.length > 0) {
+        setError('Please select only image files (jpg, png, gif, etc.)');
+        return;
+      }
+      setSelectedImages(files);
       setError('');
     }
   };
@@ -159,11 +281,63 @@ const CreateProduct = () => {
     }
   };
 
+  // New function to handle image import
+  const handleImportProductImages = async () => {
+    if (!selectedImages || selectedImages.length === 0) {
+      setError('Please select image files first');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formDataForUpload = new FormData();
+
+      // Append all images with the key 'images' as expected by the backend
+      selectedImages.forEach((image) => {
+        formDataForUpload.append('images', image);
+      });
+
+      const res = await axiosInstance.post('/products/import-product-images', formDataForUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      console.log("Images imported", res.data);
+
+      if (res.data.statusCode === 200) {
+        setImageDialogOpen(false);
+        setSelectedImages([]);
+        setError('Product images imported successfully!');
+        const fileInput = document.getElementById('image-file-input');
+        if (fileInput) fileInput.value = '';
+
+        setTimeout(() => {
+          setError('');
+        }, 3000);
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || error.message || 'An error occurred while importing images');
+      console.error('Image import error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCloseCsvDialog = () => {
     setCsvDialogOpen(false);
     setSelectedFile(null);
     setError('');
     const fileInput = document.getElementById('csv-file-input');
+    if (fileInput) fileInput.value = '';
+  };
+
+  // New function to handle image dialog close
+  const handleCloseImageDialog = () => {
+    setImageDialogOpen(false);
+    setSelectedImages([]);
+    setError('');
+    const fileInput = document.getElementById('image-file-input');
     if (fileInput) fileInput.value = '';
   };
 
@@ -212,7 +386,7 @@ const CreateProduct = () => {
 
   const fetchCategoryList = async () => {
     if (!formData.commerceCategoriesOne) return;
-    
+
     try {
       console.log("Fetching categories for brand ID:", formData.commerceCategoriesOne);
       const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${formData.commerceCategoriesOne}`);
@@ -232,7 +406,7 @@ const CreateProduct = () => {
 
   const fetchSubCategoryList = async () => {
     if (!formData.commerceCategoriesTwo) return;
-    
+
     try {
       console.log("Fetching subcategories for category ID:", formData.commerceCategoriesTwo);
       const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${formData.commerceCategoriesTwo}`);
@@ -252,7 +426,7 @@ const CreateProduct = () => {
 
   const fetchSubCategoryTwoList = async () => {
     if (!formData.commerceCategoriesThree) return;
-    
+
     try {
       console.log("Fetching sub-subcategories for subcategory ID:", formData.commerceCategoriesThree);
       const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${formData.commerceCategoriesThree}`);
@@ -326,6 +500,123 @@ const CreateProduct = () => {
     <div>
       <Grid container spacing={2}>
         {/* SKU and Product Name - Two per row */}
+
+        {/* Thumbnail Image Upload */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="thumbnail-upload" sx={{ mt: 2 }}>
+            Product Thumbnail
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <input
+            id="thumbnail-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+            style={{ display: 'none' }}
+          />
+          <Box display="flex" alignItems="center" gap={2}>
+            <Button
+              variant="outlined"
+              component="label"
+              htmlFor="thumbnail-upload"
+              startIcon={<IconPhoto size="1.1rem" />}
+              disabled={loading}
+            >
+              Choose Thumbnail
+            </Button>
+            {thumbnailFile && (
+              <Typography variant="body2" color="primary">
+                {thumbnailFile.name}
+              </Typography>
+            )}
+          </Box>
+          {thumbnailPreview && (
+            <Box sx={{ mt: 2, position: 'relative', display: 'inline-block' }}>
+              <img
+                src={thumbnailPreview}
+                alt="Thumbnail preview"
+                style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #ddd' }}
+              />
+              <Button
+                size="small"
+                onClick={handleRemoveThumbnail}
+                sx={{
+                  position: 'absolute',
+                  top: -10,
+                  right: -10,
+                  minWidth: 'auto',
+                  padding: '4px',
+                  backgroundColor: 'error.main',
+                  color: 'white',
+                  '&:hover': { backgroundColor: 'error.dark' }
+                }}
+              >
+                <IconX size="1rem" />
+              </Button>
+            </Box>
+          )}
+        </Grid>
+
+        {/* Multiple Product Images Upload */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="images-upload" sx={{ mt: 2 }}>
+            Product Images (Max 10)
+          </CustomFormLabel>
+          <input
+            id="images-upload"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImagesChange}
+            style={{ display: 'none' }}
+          />
+          <Box display="flex" alignItems="center" gap={2}>
+            <Button
+              variant="outlined"
+              component="label"
+              htmlFor="images-upload"
+              startIcon={<IconPhoto size="1.1rem" />}
+              disabled={loading}
+            >
+              Choose Images
+            </Button>
+            {imageFiles.length > 0 && (
+              <Typography variant="body2" color="primary">
+                {imageFiles.length} image{imageFiles.length > 1 ? 's' : ''} selected
+              </Typography>
+            )}
+          </Box>
+          {imagePreviews.length > 0 && (
+            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {imagePreviews.map((preview, index) => (
+                <Box key={index} sx={{ position: 'relative', display: 'inline-block' }}>
+                  <img
+                    src={preview}
+                    alt={`Product ${index + 1}`}
+                    style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <Button
+                    size="small"
+                    onClick={() => handleRemoveImage(index)}
+                    sx={{
+                      position: 'absolute',
+                      top: -10,
+                      right: -10,
+                      minWidth: 'auto',
+                      padding: '4px',
+                      backgroundColor: 'error.main',
+                      color: 'white',
+                      '&:hover': { backgroundColor: 'error.dark' }
+                    }}
+                  >
+                    <IconX size="1rem" />
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="pack-name" sx={{ mt: 2 }}>
             SKU
@@ -340,6 +631,7 @@ const CreateProduct = () => {
             placeholder="Enter SKU"
           />
         </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="ProductName" sx={{ mt: 2 }}>
             ProductName
@@ -482,8 +774,8 @@ const CreateProduct = () => {
               id="commerce-category-one-select"
               value={formData.commerceCategoriesOne}
               onChange={(e) => {
-                setFormData({ 
-                  ...formData, 
+                setFormData({
+                  ...formData,
                   commerceCategoriesOne: e.target.value,
                   // Clear child categories when brand changes
                   commerceCategoriesTwo: '',
@@ -528,8 +820,8 @@ const CreateProduct = () => {
               id="commerce-category-two-select"
               value={formData.commerceCategoriesTwo}
               onChange={(e) => {
-                setFormData({ 
-                  ...formData, 
+                setFormData({
+                  ...formData,
                   commerceCategoriesTwo: e.target.value,
                   // Clear child categories when category changes
                   commerceCategoriesThree: '',
@@ -570,8 +862,8 @@ const CreateProduct = () => {
               id="commerceCategoryThree-select"
               value={formData.commerceCategoriesThree}
               onChange={(e) => {
-                setFormData({ 
-                  ...formData, 
+                setFormData({
+                  ...formData,
                   commerceCategoriesThree: e.target.value,
                   // Clear child categories when subcategory changes
                   commerceCategoriesFour: ''
@@ -603,6 +895,44 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
+
+        {/* tax selection */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="taxable-select" sx={{ mt: 2 }}>
+            Select taxable
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="taxable-select"
+              value={formData.taxable}
+              onChange={(e) => {
+                setFormData({ ...formData, taxable: e.target.value });
+              }}
+              disabled={loading || taxOptions.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                {taxOptions.length === 0 ? 'No tax options available' : 'Select a tax option'}
+              </MenuItem>
+              {taxOptions.map((tax) => (
+                <MenuItem key={tax} value={tax}>
+                  {tax === true ? 'Taxable' : 'Non Taxable'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
             Select Commerce category four
@@ -734,6 +1064,15 @@ const CreateProduct = () => {
           >
             Import CSV
           </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => setImageDialogOpen(true)}
+            startIcon={<IconPhoto size="1.1rem" />}
+            sx={{ ml: 2 }}
+          >
+            Import Product Images
+          </Button>
         </Grid>
       </Grid>
 
@@ -822,6 +1161,140 @@ const CreateProduct = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Image Import Dialog */}
+      <Dialog
+        open={imageDialogOpen}
+        onClose={handleCloseImageDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <Backdrop
+          sx={{
+            color: "#fff",
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            position: "absolute",
+            borderRadius: 1,
+          }}
+          open={loading}
+        >
+          <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+            <CircularProgress color="inherit" size={50} />
+            <Typography variant="body2" color="inherit">
+              Importing product images, please wait...
+            </Typography>
+          </Box>
+        </Backdrop>
+
+        <DialogTitle>Import Product Images</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+              Select multiple image files or a folder to import. Images should follow
+              the naming convention: <b>SKU_1, SKU_2, etc.</b>
+            </Typography>
+
+            {/* Hidden inputs */}
+            <input
+              id="image-file-input"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageFileChange}
+              style={{ display: "none" }}
+            />
+            <input
+              id="image-folder-input"
+              type="file"
+              webkitdirectory="true"
+              onChange={handleImageFileChange}
+              style={{ display: "none" }}
+            />
+
+            <Box display="flex" alignItems="center" gap={2}>
+              <Button
+                variant="outlined"
+                component="label"
+                htmlFor="image-file-input"
+                startIcon={
+                  loading ? <CircularProgress size={16} /> : <IconPhoto size="1.1rem" />
+                }
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Choose Images"}
+              </Button>
+
+              <Button
+                variant="outlined"
+                component="label"
+                htmlFor="image-folder-input"
+                startIcon={<IconPhoto size="1.1rem" />}
+                disabled={loading}
+              >
+                Choose Folder
+              </Button>
+
+              {selectedImages.length > 0 && !loading && (
+                <Typography variant="body2" color="primary">
+                  {selectedImages.length} image
+                  {selectedImages.length > 1 ? "s" : ""} selected
+                </Typography>
+              )}
+            </Box>
+
+            {selectedImages.length > 0 && !loading && (
+              <Box sx={{ mt: 2, maxHeight: 200, overflow: "auto" }}>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                  Selected Images:
+                </Typography>
+                {selectedImages.map((image, index) => (
+                  <Typography key={index} variant="caption" display="block" sx={{ pl: 2 }}>
+                    • {image.name}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+
+            {error && !error.includes("success") && (
+              <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                {error}
+              </Typography>
+            )}
+
+            {error && error.includes("success") && (
+              <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>
+                {error}
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={handleCloseImageDialog}
+            disabled={loading}
+            sx={{ opacity: loading ? 0.5 : 1 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleImportProductImages}
+            variant="contained"
+            disabled={selectedImages.length === 0 || loading}
+            startIcon={
+              loading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <IconUpload size="1.1rem" />
+              )
+            }
+            sx={{ backgroundColor: "#2E2F7F" }}
+          >
+            {loading ? "Importing..." : "Import Images"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </div>
   );
 };

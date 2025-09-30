@@ -26,6 +26,12 @@ const ListProduct = () => {
       label: 'Actions',
     },
     {
+       id: 'Image',
+      numeric: false,
+      disablePadding: false,
+      label: 'Image',
+    },
+    {
       id: 'sku',
       numeric: false,
       disablePadding: false,

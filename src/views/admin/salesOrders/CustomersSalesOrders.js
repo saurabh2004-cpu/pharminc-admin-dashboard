@@ -212,7 +212,7 @@ const CustomersSalesOrders = () => {
     const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
     const [dense, setDense] = useState(false);
-    const [rowsPerPage, setRowsPerPage] = useState(30);
+    const [rowsPerPage, setRowsPerPage] = useState(50);
     const isBrandsList = true;
 
     const [tableData, setTableData] = React.useState([]);
@@ -676,7 +676,7 @@ const CustomersSalesOrders = () => {
                         </Table>
                     </TableContainer>
                     <TablePagination
-                        rowsPerPageOptions={[5, 10, 30]}
+                        rowsPerPageOptions={[5, 10, 30,50,100,200]}
                         component="div"
                         count={rows.length}
                         rowsPerPage={rowsPerPage}

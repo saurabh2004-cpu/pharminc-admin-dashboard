@@ -214,46 +214,27 @@ const Menuitems = [
       },
     ],
   },
-  {
-    id: uniqueId(),
-    title: 'Tax',
-    icon: IconReceipt,
-    href: '/dashboard/tax',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Create Tax',
-        icon: IconPoint,
-        href: '/dashboard/tax/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Tax List',
-        icon: IconPoint,
-        href: '/dashboard/tax/list',
-      },
-    ],
-  },
-  {
-    id: uniqueId(),
-    title: 'Delivery Vendors',
-    icon: IconTruck,
-    href: '/dashboard/delivery-vendors',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Create Delivery Vendor',
-        icon: IconPoint,
-        href: '/dashboard/delivery-vendors/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Delivery Vendor List',
-        icon: IconPoint,
-        href: '/dashboard/delivery-vendors/list',
-      },
-    ],
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Tax',
+  //   icon: IconReceipt,
+  //   href: '/dashboard/tax',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Create Tax',
+  //       icon: IconPoint,
+  //       href: '/dashboard/tax/create',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Tax List',
+  //       icon: IconPoint,
+  //       href: '/dashboard/tax/list',
+  //     },
+  //   ],
+  // },
+
 
   {
     id: uniqueId(),
@@ -352,6 +333,26 @@ const Menuitems = [
       },
     ]
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Delivery Vendors',
+  //   icon: IconTruck,
+  //   href: '/dashboard/delivery-vendors',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Create Delivery Vendor',
+  //       icon: IconPoint,
+  //       href: '/dashboard/delivery-vendors/create',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Delivery Vendor List',
+  //       icon: IconPoint,
+  //       href: '/dashboard/delivery-vendors/list',
+  //     },
+  //   ],
+  // },
 
   {
     navlabel: true,
@@ -368,6 +369,30 @@ const Menuitems = [
         title: 'Add Admin',
         icon: IconUserPlus,
         href: '/dashboard/CreateAdmin',
+      },
+      {
+        id: uniqueId(),
+        title: 'Create Delivery Vendor',
+        icon: IconPoint,
+        href: '/dashboard/delivery-vendors/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Delivery Vendor List',
+        icon: IconPoint,
+        href: '/dashboard/delivery-vendors/list',
+      },
+      {
+        id: uniqueId(),
+        title: 'Create Tax',
+        icon: IconPoint,
+        href: '/dashboard/tax/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Tax List',
+        icon: IconPoint,
+        href: '/dashboard/tax/list',
       },
     ]
   },

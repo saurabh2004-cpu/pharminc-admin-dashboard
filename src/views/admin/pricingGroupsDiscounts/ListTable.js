@@ -32,6 +32,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
+import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -225,7 +226,7 @@ const ListTable = ({
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -365,6 +366,76 @@ const ListTable = ({
     }
   }, [rows]);
 
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    itemId: null,
+    itemName: '',
+    isDeleting: false
+  });
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      open: false,
+      itemId: null,
+      itemName: '',
+      isDeleting: false
+    });
+  };
+
+  const handleDeleteClick = (event, id, name, _id) => {
+    event.stopPropagation(); // Prevent row selection
+    setDeleteDialog({
+      open: true,
+      itemId: id,
+      itemName: name,
+      isDeleting: false,
+      _id: _id
+    });
+  };
+
+  //delete pricing group
+  const handleDeleteItemDiscounts = async () => {
+    try {
+      const res = await axiosInstance.delete(`/item-based-discount/delete-items-based-discount-by-customer-id/${deleteDialog.itemId}`);
+
+      console.log("deleted", res.data);
+
+      if (res.data.statusCode === 200) {
+        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog._id));
+        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog._id));
+        handleDeleteCancel();
+
+      }
+    } catch (error) {
+      console.error('Error deleting item discounts:', error);
+    }
+  };
+
+  const columnWidths = {
+    serial: { minWidth: '80px' },
+    date: { minWidth: '200px' },
+    document: { minWidth: '200px' },
+    customer: { minWidth: '300px' },
+    salesChannel: { minWidth: '150px' },
+    tracking: { minWidth: '200px' },
+    shipping: { minWidth: '400px', },
+    billing: { minWidth: '400px', },
+    customerPO: { minWidth: '150px' },
+    itemSku: { minWidth: '150px' },
+    packQuantity: { minWidth: '160px' },
+    unitsQuantity: { minWidth: '160px' },
+    amount: { minWidth: '160px' },
+    finalAmount: { minWidth: '160px' },
+    createdAt: { minWidth: '200px' },
+    actions: { minWidth: '70px' },
+  };
+
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5, // higher than other cells so it stays on top
+    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+  };
 
   return (
     <Box>
@@ -447,6 +518,22 @@ const ListTable = ({
                                 </Box>
                               </Box>
                             </TableCell> */}
+
+                            <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="Edit">
+                                  <IconButton size="small" color="primary" onClick={() => handleCustomerIdClick(row.customerId)}>
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row.customerId, row?.customerId, row?._id)}>
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+
                             <TableCell sx={{ cursor: "pointer", ":hover": { color: "blue" } }} onClick={() => handleCustomerIdClick(row.customerId)}>
                               <Typography fontWeight="600">
                                 {row.customerId}
@@ -492,7 +579,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30]}
+            rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}
@@ -502,6 +589,15 @@ const ListTable = ({
           />
         </Paper>
       </Box>
+
+      <DeleteConfirmationDialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteItemDiscounts}
+        itemName={deleteDialog.itemName}
+        isDeleting={deleteDialog.isDeleting}
+        itemType={"Customers Items Discount"}
+      />
     </Box>
   );
 };

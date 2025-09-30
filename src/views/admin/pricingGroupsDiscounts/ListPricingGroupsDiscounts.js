@@ -19,7 +19,12 @@ const BCrumb = [
 
 const ListPricingGroupsDiscounts = () => {
   const headCells = [
-
+    {
+      id: 'Actions',
+      numeric: false,
+      disablePadding: false,
+      label: 'Actions',
+    },
 
     {
       id: 'customerId',

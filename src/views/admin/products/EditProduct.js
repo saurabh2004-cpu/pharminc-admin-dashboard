@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
-import { IconUpload, IconFileImport } from '@tabler/icons-react';
+import { IconUpload, IconFileImport, IconX, IconPhoto } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router';
 
 const EditProduct = () => {
@@ -21,6 +21,7 @@ const EditProduct = () => {
     commerceCategoriesTwo: '',
     commerceCategoriesThree: '',
     commerceCategoriesFour: '',
+    badge: '',
     pageTitle: '',
     storeDescription: '',
     eachBarcodes: '',
@@ -34,13 +35,117 @@ const EditProduct = () => {
   const [selectedFile, setSelectedFile] = React.useState(null);
   const { id } = useParams();
 
+  const [thumbnailFile, setThumbnailFile] = React.useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = React.useState(null);
+  const [imageFiles, setImageFiles] = React.useState([]);
+  const [imagePreviews, setImagePreviews] = React.useState([]);
+
+  const [existingImages, setExistingImages] = React.useState([]);
+
+  // Track which images are being replaced
+  const [replacementImages, setReplacementImages] = React.useState({});
+
+  // New state for image import dialog
+  const [imageDialogOpen, setImageDialogOpen] = React.useState(false);
+  const [selectedImages, setSelectedImages] = React.useState([]);
+
+
   const [packTypes, setPackTypes] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [categoryOne, setCategoryOne] = useState([]);
   const [categoryTwo, setCategoryTwo] = useState([]);
   const [categoryThree, setCategoryThree] = useState([]);
   const [categoryFour, setCategoryFour] = useState([]);
+  const [badges, setBadges] = useState([]);
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
+
+
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file for thumbnail');
+        return;
+      }
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+      setError('');
+    }
+  };
+
+  // Handle replacement of existing images
+  const handleReplaceExistingImage = (e, imageIndex) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      setReplacementImages(prev => ({
+        ...prev,
+        [imageIndex]: {
+          file: file,
+          preview: URL.createObjectURL(file)
+        }
+      }));
+      setError('');
+    }
+  };
+
+  // Remove replacement image
+  const handleRemoveReplacement = (imageIndex) => {
+    if (replacementImages[imageIndex]?.preview) {
+      URL.revokeObjectURL(replacementImages[imageIndex].preview);
+    }
+
+    setReplacementImages(prev => {
+      const newReplacements = { ...prev };
+      delete newReplacements[imageIndex];
+      return newReplacements;
+    });
+  };
+
+  // Handle multiple images selection
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 10) {
+      setError('You can upload a maximum of 10 images');
+      return;
+    }
+
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      setError('Please select only image files');
+      return;
+    }
+
+    setImageFiles(files);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
+    setError('');
+  };
+
+  // Remove thumbnail
+  const handleRemoveThumbnail = () => {
+    setThumbnailFile(null);
+    if (thumbnailPreview) {
+      URL.revokeObjectURL(thumbnailPreview);
+      setThumbnailPreview(null);
+    }
+  };
+
+  // Remove specific image
+  const handleRemoveImage = (index) => {
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    setImageFiles(newFiles);
+    setImagePreviews(newPreviews);
+  };
+
 
   const handleSubmit = async () => {
     // Validation
@@ -65,10 +170,50 @@ const EditProduct = () => {
     setError('');
 
     try {
-      // Use PUT for update instead of POST
-      const res = await axiosInstance.put(`/products/update-product/${id}`, formData, {
+      // Create FormData for multipart upload
+      const formDataToSend = new FormData();
+
+      // Append all text fields
+      formDataToSend.append('sku', formData.sku);
+      formDataToSend.append('ProductName', formData.ProductName);
+      formDataToSend.append('eachPrice', formData.eachPrice);
+      formDataToSend.append('stockLevel', formData.stockLevel);
+      formDataToSend.append('pricingGroup', formData.pricingGroup);
+
+      // Append array fields
+      formData.typesOfPacks.forEach(pack => {
+        formDataToSend.append('typesOfPacks', pack);
+      });
+
+      // Append optional fields
+      if (formData.commerceCategoriesOne) formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
+      if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
+      if (formData.commerceCategoriesThree) formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree);
+      if (formData.commerceCategoriesFour) formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour);
+      if (formData.storeDescription) formDataToSend.append('storeDescription', formData.storeDescription);
+      if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
+      if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
+      if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
+      if (formData.badge) formDataToSend.append('badge', formData.badge);
+
+      // Append thumbnail if new one is selected
+      if (thumbnailFile) {
+        formDataToSend.append('thumbnail', thumbnailFile);
+      }
+
+      // Append replacement images with their indices
+      Object.entries(replacementImages).forEach(([index, imageData]) => {
+        formDataToSend.append(`replaceImage_${index}`, imageData.file);
+      });
+
+      // Append additional images if selected
+      imageFiles.forEach((file) => {
+        formDataToSend.append('images', file);
+      });
+
+      const res = await axiosInstance.put(`/products/update-product/${id}`, formDataToSend, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       });
 
@@ -76,7 +221,7 @@ const EditProduct = () => {
 
       if (res.data.statusCode === 200) {
         navigate('/dashboard/products/list');
-      } else if (res.data.statusCode === 400) {
+      } else {
         setError(res.data.message || 'Failed to update product');
       }
 
@@ -85,6 +230,50 @@ const EditProduct = () => {
       setError(error.response?.data?.message || error.message || 'Failed to update product');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProductDetails = async () => {
+    try {
+      const response = await axiosInstance.get(`/products/get-product/${id}`);
+      console.log("response product details", response.data);
+
+      if (response.data.statusCode === 200) {
+        const product = response.data.data;
+
+        setFormData({
+          sku: product.sku || '',
+          ProductName: product.ProductName || '',
+          eachPrice: product.eachPrice || '',
+          stockLevel: product.stockLevel || '',
+          typesOfPacks: product.typesOfPacks ? product.typesOfPacks.map(pack => pack._id) : [],
+          pricingGroup: product.pricingGroup?._id || '',
+          commerceCategoriesOne: product.commerceCategoriesOne?._id || '',
+          commerceCategoriesTwo: product.commerceCategoriesTwo?._id || '',
+          commerceCategoriesThree: product.commerceCategoriesThree?._id || '',
+          commerceCategoriesFour: product.commerceCategoriesFour?._id || '',
+          storeDescription: product.storeDescription || '',
+          pageTitle: product.pageTitle || '',
+          eachBarcodes: product.eachBarcodes || '',
+          packBarcodes: product.packBarcodes || '',
+          badge: product.badge?._id || '',
+        });
+
+        // Set existing images
+        if (product.images && product.images.length > 0) {
+          setExistingImages(product.images);
+          // Set thumbnail preview to first image
+          setThumbnailPreview(product.images[0]);
+        }
+
+        // Fetch subcategory two if needed
+        if (product.commerceCategoriesThree?._id) {
+          fetchSubCategoryTwoList(product.commerceCategoriesThree._id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      setError(error.message);
     }
   };
 
@@ -220,47 +409,52 @@ const EditProduct = () => {
     }
   };
 
-  const fetchSubCategoryTwoList = async () => {
+  const fetchSubCategoryTwoList = async (subcategoryId) => {
     try {
-      const response = await axiosInstance.get('/subcategoryTwo/get-sub-categories-two');
-      console.log("response sub categories", response.data.data);
+      // Clear existing categoryFour when subcategory changes
+      if (!subcategoryId) {
+        setCategoryFour([]);
+        // Clear the form field when no subcategory is selected
+        setFormData(prev => ({ ...prev, commerceCategoriesFour: '' }));
+        return;
+      }
+
+      const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subcategoryId}`);
+      console.log("response sub categories two", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryFour(response.data.data);
+      } else {
+        setCategoryFour([]);
       }
     } catch (error) {
-      console.error('Error fetching sub category list:', error);
+      console.error('Error fetching sub category two list:', error);
+      setCategoryFour([]);
       setError(error.message);
     }
   };
 
-  const fetchProductDetails = async () => {
+  const fetchBadges = async () => {
     try {
-      const response = await axiosInstance.get(`/products/get-product/${id}`);
-      console.log("response product details", response.data);
+      const response = await axiosInstance.get('/badge/get-badges');
+      console.log("response badges", response);
+
       if (response.data.statusCode === 200) {
-        const product = response.data.data;
-        setFormData({
-          sku: product.sku || '',
-          ProductName: product.ProductName || '',
-          eachPrice: product.eachPrice || '',
-          stockLevel: product.stockLevel || '',
-          typesOfPacks: product.typesOfPacks ? product.typesOfPacks.map(pack => pack._id) : [],
-          pricingGroup: product.pricingGroup?._id || '',
-          commerceCategoriesOne: product.commerceCategoriesOne?._id || '',
-          commerceCategoriesTwo: product.commerceCategoriesTwo?._id || '',
-          commerceCategoriesThree: product.commerceCategoriesThree?._id || '',
-          commerceCategoriesFour: product.commerceCategoriesFour?._id || '',
-          storeDescription: product.storeDescription || '',
-          pageTitle: product.pageTitle || '',
-          eachBarcodes: product.eachBarcodes || '',
-          packBarcodes: product.packBarcodes || '',
-        });
+        setBadges(response.data.data);
       }
+
     } catch (error) {
-      console.error('Error fetching product details:', error);
-      setError(error.message);
+      console.error('Error fetching badges list:', error);
+      if (error.response && error.response.status === 401) {
+        // Handle unauthorized access if needed
+      }
     }
+  }
+
+  // Handle subcategory three change to fetch subcategory two
+  const handleSubcategoryThreeChange = (value) => {
+    setFormData({ ...formData, commerceCategoriesThree: value, commerceCategoriesFour: '' });
+    fetchSubCategoryTwoList(value);
   };
 
   React.useEffect(() => {
@@ -270,17 +464,221 @@ const EditProduct = () => {
   }, [id]);
 
   React.useEffect(() => {
-    fetchSubCategoryTwoList();
     fetchPackTypesList();
     fetchPricingGroups();
     fetchBrandsList();
     fetchCategoryList();
     fetchSubCategoryList();
+    fetchBadges();
   }, []);
 
   return (
     <div>
       <Grid container spacing={2}>
+
+        {/* Thumbnail Image Upload */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="thumbnail-upload" sx={{ mt: 2 }}>
+            Product Thumbnail
+            {!existingImages.length && <span style={{ color: 'red' }}>*</span>}
+          </CustomFormLabel>
+          <input
+            id="thumbnail-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+            style={{ display: 'none' }}
+          />
+          <Box display="flex" alignItems="center" gap={2}>
+            <Button
+              variant="outlined"
+              component="label"
+              htmlFor="thumbnail-upload"
+              startIcon={<IconPhoto size="1.1rem" />}
+              disabled={loading}
+            >
+              {existingImages.length > 0 ? 'Change Thumbnail' : 'Choose Thumbnail'}
+            </Button>
+            {thumbnailFile && (
+              <Typography variant="body2" color="primary">
+                {thumbnailFile.name} (New)
+              </Typography>
+            )}
+          </Box>
+          {thumbnailPreview && (
+            <Box sx={{ mt: 2, position: 'relative', display: 'inline-block' }}>
+              <img
+                src={thumbnailPreview}
+                alt="Thumbnail preview"
+                style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #ddd' }}
+              />
+              {thumbnailFile && (
+                <Button
+                  size="small"
+                  onClick={handleRemoveThumbnail}
+                  sx={{
+                    position: 'absolute',
+                    top: -10,
+                    right: -10,
+                    minWidth: 'auto',
+                    padding: '4px',
+                    backgroundColor: 'error.main',
+                    color: 'white',
+                    '&:hover': { backgroundColor: 'error.dark' }
+                  }}
+                >
+                  <IconX size="1rem" />
+                </Button>
+              )}
+            </Box>
+          )}
+        </Grid>
+
+        {/* Existing Product Images with Replace Option */}
+        {existingImages.length > 1 && (
+          <Grid size={12}>
+            <CustomFormLabel sx={{ mt: 2 }}>
+              Current Product Images (Click to Replace)
+            </CustomFormLabel>
+            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {existingImages.slice(1).map((imageUrl, index) => {
+                const imageIndex = index + 1;
+                const replacement = replacementImages[imageIndex];
+
+                return (
+                  <Box key={index} sx={{ position: 'relative', display: 'inline-block' }}>
+                    <input
+                      id={`replace-image-${imageIndex}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleReplaceExistingImage(e, imageIndex)}
+                      style={{ display: 'none' }}
+                    />
+                    <Box
+                      component="label"
+                      htmlFor={`replace-image-${imageIndex}`}
+                      sx={{
+                        cursor: 'pointer',
+                        display: 'block',
+                        position: 'relative',
+                        '&:hover img': { opacity: 0.7 }
+                      }}
+                    >
+                      <img
+                        src={replacement ? replacement.preview : imageUrl}
+                        alt={`Product ${imageIndex + 1}`}
+                        style={{
+                          maxWidth: '150px',
+                          maxHeight: '150px',
+                          borderRadius: '4px',
+                          border: replacement ? '2px solid #4caf50' : '1px solid #ddd',
+                          transition: 'opacity 0.2s'
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          backgroundColor: replacement ? 'rgba(76, 175, 80, 0.9)' : 'rgba(0,0,0,0.7)',
+                          color: 'white',
+                          padding: '4px',
+                          textAlign: 'center',
+                          fontSize: '0.75rem',
+                          borderBottomLeftRadius: '4px',
+                          borderBottomRightRadius: '4px'
+                        }}
+                      >
+                        {replacement ? 'New Image Selected' : 'Click to Replace'}
+                      </Box>
+                    </Box>
+                    {replacement && (
+                      <Button
+                        size="small"
+                        onClick={() => handleRemoveReplacement(imageIndex)}
+                        sx={{
+                          position: 'absolute',
+                          top: -10,
+                          right: -10,
+                          minWidth: 'auto',
+                          padding: '4px',
+                          backgroundColor: 'error.main',
+                          color: 'white',
+                          '&:hover': { backgroundColor: 'error.dark' }
+                        }}
+                      >
+                        <IconX size="1rem" />
+                      </Button>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          </Grid>
+        )}
+
+        {/* Multiple Product Images Upload */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="images-upload" sx={{ mt: 2 }}>
+            {existingImages.length > 0 ? 'Add More Images (Max 10)' : 'Product Images (Max 10)'}
+          </CustomFormLabel>
+          <input
+            id="images-upload"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImagesChange}
+            style={{ display: 'none' }}
+          />
+          <Box display="flex" alignItems="center" gap={2}>
+            <Button
+              variant="outlined"
+              component="label"
+              htmlFor="images-upload"
+              startIcon={<IconPhoto size="1.1rem" />}
+              disabled={loading}
+            >
+              Choose Images
+            </Button>
+            {imageFiles.length > 0 && (
+              <Typography variant="body2" color="primary">
+                {imageFiles.length} new image{imageFiles.length > 1 ? 's' : ''} selected
+              </Typography>
+            )}
+          </Box>
+          {imagePreviews.length > 0 && (
+            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {imagePreviews.map((preview, index) => (
+                <Box key={index} sx={{ position: 'relative', display: 'inline-block' }}>
+                  <img
+                    src={preview}
+                    alt={`New Product ${index + 1}`}
+                    style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <Button
+                    size="small"
+                    onClick={() => handleRemoveImage(index)}
+                    sx={{
+                      position: 'absolute',
+                      top: -10,
+                      right: -10,
+                      minWidth: 'auto',
+                      padding: '4px',
+                      backgroundColor: 'error.main',
+                      color: 'white',
+                      '&:hover': { backgroundColor: 'error.dark' }
+                    }}
+                  >
+                    <IconX size="1rem" />
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Grid>
+
+
         {/* SKU and Product Name - Two per row */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="pack-name" sx={{ mt: 2 }}>
@@ -296,6 +694,7 @@ const EditProduct = () => {
             placeholder="Enter SKU"
           />
         </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="ProductName" sx={{ mt: 2 }}>
             ProductName
@@ -403,7 +802,7 @@ const EditProduct = () => {
               id="pricing-group-select"
               value={formData.pricingGroup}
               onChange={(e) => setFormData({ ...formData, pricingGroup: e.target.value })}
-              disabled={loading || packTypes.length === 0}
+              disabled={loading || pricingGroups.length === 0}
               displayEmpty
               sx={{
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -438,7 +837,7 @@ const EditProduct = () => {
               id="commerce-category-one-select"
               value={formData.commerceCategoriesOne}
               onChange={(e) => setFormData({ ...formData, commerceCategoriesOne: e.target.value })}
-              disabled={loading || packTypes.length === 0}
+              disabled={loading || categoryOne.length === 0}
               displayEmpty
               sx={{
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -500,6 +899,7 @@ const EditProduct = () => {
             </Select>
           </FormControl>
         </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
             Select Commerce category Three
@@ -508,7 +908,7 @@ const EditProduct = () => {
             <Select
               id="commerceCategoryThree-select"
               value={formData.commerceCategoriesThree}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesThree: e.target.value })}
+              onChange={(e) => handleSubcategoryThreeChange(e.target.value)}
               disabled={loading || categoryThree.length === 0}
               displayEmpty
               sx={{
@@ -536,12 +936,12 @@ const EditProduct = () => {
         </Grid>
 
         <Grid size={6}>
-          <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="commerce-category-four-select" sx={{ mt: 2 }}>
             Select Commerce category four
           </CustomFormLabel>
           <FormControl fullWidth>
             <Select
-              id="commerceCategoryThree-select"
+              id="commerce-category-four-select"
               value={formData.commerceCategoriesFour}
               onChange={(e) => setFormData({ ...formData, commerceCategoriesFour: e.target.value })}
               disabled={loading || categoryFour.length === 0}
@@ -564,6 +964,41 @@ const EditProduct = () => {
               {categoryFour.map((category) => (
                 <MenuItem key={category.name} value={category._id}>
                   {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="badge-select" sx={{ mt: 2 }}>
+            Select badge
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="badge-select"
+              value={formData.badge}
+              onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+              disabled={loading || badges.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                {badges.length === 0 ? 'NO BADGES' : 'Select a badge'}
+              </MenuItem>
+              {badges?.map((badge) => (
+                <MenuItem key={badge.name} value={badge._id}>
+                  {badge.name} - (text-{badge.text})
                 </MenuItem>
               ))}
             </Select>
