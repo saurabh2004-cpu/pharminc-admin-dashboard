@@ -23,6 +23,9 @@ import {
   InputAdornment,
   Paper,
   Button,
+  Menu,
+  MenuItem,
+  ListItemText,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -127,8 +130,32 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
+  const { 
+    numSelected, 
+    handleSearch, 
+    search, 
+    placeholder, 
+    rows, 
+    headCells,
+    approvalFilter,
+    setApprovalFilter 
+  } = props;
 
+  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+  const openFilterMenu = Boolean(filterAnchorEl);
+
+  const handleFilterClick = (event) => {
+    setFilterAnchorEl(event.currentTarget);
+  };
+
+  const handleFilterClose = () => {
+    setFilterAnchorEl(null);
+  };
+
+  const handleFilterSelect = (filterValue) => {
+    setApprovalFilter(filterValue);
+    handleFilterClose();
+  };
 
   const handleExportCSV = async () => {
     try {
@@ -146,6 +173,17 @@ const EnhancedTableToolbar = (props) => {
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error exporting CSV:", error);
+    }
+  };
+
+  const getFilterLabel = () => {
+    switch(approvalFilter) {
+      case 'unapproved':
+        return 'Unapproved Only';
+      case 'approved':
+        return 'Approved Only';
+      default:
+        return 'All Customers';
     }
   };
 
@@ -193,10 +231,49 @@ const EnhancedTableToolbar = (props) => {
       ) : (
         <>
           <Tooltip title="Filter list">
-            <IconButton>
+            <IconButton onClick={handleFilterClick}>
               <IconFilter size="1.2rem" />
             </IconButton>
           </Tooltip>
+          <Menu
+            anchorEl={filterAnchorEl}
+            open={openFilterMenu}
+            onClose={handleFilterClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem 
+              onClick={() => handleFilterSelect('all')}
+              selected={approvalFilter === 'all'}
+            >
+              <ListItemText>All Customers</ListItemText>
+            </MenuItem>
+            <MenuItem 
+              onClick={() => handleFilterSelect('unapproved')}
+              selected={approvalFilter === 'unapproved'}
+            >
+              <ListItemText>Unapproved Only</ListItemText>
+            </MenuItem>
+            <MenuItem 
+              onClick={() => handleFilterSelect('approved')}
+              selected={approvalFilter === 'approved'}
+            >
+              <ListItemText>Approved Only</ListItemText>
+            </MenuItem>
+          </Menu>
+          
+          {approvalFilter !== 'all' && (
+            <Typography variant="caption" sx={{ mx: 1, color: 'primary.main' }}>
+              {getFilterLabel()}
+            </Typography>
+          )}
+          
           <Tooltip title="Export CSV">
             <IconButton onClick={handleExportCSV}>
               <Button size="small" variant="outlined" >Export</Button>
@@ -229,6 +306,7 @@ const ListTable = ({
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [approvalFilter, setApprovalFilter] = useState('all'); // 'all', 'unapproved', 'approved'
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -257,10 +335,19 @@ const ListTable = ({
   };
 
   useEffect(() => {
+    let filteredData = sourceData;
+
+    // Apply approval filter first
+    if (approvalFilter === 'unapproved') {
+      filteredData = filteredData.filter(row => row.userApproval === false);
+    } else if (approvalFilter === 'approved') {
+      filteredData = filteredData.filter(row => row.userApproval === true);
+    }
+
+    // Then apply search filter if search is active
     if (search.trim()) {
-      // 🔎 Reapply filtering if search is active
-      const filteredRows = sourceData.filter((row) => {
-        const searchValue = search.toLowerCase();
+      const searchValue = search.toLowerCase();
+      filteredData = filteredData.filter((row) => {
         return (
           row.customerId?.toLowerCase().includes(searchValue) ||
           row.customerName?.toLowerCase().includes(searchValue) ||
@@ -281,42 +368,18 @@ const ListTable = ({
             : false)
         );
       });
-      setRows(filteredRows);
-    } else {
-      // 📦 No search → reset to full dataset
-      if (isBrandsList) {
-        setRows(sourceData);
-      } else {
-        setRows(filteredAndSortedProducts);
-      }
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
+
+    // Set the filtered rows
+    if (isBrandsList) {
+      setRows(filteredData);
+    } else {
+      setRows(filteredAndSortedProducts);
+    }
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, search, approvalFilter]);
 
   const handleSearch = (event) => {
-    const searchValue = event.target.value.toLowerCase();
-    setSearch(searchValue);
-
-    const filteredRows = sourceData.filter((row) => {
-      return (
-        row.customerId?.toLowerCase().includes(searchValue) ||
-        row.customerName?.toLowerCase().includes(searchValue) ||
-        row.contactName?.toLowerCase().includes(searchValue) ||
-        row.customerEmail?.toLowerCase().includes(searchValue) ||
-        row.contactEmail?.toLowerCase().includes(searchValue) ||
-        row.CustomerPhoneNo?.toString().toLowerCase().includes(searchValue) ||
-        row.category?.toLowerCase().includes(searchValue) ||
-        row.primaryBrand?.toLowerCase().includes(searchValue) ||
-        row.netTerms?.toString().toLowerCase().includes(searchValue) ||
-        row.orderApproval?.toLowerCase().includes(searchValue) ||
-        row.defaultShippingRate?.toString().toLowerCase().includes(searchValue) ||
-        row.shippingCity?.toLowerCase().includes(searchValue) ||
-        row.shippingState?.toLowerCase().includes(searchValue) ||
-        (row.inactive ? "inactive" : "active").includes(searchValue) ||
-        (row.createdAt ? new Date(row.createdAt).toLocaleDateString().toLowerCase().includes(searchValue) : false)
-      );
-    });
-
-    setRows(filteredRows);
+    setSearch(event.target.value);
   };
 
 
@@ -443,6 +506,8 @@ const ListTable = ({
           search={search}
           handleSearch={handleSearch}
           placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          approvalFilter={approvalFilter}
+          setApprovalFilter={setApprovalFilter}
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer sx={{ width: "100%" }}>
