@@ -234,7 +234,12 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Amount',
         },
-
+        {
+            id: 'tax',
+            numeric: false,
+            disablePadding: false,
+            label: 'Tax',
+        },
         {
             id: 'packQuantity',
             numeric: false,
@@ -249,8 +254,35 @@ const CustomersSalesOrders = () => {
         },
     ];
 
-    // Inside CustomersSalesOrders component
+    // Calculate tax and total amounts
+    const calculateOrderTotals = (products) => {
+        const orderTotal = products.reduce((sum, product) => sum + (parseFloat(product.amount) || 0), 0);
 
+        const taxAmount = products.reduce((sum, product) => {
+            if (product.taxApplied && product.taxPercentages > 0) {
+                return sum + (parseFloat(product.amount) || 0) * (product.taxPercentages / 100);
+            }
+            return sum;
+        }, 0);
+
+        const finalAmount = orderTotal + taxAmount;
+
+        return {
+            orderTotal: orderTotal,
+            taxAmount: taxAmount,
+            finalAmount: finalAmount
+        };
+    };
+
+    // Calculate tax for individual product
+    const calculateProductTax = (product) => {
+        if (product.taxApplied && product.taxPercentages > 0) {
+            return (parseFloat(product.amount) || 0) * (product.taxPercentages / 100);
+        }
+        return 0;
+    };
+
+    // Inside CustomersSalesOrders component
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         customerName: tableData[0]?.customerName || "",
@@ -331,58 +363,40 @@ const CustomersSalesOrders = () => {
     const fetchSalesOrdersProducts = async () => {
         try {
             const response = await axiosInstance.get(`/sales-order/get-products-by-sales-document-number/${documentNo}`);
-            console.log("response sales order products ", response);
+            console.log("response sales order products ", response.data.data);
 
             if (response.data.statusCode === 200) {
                 const data = response.data.data;
 
-                const uniqueData = Array.from(
-                    new Map(data.map(item => [item.itemSku, item])).values()
-                );
+                // Create a map that prioritizes entries with packType
+                const uniqueMap = new Map();
+
+                data.forEach(item => {
+                    const existing = uniqueMap.get(item.itemSku);
+
+                    // If no existing entry OR if current item has packType and existing doesn't
+                    if (!existing || (item.packType && !existing.packType)) {
+                        uniqueMap.set(item.itemSku, item);
+                    }
+                    // If both have packType, keep the one with more complete data
+                    else if (item.packType && existing.packType) {
+                        // You can add additional logic here if needed
+                        // For now, we'll keep the existing one
+                    }
+                });
+
+                const uniqueData = Array.from(uniqueMap.values());
 
                 setTableData(uniqueData);
                 setRows(uniqueData);
+
             }
         } catch (error) {
             console.error('Error fetching products by sales order list:', error);
             setError(error.message);
         }
     };
-
-    const fetchProductsList = async () => {
-        try {
-            const response = await axiosInstance.get('/products/get-all-products');
-            console.log("response products", response.data);
-
-            if (response.data.statusCode === 200) {
-                const productsData = response.data.data?.docs || response.data.data || response.data;
-
-                // Filter out duplicates based on _id
-                const getUniqueProducts = (products) => {
-                    if (!Array.isArray(products)) return [];
-
-                    const uniqueProducts = [];
-                    const seenIds = new Set();
-
-                    products.forEach(product => {
-                        if (product._id && !seenIds.has(product._id)) {
-                            seenIds.add(product._id);
-                            uniqueProducts.push(product);
-                        }
-                    });
-
-                    return uniqueProducts;
-                };
-
-                setProductList(getUniqueProducts(productsData));
-            }
-
-        } catch (error) {
-            console.error('Error fetching products list:', error);
-            setError(error.message);
-        }
-    };
-
+    
     const fetchProductsAvailablePackTypes = async (itemSku) => {
         try {
             const response = await axiosInstance.get(`/products/get-products-pack-types/${itemSku}`);
@@ -418,10 +432,6 @@ const CustomersSalesOrders = () => {
             fetchProductBySku(updateFormData.itemSku);
         }
     }, [updateFormData.itemSku]);
-
-    React.useEffect(() => {
-        fetchProductsList();
-    }, []);
 
     React.useEffect(() => {
         fetchSalesOrdersProducts();
@@ -918,6 +928,17 @@ const CustomersSalesOrders = () => {
                                                         )}
                                                     </TableCell>
 
+                                                    {/* Tax Column */}
+                                                    <TableCell sx={{ width: 100 }}>
+                                                        <Box >
+                                                            <Typography variant="body2">
+                                                                {`${calculateProductTax(row).toFixed(2)} (${row.taxApplied ? `${row.taxPercentages}%` : 'No Tax'})`}
+                                                            </Typography>
+
+
+                                                        </Box>
+                                                    </TableCell>
+
                                                     {/* Pack Quantity */}
                                                     <TableCell sx={{ width: 100 }}>
                                                         {isRowEditing ? (
@@ -936,7 +957,7 @@ const CustomersSalesOrders = () => {
                                                             </TextField>
                                                         ) : (
                                                             <Typography variant="body2">
-                                                                {row.packQuantity || "N/A"}
+                                                                {row.packType || "N/A"}
                                                             </Typography>
                                                         )}
                                                     </TableCell>
@@ -1013,23 +1034,15 @@ const CustomersSalesOrders = () => {
                             onRowsPerPageChange={handleChangeRowsPerPage}
                         />
 
-                        {/* Total Row */}
-                        <Box sx={{ p: 2, backgroundColor: '#f8f9fa', borderTop: '1px solid #dee2e6' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Total
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold">
-                                    ${rows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0).toFixed(2)}
-                                </Typography>
-                            </Box>
-                        </Box>
+                        {/* Enhanced Total Row with Tax Breakdown */}
+
+
                     </Paper>
                 </Grid>
 
                 {/* Right Side - Order Details */}
                 {!isEditing ?
-                    <Grid item xs={12} lg={5} minWidth={400}>
+                    <Grid item xs={12} lg={5} maxWidth={290}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                             {/* Order Details */}
                             <Paper sx={{ p: 3 }}>
@@ -1066,7 +1079,7 @@ const CustomersSalesOrders = () => {
                                                 ? new Date(tableData[0].date).toLocaleTimeString([], {
                                                     hour: "2-digit",
                                                     minute: "2-digit",
-                                                    hour12: true, // set to false if you want 24-hour format
+                                                    hour12: true,
                                                 })
                                                 : "N/A"}
                                         </Typography>
@@ -1095,7 +1108,25 @@ const CustomersSalesOrders = () => {
                                             Order Total :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            ${rows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0).toFixed(2)}
+                                            ${calculateOrderTotals(rows).orderTotal.toFixed(2)}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
+                                            Tax Amount:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
+                                            ${calculateOrderTotals(rows).taxAmount.toFixed(2)}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '1px solid #e0e0e0' }}>
+                                        <Typography variant="body1" color="textSecondary" sx={{ minWidth: 120, fontWeight: 'bold' }}>
+                                            Final Amount:
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                            ${calculateOrderTotals(rows).finalAmount.toFixed(2)}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -1179,19 +1210,7 @@ const CustomersSalesOrders = () => {
                                 />
                             </Box>
 
-                            {/* Amount */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
-                                    Amount :
-                                </Typography>
-                                <TextField
-                                    type="number"
-                                    size="small"
-                                    value={formData.amount}
-                                    onChange={(e) => handleInputChange("amount", e.target.value)}
-                                    sx={{ minWidth: 270 }}
-                                />
-                            </Box>
+
                             {/* trackingNumber number */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
@@ -1229,7 +1248,6 @@ const CustomersSalesOrders = () => {
                                 </TextField>
                             </Box>
 
-                            {/* // Replace the Shipping Address section in the editable form with this: */}
                             {/* Shipping Address */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
@@ -1272,7 +1290,6 @@ const CustomersSalesOrders = () => {
                             </Box>
                         </Box>
                     </Grid>
-
                 }
             </Grid>
 

@@ -94,10 +94,10 @@ const ProductSelectionModal = ({
     const fetchProductsList = async () => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get('/products/get-all-products');
+            const response = await axiosInstance.get('/products/get-all-products-dashboard');
 
             if (response.data.statusCode === 200) {
-                const productsData = response.data.data?.docs || response.data.data || response.data;
+                const productsData = response.data.data?.docs || response.data.data || response.data.data.products;
 
                 // Filter unique products and only active ones
                 const getUniqueProducts = (products) => {

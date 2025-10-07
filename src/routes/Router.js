@@ -209,6 +209,7 @@ const EditGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDis
 const ListNetTerms = Loadable(lazy(() => import('../views/admin/netTerms/ListNetTerms')));
 
 const CreateAdmin = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAdmin')));
+const PendingApprovalCustomers = Loadable(lazy(() => import('../views/admin/customer/PendingApprovalCustomers')));
 
 const CreateSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/CreateSubCategoryTwo')));
 const SubCategoryTwoList = Loadable(lazy(() => import('../views/admin/subCategoryTwo/SubCategoryTwoList')));
@@ -396,6 +397,7 @@ const Router = [
       { path: '/dashboard/customers/list', element: <ListCustomers /> },
       { path: '/dashboard/customers/edit/:id', element: <EditCustomer /> },
       { path: '/dashboard/customers/change-password/:email', element: <ChnagePassword /> },
+      { path: '/dashboard/customers/PendingCustomers', element: <PendingApprovalCustomers /> },
 
 
       { path: '/dashboard/NetTerms/List', element: <ListNetTerms /> },

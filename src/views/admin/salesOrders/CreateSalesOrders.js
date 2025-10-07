@@ -52,7 +52,7 @@ const CreateSalesOrders = () => {
     const totalItems = formData?.packQuantity * formData.unitsQuantity;
     let totalAmount = selectedProduct?.eachPrice * totalItems;
     console.log("before tax totalAmount", totalAmount);
-    totalAmount = totalAmount - (totalAmount * selectedProduct?.taxPercentages ) / 100;
+    totalAmount = totalAmount - (totalAmount * selectedProduct?.taxPercentages) / 100;
     console.log("after tax totalAmount", totalAmount);
 
     setFormData(prev => ({
@@ -137,7 +137,7 @@ const CreateSalesOrders = () => {
 
   const fetchProductsList = async () => {
     try {
-      const response = await axiosInstance.get('/products/get-all-products');
+      const response = await axiosInstance.get('/products/get-all-products-dashboard');
       console.log("response products", response.data);
 
       if (response.data.statusCode === 200) {
@@ -474,63 +474,63 @@ const CreateSalesOrders = () => {
         <Grid item xs={12} size={12}>
           {shippingAddress.length > 0 && <CustomFormLabel>Choose Shipping Address</CustomFormLabel>}
           {shippingAddress.length > 0 && <Grid container spacing={2}>
-            {shippingAddress?.map((addr, parentIndex) => {
-              // Create an array of address lines with their data
-              const addressLines = [
-                { line: addr.shippingAddressOne, lineNumber: 'One' },
-                { line: addr.shippingAddressTwo, lineNumber: 'Two' },
-                { line: addr.shippingAddressThree, lineNumber: 'Three' }
-              ].filter(item => item.line && item.line.trim() !== '');
-
-              return addressLines.map((addressItem, lineIndex) => {
-                const cardKey = `${parentIndex}-${lineIndex}`;
-                return (
-                  <Grid item xs={6} key={cardKey}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        border: selectedShippingAddress === cardKey ? "2px solid #2E2F7F" : "1px solid #ccc",
-                        borderRadius: "8px",
-                        cursor: "pointer"
-                      }}
-                      onClick={() => {
-                        setSelectedShippingAddress(cardKey);
-                        setFormData({
-                          ...formData,
-                          shippingAddress: {
-                            [`shippingAddressLine${addressItem.lineNumber}`]: addressItem.line,
-                            shippingCity: addr.shippingCity,
-                            shippingState: addr.shippingState,
-                            shippingZip: addr.shippingZip
-                          }
-                        });
-                      }}
-                    >
-                      <CardContent>
-                        <Radio
-                          checked={selectedShippingAddress === cardKey}
-                          onChange={() => {
-                            setSelectedShippingAddress(cardKey);
-                            setFormData({
-                              ...formData,
-                              shippingAddress: {
-                                [`shippingAddressLine${addressItem.lineNumber}`]: addressItem.line,
-                                shippingCity: addr.shippingCity,
-                                shippingState: addr.shippingState,
-                                shippingZip: addr.shippingZip
-                              }
-                            });
-                          }}
-                        />
-                        <Typography variant="subtitle1" fontWeight="bold">{addressItem.line}</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                          {addr.shippingCity}, {addr.shippingState} {addr.shippingZip}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              });
+            {shippingAddress?.map((addr, index) => {
+              return (
+                <Grid item xs={6} key={index}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      border: selectedShippingAddress === index ? "2px solid #2E2F7F" : "1px solid #ccc",
+                      borderRadius: "8px",
+                      cursor: "pointer"
+                    }}
+                    onClick={() => {
+                      setSelectedShippingAddress(index);
+                      setFormData({
+                        ...formData,
+                        shippingAddress: {
+                          shippingAddressOne: addr.shippingAddressOne,
+                          shippingAddressTwo: addr.shippingAddressTwo || '',
+                          shippingAddressThree: addr.shippingAddressThree || '',
+                          shippingCity: addr.shippingCity,
+                          shippingState: addr.shippingState,
+                          shippingZip: addr.shippingZip
+                        }
+                      });
+                    }}
+                  >
+                    <CardContent>
+                      <Radio
+                        checked={selectedShippingAddress === index}
+                        onChange={() => {
+                          setSelectedShippingAddress(index);
+                          setFormData({
+                            ...formData,
+                            shippingAddress: {
+                              shippingAddressOne: addr.shippingAddressOne,
+                              shippingAddressTwo: addr.shippingAddressTwo || '',
+                              shippingAddressThree: addr.shippingAddressThree || '',
+                              shippingCity: addr.shippingCity,
+                              shippingState: addr.shippingState,
+                              shippingZip: addr.shippingZip
+                            }
+                          });
+                        }}
+                      />
+                      <Typography variant="subtitle1" fontWeight="bold">{addr.shippingAddressOne}</Typography>
+                      {addr.shippingAddressTwo && (
+                        <Typography variant="body2">{addr.shippingAddressTwo}</Typography>
+                      )}
+                      {addr.shippingAddressThree && (
+                        <Typography variant="body2">{addr.shippingAddressThree}</Typography>
+                      )}
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {addr.shippingCity}, {addr.shippingState} {addr.shippingZip}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
             })}
           </Grid>}
         </Grid>
@@ -539,63 +539,63 @@ const CreateSalesOrders = () => {
         <Grid item xs={12} size={12} sx={{ mt: 2 }}>
           {billingAddress.length > 0 && <CustomFormLabel>Choose Billing Address</CustomFormLabel>}
           {billingAddress.length > 0 && <Grid container spacing={2}>
-            {billingAddress?.map((addr, parentIndex) => {
-              // Create an array of address lines with their data
-              const addressLines = [
-                { line: addr.billingAddressOne, lineNumber: 'One' },
-                { line: addr.billingAddressTwo, lineNumber: 'Two' },
-                { line: addr.billingAddressThree, lineNumber: 'Three' }
-              ].filter(item => item.line && item.line.trim() !== '');
-
-              return addressLines.map((addressItem, lineIndex) => {
-                const cardKey = `${parentIndex}-${lineIndex}`;
-                return (
-                  <Grid item xs={6} key={cardKey}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        border: selectedBillingAddress === cardKey ? "2px solid #2E2F7F" : "1px solid #ccc",
-                        borderRadius: "8px",
-                        cursor: "pointer"
-                      }}
-                      onClick={() => {
-                        setSelectedBillingAddress(cardKey);
-                        setFormData({
-                          ...formData,
-                          billingAddress: {
-                            [`billingAddressLine${addressItem.lineNumber}`]: addressItem.line,
-                            billingCity: addr.billingCity,
-                            billingState: addr.billingState,
-                            billingZip: addr.billingZip
-                          }
-                        });
-                      }}
-                    >
-                      <CardContent>
-                        <Radio
-                          checked={selectedBillingAddress === cardKey}
-                          onChange={() => {
-                            setSelectedBillingAddress(cardKey);
-                            setFormData({
-                              ...formData,
-                              billingAddress: {
-                                [`billingAddressLine${addressItem.lineNumber}`]: addressItem.line,
-                                billingCity: addr.billingCity,
-                                billingState: addr.billingState,
-                                billingZip: addr.billingZip
-                              }
-                            });
-                          }}
-                        />
-                        <Typography variant="subtitle1" fontWeight="bold">{addressItem.line}</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                          {addr.billingCity}, {addr.billingState} {addr.billingZip}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              });
+            {billingAddress?.map((addr, index) => {
+              return (
+                <Grid item xs={6} key={index}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      border: selectedBillingAddress === index ? "2px solid #2E2F7F" : "1px solid #ccc",
+                      borderRadius: "8px",
+                      cursor: "pointer"
+                    }}
+                    onClick={() => {
+                      setSelectedBillingAddress(index);
+                      setFormData({
+                        ...formData,
+                        billingAddress: {
+                          billingAddressOne: addr.billingAddressOne,
+                          billingAddressTwo: addr.billingAddressTwo || '',
+                          billingAddressThree: addr.billingAddressThree || '',
+                          billingCity: addr.billingCity,
+                          billingState: addr.billingState,
+                          billingZip: addr.billingZip
+                        }
+                      });
+                    }}
+                  >
+                    <CardContent>
+                      <Radio
+                        checked={selectedBillingAddress === index}
+                        onChange={() => {
+                          setSelectedBillingAddress(index);
+                          setFormData({
+                            ...formData,
+                            billingAddress: {
+                              billingAddressOne: addr.billingAddressOne,
+                              billingAddressTwo: addr.billingAddressTwo || '',
+                              billingAddressThree: addr.billingAddressThree || '',
+                              billingCity: addr.billingCity,
+                              billingState: addr.billingState,
+                              billingZip: addr.billingZip
+                            }
+                          });
+                        }}
+                      />
+                      <Typography variant="subtitle1" fontWeight="bold">{addr.billingAddressOne}</Typography>
+                      {addr.billingAddressTwo && (
+                        <Typography variant="body2">{addr.billingAddressTwo}</Typography>
+                      )}
+                      {addr.billingAddressThree && (
+                        <Typography variant="body2">{addr.billingAddressThree}</Typography>
+                      )}
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {addr.billingCity}, {addr.billingState} {addr.billingZip}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
             })}
           </Grid>}
         </Grid>

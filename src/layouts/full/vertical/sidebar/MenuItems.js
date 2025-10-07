@@ -317,6 +317,12 @@ const Menuitems = [
         icon: IconPoint,
         href: '/dashboard/customers/list',
       },
+      {
+        id: uniqueId(),
+        title: 'Pending Customers',
+        icon: IconPoint,
+        href: '/dashboard/customers/PendingCustomers',
+      },
     ]
   },
   {

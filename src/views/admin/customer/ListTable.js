@@ -26,15 +26,14 @@ import {
   Menu,
   MenuItem,
   ListItemText,
+  Chip,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-// import CustomSwitch from '../../../forms/theme-elements/CustomSwitch';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconKey } from '@tabler/icons-react';
+import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconKey, IconMapPin } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
-import axios from 'axios';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
@@ -44,7 +43,6 @@ function descendingComparator(a, b, orderBy) {
   if (b[orderBy] > a[orderBy]) {
     return 1;
   }
-
   return 0;
 }
 
@@ -75,16 +73,15 @@ function EnhancedTableHead(props) {
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
   };
 
   const headCellStyle = {
-    backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+    backgroundColor: '#f0f8ff',
     fontWeight: 600,
-    zIndex: 4, // slightly lower than sticky so sticky overlaps
+    zIndex: 4,
   };
-
 
   return (
     <TableHead>
@@ -107,7 +104,7 @@ function EnhancedTableHead(props) {
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
               ...headCellStyle,
-              ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
+              ...(index === 0 ? stickyCellStyle : {}),
             }}
           >
             <TableSortLabel
@@ -130,15 +127,13 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { 
-    numSelected, 
-    handleSearch, 
-    search, 
-    placeholder, 
-    rows, 
-    headCells,
+  const {
+    numSelected,
+    handleSearch,
+    search,
+    placeholder,
     approvalFilter,
-    setApprovalFilter 
+    setApprovalFilter
   } = props;
 
   const [filterAnchorEl, setFilterAnchorEl] = useState(null);
@@ -177,7 +172,7 @@ const EnhancedTableToolbar = (props) => {
   };
 
   const getFilterLabel = () => {
-    switch(approvalFilter) {
+    switch (approvalFilter) {
       case 'unapproved':
         return 'Unapproved Only';
       case 'approved':
@@ -248,32 +243,32 @@ const EnhancedTableToolbar = (props) => {
               horizontal: 'right',
             }}
           >
-            <MenuItem 
+            <MenuItem
               onClick={() => handleFilterSelect('all')}
               selected={approvalFilter === 'all'}
             >
               <ListItemText>All Customers</ListItemText>
             </MenuItem>
-            <MenuItem 
+            <MenuItem
               onClick={() => handleFilterSelect('unapproved')}
               selected={approvalFilter === 'unapproved'}
             >
               <ListItemText>Unapproved Only</ListItemText>
             </MenuItem>
-            <MenuItem 
+            <MenuItem
               onClick={() => handleFilterSelect('approved')}
               selected={approvalFilter === 'approved'}
             >
               <ListItemText>Approved Only</ListItemText>
             </MenuItem>
           </Menu>
-          
+
           {approvalFilter !== 'all' && (
             <Typography variant="caption" sx={{ mx: 1, color: 'primary.main' }}>
               {getFilterLabel()}
             </Typography>
           )}
-          
+
           <Tooltip title="Export CSV">
             <IconButton onClick={handleExportCSV}>
               <Button size="small" variant="outlined" >Export</Button>
@@ -285,6 +280,110 @@ const EnhancedTableToolbar = (props) => {
   );
 };
 
+// Helper function to format addresses
+const formatAddress = (address) => {
+  if (!address) return 'N/A';
+  
+  const parts = [
+    address.shippingAddressOne || address.billingAddressOne,
+    address.shippingAddressTwo || address.billingAddressTwo,
+    address.shippingAddressThree || address.billingAddressThree,
+    address.shippingCity || address.billingCity,
+    address.shippingState || address.billingState,
+    address.shippingZip || address.billingZip
+  ].filter(Boolean);
+  
+  return parts.join(', ');
+};
+
+// Component to display multiple addresses
+// Grid layout with tabs for many addresses
+const AddressesDisplay = ({ addresses, type }) => {
+  const [selectedTab, setSelectedTab] = React.useState(0);
+
+  if (!addresses || !Array.isArray(addresses) || addresses.length === 0) {
+    return <Typography variant="body2">No {type} addresses</Typography>;
+  }
+
+  return (
+    <Box sx={{ maxWidth: 350 }}>
+      {/* Tabs for navigation */}
+      {addresses.length > 1 && (
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
+          <Box sx={{ display: 'flex', overflowX: 'auto' }}>
+            {addresses.map((_, index) => (
+              <Button
+                key={index}
+                size="small"
+                variant={selectedTab === index ? "contained" : "text"}
+                onClick={() => setSelectedTab(index)}
+                sx={{ 
+                  minWidth: 'auto', 
+                  px: 1.5, 
+                  py: 0.5,
+                  fontSize: '0.7rem',
+                  mr: 0.5
+                }}
+              >
+                {index + 1}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* Address Grid */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: 1,
+        }}
+      >
+        {addresses.slice(selectedTab, selectedTab + 1).map((address, index) => (
+          <Box 
+            key={selectedTab}
+            sx={{ 
+              p: 1.5,
+              border: '1px solid',
+              borderColor: 'primary.light',
+              borderRadius: 1,
+              backgroundColor: 'primary.50',
+            }}
+          >
+            <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+              <IconMapPin size={14} style={{ marginRight: 6 }} />
+              <Typography variant="subtitle2" fontWeight="600">
+                {type} Address {selectedTab + 1}
+              </Typography>
+            </Box>
+
+            {/* Compact address details */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              {[
+                address.shippingAddressOne || address.billingAddressOne,
+                address.shippingAddressTwo || address.billingAddressTwo,
+                address.shippingAddressThree || address.billingAddressThree,
+              ].filter(Boolean).map((line, lineIndex) => (
+                <Typography key={lineIndex} variant="body2" sx={{ fontSize: '0.75rem' }}>
+                  {line}
+                </Typography>
+              ))}
+              
+              <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
+                {[
+                  address.shippingCity || address.billingCity,
+                  address.shippingState || address.billingState,
+                  address.shippingZip || address.billingZip
+                ].filter(Boolean).join(', ')}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+};
 
 const ListTable = ({
   showCheckBox,
@@ -306,14 +405,14 @@ const ListTable = ({
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [approvalFilter, setApprovalFilter] = useState('all'); // 'all', 'unapproved', 'approved'
+  const [approvalFilter, setApprovalFilter] = useState('all');
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  // Define column widths for products table
+  // Define column widths
   const columnWidths = {
     serial: { minWidth: '80px' },
     sku: { minWidth: '150px' },
@@ -331,7 +430,7 @@ const ListTable = ({
     defaultShippingRate: { minWidth: '200px' },
     createdAt: { minWidth: '160px' },
     actions: { minWidth: '160px' },
-    packBarcodes: { minWidth: '250px' },
+    addresses: { minWidth: '300px' }, // Wider for addresses
   };
 
   useEffect(() => {
@@ -348,6 +447,15 @@ const ListTable = ({
     if (search.trim()) {
       const searchValue = search.toLowerCase();
       filteredData = filteredData.filter((row) => {
+        // Search in addresses as well
+        const shippingAddressesText = row.shippingAddresses?.map(addr => 
+          Object.values(addr).join(' ').toLowerCase()
+        ).join(' ') || '';
+        
+        const billingAddressesText = row.billingAddresses?.map(addr => 
+          Object.values(addr).join(' ').toLowerCase()
+        ).join(' ') || '';
+
         return (
           row.customerId?.toLowerCase().includes(searchValue) ||
           row.customerName?.toLowerCase().includes(searchValue) ||
@@ -360,8 +468,8 @@ const ListTable = ({
           row.netTerms?.toString().toLowerCase().includes(searchValue) ||
           row.orderApproval?.toLowerCase().includes(searchValue) ||
           row.defaultShippingRate?.toString().toLowerCase().includes(searchValue) ||
-          row.shippingCity?.toLowerCase().includes(searchValue) ||
-          row.shippingState?.toLowerCase().includes(searchValue) ||
+          shippingAddressesText.includes(searchValue) ||
+          billingAddressesText.includes(searchValue) ||
           (row.inactive ? "inactive" : "active").includes(searchValue) ||
           (row.createdAt
             ? new Date(row.createdAt).toLocaleDateString().toLowerCase().includes(searchValue)
@@ -381,7 +489,6 @@ const ListTable = ({
   const handleSearch = (event) => {
     setSearch(event.target.value);
   };
-
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -427,10 +534,6 @@ const ListTable = ({
     setPage(0);
   };
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
-
   const isSelected = (name) => selected.indexOf(name) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
@@ -455,7 +558,7 @@ const ListTable = ({
   };
 
   const handleDeleteClick = (event, id, name) => {
-    event.stopPropagation(); // Prevent row selection
+    event.stopPropagation();
     setDeleteDialog({
       open: true,
       itemId: id,
@@ -464,11 +567,9 @@ const ListTable = ({
     });
   };
 
-  //delete product
   const handleDelete = async () => {
     try {
       const res = await axiosInstance.delete(`/admin/delete-user/${deleteDialog.itemId}`);
-
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
@@ -481,12 +582,10 @@ const ListTable = ({
     }
   };
 
-  //edit product
   const handleEdit = (id) => {
     navigate(`/dashboard/customers/edit/${id}`);
   };
 
-  //chnage password
   const handleChangePassword = (email) => {
     navigate(`/dashboard/customers/change-password/${email}`);
   };
@@ -494,8 +593,8 @@ const ListTable = ({
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
   };
 
   return (
@@ -505,7 +604,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          placeholder={isBrandsList ? "Search Brand" : "Search Customer"}
           approvalFilter={approvalFilter}
           setApprovalFilter={setApprovalFilter}
         />
@@ -514,14 +613,14 @@ const ListTable = ({
             <Table
               sx={{
                 minWidth: 1800,
-                borderCollapse: "collapse", // ensures borders connect
+                borderCollapse: "collapse",
                 "& td, & th": {
-                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingTop: "4px",
                   paddingBottom: "4px",
-                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                  borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
-                  borderRight: "none", // no border on last column
+                  borderRight: "none",
                 },
               }}
               aria-labelledby="tableTitle"
@@ -538,19 +637,17 @@ const ListTable = ({
                 headCells={headCells}
               />
               {loading ?
-                <>
-                  < Box sx={{
-                    display: 'flex',
-                    width: '100%',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    p: 3
-                  }}>
-                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      Loading ...
-                    </Typography>
-                  </Box>
-                </>
+                <Box sx={{
+                  display: 'flex',
+                  width: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  p: 3
+                }}>
+                  <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    Loading ...
+                  </Typography>
+                </Box>
                 : <TableBody>
                   {stableSort(rows, getComparator(order, orderBy))
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
@@ -578,7 +675,6 @@ const ListTable = ({
                           </TableCell>}
 
                           {isProductsList ? (
-                            // Products List View with enhanced styling and widths
                             <>
                               <TableCell sx={stickyCellStyle}>
                                 <Box display="flex" gap={1}>
@@ -592,271 +688,113 @@ const ListTable = ({
                                       <IconTrash size="1.1rem" />
                                     </IconButton>
                                   </Tooltip>
-
-                                  {/* Change Password */}
                                   <Tooltip title="Change Password">
                                     <IconButton
                                       size="small"
                                       color="secondary"
                                       onClick={() => handleChangePassword(row.customerEmail ? row.customerEmail : row.contactEmail)}
                                     >
-                                      <IconKey size="1.1rem" /> {/* Use a key/lock icon */}
+                                      <IconKey size="1.1rem" />
                                     </IconButton>
                                   </Tooltip>
                                 </Box>
                               </TableCell>
 
                               <TableCell sx={columnWidths.sku}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="500" variant="subtitle2">
-                                      {row.customerId}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="500" variant="subtitle2">
+                                  {row.customerId || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.productName}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400" >
-                                      {row.customerName}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.customerName || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.stockLevel}>
-                                <Box display="flex" alignItems="center">
-                                  <Box >
-                                    <Typography fontWeight="400">
-                                      {row.contactName}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.contactName || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.pricingGroup}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400" sx={{ ml: 2 }}>
-                                      {row.customerEmail || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.customerEmail || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.brand}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.contactEmail || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.contactEmail || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.category}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.CustomerPhoneNo || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.CustomerPhoneNo || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.subCategory}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.category || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.category || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.storeDescription}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400" >
-                                      {row.primaryBrand || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.primaryBrand || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.pageTitle}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {isNaN(row.netTerms) ? 'N/A' : row.netTerms}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {isNaN(row.netTerms) ? 'N/A' : row.netTerms}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.eachBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.orderApproval || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.orderApproval || 'N/A'}
+                                </Typography>
                               </TableCell>
 
                               <TableCell sx={columnWidths.defaultShippingRate}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400" >
-                                      {isNaN(row.defaultShippingRate) ? 'N/A' : row.defaultShippingRate}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {isNaN(row.defaultShippingRate) ? 'N/A' : row.defaultShippingRate}
+                                </Typography>
+                              </TableCell>
+
+                              {/* Shipping Addresses */}
+                              <TableCell sx={columnWidths.addresses}>
+                                <AddressesDisplay 
+                                  addresses={row.shippingAddresses} 
+                                  type="Shipping" 
+                                />
+                              </TableCell>
+
+                              {/* Billing Addresses */}
+                              <TableCell sx={columnWidths.addresses}>
+                                <AddressesDisplay 
+                                  addresses={row.billingAddresses} 
+                                  type="Billing" 
+                                />
                               </TableCell>
 
                               <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.shippingAddresses[0].shippingAddressOne || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.shippingAddresses[0].shippingAddressTwo || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.shippingAddresses[0].shippingAddressThree || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.shippingAddresses[0].shippingCity || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.shippingAddresses[0].shippingState || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.shippingAddresses[0].shippingZip || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              {/* billing addresses  */}
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.billingAddresses[0].billingAddressOne || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.billingAddresses[0].billingAddressTwo || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.billingAddresses[0].billingAddressThree || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.billingAddresses[0].billingCity || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.billingAddresses[0].billingState || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.billingAddresses[0].billingZip || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-
-                              <TableCell sx={columnWidths.packBarcodes}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {row.inactive === true ? 'Inactive' : 'Active' || 'N/A'}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Chip 
+                                  label={row.inactive ? 'Inactive' : 'Active'} 
+                                  color={row.inactive ? 'error' : 'success'}
+                                  size="small"
+                                />
                               </TableCell>
 
                               <TableCell sx={columnWidths.createdAt}>
-                                <Box display="flex" alignItems="center">
-                                  <Box>
-                                    <Typography fontWeight="400">
-                                      {format(new Date(row.createdAt), 'E, MMM d yyyy')}
-                                    </Typography>
-                                  </Box>
-                                </Box>
+                                <Typography fontWeight="400">
+                                  {row.createdAt ? format(new Date(row.createdAt), 'E, MMM d yyyy') : 'N/A'}
+                                </Typography>
                               </TableCell>
-
-
                             </>
                           ) : (
                             ''

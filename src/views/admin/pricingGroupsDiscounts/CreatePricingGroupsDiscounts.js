@@ -192,7 +192,7 @@ const CreatePricingGroupsDiscounts = () => {
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const response = await axiosInstance.get('/products/get-all-products');
+            const response = await axiosInstance.get('/products/get-all-products-dashboard');
             console.log("response products", response);
 
             if (response.data.statusCode === 200) {

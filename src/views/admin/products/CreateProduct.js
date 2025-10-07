@@ -28,7 +28,7 @@ const CreateProduct = () => {
     eachBarcodes: '',
     packBarcodes: '',
     productImg: '',
-    taxable : false,
+    taxable: false,
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -112,6 +112,7 @@ const CreateProduct = () => {
 
 
   const handleSubmit = async () => {
+    
     if (!formData.sku.trim()) {
       setError('Please enter a SKU');
       return;
@@ -126,10 +127,7 @@ const CreateProduct = () => {
     }
 
 
-    if (!thumbnailFile) {
-      setError('Please select a thumbnail image');
-      return;
-    }
+
 
     setLoading(true);
     setError('');
@@ -813,7 +811,7 @@ const CreateProduct = () => {
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
             Select Commerce category Two
-            <span style={{ color: 'red' }}>*</span>
+
           </CustomFormLabel>
           <FormControl fullWidth>
             <Select

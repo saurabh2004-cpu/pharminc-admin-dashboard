@@ -92,76 +92,16 @@ const ListCustomers = () => {
       label: 'Shipping Rate',
     },
     {
-      id: 'shippingAddressOne',
+      id: 'shippingAddresses',
       numeric: false,
       disablePadding: false,
-      label: 'shipping Address One',
+      label: 'Shipping Addresses',
     },
     {
-      id: 'shippingAddressTwo',
+      id: 'billingAddresses',
       numeric: false,
       disablePadding: false,
-      label: 'shipping Address Two',
-    },
-    {
-      id: 'shippingAddressThree',
-      numeric: false,
-      disablePadding: false,
-      label: 'shipping Address Three',
-    },
-    {
-      id: 'shippingCity',
-      numeric: false,
-      disablePadding: false,
-      label: 'Shipping City',
-    },
-    {
-      id: 'shippingState',
-      numeric: false,
-      disablePadding: false,
-      label: 'Shipping State',
-    },
-    {
-      id: 'shippingZip',
-      numeric: false,
-      disablePadding: false,
-      label: 'Shipping Zip',
-    },
-    {
-      id: 'billingAddressOne',
-      numeric: false,
-      disablePadding: false,
-      label: 'billing Address One',
-    },
-    {
-      id: 'billingAddressTwo',
-      numeric: false,
-      disablePadding: false,
-      label: 'billing Address Two',
-    },
-    {
-      id: 'billingAddressThree',
-      numeric: false,
-      disablePadding: false,
-      label: 'billing Address Three',
-    },
-    {
-      id: 'billingCity',
-      numeric: false,
-      disablePadding: false,
-      label: 'billing City',
-    },
-    {
-      id: 'billingState',
-      numeric: false,
-      disablePadding: false,
-      label: 'billing State',
-    },
-    {
-      id: 'billingZip',
-      numeric: false,
-      disablePadding: false,
-      label: 'billing Zip',
+      label: 'Billing Addresses',
     },
     {
       id: 'inactive',
@@ -175,7 +115,6 @@ const ListCustomers = () => {
       disablePadding: false,
       label: 'Created Date',
     },
-
   ];
 
   const [tableData, setTableData] = React.useState([]);
@@ -185,7 +124,7 @@ const ListCustomers = () => {
   const fetchCustomersList = async () => {
     setLoading(true)
     try {
-      const response = await axiosInstance.get('/admin/get-all-users'); // or whatever your customer endpoint is
+      const response = await axiosInstance.get('/admin/get-all-users');
       console.log("response customers", response.data);
 
       if (response.data.statusCode === 200) {
@@ -228,21 +167,13 @@ const ListCustomers = () => {
   return (
     <ProductProvider>
       <PageContainer title="Customers List" description="this is Customers List page">
-        {/* breadcrumb */}
         <Breadcrumb title="Customers List" items={BCrumb} />
-        {/* end breadcrumb */}
-        <Box
-        // sx={{
-        //   minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-        //   marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-        //   transition: "margin-left 0.3s ease", // smooth animation
-        // }}
-        >
+        <Box>
           <ListTable
             showCheckBox={false}
             headCells={headCells}
             tableData={tableData}
-            isCustomersList={true} // Changed from isProductsList
+            isProductsList={true}
             setTableData={setTableData}
             loading={loading}
           />
