@@ -558,7 +558,7 @@ const CreateProduct = () => {
         {/* Multiple Product Images Upload */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="images-upload" sx={{ mt: 2 }}>
-            Product Images (Max 10)
+            Product Images 
           </CustomFormLabel>
           <input
             id="images-upload"

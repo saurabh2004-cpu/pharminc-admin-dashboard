@@ -244,13 +244,19 @@ const CustomersSalesOrders = () => {
             id: 'packQuantity',
             numeric: false,
             disablePadding: false,
-            label: 'Pack Quantity',
+            label: 'Type Of Pack',
         },
         {
             id: 'unitsQuantity',
             numeric: false,
             disablePadding: false,
             label: 'Units Quantity',
+        },
+        {
+            id: 'totalItems',
+            numeric: false,
+            disablePadding: false,
+            label: 'Total Items',
         },
     ];
 
@@ -396,7 +402,7 @@ const CustomersSalesOrders = () => {
             setError(error.message);
         }
     };
-    
+
     const fetchProductsAvailablePackTypes = async (itemSku) => {
         try {
             const response = await axiosInstance.get(`/products/get-products-pack-types/${itemSku}`);
@@ -963,7 +969,7 @@ const CustomersSalesOrders = () => {
                                                     </TableCell>
 
                                                     {/* Units Quantity */}
-                                                    <TableCell sx={{ width: 150 }}>
+                                                    <TableCell sx={{ width: 50 }}>
                                                         {isRowEditing ? (
                                                             <Box>
                                                                 <TextField
@@ -1011,6 +1017,20 @@ const CustomersSalesOrders = () => {
                                                                 {row.unitsQuantity || "N/A"}
                                                             </Typography>
                                                         )}
+                                                    </TableCell>
+
+                                                    {/* total items */}
+                                                    <TableCell sx={{ width: 100 }}>
+                                                        <Box >
+                                                            <Typography variant="body2">
+                                                                {row.packQuantity
+                                                                    ? row.packQuantity * row.unitsQuantity
+                                                                    : "0"
+                                                                }
+                                                            </Typography>
+
+
+                                                        </Box>
                                                     </TableCell>
                                                 </TableRow>
                                             );
