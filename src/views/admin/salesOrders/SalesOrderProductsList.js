@@ -252,12 +252,7 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Units Quantity',
         },
-        {
-            id: 'totalItems',
-            numeric: false,
-            disablePadding: false,
-            label: 'Total Items',
-        },
+        
     ];
 
     // Calculate tax and total amounts
@@ -1019,19 +1014,7 @@ const CustomersSalesOrders = () => {
                                                         )}
                                                     </TableCell>
 
-                                                    {/* total items */}
-                                                    <TableCell sx={{ width: 100 }}>
-                                                        <Box >
-                                                            <Typography variant="body2">
-                                                                {row.packQuantity
-                                                                    ? row.packQuantity * row.unitsQuantity
-                                                                    : "0"
-                                                                }
-                                                            </Typography>
-
-
-                                                        </Box>
-                                                    </TableCell>
+                                                   
                                                 </TableRow>
                                             );
                                         })}
