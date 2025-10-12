@@ -327,6 +327,40 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'Abandoned Carts ',
+    icon: IconNotebook,
+    href: '/dashboard/abandoned-carts',
+    children: [
+      {
+        id: uniqueId(),
+        title: ' Customers',
+        icon: IconPoint,
+        href: '/dashboard/abandoned-carts/customers',
+      },
+    ]
+  },
+  {
+    id: uniqueId(),
+    title: 'Customer Specific Amounts ',
+    icon: IconNotebook,
+    href: '/dashboard/bulk-discounts',
+    children: [
+      {
+        id: uniqueId(),
+        title: ' Create Customer Specific Amounts',
+        icon: IconPoint,
+        href: '/dashboard/customer-specific-amounts/create',
+      },
+      {
+        id: uniqueId(),
+        title: ' Customer Specific Amounts',
+        icon: IconPoint,
+        href: '/dashboard/customer-specific-amounts/list',
+      },
+    ]
+  },
+  {
+    id: uniqueId(),
     title: 'NetTerms',
     icon: IconCalendar,
     href: '/dashboard/NetTerms',

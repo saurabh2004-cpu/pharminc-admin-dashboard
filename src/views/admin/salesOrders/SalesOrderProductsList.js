@@ -33,8 +33,7 @@ import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconPlus
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
-import ProductSelectionModal from './ProductSelectionModal'; // Import the modal
-import { use } from 'react';
+import ProductSelectionModal from './ProductSelectionModal';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
@@ -120,25 +119,6 @@ function EnhancedTableHead(props) {
 const EnhancedTableToolbar = (props) => {
     const { numSelected, handleSearch, search, placeholder, onAddProduct } = props;
 
-    const handleExportCSV = async () => {
-        try {
-            const response = await axiosInstance.get(
-                '/pricing-groups-discount/export-pricing-group-discounts',
-                { responseType: 'blob' }
-            );
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute("download", "pricing_group_discounts_export.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (error) {
-            console.error("Error exporting CSV:", error);
-        }
-    };
-
     return (
         <Toolbar
             sx={{
@@ -215,10 +195,43 @@ const CustomersSalesOrders = () => {
     const [error, setError] = useState('');
     const [rows, setRows] = useState([]);
     const [search, setSearch] = useState('');
-    const [showProductModal, setShowProductModal] = useState(false); // Modal state
+    const [showProductModal, setShowProductModal] = useState(false);
     const navigate = useNavigate();
     const { documentNo } = useParams();
     const [productList, setProductList] = useState([]);
+
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({
+        customerName: "",
+        salesChannel: "",
+        itemSku: "",
+        packQuantity: "",
+        amount: "",
+        billingAddress: {},
+        shippingAddress: {},
+        trackingNumber: "",
+        date: "",
+    });
+    const [loading, setLoading] = useState(false);
+    const [editingRowId, setEditingRowId] = useState(null);
+    const [packTypes, setPackTypes] = useState([]);
+    const [updateFormData, setUpdateFormData] = React.useState({});
+    const [productQuentity, setProductQuantity] = useState(0);
+    const [rowId, setRowId] = React.useState(null);
+    const [billingAddresses, setBillingAddresses] = useState([]);
+    const [shippingAddresses, setShippingAddresses] = useState([]);
+    const [selectedBillingAddress, setSelectedBillingAddress] = useState('');
+    const [selectedShippingAddress, setSelectedShippingAddress] = useState('');
+    const [validationError, setValidationError] = useState('');
+    const [deleteDialog, setDeleteDialog] = useState({
+        open: false,
+        itemId: null,
+        itemName: '',
+        isDeleting: false
+    });
+
+    const theme = useTheme();
+    const borderColor = theme.palette.divider;
 
     // Define headCells for the table
     const headCells = [
@@ -252,7 +265,6 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Units Quantity',
         },
-        
     ];
 
     // Calculate tax and total amounts
@@ -283,26 +295,28 @@ const CustomersSalesOrders = () => {
         return 0;
     };
 
-    // Inside CustomersSalesOrders component
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({
-        customerName: tableData[0]?.customerName || "",
-        salesChannel: "",
-        itemSku: "",
-        packQuantity: "",
-        amount: "",
-        billingAddress: {},
-        shippingAddress: {},
-        trackingNumber: "",
-        date: "",
-    });
-    const [loading, setLoading] = useState(false);
-    const [editingRowId, setEditingRowId] = useState(null);  // Track which row is being edited
-    const [packTypes, setPackTypes] = useState([]);
+    // FIXED: Handle pack type change - updates both packQuantity and packType
+    const handlePackTypeChange = (e) => {
+        const selectedPackQuantity = parseInt(e.target.value);
+        const selectedPack = packTypes.find(pack => parseInt(pack.quantity) === selectedPackQuantity);
 
-    // Update form data to handle individual row updates
-    const [updateFormData, setUpdateFormData] = React.useState({});
-    const [productQuentity, setProductQuantity] = useState(0);
+        console.log("Selected pack:", selectedPack);
+        console.log("Available packs:", packTypes);
+
+        if (selectedPack) {
+            setUpdateFormData(prev => ({
+                ...prev,
+                packQuantity: selectedPackQuantity.toString(), // Keep as string to match your data structure
+                packType: selectedPack.name  // Update both fields
+            }));
+
+            console.log("Updated form data:", {
+                ...updateFormData,
+                packQuantity: selectedPackQuantity.toString(),
+                packType: selectedPack.name
+            });
+        }
+    };
 
     useEffect(() => {
         if (tableData[0]) {
@@ -327,7 +341,6 @@ const CustomersSalesOrders = () => {
     };
 
     const handleSubmit = async () => {
-        // ✅ your validation logic here
         if (!formData.customerName.trim()) return setError("Customer name is required");
         if (!formData.salesChannel.trim()) return setError("Sales channel is required");
         if (!formData.itemSku.trim()) return setError("Item SKU is required");
@@ -349,7 +362,7 @@ const CustomersSalesOrders = () => {
 
             if (res.data.statusCode === 200) {
                 setIsEditing(false);
-                fetchSalesOrdersProducts(); // refresh
+                fetchSalesOrdersProducts();
             } else {
                 setError(res.data.message || "Update failed");
             }
@@ -360,7 +373,6 @@ const CustomersSalesOrders = () => {
         }
     };
 
-
     const fetchSalesOrdersProducts = async () => {
         try {
             const response = await axiosInstance.get(`/sales-order/get-products-by-sales-document-number/${documentNo}`);
@@ -369,20 +381,16 @@ const CustomersSalesOrders = () => {
             if (response.data.statusCode === 200) {
                 const data = response.data.data;
 
-                // Create a map that prioritizes entries with packType
                 const uniqueMap = new Map();
 
                 data.forEach(item => {
                     const existing = uniqueMap.get(item.itemSku);
 
-                    // If no existing entry OR if current item has packType and existing doesn't
+                    console.log("item updated in edit sales order items ", item)
+                    console.log("existing in update items function ", existing)
+
                     if (!existing || (item.packType && !existing.packType)) {
                         uniqueMap.set(item.itemSku, item);
-                    }
-                    // If both have packType, keep the one with more complete data
-                    else if (item.packType && existing.packType) {
-                        // You can add additional logic here if needed
-                        // For now, we'll keep the existing one
                     }
                 });
 
@@ -390,7 +398,6 @@ const CustomersSalesOrders = () => {
 
                 setTableData(uniqueData);
                 setRows(uniqueData);
-
             }
         } catch (error) {
             console.error('Error fetching products by sales order list:', error);
@@ -406,7 +413,6 @@ const CustomersSalesOrders = () => {
             if (response.status === 200) {
                 setPackTypes(response.data.data);
             }
-
         } catch (error) {
             console.error('Error fetching products pack types:', error);
             setError(error.message);
@@ -421,22 +427,87 @@ const CustomersSalesOrders = () => {
             if (response.status === 200) {
                 setProductQuantity(response.data.data.stockLevel);
             }
-
         } catch (error) {
             console.error('Error fetching product by sku:', error);
             setError(error.message);
         }
-    }
+    };
 
-    useEffect(() => {
-        if (formData.itemSku !== "") {
-            fetchProductBySku(updateFormData.itemSku);
+    const fetchCustomerAddresses = async (customerName) => {
+        try {
+            const response = await axiosInstance.get(`/admin/customer-addresses/${customerName}`);
+            console.log("response customer addresses", response.data);
+
+            if (response.data.statusCode === 200) {
+                setBillingAddresses(response.data.data.billingAddresses || []);
+                setShippingAddresses(response.data.data.shippingAddresses || []);
+            }
+        } catch (error) {
+            console.error('Error fetching customer addresses:', error);
         }
-    }, [updateFormData.itemSku]);
+    };
 
     React.useEffect(() => {
         fetchSalesOrdersProducts();
     }, [documentNo]);
+
+    useEffect(() => {
+        if (formData.customerName) {
+            fetchCustomerAddresses(formData.customerName);
+        }
+    }, [formData.customerName]);
+
+    useEffect(() => {
+        if (formData.billingAddress && formData.billingAddress._id) {
+            setSelectedBillingAddress(formData.billingAddress._id);
+        }
+        if (formData.shippingAddress && formData.shippingAddress._id) {
+            setSelectedShippingAddress(formData.shippingAddress._id);
+        }
+    }, [formData.billingAddress, formData.shippingAddress]);
+
+    // FIXED: Stock validation that recalculates when quantities change
+    useEffect(() => {
+        if (editingRowId && updateFormData.packQuantity && updateFormData.unitsQuantity) {
+            const totalOrderQuantity = parseInt(updateFormData.packQuantity) * updateFormData.unitsQuantity;
+
+            if (updateFormData.unitsQuantity < 1) {
+                setValidationError('Units quantity must be at least 1');
+                return;
+            }
+
+            if (totalOrderQuantity > productQuentity && productQuentity > 0) {
+                setValidationError(
+                    `Warning: Order quantity (${totalOrderQuantity}) exceeds available stock (${productQuentity})`
+                );
+            } else {
+                setValidationError('');
+            }
+        }
+    }, [updateFormData.packQuantity, updateFormData.unitsQuantity, productQuentity, editingRowId]);
+
+    // FIXED: Recalculate amount when quantities change
+    useEffect(() => {
+        if (editingRowId && updateFormData.packQuantity !== undefined && updateFormData.unitsQuantity !== undefined) {
+            const currentRow = rows.find(row => row._id === editingRowId);
+            if (!currentRow) return;
+
+            const previousAmount = currentRow.amount || 0;
+            const previousPackQuantity = parseInt(currentRow.packQuantity) || 1; // Parse as int
+            const previousUnitsQuantity = currentRow.unitsQuantity || 1;
+
+            const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
+
+            const newPackQuantity = parseInt(updateFormData.packQuantity) || previousPackQuantity; // Parse as int
+            const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
+            const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
+
+            setUpdateFormData(prev => ({
+                ...prev,
+                amount: newAmount
+            }));
+        }
+    }, [updateFormData.packQuantity, updateFormData.unitsQuantity, editingRowId, rows]);
 
     const handleSearch = (event) => {
         const searchValue = event.target.value.toLowerCase();
@@ -495,55 +566,21 @@ const CustomersSalesOrders = () => {
         setPage(0);
     };
 
-    // Handle add product button click
     const handleAddProduct = () => {
         setShowProductModal(true);
     };
 
-    // Handle modal close
     const handleCloseModal = () => {
         setShowProductModal(false);
     };
 
-    // Handle successful sales order creation
     const handleSalesOrderCreated = () => {
-        // Refresh the data
         fetchSalesOrdersProducts();
     };
 
     const isSelected = (name) => selected.indexOf(name) !== -1;
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
-    const theme = useTheme();
-    const borderColor = theme.palette.divider;
-    const [rowId, setRowId] = React.useState(null);
-    const [billingAddresses, setBillingAddresses] = useState([]);
-    const [shippingAddresses, setShippingAddresses] = useState([]);
-    const [selectedBillingAddress, setSelectedBillingAddress] = useState('');
-    const [selectedShippingAddress, setSelectedShippingAddress] = useState('');
-    const [validationError, setValidationError] = useState('');
 
-    // Add this function to fetch customer addresses
-    const fetchCustomerAddresses = async (customerName) => {
-        try {
-            const response = await axiosInstance.get(`/admin/customer-addresses/${customerName}`);
-            console.log("response customer addresses", response.data);
-
-            if (response.data.statusCode === 200) {
-                setBillingAddresses(response.data.data.billingAddresses || []);
-                setShippingAddresses(response.data.data.shippingAddresses || []);
-            }
-        } catch (error) {
-            console.error('Error fetching customer addresses:', error);
-        }
-    };
-
-    useEffect(() => {
-        if (formData.customerName) {
-            fetchCustomerAddresses(formData.customerName);
-        }
-    }, [formData.customerName]);
-
-    // Add these handler functions for address selection
     const handleBillingAddressChange = (event) => {
         const addressId = event.target.value;
         setSelectedBillingAddress(addressId);
@@ -570,22 +607,16 @@ const CustomersSalesOrders = () => {
         }
     };
 
-    useEffect(() => {
-        if (formData.billingAddress && formData.billingAddress._id) {
-            setSelectedBillingAddress(formData.billingAddress._id);
-        }
-        if (formData.shippingAddress && formData.shippingAddress._id) {
-            setSelectedShippingAddress(formData.shippingAddress._id);
-        }
-    }, [formData.billingAddress, formData.shippingAddress]);
-
+    // FIXED: Initialize edit form with proper data
     const handleEditSalesOrder = (order) => {
+        console.log("order in handle edit sales order", order);
+
         setRowId(order._id);
         setEditingRowId(order._id);
         fetchProductsAvailablePackTypes(order.itemSku);
-        fetchProductBySku(order.itemSku); // Fetch current stock level
+        fetchProductBySku(order.itemSku);
 
-        // Initialize form data for this specific row
+        // FIXED: Initialize form data with current values including packType
         setUpdateFormData({
             date: order?.date || null,
             documentNumber: order.documentNumber || '',
@@ -596,27 +627,25 @@ const CustomersSalesOrders = () => {
             billingAddress: order.billingAddress || '',
             customerPO: order.customerPO || '',
             itemSku: order.itemSku || '',
-            packQuantity: order.packQuantity || 1,
-            unitsQuantity: order.unitsQuantity || 0,
+            packQuantity: order.packQuantity || '',  // Keep original format
+            unitsQuantity: parseInt(order.unitsQuantity) || 0,
             finalAmount: order.finalAmount || 0,
             amount: order.amount || 0,
+            packType: order.packType || '', // Ensure packType is initialized
+        });
+
+        console.log("Initialized update form data:", {
+            packQuantity: order.packQuantity,
+            packType: order.packType
         });
     };
 
-    // Add this function to handle canceling the update
     const handleCancelUpdate = (rowId) => {
         setEditingRowId(null);
         setUpdateFormData({});
         setValidationError('');
         setError('');
     };
-
-    const [deleteDialog, setDeleteDialog] = useState({
-        open: false,
-        itemId: null,
-        itemName: '',
-        isDeleting: false
-    });
 
     const handleDeleteCancel = () => {
         setDeleteDialog({
@@ -628,7 +657,7 @@ const CustomersSalesOrders = () => {
     };
 
     const handleDeleteClick = (event, id, name) => {
-        event.stopPropagation(); // Prevent row selection
+        event.stopPropagation();
         setDeleteDialog({
             open: true,
             itemId: id,
@@ -660,10 +689,9 @@ const CustomersSalesOrders = () => {
         backgroundColor: '#f0f8ff',
     };
 
-    // Updated handleSaveUpdate function with correct amount calculation
+    // FIXED: Updated handleSaveUpdate to properly include packType
     const handleSaveUpdate = async (rowId) => {
         try {
-            // Validation
             if (!updateFormData.unitsQuantity || updateFormData.unitsQuantity < 1) {
                 setError('Units quantity must be at least 1');
                 return;
@@ -674,7 +702,7 @@ const CustomersSalesOrders = () => {
                 return;
             }
 
-            const totalOrderQuantity = updateFormData.packQuantity * updateFormData.unitsQuantity;
+            const totalOrderQuantity = parseInt(updateFormData.packQuantity) * updateFormData.unitsQuantity;
             if (totalOrderQuantity > productQuentity) {
                 setError(`Cannot save: Order quantity (${totalOrderQuantity}) exceeds available stock (${productQuentity})`);
                 return;
@@ -683,56 +711,83 @@ const CustomersSalesOrders = () => {
             setLoading(true);
             setError('');
 
-            // Get the current row data
             const currentRow = rows.find(row => row._id === rowId);
             if (!currentRow) {
                 setError('Row not found');
                 return;
             }
 
-            // Calculate the new amount based on the formula:
-            // First get the unit price: previousAmount / (previousPackQuantity * previousUnitsQuantity)
-            // Then calculate new amount: unitPrice * (newPackQuantity * newUnitsQuantity)
             const previousAmount = currentRow.amount || 0;
-            const previousPackQuantity = currentRow.packQuantity || 1;
+            const previousPackQuantity = parseInt(currentRow.packQuantity) || 1;
             const previousUnitsQuantity = currentRow.unitsQuantity || 1;
 
-            // Get unit price
             const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
 
-            // Calculate new amount with updated quantities
-            const newPackQuantity = updateFormData.packQuantity || previousPackQuantity;
+            const newPackQuantity = parseInt(updateFormData.packQuantity) || previousPackQuantity;
             const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
             const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
 
+            // FIXED: Ensure packType is properly included
             const updatedData = {
                 ...updateFormData,
-                amount: newAmount
+                packQuantity: newPackQuantity.toString(), // Ensure it's a string
+                unitsQuantity: newUnitsQuantity,
+                amount: newAmount,
+                packType: updateFormData.packType || currentRow.packType // Ensure packType is included
             };
 
-            const res = await axiosInstance.put(`/sales-order/update-sales-order-item/${rowId}`, updatedData, {
-                headers: {
-                    'Content-Type': 'application/json'
+            console.log("Sending update data:", updatedData);
+            console.log("Pack type being sent:", updatedData.packType);
+
+            const res = await axiosInstance.put(
+                `/sales-order/update-sales-order-item/${rowId}`,
+                updatedData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 }
-            });
+            );
 
             console.log("Update sales order response:", res);
+            console.log("Response data:", res.data);
 
             if (res.data.statusCode === 200) {
-                // Update the rows with the new data
+                // FIXED: Update local state with all fields including packType
                 setRows(prevRows =>
                     prevRows.map(row =>
                         row._id === rowId
-                            ? { ...row, ...updatedData, amount: newAmount }
+                            ? {
+                                ...row,
+                                ...updatedData,
+                                amount: newAmount,
+                                packType: updatedData.packType, // Ensure packType is updated
+                                packQuantity: updatedData.packQuantity // Ensure packQuantity is updated
+                            }
                             : row
                     )
                 );
 
-                // Exit edit mode
+                // Also update tableData to ensure consistency
+                setTableData(prevData =>
+                    prevData.map(item =>
+                        item._id === rowId
+                            ? {
+                                ...item,
+                                ...updatedData,
+                                amount: newAmount,
+                                packType: updatedData.packType,
+                                packQuantity: updatedData.packQuantity
+                            }
+                            : item
+                    )
+                );
+
                 handleCancelUpdate(rowId);
 
-                // Refresh the data
-                fetchSalesOrdersProducts();
+                // Force refresh the data from server
+                await fetchSalesOrdersProducts();
+
             } else {
                 setError(res.data.message || 'Update failed');
             }
@@ -745,53 +800,6 @@ const CustomersSalesOrders = () => {
         }
     };
 
-    useEffect(() => {
-        if (editingRowId && updateFormData.packQuantity && updateFormData.unitsQuantity) {
-            const totalOrderQuantity = updateFormData.packQuantity * updateFormData.unitsQuantity;
-
-            // Check if units quantity is less than 1
-            if (updateFormData.unitsQuantity < 1) {
-                setValidationError('Units quantity must be at least 1');
-                return;
-            }
-
-            // Check if total quantity exceeds available stock
-            if (totalOrderQuantity > productQuentity) {
-                setValidationError(
-                    `Warning: Order quantity (${totalOrderQuantity}) exceeds available stock (${productQuentity})`
-                );
-            } else {
-                setValidationError('');
-            }
-        }
-    }, [updateFormData.packQuantity, updateFormData.unitsQuantity, productQuentity, editingRowId]);
-
-    useEffect(() => {
-        if (editingRowId && updateFormData.packQuantity !== undefined && updateFormData.unitsQuantity !== undefined) {
-            const currentRow = rows.find(row => row._id === editingRowId);
-            if (!currentRow) return;
-
-            // Calculate the new amount based on the formula:
-            // First get the unit price: previousAmount / (previousPackQuantity * previousUnitsQuantity)
-            // Then calculate new amount: unitPrice * (newPackQuantity * newUnitsQuantity)
-            const previousAmount = currentRow.amount || 0;
-            const previousPackQuantity = currentRow.packQuantity || 1;
-            const previousUnitsQuantity = currentRow.unitsQuantity || 1;
-
-            // Get unit price
-            const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
-
-            // Calculate new amount with updated quantities
-            const newPackQuantity = updateFormData.packQuantity || previousPackQuantity;
-            const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
-            const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
-
-            // Update the form data with the new amount
-            setUpdateFormData(prev => ({ ...prev, amount: newAmount }));
-        }
-    }, [updateFormData.packQuantity, updateFormData.unitsQuantity, editingRowId, rows]);
-
-    // Helper function to update form data for specific fields
     const handleUpdateFormChange = (field, value) => {
         console.log("handleUpdateFormChange", field, value);
         setUpdateFormData(prev => ({ ...prev, [field]: value }));
@@ -911,7 +919,7 @@ const CustomersSalesOrders = () => {
                                                         </Box>
                                                     </TableCell>
 
-                                                    {/* SKU - stays readonly */}
+                                                    {/* SKU */}
                                                     <TableCell sx={{ width: 120 }}>
                                                         <Typography fontWeight="500" variant="body2">
                                                             {row.itemSku || "N/A"}
@@ -931,34 +939,48 @@ const CustomersSalesOrders = () => {
 
                                                     {/* Tax Column */}
                                                     <TableCell sx={{ width: 100 }}>
-                                                        <Box >
+                                                        <Box>
                                                             <Typography variant="body2">
                                                                 {`${calculateProductTax(row).toFixed(2)} (${row.taxApplied ? `${row.taxPercentages}%` : 'No Tax'})`}
                                                             </Typography>
-
-
                                                         </Box>
                                                     </TableCell>
 
-                                                    {/* Pack Quantity */}
-                                                    <TableCell sx={{ width: 100 }}>
+                                                    {/* Pack Type - FIXED */}
+                                                    <TableCell sx={{ width: 150 }}>
                                                         {isRowEditing ? (
-                                                            <TextField
-                                                                select
-                                                                size="small"
-                                                                value={updateFormData.packQuantity || row.packQuantity || ""}
-                                                                onChange={(e) => handleUpdateFormChange('packQuantity', parseInt(e.target.value))}
-                                                                error={!!validationError}
-                                                            >
-                                                                {packTypes?.map((pack) => (
-                                                                    <MenuItem key={pack._id} value={pack.quantity}>
-                                                                        {pack.name}
-                                                                    </MenuItem>
-                                                                ))}
-                                                            </TextField>
+                                                            <Box>
+                                                                <TextField
+                                                                    select
+                                                                    size="small"
+                                                                    value={updateFormData.packQuantity || row.packQuantity || ""}
+                                                                    onChange={handlePackTypeChange}
+                                                                    error={!!validationError}
+                                                                    fullWidth
+                                                                >
+                                                                    {packTypes?.map((pack) => (
+                                                                        <MenuItem key={pack._id} value={parseInt(pack.quantity)}>
+                                                                            {pack.name}
+                                                                        </MenuItem>
+                                                                    ))}
+                                                                </TextField>
+                                                                {updateFormData.packType && (
+                                                                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                                                                        Selected: {updateFormData.packType}
+                                                                    </Typography>
+                                                                )}
+                                                                {/* Debug info */}
+                                                                {/* <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5, fontSize: '0.6rem' }}>
+                                                                    Debug: Qty: {updateFormData.packQuantity}, Type: {updateFormData.packType}
+                                                                </Typography> */}
+                                                            </Box>
                                                         ) : (
                                                             <Typography variant="body2">
                                                                 {row.packType || "N/A"}
+                                                                {/* Debug info */}
+                                                                {/* <Typography variant="caption" color="textSecondary" sx={{ display: 'block', fontSize: '0.6rem' }}>
+                                                                    Current: {row.packType}
+                                                                </Typography> */}
                                                             </Typography>
                                                         )}
                                                     </TableCell>
@@ -1013,8 +1035,6 @@ const CustomersSalesOrders = () => {
                                                             </Typography>
                                                         )}
                                                     </TableCell>
-
-                                                   
                                                 </TableRow>
                                             );
                                         })}
@@ -1024,7 +1044,6 @@ const CustomersSalesOrders = () => {
                                         </TableRow>
                                     )}
                                 </TableBody>
-
                             </Table>
                         </TableContainer>
                         <TablePagination
@@ -1036,15 +1055,11 @@ const CustomersSalesOrders = () => {
                             onPageChange={handleChangePage}
                             onRowsPerPageChange={handleChangeRowsPerPage}
                         />
-
-                        {/* Enhanced Total Row with Tax Breakdown */}
-
-
                     </Paper>
                 </Grid>
 
                 {/* Right Side - Order Details */}
-                {!isEditing ?
+                {!isEditing ? (
                     <Grid item xs={12} lg={5} maxWidth={290}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                             {/* Order Details */}
@@ -1143,7 +1158,6 @@ const CustomersSalesOrders = () => {
                                 <Divider sx={{ mb: 2 }} />
 
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
                                             Billing Address:
@@ -1176,11 +1190,28 @@ const CustomersSalesOrders = () => {
                                     </Box>
                                 </Box>
                             </Paper>
+
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" gutterBottom color="primary">
+                                    Order Comments
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+
+                                        <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
+                                            {tableData[0]?.comments || 'No Comments'}
+                                        </Typography>
+                                    </Box>
+
+                                </Box>
+                            </Paper>
                         </Box>
                     </Grid>
-                    :
-                    // --- Editable Form
-                    <Grid item xs={12} lg={5} minWidth={400}  >
+                ) : (
+                    // Editable Form
+                    <Grid item xs={12} lg={5} minWidth={400}>
                         <Typography variant="h6" gutterBottom color="primary">
                             Edit Order Details
                         </Typography>
@@ -1213,8 +1244,7 @@ const CustomersSalesOrders = () => {
                                 />
                             </Box>
 
-
-                            {/* trackingNumber number */}
+                            {/* trackingNumber */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
                                     trackingNumber:
@@ -1286,14 +1316,14 @@ const CustomersSalesOrders = () => {
                                     variant="contained"
                                     color="primary"
                                     onClick={handleSubmit}
-                                    disabled={loading || !!validationError || updateFormData.unitsQuantity < 1}
+                                    disabled={loading}
                                 >
                                     {loading ? "Saving..." : "Save Changes"}
                                 </Button>
                             </Box>
                         </Box>
                     </Grid>
-                }
+                )}
             </Grid>
 
             {/* Product Selection Modal */}
@@ -1318,7 +1348,7 @@ const CustomersSalesOrders = () => {
                 onConfirm={handleDeleteSalesOrder}
                 itemName={deleteDialog.itemName}
                 isDeleting={deleteDialog.isDeleting}
-                itemType={"Pact Types"}
+                itemType={"Sales Order Item"}
             />
         </Box>
     );

@@ -28,7 +28,8 @@ const CreateProduct = () => {
     eachBarcodes: '',
     packBarcodes: '',
     productImg: '',
-    taxable: false,
+    taxable: true,
+    bulkDiscount: 0
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -112,7 +113,7 @@ const CreateProduct = () => {
 
 
   const handleSubmit = async () => {
-    
+
     if (!formData.sku.trim()) {
       setError('Please enter a SKU');
       return;
@@ -558,7 +559,7 @@ const CreateProduct = () => {
         {/* Multiple Product Images Upload */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="images-upload" sx={{ mt: 2 }}>
-            Product Images 
+            Product Images
           </CustomFormLabel>
           <input
             id="images-upload"
@@ -725,6 +726,20 @@ const CreateProduct = () => {
               ))}
             </Select>
           </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+            Bulk Discount %
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="stockLevel"
+            fullWidth
+            value={formData.bulkDiscount}
+            onChange={(e) => setFormData({ ...formData, bulkDiscount: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Bulk Discount Percentages"
+          />
         </Grid>
 
         {/* Pricing Group and Commerce Category One - Two per row */}
