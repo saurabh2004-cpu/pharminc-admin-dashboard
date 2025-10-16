@@ -1,46 +1,31 @@
-name: Deploy Next.js App
+name: Deploy Next.js Static Site
 
 on:
   push:
-    branches:
-      - main  # Run workflow on push to main branch
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Next.js app
-        run: npm run build
-
-      - name: Copy files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "."
-          target: "/var/www/myapps/frontend"
-
-      - name: Restart PM2 processes
-        uses: appleboy/ssh-action@v0.1.8
+          cache: 'npm'
+          
+      - run: npm ci
+      - run: npm run build
+      - run: npm run export  # Make sure you have "export": "next export" in package.json
+      
+      - name: Deploy to Nginx
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /var/www/myapps/frontend
-            npm install
-            npm run build
-            
+            sudo rm -rf /var/www/html/*
+            sudo cp -r /var/www/myapps/frontend/out/* /var/www/html/
+            sudo systemctl reload nginx
