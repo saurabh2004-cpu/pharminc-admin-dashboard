@@ -546,61 +546,7 @@ const ListTable = ({
           setFilter={setFilter}
         />
 
-        {/* Summary Cards */}
-        <Box sx={{ mx: 2, mb: 2 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined">
-                <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                  <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
-                    <IconCash size="2rem" color={theme.palette.primary.main} />
-                  </Box>
-                  <Typography variant="h4" color="primary.main" fontWeight="bold">
-                    ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Amount
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined">
-                <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                  <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
-                    <IconCalendarEvent size="2rem" color={theme.palette.info.main} />
-                  </Box>
-                  <Typography variant="h4" color="info.main" fontWeight="bold">
-                    {totalCount}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Records
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {tableData?.year && tableData?.month && (
-              <Grid item xs={12} sm={6} md={3}>
-                <Card variant="outlined">
-                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                    <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
-                      <IconCalendar size="2rem" color={theme.palette.secondary.main} />
-                    </Box>
-                    <Typography variant="h6" color="secondary.main" fontWeight="bold">
-                      {tableData.month}/{tableData.year}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Period
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-          </Grid>
-        </Box>
-
+      
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer sx={{ width: "100%" }}>
             <Table

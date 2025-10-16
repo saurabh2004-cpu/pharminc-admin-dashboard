@@ -26,6 +26,7 @@ const CreateSalesOrders = () => {
     customerPO: '',
     itemSku: '',
     packQuantity: 1,
+    packType: '',
     unitsQuantity: 1,
     finalAmount: null,
     amount: 0
@@ -660,8 +661,14 @@ const CreateSalesOrders = () => {
           <FormControl fullWidth>
             <Select
               id="item-sku-select"
-              value={formData.packQuantity}
-              onChange={(e) => setFormData({ ...formData, packQuantity: e.target.value })}
+              value={formData.packType}
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  packQuantity: e.target.value.quantity,
+                  packType: e.target.value.name
+                })
+              }}
               disabled={loading || productsList.length === 0}
               displayEmpty
               sx={{
@@ -680,7 +687,7 @@ const CreateSalesOrders = () => {
                 {packTypes.length === 0 ? 'Loading products...' : 'Select a product'}
               </MenuItem>
               {packTypes.map((packType) => (
-                <MenuItem key={packType._id} value={packType.quantity}>
+                <MenuItem key={packType._id} value={packType}>
                   {packType.name}
                 </MenuItem>
               ))}

@@ -16,23 +16,21 @@ import {
   Toolbar,
   IconButton,
   Tooltip,
-  FormControlLabel,
   Typography,
-  Avatar,
   TextField,
   InputAdornment,
   Paper,
   Button,
+  Avatar,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-// import CustomSwitch from '../../../forms/theme-elements/CustomSwitch';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconEye } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
-import { useNavigate, useParams } from 'react-router';
-import axios from 'axios';
+import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import { color } from 'framer-motion';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -41,14 +39,10 @@ function descendingComparator(a, b, orderBy) {
   if (b[orderBy] > a[orderBy]) {
     return 1;
   }
-
   return 0;
 }
 
-function getComparator(
-  order,
-  orderBy,
-) {
+function getComparator(order, orderBy) {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -69,42 +63,45 @@ function EnhancedTableHead(props) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
-  const stickyCellStyle = {
-    position: "sticky",
-    left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
-  };
 
   const headCellStyle = {
-    backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+    backgroundColor: '#f0f8ff',
     fontWeight: 600,
-    zIndex: 4, // slightly lower than sticky so sticky overlaps
+    zIndex: 4,
+  };
+
+  const stickyCellStyle = {
+    ...headCellStyle,
+    position: "sticky",
+    left: 0,
+    zIndex: 5,
   };
 
   return (
     <TableHead>
       <TableRow>
-        {showCheckBox && <TableCell padding="checkbox">
-          <CustomCheckbox
-            color="primary"
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-            inputProps={{
-              'aria-label': 'select all desserts',
-            }}
-          />
-        </TableCell>}
+        {showCheckBox && (
+          <TableCell padding="checkbox">
+            <CustomCheckbox
+              color="primary"
+              checked={rowCount > 0 && numSelected === rowCount}
+              onChange={onSelectAllClick}
+              inputProps={{
+                'aria-label': 'select all desserts',
+              }}
+            />
+          </TableCell>
+        )}
 
         {/* Actions column */}
-        <TableCell sx={{ ...headCellStyle, ...stickyCellStyle }}>
+        <TableCell sx={stickyCellStyle}>
           Actions
         </TableCell>
 
-        {headCells.map((headCell, index) => (
+        {headCells.map((headCell) => (
           <TableCell
             key={headCell.key || headCell.id}
-            align={headCell.numeric ? 'right' : 'left'}
+            align={headCell.numeric ? 'left' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={headCellStyle}
@@ -134,25 +131,12 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
+  const { numSelected, handleSearch, search, placeholder } = props;
 
-  const handleExportCSV = async () => {
-    try {
-      const response = await axiosInstance.get(
-        '/pricing-groups-discount/export-pricing-group-discounts',
-        { responseType: 'blob' }
-      );
+  const navigate = useNavigate();
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "pricing_group_discounts_export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error exporting CSV:", error);
-    }
+  const handleCreateProductGroup = () => {
+    navigate('/dashboard/product-groups/create');
   };
 
   return (
@@ -173,7 +157,7 @@ const EnhancedTableToolbar = (props) => {
       ) : (
         <Box sx={{ flex: '1 1 100%' }}>
           <TextField
-            placeholder={placeholder || "Search"}
+            placeholder={placeholder || "Search Product Groups"}
             size="small"
             onChange={handleSearch}
             value={search}
@@ -198,13 +182,20 @@ const EnhancedTableToolbar = (props) => {
         </Tooltip>
       ) : (
         <>
+          <Tooltip title="Create Product Group">
+            {/* <Button 
+              size="small" 
+              variant="contained" 
+              onClick={handleCreateProductGroup}
+              sx={{ backgroundColor: '#2E2F7F', mr: 1 }}
+            >
+              Create Product Group
+            </Button> */}
+          </Tooltip>
           <Tooltip title="Filter list">
             <IconButton>
               <IconFilter size="1.2rem" />
             </IconButton>
-          </Tooltip>
-          <Tooltip title="Export CSV">
-            <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
           </Tooltip>
         </>
       )}
@@ -212,99 +203,92 @@ const EnhancedTableToolbar = (props) => {
   );
 };
 
-const CustomersItemsBasedDiscounts = () => {
-  const {
-    filteredAndSortedProducts,
-  } = useContext(ProductContext);
-
+const ListProductGroup = () => {
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('name');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(50);
-  const isBrandsList = true;
 
-  const [tableData, setTableData] = React.useState([]);
-  const [error, setError] = useState(''); // Added missing error state
-  const sourceData = tableData || [];
-  const [rows, setRows] = useState(sourceData);
+  const [tableData, setTableData] = useState([]);
+  const [error, setError] = useState('');
+  const [rows, setRows] = useState([]);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const { id } = useParams();
 
-  // Define headCells for the table
+  // Define headCells for product groups
   const headCells = [
     {
-      id: 'productSku',
-      label: 'Product SKU',
+      id: 'thumbnail',
+      label: 'Thumbnail',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'percentage',
-      label: 'Discount',
+      id: 'name',
+      label: 'Group Name',
       numeric: false,
       disablePadding: false,
     },
-    // {
-    //   id: 'pricingGroup',
-    //   label: 'Pricing Group Name',
-    //   numeric: false,
-    //   disablePadding: false,
-    // },
+    {
+      id: 'slug',
+      label: 'Slug',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'productsCount',
+      label: 'Products Count',
+      numeric: true,
+      disablePadding: false,
+    },
+    {
+      id: 'price',
+      label: 'Total Price',
+      numeric: true,
+      disablePadding: false,
+    },
   ];
 
-
-  const fetchItemsDiscounts = async () => {
+  // Fetch product groups
+  const fetchProductGroups = async () => {
     try {
-      const response = await axiosInstance.get(`/item-based-discount/get-items-based-discount-by-customer-id/${id}`);
-      console.log("response item discounts ", response);
+      setError('');
+      const response = await axiosInstance.get('/product-group/get-all-product-groups');
+      console.log("response product groups", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
+        setRows(response.data.data);
+      } else {
+        setError('Failed to fetch product groups');
       }
-
     } catch (error) {
-      console.error('Error fetching pricing groups list:', error);
-      setError(error.message);
+      console.error('Error fetching product groups:', error);
+      setError(error.response?.data?.message || error.message || 'Error fetching product groups');
+      setTableData([]);
+      setRows([]);
     }
   };
 
-
-  React.useEffect(() => {
-    fetchItemsDiscounts();
-  }, [id]);
-
   useEffect(() => {
-    if (isBrandsList) {
-      setRows(sourceData);
-    } else {
-      setRows(filteredAndSortedProducts);
-    }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList]);
+    fetchProductGroups();
+  }, []);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    if (isBrandsList) {
-      const filteredRows = sourceData.filter((row) => {
-        return (
-          row?.productSku?.toLowerCase().includes(searchValue) ||
-          row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-          row?.percentage?.includes(searchValue)
-        );
-      });
-      setRows(filteredRows);
-    } else {
-      const filteredRows = filteredAndSortedProducts.filter((row) => {
-        return row.title.toLowerCase().includes(searchValue);
-      });
-      setRows(filteredRows);
-    }
+    const filteredRows = tableData.filter((row) => {
+      return (
+        row?.name?.toLowerCase().includes(searchValue) ||
+        row?.slug?.toLowerCase().includes(searchValue) ||
+        row?.price?.toString().includes(searchValue)
+      );
+    });
+    setRows(filteredRows);
   };
-
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -314,19 +298,19 @@ const CustomersItemsBasedDiscounts = () => {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.name || n.title);
+      const newSelecteds = rows.map((n) => n._id);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
     let newSelected = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -350,11 +334,7 @@ const CustomersItemsBasedDiscounts = () => {
     setPage(0);
   };
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
-
-  const isSelected = (name) => selected.indexOf(name) !== -1;
+  const isSelected = (id) => selected.indexOf(id) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
@@ -378,7 +358,7 @@ const CustomersItemsBasedDiscounts = () => {
   };
 
   const handleDeleteClick = (event, id, name) => {
-    event.stopPropagation(); // Prevent row selection
+    event.stopPropagation();
     setDeleteDialog({
       open: true,
       itemId: id,
@@ -387,37 +367,43 @@ const CustomersItemsBasedDiscounts = () => {
     });
   };
 
-  //delete pricing group
-  const handleDeleteItemDiscounts = async () => {
+  // Delete product group
+  const handleDeleteProductGroup = async () => {
     try {
-      const res = await axiosInstance.delete(`/item-based-discount/delete-items-based-discount/${deleteDialog.itemId}`);
+      setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
 
-      console.log("deleted", res.data);
+      const res = await axiosInstance.delete(`/product-group/delete-product-group/${deleteDialog.itemId}`);
+      console.log("deleted product group", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
         setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
         handleDeleteCancel();
-
       }
     } catch (error) {
-      console.error('Error deleting item discounts:', error);
+      console.error('Error deleting product group:', error);
+      setError(error.response?.data?.message || error.message || 'Error deleting product group');
+    } finally {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
     }
   };
 
-  //edit pricing group
-  const handleEditItemDiscounts = (id) => {
-    navigate(`/dashboard/items-based-discounts/edit/${id}`);
+  // Edit product group
+  const handleEditProductGroup = (id) => {
+    navigate(`/dashboard/productGroup/edit/${id}`);
+  };
+
+  // View product group details
+  const handleViewProductGroup = (id) => {
+    navigate(`/dashboard/productGroup/products/${id}`);
   };
 
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
   };
-
-
 
   return (
     <Box>
@@ -426,21 +412,19 @@ const CustomersItemsBasedDiscounts = () => {
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Pricing Group Discount" : "Search Product"}
-          rows={rows}
-          headCells={headCells}
+          placeholder="Search Product Groups"
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
             <Table
               sx={{
                 minWidth: 1000,
-                borderCollapse: "collapse", // ensures borders connect
+                borderCollapse: "collapse",
                 "& td, & th": {
-                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                  borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
-                  borderRight: "none", // no border on last column
+                  borderRight: "none",
                 },
               }}
               aria-labelledby="tableTitle"
@@ -460,8 +444,9 @@ const CustomersItemsBasedDiscounts = () => {
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row, index) => {
-                    const isItemSelected = isSelected(row.name || row.title);
+                    const isItemSelected = isSelected(row._id);
                     const labelId = `enhanced-table-checkbox-${index}`;
+                    const productsCount = row.products ? (Array.isArray(row.products) ? row.products.length : 0) : 0;
 
                     return (
                       <TableRow
@@ -469,73 +454,109 @@ const CustomersItemsBasedDiscounts = () => {
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
-                        key={row._id || row.title}
+                        key={row._id}
                         selected={isItemSelected}
                       >
-                        {isBrandsList ? (
-                          // Brands List View
-                          <>
-                            <TableCell sx={stickyCellStyle} >
-                              <Box display="flex" gap={1}>
-                                <Tooltip title="Edit">
-                                  <IconButton size="small" color="primary" onClick={() => handleEditItemDiscounts(row?._id)}>
-                                    <IconEdit size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row?._id, row?.pricingGroup?.name)}>
-                                    <IconTrash size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
+                        {/* Actions Column */}
+                        <TableCell sx={stickyCellStyle}>
+                          <Box display="flex" gap={1}>
+                            <Tooltip title="View">
+                              <IconButton
+                                size="small"
+                                color="info"
+                                onClick={() => handleViewProductGroup(row._id)}
+                              >
+                                <IconEye size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Edit">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleEditProductGroup(row._id)}
+                              >
+                                <IconEdit size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => handleDeleteClick(e, row._id, row.name)}
+                              >
+                                <IconTrash size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
 
-                            <TableCell onClick={() => handleEditItemDiscounts(row._id)} sx={{ cursor: 'pointer' }}>
-                              <Box display="flex" alignItems="center">
-                                <Box sx={{ ml: 2 }}>
-                                  <Typography fontWeight="600">
-                                    {row?.productSku || 'N/A'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell onClick={() => handleEditItemDiscounts(row._id)} sx={{ cursor: 'pointer' }}>
-                              <Box display="flex" alignItems="center">
-                                <Box sx={{ ml: 2 }}>
-                                  <Typography fontWeight="600">
-                                    {row?.percentage || 'N/A'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            {/* <TableCell onClick={() => handleEditItemDiscounts(row._id)} sx={{ cursor: 'pointer' }}>
-                              <Box display="flex" alignItems="center">
-                                <Box sx={{ ml: 2 }}>
-                                  <Typography fontWeight="600">
-                                    {row?.pricingGroup?.name || ''}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell> */}
+                        {/* Thumbnail */}
+                        <TableCell>
+                          <Avatar
+                            src={row.thumbnail}
+                            variant="rounded"
+                            sx={{ width: 60, height: 60 }}
+                            alt={row.name}
+                          />
+                        </TableCell>
 
-                            <TableCell>
-                              <Typography>
-                                {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
-                              </Typography>
-                            </TableCell>
-                          </>
-                        ) : (
-                          // Products List View (original code)
-                          <TableCell colSpan={headCells.length + 2}>
-                            <Typography>No product view implemented</Typography>
-                          </TableCell>
-                        )}
+                        {/* Group Name */}
+                        <TableCell onClick={() => handleViewProductGroup(row._id)}>
+                          <Typography
+                            fontWeight="600"
+                            variant="body1"
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': {
+                                color: 'primary.main'
+                              }
+                            }}
+                          >
+                            {row.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+                        {/* Slug */}
+                        <TableCell>
+                          <Typography variant="body2" color="textSecondary">
+                            {row.slug || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Products Count */}
+                        <TableCell align="center">
+                          <Typography fontWeight="600">
+                            {productsCount}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Total Price */}
+                        <TableCell align="center">
+                          <Typography fontWeight="600" color="primary">
+                            ${row.price ? parseFloat(row.price).toFixed(2) : '0.00'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Last Updated Date */}
+                        <TableCell>
+                          <Typography variant="body2">
+                            {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
+                          </Typography>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
                 {emptyRows > 0 && (
                   <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
                     <TableCell colSpan={headCells.length + 2} />
+                  </TableRow>
+                )}
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={headCells.length + 2} align="center" sx={{ py: 3 }}>
+                      <Typography variant="h6" color="textSecondary">
+                        {search ? 'No product groups found matching your search' : 'No product groups found'}
+                      </Typography>
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -563,13 +584,13 @@ const CustomersItemsBasedDiscounts = () => {
       <DeleteConfirmationDialog
         open={deleteDialog.open}
         onClose={handleDeleteCancel}
-        onConfirm={handleDeleteItemDiscounts}
+        onConfirm={handleDeleteProductGroup}
         itemName={deleteDialog.itemName}
         isDeleting={deleteDialog.isDeleting}
-        itemType={"Customers Items Discount"}
+        itemType={"Product Group"}
       />
     </Box>
   );
 };
 
-export default CustomersItemsBasedDiscounts;
+export default ListProductGroup;

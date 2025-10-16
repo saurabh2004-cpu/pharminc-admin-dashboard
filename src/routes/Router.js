@@ -6,11 +6,13 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
+const SalesRepFullLayout = Loadable(lazy(() => import('../layouts/full/SalesRepFullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
 
 /* ****Pages***** */
 // const ModernDash = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const EcommerceDash = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
+const SalesRepDashboard = Loadable(lazy(() => import('../views/dashboard/SalesRep')));
 
 
 
@@ -75,15 +77,40 @@ const SalesOrderProductsList = Loadable(lazy(() => import('../views/admin/salesO
 const Reset = Loadable(lazy(() => import('../views/admin/ResetPassword/Reset')));
 
 const CustomersList = Loadable(lazy(() => import('../views/admin/AbandonedCart/CustomersList')));
+const CustomersCartItems = Loadable(lazy(() => import('../views/admin/AbandonedCart/CustomersCartItems')));
 
 const CreateCustomerSpecificAmounts = Loadable(lazy(() => import('../views/admin/customerSpecificAmounts/CreateCustomerSpecificAmounts')));
 const ListCustomerSpecificAmounts = Loadable(lazy(() => import('../views/admin/customerSpecificAmounts/ListCustomerSpecificAmounts')));
 const CustomerList = Loadable(lazy(() => import('../views/admin/customerSpecificAmounts/CustomerList')));
 const EditCustomerSpecificDiscounts = Loadable(lazy(() => import('../views/admin/customerSpecificAmounts/EditCustomerSpecificDiscounts')));
+const BrandPagesListDetails = Loadable(lazy(() => import('../views/admin/brand/BrandPagesListDetails')));
+const CreateBrandPage = Loadable(lazy(() => import('../views/admin/brand/CreateBrandPage')));
+const EditBrandPage = Loadable(lazy(() => import('../views/admin/brand/EditBrandPage')));
+const CreateBulkDiscounts = Loadable(lazy(() => import('../views/admin/bulkDiscounts/CreateBulkDiscounts')));
+const BulkDiscountsList = Loadable(lazy(() => import('../views/admin/bulkDiscounts/BulkDiscountsList')));
+const EditBulkDiscounts = Loadable(lazy(() => import('../views/admin/bulkDiscounts/EditBulkDiscounts')));
+const BulkDiscountsCustomersList = Loadable(lazy(() => import('../views/admin/bulkDiscounts/BulkDiscountsCustomersList')));
+const CreateSalesRep = Loadable(lazy(() => import('../views/admin/salesRep/CreateSalesRep')));
+const ListSalesRep = Loadable(lazy(() => import('../views/admin/salesRep/ListSalesRep')));
+const EditSalesRep = Loadable(lazy(() => import('../views/admin/salesRep/EditSalesRep')));
+const SalesRepCustomersList = Loadable(lazy(() => import('../views/admin/salesRep/SalesRepCustomersList')));
+
+const SalesRepLogin2 = Loadable(lazy(() => import('../views/authentication/auth2/SalesRepLogin2')));
+const SalesRepCustomers = Loadable(lazy(() => import('../views/salesRep/customers/CustomersList')));
+
+const CreateProductGroup = Loadable(lazy(() => import('../views/admin/productGroup/CreateProductGroup')));
+const ListProductGroup = Loadable(lazy(() => import('../views/admin/productGroup/ListProductGroup')));
+const ListGroupsProducts = Loadable(lazy(() => import('../views/admin/productGroup/ListGroupsProducts')));
+const EditProductGroups = Loadable(lazy(() => import('../views/admin/productGroup/EditProductGroups')));
+
+const CreateMetaData = Loadable(lazy(() => import('../views/admin/metaData/createMetaData')));
+const ListMetaData = Loadable(lazy(() => import('../views/admin/metaData/ListMetaData')));
+const EditMetaData = Loadable(lazy(() => import('../views/admin/metaData/EditMetaData')));
 
 
 
 const Router = [
+
   {
     path: '/',
     element: <FullLayout />,
@@ -91,7 +118,7 @@ const Router = [
       { path: '/', element: <Navigate to="/dashboards/ecommerce" /> },
       // { path: '/dashboards/modern', exact: true, element: <ModernDash /> },
       { path: '/dashboards/ecommerce', exact: true, element: <EcommerceDash /> },
-     
+
 
       { path: '*', element: <Navigate to="/auth/404" /> },
 
@@ -103,6 +130,9 @@ const Router = [
       { path: '/dashboard/Brand/create', element: <CreateBrand /> },
       { path: '/dashboard/brands/list', element: <BrandsList /> },
       { path: '/dashboard/brand/edit/:id', element: <EditBrand /> },
+      { path: '/dashboard/brand-page/create', element: <CreateBrandPage /> },
+      { path: '/dashboard/brand-pages/List', element: <BrandPagesListDetails /> },
+      { path: '/dashboard/brand-page/edit/:id', element: <EditBrandPage /> },
 
       { path: '/dashboard/category/create', element: <CreateCategory /> },
       { path: '/dashboard/category/list', element: <CategoriesList /> },
@@ -173,14 +203,55 @@ const Router = [
 
 
       { path: '/dashboard/abandoned-carts/customers', element: <CustomersList /> },
-      
+      { path: '/dashboard/abandoned-cart-items/list/:customerId', element: <CustomersCartItems /> },
+
+
       { path: '/dashboard/customer-specific-amounts/create', element: <CreateCustomerSpecificAmounts /> },
       { path: '/dashboard/customer-specific-amounts/list', element: <ListCustomerSpecificAmounts /> },
       { path: '/dashboard/customer-specific-amounts/customers-list/:id', element: <CustomerList /> },
       { path: '/dashboard/customer-specific-amounts/edit/:id', element: <EditCustomerSpecificDiscounts /> },
+
+      { path: '/dashboard/bulk-discounts/create', element: <CreateBulkDiscounts /> },
+      { path: '/dashboard/bulk-discounts/list', element: <BulkDiscountsList /> },
+      { path: '/dashboard/bulk-discounts/edit/:id', element: <EditBulkDiscounts /> },
+      { path: '/dashboard/bulk-discounts/customers/:id', element: <BulkDiscountsCustomersList /> },
+
+      { path: '/dashboard/SalesRep/create', element: <CreateSalesRep /> },
+      { path: '/dashboard/SalesRep/list', element: <ListSalesRep /> },
+      { path: '/dashboard/SalesRep/customers/:id', element: <SalesRepCustomersList /> },
+      { path: '/dashboard/SalesRep/edit/:id', element: <EditSalesRep /> },
       
+      { path: '/dashboard/productGroup/create', element: <CreateProductGroup /> },
+      { path: '/dashboard/productGroup/list', element: <ListProductGroup /> },
+      { path: '/dashboard/productGroup/products/:id', element: <ListGroupsProducts /> },
+      { path: '/dashboard/productGroup/edit/:id', element: <EditProductGroups /> },
+      
+      { path: '/dashboard/meta-data/create', element: <CreateMetaData /> },
+      { path: '/dashboard/meta-data/List', element: <ListMetaData /> },
+      { path: '/dashboard/meta-data/Edit/:id', element: <EditMetaData /> },
     ],
   },
+
+  //salre rep routes
+  {
+    path: '/',
+    element: <SalesRepFullLayout />,
+    children: [
+      { path: '/salesrep/dashboard', element: <Navigate to="/salesrep/dashboard/ecommerce" /> },
+
+      { path: '/salesrep/dashboards/ecommerce', exact: true, element: <SalesRepDashboard /> },
+
+      { path: '*', element: <Navigate to="/auth/404" /> },
+
+      { path: '/salesrep/dashboards/customers/list', element: <SalesRepCustomers /> },
+
+      { path: '/salesrep/dashboards/customer/salesOrders/:customerName', element: <CustomersSalesOrders /> },
+
+
+    ],
+  },
+
+
   {
     path: '/',
     element: <BlankLayout />,
@@ -189,6 +260,8 @@ const Router = [
       { path: '/auth/login', element: <Login2 /> },
       { path: '/auth/register', element: <Register2 /> },
       { path: '/reset-password', element: <Reset /> },
+
+      { path: '/salas-rep/login', element: <SalesRepLogin2 /> },
 
 
 

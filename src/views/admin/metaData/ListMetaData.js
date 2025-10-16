@@ -16,9 +16,7 @@ import {
   Toolbar,
   IconButton,
   Tooltip,
-  FormControlLabel,
   Typography,
-  Avatar,
   TextField,
   InputAdornment,
   Paper,
@@ -26,11 +24,10 @@ import {
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
-import { useNavigate, useParams } from 'react-router';
-import axios from 'axios';
+import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
@@ -40,7 +37,6 @@ function descendingComparator(a, b, orderBy) {
   if (b[orderBy] > a[orderBy]) {
     return 1;
   }
-
   return 0;
 }
 
@@ -87,19 +83,18 @@ function EnhancedTableHead(props) {
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
             inputProps={{
-              'aria-label': 'select all desserts',
+              'aria-label': 'select all items',
             }}
           />
         </TableCell>}
 
-        {/* Actions column */}
-        {/* <TableCell sx={{ ...headCellStyle, ...stickyCellStyle }}>
+        <TableCell sx={{ ...headCellStyle, ...stickyCellStyle }}>
           Actions
-        </TableCell> */}
+        </TableCell>
 
-        {headCells.map((headCell, index) => (
+        {headCells.map((headCell) => (
           <TableCell
-            key={headCell.key || headCell.id}
+            key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
@@ -119,15 +114,13 @@ function EnhancedTableHead(props) {
             </TableSortLabel>
           </TableCell>
         ))}
-
-
       </TableRow>
     </TableHead>
   );
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
+  const { numSelected, handleSearch, search, placeholder } = props;
 
   return (
     <Toolbar
@@ -164,110 +157,85 @@ const EnhancedTableToolbar = (props) => {
         </Box>
       )}
 
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
+      {numSelected <= 0 && (
+        <Tooltip title="Filter list">
           <IconButton>
-            <IconTrash width="18" />
+            <IconFilter size="1.2rem" />
           </IconButton>
         </Tooltip>
-      ) : (
-        <></>
       )}
     </Toolbar>
   );
 };
 
-const CustomersList = () => {
-  const {
-    filteredAndSortedProducts,
-  } = useContext(ProductContext);
-
+const ListMetaData = () => {
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('customerId');
+  const [orderBy, setOrderBy] = useState('page');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
-  const [tableData, setTableData] = React.useState([]);
+  const [tableData, setTableData] = useState([]);
   const [error, setError] = useState('');
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { id } = useParams();
 
-  // Define headCells for the table
   const headCells = [
     {
-      id: 'customerId',
-      label: 'Customer ID',
+      id: 'page',
+      label: 'Page',
       numeric: false,
-      disablePadding: false,
+      disablePadding: false
     },
     {
-      id: 'customerName',
-      label: 'Customer Name',
+      id: 'title',
+      label: 'Title',
       numeric: false,
-      disablePadding: false,
+      disablePadding: false
     },
     {
-      id: 'customerPhone',
-      label: 'Customer Phone',
+      id: 'description',
+      label: 'Description',
       numeric: false,
-      disablePadding: false,
+      disablePadding: false
     },
     {
-      id: 'customerEmail',
-      label: 'Customer Email',
+      id: 'keywords',
+      label: 'Keywords',
       numeric: false,
-      disablePadding: false,
-    },
-    {
-      id: 'totalCartItems',
-      label: 'Total Cart Items',
-      numeric: false,
-      disablePadding: false,
+      disablePadding: false
     },
     {
       id: 'updatedAt',
-      label: 'Last Updated Date',
+      label: 'Last Updated',
       numeric: false,
-      disablePadding: false,
-    },
+      disablePadding: false
+    }
   ];
 
-  const fetchCustomers = async () => {
+  const fetchMetaData = async () => {
+    setLoading(true);
     try {
-      const response = await axiosInstance.get(`/cart/get-all-users-with-cart-items`);
-      console.log("get-all-users-with-cart-items ", response);
+      const response = await axiosInstance.get('/meta-data/get-all-meta-data');
+      console.log("response meta data", response);
 
       if (response.data.statusCode === 200) {
-        // Transform the nested data structure to flat structure for table
-        const transformedData = response.data.data.users.map(userObj => ({
-          _id: userObj.user._id,
-          customerId: userObj.user.customerId,
-          customerName: userObj.user.customerName,
-          customerPhone: userObj.user.CustomerPhoneNo,
-          customerEmail: userObj.user.customerEmail,
-          totalCartItems: userObj.totalCartItems,
-          cartId: userObj.cartId,
-          cartItems: userObj.cartItems,
-          updatedAt: userObj.user.updatedAt,
-          createdAt: userObj.user.createdAt,
-        }));
-
-        setTableData(transformedData);
-        setRows(transformedData);
+        setTableData(response.data.data);
+        setRows(response.data.data);
       }
-
     } catch (error) {
-      console.error('Error fetching customers list:', error);
-      setError(error.message);
+      console.error('Error fetching meta data list:', error);
+      setError(error.message || 'Failed to fetch meta data');
+    } finally {
+      setLoading(false);
     }
   };
 
-  React.useEffect(() => {
-    fetchCustomers();
+  useEffect(() => {
+    fetchMetaData();
   }, []);
 
   const handleSearch = (event) => {
@@ -276,10 +244,10 @@ const CustomersList = () => {
 
     const filteredRows = tableData.filter((row) => {
       return (
-        row?.customerId?.toLowerCase().includes(searchValue) ||
-        row?.customerName?.toLowerCase().includes(searchValue) ||
-        row?.customerPhone?.toLowerCase().includes(searchValue) ||
-        row?.customerEmail?.toLowerCase().includes(searchValue)
+        row?.page?.toLowerCase().includes(searchValue) ||
+        row?.title?.toLowerCase().includes(searchValue) ||
+        row?.description?.toLowerCase().includes(searchValue) ||
+        row?.keywords?.toLowerCase().includes(searchValue)
       );
     });
     setRows(filteredRows);
@@ -293,19 +261,19 @@ const CustomersList = () => {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.customerId);
+      const newSelecteds = rows.map((n) => n._id);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
     let newSelected = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -329,24 +297,28 @@ const CustomersList = () => {
     setPage(0);
   };
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
-
-  const isSelected = (name) => selected.indexOf(name) !== -1;
+  const isSelected = (id) => selected.indexOf(id) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  // const [deleteDialog, setDeleteDialog] = useState({
-  //   open: false,
-  //   itemId: null,
-  //   itemName: '',
-  //   isDeleting: false
-  // });
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    itemId: null,
+    itemName: '',
+    isDeleting: false
+  });
 
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      open: false,
+      itemId: null,
+      itemName: '',
+      isDeleting: false
+    });
+  };
 
   const handleDeleteClick = (event, id, name) => {
     event.stopPropagation();
@@ -358,11 +330,31 @@ const CustomersList = () => {
     });
   };
 
-  const handleCustomerIdClcik = async (customerId) => {
-    navigate(`/dashboard/abandoned-cart-items/list/${customerId}`);
-  }
+  const handleDeleteMetaData = async () => {
+    try {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
 
+      const res = await axiosInstance.delete(
+        `/meta-data/delete-meta-data/${deleteDialog.itemId}`
+      );
 
+      console.log("deleted", res.data);
+
+      if (res.data.statusCode === 200) {
+        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+        handleDeleteCancel();
+      }
+    } catch (error) {
+      console.error('Error deleting meta data:', error);
+      setError(error.message || 'Failed to delete meta data');
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
+  const handleEditMetaData = (id) => {
+    navigate(`/dashboard/meta-data/Edit/${id}`);
+  };
 
   const stickyCellStyle = {
     position: "sticky",
@@ -371,6 +363,23 @@ const CustomersList = () => {
     backgroundColor: '#f0f8ff',
   };
 
+  const formatDate = (dateString) => {
+    try {
+      if (!dateString) return 'N/A';
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography>Loading meta data...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Box>
@@ -378,9 +387,7 @@ const CustomersList = () => {
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder="Search Customers"
-          rows={rows}
-          headCells={headCells}
+          placeholder="Search meta data..."
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -409,84 +416,87 @@ const CustomersList = () => {
                 headCells={headCells}
               />
               <TableBody>
-                {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = isSelected(row.customerId);
-                    const labelId = `enhanced-table-checkbox-${index}`;
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={headCells.length + 1} align="center" sx={{ py: 3 }}>
+                      <Typography color="textSecondary">No meta data found</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  stableSort(rows, getComparator(order, orderBy))
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row, index) => {
+                      const isItemSelected = isSelected(row._id);
+                      const labelId = `enhanced-table-checkbox-${index}`;
 
-                    return (
-                      <TableRow
-                        hover
-                        role="checkbox"
-                        aria-checked={isItemSelected}
-                        tabIndex={-1}
-                        key={row._id}
-                        selected={isItemSelected}
-                      >
-                        {/* Actions Column */}
-                        {/* <TableCell sx={stickyCellStyle}>
-                          <Box display="flex" gap={1}>
-                            <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => handleEditCustomer(row?._id)}>
-                                <IconEdit size="1.1rem" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete">
-                              <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row?._id, row?.customerName)}>
-                                <IconTrash size="1.1rem" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell> */}
+                      return (
+                        <TableRow
+                          hover
+                          role="checkbox"
+                          aria-checked={isItemSelected}
+                          tabIndex={-1}
+                          key={row._id}
+                          selected={isItemSelected}
+                        >
+                          <TableCell sx={stickyCellStyle}>
+                            <Box display="flex" gap={1}>
+                              <Tooltip title="Edit">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => handleEditMetaData(row.page)}
+                                >
+                                  <IconEdit size="1.1rem" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={(e) => handleDeleteClick(e, row._id, row.page)}
+                                >
+                                  <IconTrash size="1.1rem" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
 
-                        {/* Customer ID */}
-                        <TableCell onClick={() => handleCustomerIdClcik(row._id)} sx={{ cursor: 'pointer', ":hover": { color: "primary.main" } }}>
-                          <Typography fontWeight="600">
-                            {row?.customerId || 'N/A'}
-                          </Typography>
-                        </TableCell>
+                          <TableCell>
+                            <Typography fontWeight="600">
+                              {row.page || 'N/A'}
+                            </Typography>
+                          </TableCell>
 
-                        {/* Customer Name */}
-                        <TableCell sx={{ cursor: 'pointer' }}>
-                          <Typography fontWeight="600">
-                            {row?.customerName || 'N/A'}
-                          </Typography>
-                        </TableCell>
+                          <TableCell>
+                            <Typography>
+                              {row.title || 'N/A'}
+                            </Typography>
+                          </TableCell>
 
-                        {/* Customer Phone */}
-                        <TableCell sx={{ cursor: 'pointer' }}>
-                          <Typography>
-                            {row?.customerPhone || 'N/A'}
-                          </Typography>
-                        </TableCell>
+                          <TableCell>
+                            <Typography noWrap title={row.description}>
+                              {row.description || 'N/A'}
+                            </Typography>
+                          </TableCell>
 
-                        {/* Customer Email */}
-                        <TableCell sx={{ cursor: 'pointer' }}>
-                          <Typography>
-                            {row?.customerEmail || 'N/A'}
-                          </Typography>
-                        </TableCell>
+                          <TableCell>
+                            <Typography noWrap title={row.keywords}>
+                              {row.keywords || 'N/A'}
+                            </Typography>
+                          </TableCell>
 
-                        {/* Total Cart Items */}
-                        <TableCell>
-                          <Typography fontWeight="600" onClick={() => handleCustomerIdClcik(row._id)} sx={{ marginLeft: "50px" }} color="primary">
-                            {row?.totalCartItems || 0}
-                          </Typography>
-                        </TableCell>
-
-                        {/* Last Updated Date */}
-                        <TableCell>
-                          <Typography>
-                            {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          <TableCell>
+                            <Typography>
+                              {formatDate(row.updatedAt)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                )}
                 {emptyRows > 0 && (
                   <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                    <TableCell colSpan={headCells.length + 3} />
+                    <TableCell colSpan={headCells.length + 1} />
                   </TableRow>
                 )}
               </TableBody>
@@ -504,23 +514,22 @@ const CustomersList = () => {
         </Paper>
       </Box>
 
-      {/* Show error if any */}
       {error && (
         <Box sx={{ p: 2 }}>
           <Typography color="error">Error: {error}</Typography>
         </Box>
       )}
 
-      {/* <DeleteConfirmationDialog
+      <DeleteConfirmationDialog
         open={deleteDialog.open}
         onClose={handleDeleteCancel}
-        onConfirm={handleDeleteCustomer}
+        onConfirm={handleDeleteMetaData}
         itemName={deleteDialog.itemName}
         isDeleting={deleteDialog.isDeleting}
-        itemType={"Customer"}
-      /> */}
+        itemType="Meta Data"
+      />
     </Box>
   );
 };
 
-export default CustomersList;
+export default ListMetaData;

@@ -2,7 +2,7 @@
 // @ts-ignore
 import React, { useContext, useState, useEffect } from 'react';
 import { alpha, useTheme } from '@mui/material/styles';
-import { format, formatDate } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Box,
   Table,
@@ -16,9 +16,7 @@ import {
   Toolbar,
   IconButton,
   Tooltip,
-  FormControlLabel,
   Typography,
-  Avatar,
   TextField,
   InputAdornment,
   Paper,
@@ -26,8 +24,7 @@ import {
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-// import CustomSwitch from '../../../forms/theme-elements/CustomSwitch';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconFilter, IconSearch, IconTrash, IconEdit, IconCalendar, IconX } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
@@ -40,14 +37,10 @@ function descendingComparator(a, b, orderBy) {
   if (b[orderBy] > a[orderBy]) {
     return 1;
   }
-
   return 0;
 }
 
-function getComparator(
-  order,
-  orderBy,
-) {
+function getComparator(order, orderBy) {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -71,16 +64,15 @@ function EnhancedTableHead(props) {
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
   };
 
   const headCellStyle = {
-    backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+    backgroundColor: '#f0f8ff',
     fontWeight: 600,
-    zIndex: 4, // slightly lower than sticky so sticky overlaps
+    zIndex: 4,
   };
-
 
   return (
     <TableHead>
@@ -102,8 +94,7 @@ function EnhancedTableHead(props) {
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
-              // ...headCellStyle,
-              ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
+              ...(index === 0 ? stickyCellStyle : {}),
             }}
           >
             <TableSortLabel
@@ -126,26 +117,21 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
-
-  const handleExportCSV = async () => {
-    try {
-      const response = await axiosInstance.get(
-        '/sales-order/export-sales-orders',
-        { responseType: 'blob' }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "sales_orders_export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error exporting CSV:", error);
-    }
-  };
+  const {
+    numSelected,
+    handleSearch,
+    search,
+    placeholder,
+    onExportCSV,
+    onOpenDateFilter,
+    dateFilterActive,
+    showDateFilter,
+    dateFilter,
+    onDateFilterChange,
+    onApplyDateFilter,
+    onClearDateFilter,
+    loading
+  } = props;
 
   return (
     <Toolbar
@@ -156,6 +142,9 @@ const EnhancedTableToolbar = (props) => {
           bgcolor: (theme) =>
             alpha(theme.palette.primary.main, theme.palette.action.activatedOpacity),
         }),
+        flexWrap: 'wrap',
+        gap: 2,
+        py: 2,
       }}
     >
       {numSelected > 0 ? (
@@ -163,49 +152,113 @@ const EnhancedTableToolbar = (props) => {
           {numSelected} selected
         </Typography>
       ) : (
-        <Box sx={{ flex: '1 1 100%' }}>
-          <TextField
-            placeholder={placeholder || "Search"}
-            size="small"
-            onChange={handleSearch}
-            value={search}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size="1.1rem" />
-                  </InputAdornment>
-                ),
-              }
-            }}
-          />
-        </Box>
-      )}
-
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton>
-            <IconTrash width="18" />
-          </IconButton>
-        </Tooltip>
-      ) : (
         <>
-          <Tooltip title="Filter list">
-            <IconButton>
-              <IconFilter size="1.2rem" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Export CSV">
-            {/* <IconButton onClick={handleExportCSV}> */}
-            <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
-            {/* </IconButton> */}
-          </Tooltip>
+          <Box sx={{ flex: '1 1 auto', minWidth: 200, maxWidth: 300 }}>
+            <TextField
+              placeholder={placeholder || "Search"}
+              size="small"
+              onChange={handleSearch}
+              value={search}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size="1.1rem" />
+                    </InputAdornment>
+                  ),
+                }
+              }}
+              sx={{ width: '100%' }}
+            />
+          </Box>
+
+          {/* Date Filter Inputs - Show when filter is toggled */}
+          {showDateFilter && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <TextField
+                label="From Date"
+                type="date"
+                size="small"
+                value={dateFilter.from}
+                onChange={(e) => onDateFilterChange('from', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ minWidth: 140 }}
+              />
+              <TextField
+                label="To Date"
+                type="date"
+                size="small"
+                value={dateFilter.to}
+                onChange={(e) => onDateFilterChange('to', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ minWidth: 140 }}
+              />
+              <Button
+                size="small"
+                variant="contained"
+                onClick={onApplyDateFilter}
+                disabled={loading || !dateFilter.from || !dateFilter.to}
+                sx={{ backgroundColor: '#2E2F7F', minWidth: 80 }}
+              >
+                {loading ? 'Applying...' : 'Apply'}
+              </Button>
+              <IconButton
+                size="small"
+                onClick={onClearDateFilter}
+                disabled={loading}
+                color="error"
+              >
+                <IconX size="1.1rem" />
+              </IconButton>
+            </Box>
+          )}
+
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+            {/* Show Calendar icon only when date inputs are NOT visible */}
+            {!showDateFilter && (
+              <Tooltip title={dateFilterActive ? "Date Filter Active - Click to Modify" : "Filter by Date"}>
+                <IconButton
+                  onClick={onOpenDateFilter}
+                  color={dateFilterActive ? "primary" : "default"}
+                >
+                  <IconCalendar size="1.2rem" />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {/* Show Export All only when no date filter is active and not showing date inputs */}
+            {!dateFilterActive && !showDateFilter && (
+              <Tooltip title="Export All CSV">
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={onExportCSV}
+                >
+                  Export All
+                </Button>
+              </Tooltip>
+            )}
+
+            {/* Show Export Filtered Data when date filter is active and inputs are hidden */}
+            {dateFilterActive && !showDateFilter && (
+              <Tooltip title="Export Filtered Data">
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={onExportCSV}
+                  sx={{ backgroundColor: '#2E2F7F' }}
+                >
+                  Export Filtered Data
+                </Button>
+              </Tooltip>
+            )}
+          </Box>
         </>
       )}
     </Toolbar>
   );
 };
-
 
 const ListTable = ({
   showCheckBox,
@@ -214,11 +267,7 @@ const ListTable = ({
   isBrandsList = false,
   setTableData
 }) => {
-
-  const {
-    filteredAndSortedProducts,
-  } = useContext(ProductContext);
-
+  const { filteredAndSortedProducts } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
@@ -232,13 +281,28 @@ const ListTable = ({
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  // Date filter states - UPDATED
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [dateFilter, setDateFilter] = useState({
+    from: '',
+    to: ''
+  });
+  const [dateFilterActive, setDateFilterActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Delete dialog state
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    itemId: null,
+    itemName: '',
+    isDeleting: false
+  });
 
   useEffect(() => {
     let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
 
     if (search) {
       const searchValue = search.toLowerCase();
-
       const filteredRows = baseData.filter((row) => {
         const values = [
           row?.documentNumber,
@@ -249,18 +313,15 @@ const ListTable = ({
           row?.trackingNumber,
           row?.customerPO,
         ];
-
         return values.some((val) =>
           (val || "").toString().toLowerCase().includes(searchValue)
         );
       });
-
       setRows(filteredRows);
     } else {
       setRows(baseData);
     }
   }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
-
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
@@ -276,8 +337,7 @@ const ListTable = ({
           row?.status?.toLowerCase().includes(searchValue) ||
           row?.trackingNumber?.toLowerCase().includes(searchValue) ||
           row?.customerPO?.toLowerCase().includes(searchValue)
-
-        )
+        );
       });
       setRows(filteredRows);
     } else {
@@ -285,6 +345,102 @@ const ListTable = ({
         return row.title.toLowerCase().includes(searchValue);
       });
       setRows(filteredRows);
+    }
+  };
+
+  // Updated Date filter functions
+  const handleOpenDateFilter = () => {
+    setShowDateFilter(true);
+  };
+
+  const handleDateFilterChange = (field, value) => {
+    setDateFilter(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleApplyDateFilter = async () => {
+    if (!dateFilter.from || !dateFilter.to) {
+      alert('Please select both start and end dates');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get('/sales-order/get-sales-order-by-date-frame', {
+        params: {
+          startDate: dateFilter.from,
+          endDate: dateFilter.to
+        }
+      });
+
+      console.log("get sales orders by date response", response)
+
+      if (response.data.statusCode === 200) {
+        setTableData(response.data.data.salesOrders);
+        setRows(response.data.data.salesOrders);
+        setDateFilterActive(true);
+        setShowDateFilter(false); // Hide the filter inputs after applying
+      }
+    } catch (error) {
+      console.error('Error filtering by date:', error);
+      alert('Error applying date filter');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearDateFilter = async () => {
+    try {
+      setLoading(true);
+      // Reset to show all data
+      const response = await axiosInstance.get('/sales-order/get-all-sales-orders');
+      if (response.data.statusCode === 200) {
+        setTableData(response.data.data.salesOrders);
+        setRows(response.data.data.salesOrders);
+        setDateFilterActive(false);
+        setDateFilter({ from: '', to: '' });
+        setShowDateFilter(false); // Hide the filter inputs
+      }
+    } catch (error) {
+      console.error('Error clearing date filter:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportAllCSV = async () => {
+    try {
+      let endpoint = '/sales-order/export-sales-orders';
+      let params = {};
+      let filename = "sales_orders_export.csv";
+
+      // If date filter is active, export filtered data
+      if (dateFilterActive) {
+        endpoint = '/sales-order/export-sales-orders-by-date-frame';
+        params = {
+          from: dateFilter.from,
+          to: dateFilter.to
+        };
+        filename = `sales-orders-${dateFilter.from}-to-${dateFilter.to}.csv`;
+      }
+
+      const response = await axiosInstance.get(endpoint, {
+        params,
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      alert('Error exporting data');
     }
   };
 
@@ -332,22 +488,12 @@ const ListTable = ({
     setPage(0);
   };
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
-
   const isSelected = (name) => selected.indexOf(name) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   const theme = useTheme();
   const borderColor = theme.palette.divider;
-  const [deleteDialog, setDeleteDialog] = useState({
-    open: false,
-    itemId: null,
-    itemName: '',
-    isDeleting: false
-  });
 
   const handleDeleteCancel = () => {
     setDeleteDialog({
@@ -359,7 +505,7 @@ const ListTable = ({
   };
 
   const handleDeleteClick = (event, id, name) => {
-    event.stopPropagation(); // Prevent row selection
+    event.stopPropagation();
     setDeleteDialog({
       open: true,
       itemId: id,
@@ -368,11 +514,10 @@ const ListTable = ({
     });
   };
 
-  //delete sales order
   const handleDeleteSalesOrder = async () => {
     try {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
       const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${deleteDialog.itemId}`);
-
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
@@ -381,12 +526,10 @@ const ListTable = ({
         handleDeleteCancel();
       }
     } catch (error) {
-      console.error('Error deleting category:', error);
+      console.error('Error deleting sales order:', error);
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
     }
   };
-
-
-  //edit sales order
 
   const handleEditSalesOrder = (id) => {
     navigate(`/dashboard/sales-order-product-list/${id}`);
@@ -396,6 +539,9 @@ const ListTable = ({
     navigate(`/dashboard/sales-order-product-list/${documentNo}`);
   };
 
+  const hadleDocumentClick = (documentNo, orderId) => {
+    navigate(`/dashboard/sales-order-by-customer/${documentNo}`);
+  }
 
   const columnWidths = {
     serial: { minWidth: '80px' },
@@ -404,8 +550,8 @@ const ListTable = ({
     customer: { minWidth: '300px' },
     salesChannel: { minWidth: '150px' },
     tracking: { minWidth: '200px' },
-    shipping: { minWidth: '400px', },
-    billing: { minWidth: '400px', },
+    shipping: { minWidth: '400px' },
+    billing: { minWidth: '400px' },
     customerPO: { minWidth: '150px' },
     itemSku: { minWidth: '150px' },
     packQuantity: { minWidth: '160px' },
@@ -419,13 +565,9 @@ const ListTable = ({
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
   };
-
-  const hadleDocumentClick = (documentNo, orderId) => {
-    navigate(`/dashboard/sales-order-by-customer/${documentNo}`);
-  }
 
   return (
     <Box>
@@ -435,20 +577,31 @@ const ListTable = ({
           search={search}
           handleSearch={handleSearch}
           placeholder={'Search sales order'}
+          onExportCSV={handleExportAllCSV}
+          onOpenDateFilter={handleOpenDateFilter}
+          dateFilterActive={dateFilterActive}
+          // New props for inline date filter
+          showDateFilter={showDateFilter}
+          dateFilter={dateFilter}
+          onDateFilterChange={handleDateFilterChange}
+          onApplyDateFilter={handleApplyDateFilter}
+          onClearDateFilter={handleClearDateFilter}
+          loading={loading}
         />
+
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer sx={{ width: "100%" }}>
             <Table
               sx={{
                 minWidth: 1800,
-                borderCollapse: "collapse", // ensures borders connect
+                borderCollapse: "collapse",
                 "& td, & th": {
-                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingTop: "4px",
                   paddingBottom: "4px",
-                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                  borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
-                  borderRight: "none", // no border on last column
+                  borderRight: "none",
                 },
               }}
               aria-labelledby="tableTitle"
@@ -474,7 +627,6 @@ const ListTable = ({
                     return (
                       <TableRow
                         hover
-                        // onClick={(event) => handleClick(event, row.name || row.title)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
@@ -490,7 +642,6 @@ const ListTable = ({
                             }}
                           />
                         </TableCell>}
-
 
                         <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
                           <Box display="flex" gap={1}>
@@ -510,7 +661,7 @@ const ListTable = ({
                         <TableCell sx={{ ...columnWidths.document, cursor: "pointer", ":hover": { color: "blue" } }} onClick={() => handleDocumentClick(row.documentNumber)}>
                           <Box display="flex" alignItems="center">
                             <Box sx={{ ml: 2 }}>
-                              <Typography fontWeight="500" variant="subtitle2"  >
+                              <Typography fontWeight="500" variant="subtitle2">
                                 {row?.documentNumber || 'N/A'}
                               </Typography>
                             </Box>
@@ -532,8 +683,6 @@ const ListTable = ({
                             </Box>
                           </Box>
                         </TableCell>
-
-
 
                         <TableCell sx={{ ...columnWidths.customer, cursor: "pointer" }} onClick={() => hadleDocumentClick(row.customerName, row._id)}>
                           <Box display="flex" alignItems="center">
@@ -606,8 +755,6 @@ const ListTable = ({
                             {format(new Date(row.updatedAt), 'E, MMM d yyyy')}
                           </Typography>
                         </TableCell>
-
-
                       </TableRow>
                     );
                   })}

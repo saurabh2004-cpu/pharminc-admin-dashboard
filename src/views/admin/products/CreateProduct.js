@@ -29,7 +29,7 @@ const CreateProduct = () => {
     packBarcodes: '',
     productImg: '',
     taxable: true,
-    bulkDiscount: 0
+
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -728,19 +728,7 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
-            Bulk Discount %
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="stockLevel"
-            fullWidth
-            value={formData.bulkDiscount}
-            onChange={(e) => setFormData({ ...formData, bulkDiscount: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Bulk Discount Percentages"
-          />
-        </Grid>
+       
 
         {/* Pricing Group and Commerce Category One - Two per row */}
         <Grid size={6}>

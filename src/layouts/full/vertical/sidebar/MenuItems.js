@@ -60,6 +60,18 @@ const Menuitems = [
         icon: IconPoint,
         href: '/dashboard/brands/list',
       },
+      {
+        id: uniqueId(),
+        title: 'Create Brand Page ',
+        icon: IconPoint,
+        href: '/dashboard/brand-page/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'List Brand Pages ',
+        icon: IconPoint,
+        href: '/dashboard/brand-pages/List',
+      },
     ]
   },
 
@@ -281,6 +293,27 @@ const Menuitems = [
 
   {
     id: uniqueId(),
+    title: 'Product Groups',
+    icon: IconShoppingBag,
+    href: '/dashboard/productsGroups',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Product Group',
+        icon: IconPoint,
+        href: '/dashboard/productGroup/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Product Groups List',
+        icon: IconPoint,
+        href: '/dashboard/productGroup/list',
+      },
+    ]
+  },
+
+  {
+    id: uniqueId(),
     title: 'Sales order',
     icon: IconFileDescription,
     href: '/dashboard/sales-order',
@@ -339,23 +372,63 @@ const Menuitems = [
       },
     ]
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Customer Specific Amounts ',
+  //   icon: IconNotebook,
+  //   href: '/dashboard/customer-specific-amounts',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: ' Create Customer Specific Amounts',
+  //       icon: IconPoint,
+  //       href: '/dashboard/customer-specific-amounts/create',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: ' Customer Specific Amounts',
+  //       icon: IconPoint,
+  //       href: '/dashboard/customer-specific-amounts/list',
+  //     },
+  //   ]
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Bulk Discounts ',
+  //   icon: IconNotebook,
+  //   href: '/dashboard/bulk-discounts',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: ' Create Bulk Discounts',
+  //       icon: IconPoint,
+  //       href: '/dashboard/bulk-discounts/create',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: ' Bulk Discounts List',
+  //       icon: IconPoint,
+  //       href: '/dashboard/bulk-discounts/list',
+  //     },
+  //   ]
+  // },
   {
     id: uniqueId(),
-    title: 'Customer Specific Amounts ',
+    title: 'Sales Rep ',
     icon: IconNotebook,
-    href: '/dashboard/bulk-discounts',
+    href: '/dashboard/sales-rep',
     children: [
       {
         id: uniqueId(),
-        title: ' Create Customer Specific Amounts',
+        title: ' Create Sales Rep',
         icon: IconPoint,
-        href: '/dashboard/customer-specific-amounts/create',
+        href: '/dashboard/SalesRep/create',
       },
       {
         id: uniqueId(),
-        title: ' Customer Specific Amounts',
+        title: ' Sales Rep List',
         icon: IconPoint,
-        href: '/dashboard/customer-specific-amounts/list',
+        href: '/dashboard/SalesRep/list',
       },
     ]
   },
@@ -373,6 +446,7 @@ const Menuitems = [
       },
     ]
   },
+
   // {
   //   id: uniqueId(),
   //   title: 'Delivery Vendors',
@@ -433,6 +507,26 @@ const Menuitems = [
         title: 'Tax List',
         icon: IconPoint,
         href: '/dashboard/tax/list',
+      },
+    ]
+  },
+  {
+    id: uniqueId(),
+    title: 'Meta Data',
+    icon: IconCalendar,
+    href: '/dashboard/meta-data',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Meta Data',
+        icon: IconPoint,
+        href: '/dashboard/meta-data/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Meta Data List',
+        icon: IconPoint,
+        href: '/dashboard/meta-data/List',
       },
     ]
   },

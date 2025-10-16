@@ -221,10 +221,16 @@ const CustomersSalesOrders = () => {
     const [rows, setRows] = useState(sourceData);
     const [search, setSearch] = useState('');
     const navigate = useNavigate();
-    const { id } = useParams();
+    const { customerName } = useParams();
 
     // Define headCells for the table
     const headCells = [
+        {
+            id: 'Actions',
+            numeric: false,
+            disablePadding: false,
+            label: 'Actions',
+        },
         {
             id: 'documentNumber',
             numeric: false,
@@ -237,6 +243,7 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Date',
         },
+
         {
             id: 'customerName',
             numeric: false,
@@ -273,37 +280,14 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Customer PO',
         },
-        {
-            id: 'itemSku',
-            numeric: false,
-            disablePadding: false,
-            label: 'Item SKU',
-        },
-        {
-            id: 'packQuantity',
-            numeric: true,
-            disablePadding: false,
-            label: 'Pack Quantity',
-        },
-        {
-            id: 'unitsQuantity',
-            numeric: true,
-            disablePadding: false,
-            label: 'Units Quantity',
-        },
-        {
-            id: 'amount',
-            numeric: true,
-            disablePadding: false,
-            label: 'Amount',
-        },
+
 
 
         {
-            id: 'createdAt',
+            id: 'LastUpdatedDate',
             numeric: false,
             disablePadding: false,
-            label: 'Created Date',
+            label: 'Last Updated Date',
         },
 
     ];
@@ -311,8 +295,8 @@ const CustomersSalesOrders = () => {
 
     const fetchCustomerSalesOrder = async () => {
         try {
-            const response = await axiosInstance.get(`/sales-order/get-sales-order-by-customer/${id}`);
-            console.log("response item discounts ", response);
+            const response = await axiosInstance.get(`/sales-order/get-sales-order-by-customer/${customerName}`);
+            console.log("response sales order s by customer name  ", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);
@@ -327,7 +311,7 @@ const CustomersSalesOrders = () => {
 
     React.useEffect(() => {
         fetchCustomerSalesOrder();
-    }, [id]);
+    }, [customerName]);
 
     useEffect(() => {
         if (isBrandsList) {
@@ -435,10 +419,9 @@ const CustomersSalesOrders = () => {
         navigate(`/dashboard/sales-order/edit/${id}`);
     };
 
-    const handleDocumentClick = (documentNo,customerName) => {
-        navigate(`/dashboard/sales-order-product-list/${documentNo}/${customerName}`);
+    const handleDocumentClick = (documentNo) => {
+        navigate(`/dashboard/sales-order-product-list/${documentNo}`);
     };
-
 
 
     const stickyCellStyle = {
@@ -538,7 +521,7 @@ const CustomersSalesOrders = () => {
                                                     </Box>
                                                 </TableCell>
 
-                                                <TableCell sx={{ ...columnWidths.document, cursor: "pointer" }} onClick={() => handleDocumentClick(row.documentNumber, row.customerName)}>
+                                                <TableCell sx={{ ...columnWidths.document, cursor: "pointer" }} onClick={() => handleDocumentClick(row.documentNumber)}>
                                                     <Box display="flex" alignItems="center">
                                                         <Box sx={{ ml: 2 }}>
                                                             <Typography fontWeight="500" variant="subtitle2">
@@ -676,7 +659,7 @@ const CustomersSalesOrders = () => {
                         </Table>
                     </TableContainer>
                     <TablePagination
-                        rowsPerPageOptions={[5, 10, 30,50,100,200]}
+                        rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
                         component="div"
                         count={rows.length}
                         rowsPerPage={rowsPerPage}

@@ -351,29 +351,51 @@ const ListTable = ({
     try {
       const uniqueCustomerIds = [...new Set(rows.map((r) => r.customerId))].filter(Boolean);
 
+      if (uniqueCustomerIds.length === 0) {
+        console.log("No customer IDs found");
+        return;
+      }
+
+      console.log("Fetching details for customer IDs:", uniqueCustomerIds);
+
       const responses = await Promise.all(
         uniqueCustomerIds.map((id) =>
-          axiosInstance.get(`/admin/get-user-by-customerId/${id}`).catch((err) => {
-            console.error("API error for id:", id, err);
-            return null;
-          })
+          axiosInstance.get(`/admin/get-user-by-customerId/${id}`)
+            .then(response => ({ success: true, data: response.data, id }))
+            .catch((err) => {
+              console.error(`API error for id ${id}:`, err.response?.data || err.message);
+              return { success: false, id, error: err };
+            })
         )
       );
 
+      console.log("All customer API responses:", responses);
+
       const map = {};
-      responses.forEach((res, idx) => {
-        if (res?.data?.statusCode === 200) {
-          console.log("API Response for", uniqueCustomerIds[idx], res.data); // 👈 check here
-          const id = uniqueCustomerIds[idx];
-          // adjust this if API structure is different
-          map[id] = res.data.data?.name || "N/A";
+      responses.forEach((response) => {
+        if (response.success && response.data?.statusCode === 200) {
+          const customerData = response.data.data;
+
+          // Try multiple possible fields for customer name
+          const customerName =
+            customerData?.customerName ||
+            customerData?.contactName ||
+            customerData?.storeName ||
+            customerData?.name ||
+            "N/A";
+
+          map[response.id] = customerName;
+          console.log(`✅ Mapped ${response.id} to: ${customerName}`);
+        } else {
+          map[response.id] = "Not Found";
+          console.log(`❌ Failed to fetch details for: ${response.id}`);
         }
       });
 
       console.log("Final customer map:", map);
       setCustomerMap(map);
     } catch (error) {
-      console.error("Error fetching customer details:", error);
+      console.error("Error in fetchCustomerDetails:", error);
     }
   };
 

@@ -420,7 +420,7 @@ const ProductTableList = ({
                     return (
                       <TableRow
                         hover
-                        onClick={(event) => handleClick(event, row.name || row.title)}
+                        // onClick={(event) => handleClick(event, row.name || row.title)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}

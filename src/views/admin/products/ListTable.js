@@ -285,31 +285,97 @@ const ListTable = ({
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    if (!searchValue) {
-      // Reset
-      setRows(sourceData);
-      return;
+    let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
+
+    if (searchValue) {
+      const filteredRows = baseData.filter((row) => {
+        // Helper function to search in a value
+        const searchInValue = (value) => {
+          if (!value) return false;
+
+          // Handle arrays
+          if (Array.isArray(value)) {
+            return value.some(item =>
+              item?.toString().toLowerCase().includes(searchValue)
+            );
+          }
+
+          // Handle objects - search through all properties
+          if (typeof value === 'object') {
+            return Object.values(value).some(val =>
+              searchInValue(val)
+            );
+          }
+
+          // Handle primitive values
+          return value.toString().toLowerCase().includes(searchValue);
+        };
+
+        // Check all relevant fields
+        return (
+          // SKU and Product Identification
+          searchInValue(row.sku) ||
+          searchInValue(row.itemSku) ||
+          searchInValue(row.productCode) ||
+          searchInValue(row.productId) ||
+
+          // Product Names and Titles
+          searchInValue(row.title) ||
+          searchInValue(row.productName) ||
+          searchInValue(row.name) ||
+          searchInValue(row.displayName) ||
+
+          // Product Type and Classification
+          searchInValue(row.type) ||
+          searchInValue(row.productType) ||
+          searchInValue(row.category) ||
+
+          // Pricing Information
+          searchInValue(row.pricingGroup) ||
+          searchInValue(row.priceGroup) ||
+          searchInValue(row.costGroup) ||
+
+          // Commerce Categories
+          searchInValue(row.commerceCategoryOne) ||
+          searchInValue(row.commerceCategoryTwo) ||
+          searchInValue(row.commerceCategoryThree) ||
+          searchInValue(row.commerceCategoryFour) ||
+          searchInValue(row.categoryOne) ||
+          searchInValue(row.categoryTwo) ||
+          searchInValue(row.categoryThree) ||
+          searchInValue(row.categoryFour) ||
+
+          // Barcodes
+          searchInValue(row.barcode) ||
+          searchInValue(row.barcodes) ||
+          searchInValue(row.eachBarcode) ||
+          searchInValue(row.eachBarcodes) ||
+          searchInValue(row.packBarcode) ||
+          searchInValue(row.packBarcodes) ||
+          searchInValue(row.ean) ||
+          searchInValue(row.upc) ||
+          searchInValue(row.gtin) ||
+          searchInValue(row.isbn) ||
+
+          // Additional Product Details
+          searchInValue(row.description) ||
+          searchInValue(row.brand) ||
+          searchInValue(row.manufacturer) ||
+          searchInValue(row.supplier) ||
+          searchInValue(row.supplierCode) ||
+          searchInValue(row.vendor) ||
+
+          // Search in nested objects (if your data structure has them)
+          (row.commerceCategories && searchInValue(row.commerceCategories)) ||
+          (row.categories && searchInValue(row.categories)) ||
+          (row.barcodeData && searchInValue(row.barcodeData))
+        );
+      });
+
+      setRows(filteredRows);
+    } else {
+      setRows(baseData);
     }
-
-    const filteredRows = sourceData.filter((row) => {
-      // Collect all primitive + nested fields
-      const values = [
-        ...Object.values(row).map((val) => (typeof val === "object" ? "" : String(val))),
-        row.pricingGroup?.name,
-        row.commerceCategoriesOne?.name,
-        row.commerceCategoriesTwo?.name,
-        row.commerceCategoriesThree?.name,
-        row.commerceCategoriesFour?.name,
-      ];
-
-      return values.some((val) =>
-        String(val || "")
-          .toLowerCase()
-          .includes(searchValue)
-      );
-    });
-
-    setRows(filteredRows);
   };
 
 

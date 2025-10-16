@@ -15,15 +15,15 @@ import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheck
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import axiosInstance from '../../../axios/axiosInstance';
-import { login } from '../../../store/authSlice';
-import { useDispatch } from 'react-redux';
+import {login} from '../../../store/authSlice';
+import {useDispatch} from 'react-redux';
 import { useNavigate } from 'react-router';
 
 
 
-const AuthLogin = ({ title, subtitle, subtext }) => {
+const SalesRepLogin = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({
-    email: '',
+    salesRepId: '',
     password: '',
   });
 
@@ -33,15 +33,15 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axiosInstance.post('/admin/login', formData, {
+      const res = await axiosInstance.post('/sales-rep/login-sales-rep', formData,{
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
-      if (res.data.statusCode === 200) {
+      if(res.data.statusCode === 200){
         dispatch(login(res.data.user));
-        navigate('/')
+        navigate('/salesrep/dashboards/ecommerce')
       }
 
       console.log("res", res.data);
@@ -55,12 +55,12 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
       <Stack>
         <Box>
-          <CustomFormLabel htmlFor="username">E-mail</CustomFormLabel>
+          <CustomFormLabel htmlFor="username">Sales Rep Id</CustomFormLabel>
           <CustomTextField
             id="username"
             variant="outlined"
             fullWidth
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, salesRepId: e.target.value })}
           />
         </Box>
         <Box>
@@ -73,32 +73,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           />
         </Box>
-        <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-          <Typography
-            component={Link}
-            to="/salas-rep/login"
-            fontWeight="500"
-            sx={{
-              textDecoration: 'none',
-              color: 'primary.main',
-            }}
-          >
-            Log In As Sales Rep
-          </Typography>
-
-          <Typography
-            component={Link}
-            to="/auth/register"
-            fontWeight="500"
-            sx={{
-              textDecoration: 'none',
-              color: 'primary.main',
-            }}
-          >
-            Register
-          </Typography>
-
-        </Stack>
       </Stack>
       <Box>
         <Button
@@ -106,11 +80,9 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           variant="contained"
           size="large"
           fullWidth
-          // component={Link}
-          // to="/"
           onClick={handleLogin}
           type="submit"
-          sx={{ backgroundColor: '#2E2F7F' }}
+          sx={{ backgroundColor: '#2E2F7F',marginTop: '20px' }}
         >
           Sign In
         </Button>
@@ -120,4 +92,4 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   )
 };
 
-export default AuthLogin;
+export default SalesRepLogin;

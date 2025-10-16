@@ -5,7 +5,7 @@ import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { Provider } from 'react-redux';
-import {store} from './store/authStore'
+import { store } from './store/authStore'
 
 async function deferRender() {
   const { worker } = await import("./api/mocks/browser");

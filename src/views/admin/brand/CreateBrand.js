@@ -11,7 +11,8 @@ import { CircularProgress, Backdrop } from '@mui/material';
 const CreateBrand = () => {
     const [formData, setFormData] = React.useState({
         name: '',
-        brandImage: '',
+        brandImage: null,
+        description: '',
         slug: ''
     });
     const [error, setError] = React.useState('');
@@ -34,21 +35,33 @@ const CreateBrand = () => {
 
     const handleSubmit = async () => {
         try {
-            const res = await axiosInstance.post('/brand/create-brand', formData, {
+            // Create FormData for multipart/form-data
+            const submitFormData = new FormData();
+            submitFormData.append('name', formData.name);
+            submitFormData.append('slug', formData.slug);
+            submitFormData.append('description', formData.description);
+
+            // Append image with the correct field name 'brandImg' (as per backend API)
+            if (formData.brandImage) {
+                submitFormData.append('brandImg', formData.brandImage);
+            }
+
+            const res = await axiosInstance.post('/brand/create-brand', submitFormData, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'multipart/form-data'
                 }
             });
 
             if (res.data.statusCode === 200) {
                 setFormData({
                     name: '',
+                    brandImage: null,
                     slug: ''
-                })
-                navigate('/dashboard/brands/list')
+                });
+                navigate('/dashboard/brands/list');
             }
         } catch (error) {
-            setError(error.message || 'An error occurred');
+            setError(error.response?.data?.message || error.message || 'An error occurred');
             console.error(error.message);
         }
     };
@@ -104,10 +117,6 @@ const CreateBrand = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // if (!file.name.toLowerCase().endsWith('.csv') || !file.name.toLowerCase().endsWith('.xlsx') ) {
-            //     setError('Please select a valid CSV file');
-            //     // return;
-            // }
             setSelectedFile(file);
             setError('');
         }
@@ -119,10 +128,10 @@ const CreateBrand = () => {
             setFormData({
                 ...formData,
                 brandImage: file
-            })
+            });
             setError('');
         }
-    }
+    };
 
     return (
         <div>
@@ -149,7 +158,7 @@ const CreateBrand = () => {
 
                 <Grid size={12}>
                     <CustomFormLabel
-                        htmlFor="bi-name"
+                        htmlFor="brand-image-file"
                         sx={{ mt: 0 }}
                     >
                         Brand Image
@@ -158,12 +167,33 @@ const CreateBrand = () => {
                 </Grid>
                 <Grid size={12}>
                     <CustomOutlinedInput
-                        id="bi-name"
+                        id="brand-image-file"
                         fullWidth
                         type="file"
                         accept=".png,.jpg,.jpeg,.svg"
-                        value={formData.brandImage}
                         onChange={(e) => handleBrandImageChange(e)}
+                        inputProps={{
+                            style: { cursor: 'pointer' }
+                        }}
+                    />
+                </Grid>
+
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="bi-name"
+                        sx={{ mt: 0 }}
+                    >
+                        Brand Description
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                </Grid>
+
+                <Grid size={12}>
+                    <CustomOutlinedInput
+                        id="bi-name"
+                        fullWidth
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
                 </Grid>
 

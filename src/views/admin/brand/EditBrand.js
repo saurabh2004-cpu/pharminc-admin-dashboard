@@ -1,21 +1,23 @@
 import React, { useEffect } from 'react';
-import { Grid } from '@mui/material';
-import InputAdornment from '@mui/material/InputAdornment';
+import { Grid, Box, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 
 const EditBrand = () => {
     const [formData, setFormData] = React.useState({
         name: '',
-        slug: ''
+        brandImage: null,
+        description: '',
+        slug: '',
+        existingImageUrl: ''
     });
     const [error, setError] = React.useState('');
+    const [imagePreview, setImagePreview] = React.useState('');
     const navigate = useNavigate();
-    const { id } = useParams(); 
+    const { id } = useParams();
 
     const handleNameChange = (e) => {
         const name = e.target.value;
@@ -32,35 +34,70 @@ const EditBrand = () => {
         try {
             const res = await axiosInstance.get(`/brand/get-brand/${id}`);
 
-            console.log("res", res)
+            console.log("res", res);
 
             if (res.data.statusCode === 200) {
+                const brandData = res.data.data;
                 setFormData({
-                    name: res.data.data.name,
-                    slug: res.data.data.slug
-                })
+                    name: brandData.name,
+                    slug: brandData.slug,
+                    description: brandData.description || '',
+                    brandImage: null,
+                    existingImageUrl: brandData.brandImg || ''
+                });
+                setImagePreview(brandData.brandImg || '');
             }
         } catch (error) {
             setError(error.message || 'An error occurred');
             console.error(error.message);
-        } 
+        }
     };
 
-    const handleSubmit = async()=>{
+    const handleBrandImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFormData({
+                ...formData,
+                brandImage: file
+            });
+
+            // Create preview URL for new image
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+            
+            setError('');
+        }
+    };
+
+    const handleSubmit = async () => {
         try {
-            const res = await axiosInstance.put(`/brand/update-brand/${id}`, formData, {
+            const submitFormData = new FormData();
+            submitFormData.append('name', formData.name);
+            submitFormData.append('slug', formData.slug);
+            submitFormData.append('description', formData.description);
+
+            // Only append image if a new one was selected
+            if (formData.brandImage) {
+                submitFormData.append('brandImg', formData.brandImage);
+            }
+
+            const res = await axiosInstance.put(`/brand/update-brand/${id}`, submitFormData, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'multipart/form-data'
                 }
             });
+
             if (res.data.statusCode === 200) {
                 navigate('/dashboard/brands/list');
             }
         } catch (error) {
             console.error(error);
-            setError('Something went wrong');
+            setError(error.response?.data?.message || 'Something went wrong');
         }
-    }
+    };
 
     useEffect(() => {
         fetchBrand();
@@ -86,6 +123,67 @@ const EditBrand = () => {
                         onChange={(e) => handleNameChange(e)}
                     />
                 </Grid>
+
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="brand-image-file"
+                        sx={{ mt: 0 }}
+                    >
+                        Brand Image
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                </Grid>
+                
+                <Grid size={12}>
+                    {/* Show existing image preview if available */}
+                    {imagePreview && (
+                        <Box sx={{ mb: 2 }}>
+                            <img 
+                                src={imagePreview} 
+                                alt="Brand" 
+                                style={{ 
+                                    maxWidth: '150px', 
+                                    maxHeight: '150px', 
+                                    objectFit: 'contain',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    padding: '8px'
+                                }} 
+                            />
+                        </Box>
+                    )}
+                    
+                    <CustomOutlinedInput
+                        id="brand-image-file"
+                        fullWidth
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.svg"
+                        onChange={(e) => handleBrandImageChange(e)}
+                        inputProps={{
+                            style: { cursor: 'pointer' }
+                        }}
+                    />
+                </Grid>
+
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="bi-description"
+                        sx={{ mt: 0 }}
+                    >
+                        Brand Description
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                </Grid>
+
+                <Grid size={12}>
+                    <CustomOutlinedInput
+                        id="bi-description"
+                        fullWidth
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
+                </Grid>
+
                 {/* 2 */}
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="bi-company">Slug</CustomFormLabel>

@@ -89,7 +89,7 @@ const ListSalesOrders = () => {
   const [tableData, setTableData] = React.useState([]);
   const [error, setError] = React.useState(null);
 
-  const fetchPricingGroups = async () => {
+  const fetchSalesOrders = async () => {
     try {
       const response = await axiosInstance.get('/sales-order/get-sales-orders');
       console.log("response Sales Orders", response);
@@ -109,7 +109,7 @@ const ListSalesOrders = () => {
 
 
   React.useEffect(() => {
-    fetchPricingGroups();
+    fetchSalesOrders();
   }, []);
 
   return (

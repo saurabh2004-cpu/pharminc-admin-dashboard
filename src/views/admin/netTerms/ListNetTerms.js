@@ -6,6 +6,7 @@ import { ProductProvider } from '../../../context/EcommerceContext';
 import axiosInstance from '../../../axios/axiosInstance';
 import ListTable from './ListTable';
 import { CustomizerContext } from '../../../context/CustomizerContext'
+import { Button, TextField } from '@mui/material';
 
 const BCrumb = [
   {
@@ -19,7 +20,6 @@ const BCrumb = [
 
 const ListNetTerms = () => {
   const headCells = [
-
     {
       id: 'documentNumber',
       numeric: false,
@@ -32,7 +32,6 @@ const ListNetTerms = () => {
       disablePadding: false,
       label: 'Date',
     },
-
     {
       id: 'customerName',
       numeric: false,
@@ -69,80 +68,185 @@ const ListNetTerms = () => {
       disablePadding: false,
       label: 'Customer PO',
     },
-
-
-
     {
       id: 'LastUpdatedDate',
       numeric: false,
       disablePadding: false,
       label: 'Last Updated Date',
     },
-
   ];
 
   const [tableData, setTableData] = React.useState([]);
   const [error, setError] = React.useState(null);
-  const [filter, setFilter] = React.useState('');
-  const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(false);
   const { isCollapse } = React.useContext(CustomizerContext);
-  const [date, setdate] = React.useState('');
+  const [filterType, setFilterType] = React.useState('month');
+  const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = React.useState(new Date().getMonth() + 1);
 
-
-
-  React.useEffect(() => {
-    // Get current date
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // Adding 1 since getMonth() returns 0-11
-
-    // Set initial filter with current month and year
-    setFilter(`get-net-terms-by-month/${currentMonth}/${currentYear}`);
-  }, []);
-
-  const fetchCustomersList = async () => {
-    setLoading(true)
+  // Fetch data based on filter type
+  const fetchNetTermsData = React.useCallback(async (type, year, month) => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await axiosInstance.get(`/netTerms/${filter}`); 
-      console.log("response net termsssss", response);
+      let endpoint = '';
 
-      if (response.data.statusCode === 200) {
-        setTableData(response.data.data.payments);
+      switch (type) {
+        case 'month':
+          endpoint = `/netTerms/get-net-terms-by-month/${month}/${year}`;
+          break;
+        case 'year':
+          endpoint = `/netTerms/get-net-terms-by-year/${year}`;
+          break;
+        case 'week':
+          endpoint = `/netTerms/get-net-terms-by-week`;
+          break;
+        case 'overdue':
+          endpoint = `/netTerms/get-overdue-net-terms`;
+          break;
+        default:
+          endpoint = `/netTerms/get-net-terms-by-month/${month}/${year}`;
       }
 
-    } catch (error) {
-      console.error('Error fetching customers list:', error);
-      setError(error.message);
+      const response = await axiosInstance.get(endpoint);
+      console.log('NetTerms response:', response.data);
+
+      if (response.data.statusCode === 200) {
+        setTableData(response.data.data);
+      } else {
+        setError('Failed to fetch net terms');
+      }
+    } catch (err) {
+      console.error('Error fetching net terms:', err);
+      setError(err.message || 'Error fetching data');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
+  }, []);
+
+  // Initial load - mount only
+  React.useEffect(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    setSelectedYear(currentYear);
+    setSelectedMonth(currentMonth);
+    fetchNetTermsData('month', currentYear, currentMonth);
+  }, []); // Empty dependency - runs once on mount
+
+  // Filter handlers
+  const handleMonthFilter = () => {
+    setFilterType('month');
+    fetchNetTermsData('month', selectedYear, selectedMonth);
   };
 
-  React.useEffect(() => {
-    fetchCustomersList();
-  }, [filter]);
+  const handleYearFilter = () => {
+    setFilterType('year');
+    fetchNetTermsData('year', selectedYear, selectedMonth);
+  };
+
+  const handleWeekFilter = () => {
+    setFilterType('week');
+    fetchNetTermsData('week', selectedYear, selectedMonth);
+  };
+
+  const handleOverdueFilter = () => {
+    setFilterType('overdue');
+    fetchNetTermsData('overdue', selectedYear, selectedMonth);
+  };
 
   return (
     <ProductProvider>
-      <PageContainer title="Net Terms List" description="this is Customers List page">
-        {/* breadcrumb */}
+      <PageContainer title="Net Terms List" description="Net Terms payment tracking">
         <Breadcrumb title="Net Terms List" items={BCrumb} />
-        {/* end breadcrumb */}
-        <Box
-        // sx={{
-        //   minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-        //   marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-        //   transition: "margin-left 0.3s ease", // smooth animation
-        // }}
-        >
+
+        {/* Filter Controls */}
+        <Box sx={{
+          mb: 3,
+          p: 2,
+          backgroundColor: '#f5f5f5',
+          borderRadius: 1,
+          display: 'flex',
+          gap: 2,
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}>
+          {/* Month Filter */}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <TextField
+              label="Month"
+              type="number"
+              value={selectedMonth}
+              onChange={(e) => {
+                const val = Math.min(12, Math.max(1, parseInt(e.target.value) || 1));
+                setSelectedMonth(val);
+              }}
+              inputProps={{ min: 1, max: 12 }}
+              size="small"
+              sx={{ width: 80 }}
+            />
+            <TextField
+              label="Year"
+              type="number"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value) || new Date().getFullYear())}
+              size="small"
+              sx={{ width: 100 }}
+            />
+            <Button
+              variant={filterType === 'month' ? 'contained' : 'outlined'}
+              onClick={handleMonthFilter}
+              size="small"
+            >
+              By Month
+            </Button>
+          </Box>
+
+          {/* Year Filter */}
+          <Button
+            variant={filterType === 'year' ? 'contained' : 'outlined'}
+            onClick={handleYearFilter}
+            size="small"
+          >
+            By Year: {selectedYear}
+          </Button>
+
+          {/* Week Filter */}
+          <Button
+            variant={filterType === 'week' ? 'contained' : 'outlined'}
+            onClick={handleWeekFilter}
+            size="small"
+          >
+            This Week
+          </Button>
+
+          {/* Overdue Filter */}
+          <Button
+            variant={filterType === 'overdue' ? 'contained' : 'outlined'}
+            color={filterType === 'overdue' ? 'error' : 'inherit'}
+            onClick={handleOverdueFilter}
+            size="small"
+          >
+            Overdue Payments
+          </Button>
+        </Box>
+
+        {error && (
+          <Box sx={{ mb: 2, p: 2, backgroundColor: '#ffebee', borderRadius: 1, color: '#c62828' }}>
+            Error: {error}
+          </Box>
+        )}
+
+        <Box>
           <ListTable
             showCheckBox={false}
             headCells={headCells}
             tableData={tableData}
-            isCustomersList={true} // Changed from isProductsList
+            isCustomersList={true}
             setTableData={setTableData}
-            setFilter={setFilter}
             loading={loading}
+            filterType={filterType}
           />
         </Box>
       </PageContainer>

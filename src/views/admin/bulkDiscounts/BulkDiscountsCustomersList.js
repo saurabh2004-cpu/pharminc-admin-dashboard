@@ -16,9 +16,7 @@ import {
   Toolbar,
   IconButton,
   Tooltip,
-  FormControlLabel,
   Typography,
-  Avatar,
   TextField,
   InputAdornment,
   Paper,
@@ -26,11 +24,10 @@ import {
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconSearch, IconTrash, IconEdit, IconFilter, IconArrowLeft } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
-import axios from 'axios';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
@@ -40,7 +37,6 @@ function descendingComparator(a, b, orderBy) {
   if (b[orderBy] > a[orderBy]) {
     return 1;
   }
-
   return 0;
 }
 
@@ -65,13 +61,7 @@ function EnhancedTableHead(props) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
-  const stickyCellStyle = {
-    position: "sticky",
-    left: 0,
-    zIndex: 5,
-    backgroundColor: '#f0f8ff',
-  };
-
+  
   const headCellStyle = {
     backgroundColor: '#f0f8ff',
     fontWeight: 600,
@@ -81,7 +71,7 @@ function EnhancedTableHead(props) {
   return (
     <TableHead>
       <TableRow>
-        {showCheckBox && <TableCell padding="checkbox">
+        {showCheckBox && <TableCell padding="checkbox" sx={headCellStyle}>
           <CustomCheckbox
             color="primary"
             checked={rowCount > 0 && numSelected === rowCount}
@@ -92,12 +82,11 @@ function EnhancedTableHead(props) {
           />
         </TableCell>}
 
-        {/* Actions column */}
-        {/* <TableCell sx={{ ...headCellStyle, ...stickyCellStyle }}>
+        <TableCell sx={headCellStyle}>
           Actions
-        </TableCell> */}
+        </TableCell>
 
-        {headCells.map((headCell, index) => (
+        {headCells.map((headCell) => (
           <TableCell
             key={headCell.key || headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
@@ -120,14 +109,16 @@ function EnhancedTableHead(props) {
           </TableCell>
         ))}
 
-
+        <TableCell sx={headCellStyle}>
+          Added Date
+        </TableCell>
       </TableRow>
     </TableHead>
   );
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
+  const { numSelected, handleSearch, search, placeholder, onBackClick, bulkDiscountName } = props;
 
   return (
     <Toolbar
@@ -145,65 +136,68 @@ const EnhancedTableToolbar = (props) => {
           {numSelected} selected
         </Typography>
       ) : (
-        <Box sx={{ flex: '1 1 100%' }}>
-          <TextField
-            placeholder={placeholder || "Search"}
+        <Box sx={{ flex: '1 1 100%', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            startIcon={<IconArrowLeft size="1.1rem" />}
+            onClick={onBackClick}
+            variant="outlined"
             size="small"
-            onChange={handleSearch}
-            value={search}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size="1.1rem" />
-                  </InputAdornment>
-                ),
-              }
-            }}
-          />
+          >
+            Back
+          </Button>
+          
+          <Box sx={{ flex: 1 }}>
+            
+            <TextField
+              placeholder={placeholder || "Search customers..."}
+              size="small"
+              onChange={handleSearch}
+              value={search}
+              sx={{ width: 300 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size="1.1rem" />
+                    </InputAdornment>
+                  ),
+                }
+              }}
+            />
+          </Box>
         </Box>
       )}
 
-      {numSelected > 0 ? (
+      {numSelected > 0 && (
         <Tooltip title="Delete">
           <IconButton>
             <IconTrash width="18" />
           </IconButton>
         </Tooltip>
-      ) : (
-        <></>
       )}
     </Toolbar>
   );
 };
 
-const CustomersList = () => {
-  const {
-    filteredAndSortedProducts,
-  } = useContext(ProductContext);
-
+const BulkDiscountsCustomersList = () => {
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('customerId');
+  const [orderBy, setOrderBy] = useState('customerName');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
-  const [tableData, setTableData] = React.useState([]);
+  const [bulkDiscountData, setBulkDiscountData] = useState(null);
+  const [customers, setCustomers] = useState([]);
   const [error, setError] = useState('');
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams(); // This should be the bulkDiscountId from the URL
+  const theme = useTheme();
 
-  // Define headCells for the table
+  // Headers for customer list
   const headCells = [
-    {
-      id: 'customerId',
-      label: 'Customer ID',
-      numeric: false,
-      disablePadding: false,
-    },
     {
       id: 'customerName',
       label: 'Customer Name',
@@ -211,75 +205,62 @@ const CustomersList = () => {
       disablePadding: false,
     },
     {
-      id: 'customerPhone',
-      label: 'Customer Phone',
+      id: 'customerId',
+      label: 'Customer ID',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'customerEmail',
-      label: 'Customer Email',
+      id: 'email',
+      label: 'Email',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'totalCartItems',
-      label: 'Total Cart Items',
-      numeric: false,
-      disablePadding: false,
-    },
-    {
-      id: 'updatedAt',
-      label: 'Last Updated Date',
+      id: 'phone',
+      label: 'Phone',
       numeric: false,
       disablePadding: false,
     },
   ];
 
-  const fetchCustomers = async () => {
+  const fetchBulkDiscountCustomers = async () => {
     try {
-      const response = await axiosInstance.get(`/cart/get-all-users-with-cart-items`);
-      console.log("get-all-users-with-cart-items ", response);
-
-      if (response.data.statusCode === 200) {
-        // Transform the nested data structure to flat structure for table
-        const transformedData = response.data.data.users.map(userObj => ({
-          _id: userObj.user._id,
-          customerId: userObj.user.customerId,
-          customerName: userObj.user.customerName,
-          customerPhone: userObj.user.CustomerPhoneNo,
-          customerEmail: userObj.user.customerEmail,
-          totalCartItems: userObj.totalCartItems,
-          cartId: userObj.cartId,
-          cartItems: userObj.cartItems,
-          updatedAt: userObj.user.updatedAt,
-          createdAt: userObj.user.createdAt,
-        }));
-
-        setTableData(transformedData);
-        setRows(transformedData);
+      if (!id) {
+        setError('Bulk discount ID is missing');
+        return;
       }
 
+      const response = await axiosInstance.get(`/bulk-discounts/get-customer-by-bulk-discount-id/${id}`);
+      console.log("fetch bulk discount customers ", response);
+
+      if (response.data.statusCode === 200) {
+        setBulkDiscountData(response.data.data);
+        const customersData = response.data.data || [];
+        setCustomers(customersData);
+        setRows(customersData);
+      }
     } catch (error) {
-      console.error('Error fetching customers list:', error);
-      setError(error.message);
+      console.error('Error fetching customers of bulk discount:', error);
+      setError(error.message || 'Failed to fetch customers');
     }
   };
 
-  React.useEffect(() => {
-    fetchCustomers();
-  }, []);
+  useEffect(() => {
+    fetchBulkDiscountCustomers();
+  }, [id]);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    const filteredRows = tableData.filter((row) => {
+    const filteredRows = customers.filter((customer) => {
       return (
-        row?.customerId?.toLowerCase().includes(searchValue) ||
-        row?.customerName?.toLowerCase().includes(searchValue) ||
-        row?.customerPhone?.toLowerCase().includes(searchValue) ||
-        row?.customerEmail?.toLowerCase().includes(searchValue)
+        customer?.customerName?.toLowerCase().includes(searchValue) ||
+        customer?.name?.toLowerCase().includes(searchValue) ||
+        customer?.customerId?.toLowerCase().includes(searchValue) ||
+        customer?.email?.toLowerCase().includes(searchValue) ||
+        customer?.phone?.toLowerCase().includes(searchValue)
       );
     });
     setRows(filteredRows);
@@ -293,19 +274,19 @@ const CustomersList = () => {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.customerId);
+      const newSelecteds = rows.map((n) => n._id);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
     let newSelected = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -329,46 +310,73 @@ const CustomersList = () => {
     setPage(0);
   };
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
-
-  const isSelected = (name) => selected.indexOf(name) !== -1;
+  const isSelected = (id) => selected.indexOf(id) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-  const theme = useTheme();
   const borderColor = theme.palette.divider;
 
-  // const [deleteDialog, setDeleteDialog] = useState({
-  //   open: false,
-  //   itemId: null,
-  //   itemName: '',
-  //   isDeleting: false
-  // });
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    customerId: null,
+    customerName: '',
+    isDeleting: false
+  });
 
-
-  const handleDeleteClick = (event, id, name) => {
-    event.stopPropagation();
+  const handleDeleteCancel = () => {
     setDeleteDialog({
-      open: true,
-      itemId: id,
-      itemName: name,
+      open: false,
+      customerId: null,
+      customerName: '',
       isDeleting: false
     });
   };
 
-  const handleCustomerIdClcik = async (customerId) => {
-    navigate(`/dashboard/abandoned-cart-items/list/${customerId}`);
-  }
+  const handleDeleteClick = (event, customerId, customerName) => {
+    event.stopPropagation();
+    setDeleteDialog({
+      open: true,
+      customerId: customerId,
+      customerName: customerName,
+      isDeleting: false
+    });
+  };
 
+  const handleRemoveCustomer = async () => {
+    try {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
+      
+      const res = await axiosInstance.delete(
+        `/bulk-discounts/remove-customer-from-bulk-discount/${id}/${deleteDialog.customerId}`
+      );
 
+      console.log("Customer removed", res.data);
 
-  const stickyCellStyle = {
-    position: "sticky",
-    left: 0,
-    zIndex: 5,
-    backgroundColor: '#f0f8ff',
+      if (res.data.statusCode === 200) {
+        // Update the local state to remove the customer
+        setCustomers(prev => prev.filter(customer => customer._id !== deleteDialog.customerId));
+        setRows(prev => prev.filter(customer => customer._id !== deleteDialog.customerId));
+        handleDeleteCancel();
+        
+        // Show success message
+        setError(`Customer ${deleteDialog.customerName} removed successfully`);
+        setTimeout(() => setError(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error removing customer from bulk discount:', error);
+      setError('Failed to remove customer: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
+  const handleBackClick = () => {
+    navigate('/dashboard/bulk-discounts/list');
+  };
+
+  const handleEditCustomer = (customerId) => {
+    // Navigate to customer edit page if needed
+    navigate(`/dashboard/customers/edit/${customerId}`);
   };
 
   return (
@@ -378,10 +386,12 @@ const CustomersList = () => {
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder="Search Customers"
-          rows={rows}
-          headCells={headCells}
+          placeholder="Search customers..."
+          onBackClick={handleBackClick}
+          bulkDiscountName={bulkDiscountData?.name || 'Bulk Discount'}
         />
+        
+       
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
             <Table
@@ -411,8 +421,8 @@ const CustomersList = () => {
               <TableBody>
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = isSelected(row.customerId);
+                  .map((customer, index) => {
+                    const isItemSelected = isSelected(customer._id);
                     const labelId = `enhanced-table-checkbox-${index}`;
 
                     return (
@@ -421,64 +431,50 @@ const CustomersList = () => {
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
-                        key={row._id}
+                        key={customer._id}
                         selected={isItemSelected}
                       >
-                        {/* Actions Column */}
-                        {/* <TableCell sx={stickyCellStyle}>
+                        <TableCell>
                           <Box display="flex" gap={1}>
-                            <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => handleEditCustomer(row?._id)}>
-                                <IconEdit size="1.1rem" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete">
-                              <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row?._id, row?.customerName)}>
+                            <Tooltip title="Remove from Bulk Discount">
+                              <IconButton 
+                                size="small" 
+                                color="error" 
+                                onClick={(e) => handleDeleteClick(e, customer._id, customer.customerName || customer.name)}
+                              >
                                 <IconTrash size="1.1rem" />
                               </IconButton>
                             </Tooltip>
                           </Box>
-                        </TableCell> */}
-
-                        {/* Customer ID */}
-                        <TableCell onClick={() => handleCustomerIdClcik(row._id)} sx={{ cursor: 'pointer', ":hover": { color: "primary.main" } }}>
-                          <Typography fontWeight="600">
-                            {row?.customerId || 'N/A'}
-                          </Typography>
                         </TableCell>
 
-                        {/* Customer Name */}
-                        <TableCell sx={{ cursor: 'pointer' }}>
-                          <Typography fontWeight="600">
-                            {row?.customerName || 'N/A'}
-                          </Typography>
-                        </TableCell>
-
-                        {/* Customer Phone */}
-                        <TableCell sx={{ cursor: 'pointer' }}>
-                          <Typography>
-                            {row?.customerPhone || 'N/A'}
-                          </Typography>
-                        </TableCell>
-
-                        {/* Customer Email */}
-                        <TableCell sx={{ cursor: 'pointer' }}>
-                          <Typography>
-                            {row?.customerEmail || 'N/A'}
-                          </Typography>
-                        </TableCell>
-
-                        {/* Total Cart Items */}
                         <TableCell>
-                          <Typography fontWeight="600" onClick={() => handleCustomerIdClcik(row._id)} sx={{ marginLeft: "50px" }} color="primary">
-                            {row?.totalCartItems || 0}
+                          <Typography fontWeight="600">
+                            {customer?.customerName || customer?.name || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        {/* Last Updated Date */}
                         <TableCell>
                           <Typography>
-                            {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
+                            {customer?.customerId || customer?._id || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography>
+                            {customer?.customerEmail || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography>
+                            {customer?.customerPhone || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography>
+                            {customer.createdAt ? format(new Date(customer.createdAt), 'E, MMM d yyyy') : 'N/A'}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -486,7 +482,7 @@ const CustomersList = () => {
                   })}
                 {emptyRows > 0 && (
                   <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                    <TableCell colSpan={headCells.length + 3} />
+                    <TableCell colSpan={headCells.length + 2} />
                   </TableRow>
                 )}
               </TableBody>
@@ -504,23 +500,25 @@ const CustomersList = () => {
         </Paper>
       </Box>
 
-      {/* Show error if any */}
       {error && (
         <Box sx={{ p: 2 }}>
-          <Typography color="error">Error: {error}</Typography>
+          <Typography color={error.includes('successfully') ? 'success' : 'error'}>
+            {error}
+          </Typography>
         </Box>
       )}
 
-      {/* <DeleteConfirmationDialog
+      <DeleteConfirmationDialog
         open={deleteDialog.open}
         onClose={handleDeleteCancel}
-        onConfirm={handleDeleteCustomer}
-        itemName={deleteDialog.itemName}
+        onConfirm={handleRemoveCustomer}
+        itemName={deleteDialog.customerName}
         isDeleting={deleteDialog.isDeleting}
         itemType={"Customer"}
-      /> */}
+        message="Are you sure you want to remove this customer from the bulk discount?"
+      />
     </Box>
   );
 };
 
-export default CustomersList;
+export default BulkDiscountsCustomersList;

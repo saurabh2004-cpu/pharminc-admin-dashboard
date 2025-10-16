@@ -330,41 +330,58 @@ const ListTable = ({
 
   const [customerMap, setCustomerMap] = useState({});
 
-  const fetchCustomerDetails = async () => {
+  const fetchCustomerDetails = async (customerIds) => {
     try {
-      const uniqueCustomerIds = [...new Set(rows.map((r) => r.customerId))].filter(Boolean);
+      console.log("Fetching details for customer IDs:", customerIds);
 
       const responses = await Promise.all(
-        uniqueCustomerIds.map((id) =>
-          axiosInstance.get(`/admin/get-user-by-customerId/${id}`).catch((err) => {
-            console.error("API error for id:", id, err);
-            return null;
-          })
+        customerIds.map((id) =>
+          axiosInstance.get(`/admin/get-user-by-customerId/${id}`)
+            .then(response => ({ success: true, data: response.data, id }))
+            .catch((err) => {
+              console.error(`API error for id ${id}:`, err.response?.data || err.message);
+              return { success: false, id, error: err };
+            })
         )
       );
 
-      const map = {};
-      responses.forEach((res, idx) => {
-        if (res?.data?.statusCode === 200) {
-          console.log("API Response for", uniqueCustomerIds[idx], res.data); // 👈 check here
-          const id = uniqueCustomerIds[idx];
-          // adjust this if API structure is different
-          map[id] = res.data.data?.name || "N/A";
+      const newMap = {};
+      responses.forEach((response) => {
+        if (response.success && response.data?.statusCode === 200) {
+          const customerData = response.data.data;
+          const customerName =
+            customerData?.customerName ||
+            customerData?.contactName ||
+            customerData?.storeName ||
+            customerData?.name ||
+            "N/A";
+
+          newMap[response.id] = customerName;
+          console.log(`✅ Mapped ${response.id} to: ${customerName}`);
+        } else {
+          newMap[response.id] = "Not Found";
+          console.log(`❌ Failed to fetch details for: ${response.id}`);
         }
       });
 
-      console.log("Final customer map:", map);
-      setCustomerMap(map);
+      setCustomerMap(prev => ({ ...prev, ...newMap }));
     } catch (error) {
-      console.error("Error fetching customer details:", error);
+      console.error("Error in fetchCustomerDetails:", error);
     }
   };
 
   useEffect(() => {
     if (rows.length > 0) {
-      fetchCustomerDetails();
+      const uniqueCustomerIds = [...new Set(rows.map((r) => r.customerId))].filter(Boolean);
+
+      // Only fetch customer details that we don't already have
+      const missingCustomerIds = uniqueCustomerIds.filter(id => !customerMap[id]);
+
+      if (missingCustomerIds.length > 0) {
+        fetchCustomerDetails(missingCustomerIds);
+      }
     }
-  }, [rows]);
+  }, [rows, customerMap]);
 
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
