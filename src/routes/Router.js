@@ -103,7 +103,7 @@ const ListProductGroup = Loadable(lazy(() => import('../views/admin/productGroup
 const ListGroupsProducts = Loadable(lazy(() => import('../views/admin/productGroup/ListGroupsProducts')));
 const EditProductGroups = Loadable(lazy(() => import('../views/admin/productGroup/EditProductGroups')));
 
-const CreateMetaData = Loadable(lazy(() => import('../views/admin/metaData/createMetaData')));
+const CreateMetaData = Loadable(lazy(() => import('../views/admin/metaData/CreateMetaData')));
 const ListMetaData = Loadable(lazy(() => import('../views/admin/metaData/ListMetaData')));
 const EditMetaData = Loadable(lazy(() => import('../views/admin/metaData/EditMetaData')));
 
