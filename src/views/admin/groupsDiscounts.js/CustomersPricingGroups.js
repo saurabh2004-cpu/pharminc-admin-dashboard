@@ -234,18 +234,40 @@ const CustomersPricingGroups = () => {
     const headCells = [
         {
             key: 1,
-            id: 'pricingGroup',
-            label: 'Pricing Group',
+            id: 'CustomerId',
+            label: 'Customer Id',
             numeric: false,
             disablePadding: false
         },
         {
             key: 1,
-            id: 'percentage',
-            label: 'Percentage',
+            id: 'CustomerName',
+            label: 'Customer Name',
             numeric: false,
             disablePadding: false
         },
+        {
+            key: 1,
+            id: 'cistomerEmail',
+            label: 'Customer Email',
+            numeric: false,
+            disablePadding: false
+        },
+        {
+            key: 1,
+            id: 'customerPhone',
+            label: 'Customer Phone',
+            numeric: false,
+            disablePadding: false
+        },
+        {
+            key: 1,
+            id: 'Pecentage',
+            label: 'Pecentage',
+            numeric: false,
+            disablePadding: false
+        },
+       
         {
             key: 1,
             id: 'lastUpdatedDate',

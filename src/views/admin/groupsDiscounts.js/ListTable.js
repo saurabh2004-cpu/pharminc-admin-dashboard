@@ -33,6 +33,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import { set } from 'lodash';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -344,7 +345,7 @@ const ListTable = ({
   };
 
   const handleCustomerIdClick = (id) => {
-    navigate(`/dashboard/customers-pricing-groups/${id}`);
+    // navigate(`/dashboard/customers-pricing-groups/${id}`);
   }
 
   const fetchCustomerDetails = async () => {
@@ -481,21 +482,28 @@ const ListTable = ({
   };
 
   //delete sales order
+  // Update the delete handler to use the correct endpoint
   const handleDeleteGroupsDiscounts = async () => {
-
-    console.log("handle DeleteGroups Discounts .............")
     try {
-      const res = await axiosInstance.delete(`/pricing-groups-discount/delete-customer-all-pricing-group-discount/${deleteDialog.itemId}`);
+      const res = await axiosInstance.delete(`/pricing-groups-discount/delete-pricing-group-discount/${deleteDialog._id}`, {
+        data: { customerId: deleteDialog.originalCustomerId }
+      });
 
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog._id));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog._id));
+        setRows(prevRows => prevRows.filter(row => row._id !== deleteDialog.compositeId));
+
+        // ✅ Update the parent component's tableData
+        if (setTableData) {
+          setTableData(prevData => prevData.filter(item => item._id !== deleteDialog.compositeId));
+        }
+
+
         handleDeleteCancel();
       }
     } catch (error) {
-      console.error('Error deleting category:', error);
+      console.error('Error deleting pricing group discount:', error);
     }
   };
 
@@ -518,6 +526,9 @@ const ListTable = ({
     actions: { minWidth: '160px' },
   };
 
+  const handleEditPricingGroup = (row) => {
+    navigate(`/dashboard/groups-discounts/edit/${row.originalDiscountId}`);
+  }
 
 
   return (
@@ -564,25 +575,33 @@ const ListTable = ({
                     const isItemSelected = isSelected(row.name || row.title);
                     const labelId = `enhanced-table-checkbox-${index}`;
 
+                    // Get pricing group name
+                    const pricingGroupName = row.pricingGroup && typeof row.pricingGroup === 'object'
+                      ? row.pricingGroup.name
+                      : pricingGroupsMap[row.pricingGroup] || `Group ${row.pricingGroup}`;
+
                     return (
                       <TableRow
                         hover
-                        // onClick={(event) => handleClick(event, row.name || row.title)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
-                        key={row._id || row.title}
+                        key={row._id}
                         selected={isItemSelected}
                       >
                         <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
                           <Box display="flex" gap={1}>
                             <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => handleEditSalesOrder(row.documentNumber)}>
+                              <IconButton size="small" color="primary" onClick={() => handleEditPricingGroup(row)}>
                                 <IconEdit size="1.1rem" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete">
-                              <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row.customerId, row?.customerId, row._id)}>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => handleDeleteClick(e, row.customerId, row.customerName, row.originalDiscountId)}
+                              >
                                 <IconTrash size="1.1rem" />
                               </IconButton>
                             </Tooltip>
@@ -591,20 +610,34 @@ const ListTable = ({
 
                         <TableCell sx={{ cursor: "pointer", ":hover": { color: "blue" } }}>
                           <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
-                            {row?.customerId}
+                            {row.customerId}
                           </Typography>
                         </TableCell>
 
-                        <TableCell sx={{ cursor: "pointer" }}>
-                          <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
-                            {customerMap[row.customerId] || ""}
+                        <TableCell>
+                          <Typography fontWeight="600">
+                            {row.customerName}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography>{pricingGroupName}</Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography
+                            sx={{
+                              color: row.percentage.startsWith('+') ? 'success.main' : 'error.main',
+                              fontWeight: 600
+                            }}
+                          >
+                            {row.percentage}
                           </Typography>
                         </TableCell>
 
                         <TableCell>
                           <Typography>{format(new Date(row.updatedAt), 'E, MMM d yyyy')}</Typography>
                         </TableCell>
-
                       </TableRow>
                     );
                   })}

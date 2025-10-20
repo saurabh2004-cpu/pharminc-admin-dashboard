@@ -705,6 +705,12 @@ const ListTable = ({
                                   {row.customerId || 'N/A'}
                                 </Typography>
                               </TableCell>
+                              
+                              <TableCell sx={columnWidths.sku}>
+                                <Typography fontWeight="500" variant="subtitle2">
+                                  {row.markupDiscount || 'N/A'}
+                                </Typography>
+                              </TableCell>
 
                               <TableCell sx={columnWidths.productName}>
                                 <Typography fontWeight="400">

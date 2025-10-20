@@ -50,6 +50,12 @@ const ListProduct = () => {
       label: 'Each Price',
     },
     {
+      id: 'ComparePrice', // Corrected to match API response (capital P)
+      numeric: false,
+      disablePadding: false,
+      label: 'Compare Price',
+    },
+    {
       id: 'Type', // Corrected to match API response (capital P)
       numeric: false,
       disablePadding: false,

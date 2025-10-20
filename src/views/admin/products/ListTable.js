@@ -620,6 +620,16 @@ const ListTable = ({
                               <Box display="flex" alignItems="center">
                                 <Box>
                                   <Typography fontWeight="400" variant="body2">
+                                    {row.comparePrice || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.stockLevel}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400" variant="body2">
                                     {row.type || ''}
                                   </Typography>
                                 </Box>

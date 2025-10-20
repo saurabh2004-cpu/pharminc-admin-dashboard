@@ -29,6 +29,7 @@ const CreateProduct = () => {
     packBarcodes: '',
     productImg: '',
     taxable: true,
+    comparePrice: '',
 
   });
   const [error, setError] = React.useState('');
@@ -110,8 +111,6 @@ const CreateProduct = () => {
     setImagePreviews(newPreviews);
   };
 
-
-
   const handleSubmit = async () => {
 
     if (!formData.sku.trim()) {
@@ -126,9 +125,6 @@ const CreateProduct = () => {
       setError('Please enter a price');
       return;
     }
-
-
-
 
     setLoading(true);
     setError('');
@@ -218,10 +214,10 @@ const CreateProduct = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.name.toLowerCase().endsWith('.csv')) {
-        setError('Please select a valid CSV file');
-        return;
-      }
+      // if (!file.name.toLowerCase().endsWith('.csv')) {
+      //   setError('Please select a valid CSV file');
+      //   return;
+      // }
       setSelectedFile(file);
       setError('');
     }
@@ -661,6 +657,22 @@ const CreateProduct = () => {
             placeholder="Enter Each Price"
           />
         </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+            Compare Price
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="stockLevel"
+            fullWidth
+            value={formData.comparePrice}
+            onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Compare Price "
+          />
+        </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
             Stock Level
@@ -677,7 +689,7 @@ const CreateProduct = () => {
         </Grid>
 
         {/* Type of Packs Selection - Full Width */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="types-of-packs-select" sx={{ mt: 2 }}>
             Select Type Of Packs (Multiple)
             <span style={{ color: 'red' }}>*</span>
@@ -728,7 +740,7 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
-       
+
 
         {/* Pricing Group and Commerce Category One - Two per row */}
         <Grid size={6}>

@@ -26,6 +26,7 @@ const EditProduct = () => {
     storeDescription: '',
     eachBarcodes: '',
     packBarcodes: '',
+    comparePrice: null,
   });
 
   const [error, setError] = React.useState('');
@@ -195,6 +196,7 @@ const EditProduct = () => {
       if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
       if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
       if (formData.badge) formDataToSend.append('badge', formData.badge);
+      if(formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
 
       // Append thumbnail if new one is selected
       if (thumbnailFile) {
@@ -257,6 +259,7 @@ const EditProduct = () => {
           eachBarcodes: product.eachBarcodes || '',
           packBarcodes: product.packBarcodes || '',
           badge: product.badge?._id || '',
+          comparePrice: product.comparePrice || '',
         });
 
         // Set existing images
@@ -725,6 +728,22 @@ const EditProduct = () => {
             placeholder="Enter Each Price"
           />
         </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="comparePrice" sx={{ mt: 2 }}>
+            Compare Price
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="comparePrice"
+            fullWidth
+            value={formData.comparePrice}
+            onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Compare Price "
+          />
+        </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
             Stock Level
@@ -741,7 +760,7 @@ const EditProduct = () => {
         </Grid>
 
         {/* Type of Packs Selection - Full Width */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="types-of-packs-select" sx={{ mt: 2 }}>
             Select Type Of Packs (Multiple)
             <span style={{ color: 'red' }}>*</span>

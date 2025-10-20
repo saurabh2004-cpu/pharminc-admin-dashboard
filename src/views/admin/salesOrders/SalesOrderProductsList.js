@@ -265,6 +265,19 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Units Quantity',
         },
+        {
+            id: 'discountType',
+            numeric: false,
+            disablePadding: false,
+            label: 'Discount Type',
+        },
+        {
+            id: 'discountPercentages',
+            numeric: false,
+            disablePadding: false,
+            label: 'Discount Percentages',
+        },
+
     ];
 
     // Calculate tax and total amounts
@@ -1035,6 +1048,22 @@ const CustomersSalesOrders = () => {
                                                             </Typography>
                                                         )}
                                                     </TableCell>
+
+                                                    <TableCell sx={{ width: 100 }}>
+                                                        <Box>
+                                                            <Typography variant="body2">
+                                                                {row.discountType || ""}
+                                                            </Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell sx={{ width: 100 }}>
+                                                        <Box>
+                                                            <Typography variant="body2">
+                                                                {row.discountPercentages || ""}
+                                                            </Typography>
+                                                        </Box>
+                                                    </TableCell>
+
                                                 </TableRow>
                                             );
                                         })}

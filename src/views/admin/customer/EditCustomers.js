@@ -37,7 +37,8 @@ const EditCustomers = () => {
     billingState: '',
     billingZip: '',
     password: '',
-    inactive: false
+    inactive: false,
+    markupDiscount: null
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -301,7 +302,7 @@ const EditCustomers = () => {
         </Grid>
 
         {/* Net Terms - Single field in row 6 */}
-        <Grid size={12}>
+        <Grid size={6}>
           <CustomFormLabel htmlFor="netTerms" sx={{ mt: 0 }}>
             Net Terms
             <span style={{ color: 'red' }}>*</span>
@@ -313,6 +314,21 @@ const EditCustomers = () => {
             onChange={(e) => setFormData({ ...formData, netTerms: e.target.value })}
             disabled={loading}
             placeholder="Enter Net Terms (e.g., Net 30)"
+          />
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="netTerms" sx={{ mt: 0 }}>
+            Markup Discount
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="netTerms"
+            fullWidth
+            value={formData.markupDiscount}
+            onChange={(e) => setFormData({ ...formData, markupDiscount: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Markup/Discount value eg: +10/-10"
           />
         </Grid>
 
@@ -579,6 +595,9 @@ const EditCustomers = () => {
             </Box>
           </FormControl>
         </Grid>
+
+
+
 
         {/* Error Message */}
         {error && (

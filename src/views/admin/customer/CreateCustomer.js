@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Grid, 
-  MenuItem, 
-  Select, 
-  FormControl, 
-  Checkbox, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  Typography, 
-  Box, 
+import {
+  Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Typography,
+  Box,
   DialogActions,
   Card,
   CardContent,
@@ -59,7 +59,8 @@ const CreateCustomer = () => {
       isDefault: true
     }],
     password: '',
-    inactive: false
+    inactive: false,
+    markupDiscount: null,
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -90,12 +91,12 @@ const CreateCustomer = () => {
   const removeShippingAddress = (index) => {
     if (formData.shippingAddresses.length > 1) {
       const updatedAddresses = formData.shippingAddresses.filter((_, i) => i !== index);
-      
+
       // If we removed the default address, make the first one default
       if (formData.shippingAddresses[index].isDefault && updatedAddresses.length > 0) {
         updatedAddresses[0].isDefault = true;
       }
-      
+
       setFormData({
         ...formData,
         shippingAddresses: updatedAddresses
@@ -154,12 +155,12 @@ const CreateCustomer = () => {
   const removeBillingAddress = (index) => {
     if (formData.billingAddresses.length > 1) {
       const updatedAddresses = formData.billingAddresses.filter((_, i) => i !== index);
-      
+
       // If we removed the default address, make the first one default
       if (formData.billingAddresses[index].isDefault && updatedAddresses.length > 0) {
         updatedAddresses[0].isDefault = true;
       }
-      
+
       setFormData({
         ...formData,
         billingAddresses: updatedAddresses
@@ -215,7 +216,7 @@ const CreateCustomer = () => {
     }
 
     // Validate at least one complete shipping address
-    const hasValidShippingAddress = formData.shippingAddresses.some(addr => 
+    const hasValidShippingAddress = formData.shippingAddresses.some(addr =>
       addr.shippingAddressOne && addr.shippingCity && addr.shippingState && addr.shippingZip
     );
     if (!hasValidShippingAddress) {
@@ -224,7 +225,7 @@ const CreateCustomer = () => {
     }
 
     // Validate at least one complete billing address
-    const hasValidBillingAddress = formData.billingAddresses.some(addr => 
+    const hasValidBillingAddress = formData.billingAddresses.some(addr =>
       addr.billingAddressOne && addr.billingCity && addr.billingState
     );
     if (!hasValidBillingAddress) {
@@ -832,6 +833,19 @@ const CreateCustomer = () => {
                 disabled={loading}
               />
               <Typography>Mark as Inactive</Typography>
+            </Box>
+          </FormControl>
+        </Grid>
+
+        <Grid size={12} sx={{ mt: 2 }}>
+          <FormControl>
+            <Box display="flex" alignItems="center">
+              <Checkbox
+                checked={formData.markupDiscount}
+                onChange={(e) => setFormData({ ...formData, markupDiscount: e.target.checked })}
+                disabled={loading}
+              />
+              <Typography>Enter Markup/Discount value</Typography>
             </Box>
           </FormControl>
         </Grid>
