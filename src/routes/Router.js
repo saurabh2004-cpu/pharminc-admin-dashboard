@@ -37,9 +37,11 @@ const EditBadge = Loadable(lazy(() => import('../views/admin/badge/EditBadge')))
 const ListPricingGroups = Loadable(lazy(() => import('../views/admin/pricingGroups/ListPricingGroups')));
 const CreatePricingGroups = Loadable(lazy(() => import('../views/admin/pricingGroups/CreatePricingGroups')));
 const EditPricingGroups = Loadable(lazy(() => import('../views/admin/pricingGroups/EditPricingGroups')));
+
 const CreatePricingGroupsDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/CreatePricingGroupsDiscounts')));
 const ListPricingGroupsDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/ListPricingGroupsDiscounts')));
 const EditPricingGroupsDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/EditPricingGroupsDiscounts')));
+
 const CreateTax = Loadable(lazy(() => import('../views/admin/tax/CreateTax')));
 const ListTax = Loadable(lazy(() => import('../views/admin/tax/ListTax')));
 const EditTax = Loadable(lazy(() => import('../views/admin/tax/EditTax')));
@@ -62,6 +64,8 @@ const ChnagePassword = Loadable(lazy(() => import('../views/admin/customer/Chnag
 const CreateGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/CreateGroupsDiscounts')));
 const ListGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/ListGroupsDiscounts')));
 const EditGroupsDiscounts = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/EditGroupsDiscounts')));
+const EditCustomersPercentage = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/EditCustomersPercentage')));
+
 const ListNetTerms = Loadable(lazy(() => import('../views/admin/netTerms/ListNetTerms')));
 
 const CreateAdmin = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAdmin')));
@@ -70,7 +74,9 @@ const PendingApprovalCustomers = Loadable(lazy(() => import('../views/admin/cust
 const CreateSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/CreateSubCategoryTwo')));
 const SubCategoryTwoList = Loadable(lazy(() => import('../views/admin/subCategoryTwo/SubCategoryTwoList')));
 const EditSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/EditSubCategoryTwo')));
-const CustomersPricingGroups = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/CustomersPricingGroups')))
+
+const CustomersByPricingGroups = Loadable(lazy(() => import('../views/admin/groupsDiscounts.js/CustomersByPricingGroups')))
+
 const CustomersItemsBasedDiscounts = Loadable(lazy(() => import('../views/admin/pricingGroupsDiscounts/CustomersItemsBasedDiscounts')))
 const CustomersSalesOrders = Loadable(lazy(() => import('../views/admin/salesOrders/CustomersSalesOrders')))
 const SalesOrderProductsList = Loadable(lazy(() => import('../views/admin/salesOrders/SalesOrderProductsList')))
@@ -100,7 +106,7 @@ const SalesRepCustomers = Loadable(lazy(() => import('../views/salesRep/customer
 
 const CreateProductGroup = Loadable(lazy(() => import('../views/admin/productGroup/CreateProductGroup')));
 const ListProductGroup = Loadable(lazy(() => import('../views/admin/productGroup/ListProductGroup')));
-const ListGroupsProducts = Loadable(lazy(() => import('../views/admin/productGroup/ListGroupsProducts')));
+const ListProductGroupProducts = Loadable(lazy(() => import('../views/admin/productGroup/ListGroupsProducts')));
 const EditProductGroups = Loadable(lazy(() => import('../views/admin/productGroup/EditProductGroups')));
 
 const CreateMetaData = Loadable(lazy(() => import('../views/admin/metaData/CreateMetaData')));
@@ -154,7 +160,8 @@ const Router = [
       { path: '/dashboard/groups-discounts/create', element: <CreateGroupsDiscounts /> },
       { path: '/dashboard/groups-discounts/list', element: <ListGroupsDiscounts /> },
       { path: '/dashboard/groups-discounts/edit/:id', element: <EditGroupsDiscounts /> },
-      { path: '/dashboard/customers-pricing-groups/:id', element: <CustomersPricingGroups /> },
+      { path: '/dashboard/groups-discount/customers/:pricingGroupId', element: <CustomersByPricingGroups /> },
+      { path: '/dashboard/edit-customers-percentage/:customerId/:pricingGroupDiscountId/:discountId', element: <EditCustomersPercentage /> },
 
 
 
@@ -223,7 +230,7 @@ const Router = [
       
       { path: '/dashboard/productGroup/create', element: <CreateProductGroup /> },
       { path: '/dashboard/productGroup/list', element: <ListProductGroup /> },
-      { path: '/dashboard/productGroup/products/:id', element: <ListGroupsProducts /> },
+      { path: '/dashboard/productGroup/products/:id', element: <ListProductGroupProducts /> },
       { path: '/dashboard/productGroup/edit/:id', element: <EditProductGroups /> },
       
       { path: '/dashboard/meta-data/create', element: <CreateMetaData /> },

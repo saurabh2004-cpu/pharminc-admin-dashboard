@@ -661,7 +661,6 @@ const CreateProduct = () => {
         <Grid size={6}>
           <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
             Compare Price
-            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
             id="stockLevel"

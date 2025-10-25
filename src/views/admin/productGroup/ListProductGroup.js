@@ -77,11 +77,26 @@ function EnhancedTableHead(props) {
     zIndex: 5,
   };
 
+  // Column width configuration
+  const columnWidths = {
+    actions: { minWidth: '120px', maxWidth: '120px' },
+    thumbnail: { minWidth: '100px', maxWidth: '100px' },
+    name: { minWidth: '200px', maxWidth: '200px' },
+    slug: { minWidth: '180px', maxWidth: '180px' },
+    productsCount: { minWidth: '120px', maxWidth: '120px' },
+    commerceCategoryOne: { minWidth: '180px', maxWidth: '180px' },
+    commerceCategoryTwo: { minWidth: '180px', maxWidth: '180px' },
+    commerceCategoryThree: { minWidth: '180px', maxWidth: '180px' },
+    commerceCategoryFour: { minWidth: '180px', maxWidth: '180px' },
+    price: { minWidth: '120px', maxWidth: '120px' },
+    updatedAt: { minWidth: '150px', maxWidth: '150px' },
+  };
+
   return (
     <TableHead>
       <TableRow>
         {showCheckBox && (
-          <TableCell padding="checkbox">
+          <TableCell padding="checkbox" sx={{ minWidth: '60px', maxWidth: '60px' }}>
             <CustomCheckbox
               color="primary"
               checked={rowCount > 0 && numSelected === rowCount}
@@ -94,7 +109,7 @@ function EnhancedTableHead(props) {
         )}
 
         {/* Actions column */}
-        <TableCell sx={stickyCellStyle}>
+        <TableCell sx={{ ...stickyCellStyle, ...columnWidths.actions }}>
           Actions
         </TableCell>
 
@@ -104,7 +119,7 @@ function EnhancedTableHead(props) {
             align={headCell.numeric ? 'left' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={headCellStyle}
+            sx={{ ...headCellStyle, ...columnWidths[headCell.id] }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -121,8 +136,8 @@ function EnhancedTableHead(props) {
           </TableCell>
         ))}
 
-        {/* Created At column */}
-        <TableCell sx={headCellStyle}>
+        {/* Last Updated Date column */}
+        <TableCell sx={{ ...headCellStyle, ...columnWidths.updatedAt }}>
           Last Updated Date
         </TableCell>
       </TableRow>
@@ -182,16 +197,16 @@ const EnhancedTableToolbar = (props) => {
         </Tooltip>
       ) : (
         <>
-          <Tooltip title="Create Product Group">
-            {/* <Button 
-              size="small" 
-              variant="contained" 
+          {/* <Tooltip title="Create Product Group">
+            <Button
+              size="small"
+              variant="contained"
               onClick={handleCreateProductGroup}
               sx={{ backgroundColor: '#2E2F7F', mr: 1 }}
             >
               Create Product Group
-            </Button> */}
-          </Tooltip>
+            </Button>
+          </Tooltip> */}
           <Tooltip title="Filter list">
             <IconButton>
               <IconFilter size="1.2rem" />
@@ -244,12 +259,51 @@ const ListProductGroup = () => {
       disablePadding: false,
     },
     {
+      id: 'commerceCategoryOne',
+      label: 'Commerce Category One',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'commerceCategoryTwo',
+      label: 'Commerce Category Two',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'commerceCategoryThree',
+      label: 'Commerce Category Three',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'commerceCategoryFour',
+      label: 'Commerce Category Four',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
       id: 'price',
       label: 'Total Price',
       numeric: true,
       disablePadding: false,
     },
   ];
+
+  // Column width configuration for table body
+  const columnWidths = {
+    actions: { minWidth: '120px', maxWidth: '120px' },
+    thumbnail: { minWidth: '100px', maxWidth: '100px' },
+    name: { minWidth: '240px', maxWidth: '280px' },
+    slug: { minWidth: '240px', maxWidth: '280px' },
+    productsCount: { minWidth: '120px', maxWidth: '120px' },
+    commerceCategoryOne: { minWidth: '260px', maxWidth: '300px' },
+    commerceCategoryTwo: { minWidth: '260px', maxWidth: '300px' },
+    commerceCategoryThree: { minWidth: '260px', maxWidth: '300px' },
+    commerceCategoryFour: { minWidth: '180px', maxWidth: '180px' },
+    price: { minWidth: '120px', maxWidth: '120px' },
+    updatedAt: { minWidth: '150px', maxWidth: '150px' },
+  };
 
   // Fetch product groups
   const fetchProductGroups = async () => {
@@ -284,7 +338,11 @@ const ListProductGroup = () => {
       return (
         row?.name?.toLowerCase().includes(searchValue) ||
         row?.slug?.toLowerCase().includes(searchValue) ||
-        row?.price?.toString().includes(searchValue)
+        row?.price?.toString().includes(searchValue) ||
+        row.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue) ||
+        row.commerceCategoriesTwo?.name?.toLowerCase().includes(searchValue) ||
+        row.commerceCategoriesThree?.name?.toLowerCase().includes(searchValue) ||
+        row.commerceCategoriesFour?.name?.toLowerCase().includes(searchValue)
       );
     });
     setRows(filteredRows);
@@ -403,6 +461,7 @@ const ListProductGroup = () => {
     left: 0,
     zIndex: 5,
     backgroundColor: '#f0f8ff',
+    ...columnWidths.actions
   };
 
   return (
@@ -491,7 +550,7 @@ const ListProductGroup = () => {
                         </TableCell>
 
                         {/* Thumbnail */}
-                        <TableCell>
+                        <TableCell sx={columnWidths.thumbnail}>
                           <Avatar
                             src={row.thumbnail}
                             variant="rounded"
@@ -501,9 +560,12 @@ const ListProductGroup = () => {
                         </TableCell>
 
                         {/* Group Name */}
-                        <TableCell onClick={() => handleViewProductGroup(row._id)}>
+                        <TableCell
+                          sx={columnWidths.name}
+                          onClick={() => handleViewProductGroup(row._id)}
+                        >
                           <Typography
-                            fontWeight="600"
+                            fontWeight="400"
                             variant="body1"
                             sx={{
                               cursor: 'pointer',
@@ -515,29 +577,58 @@ const ListProductGroup = () => {
                             {row.name || 'N/A'}
                           </Typography>
                         </TableCell>
+
                         {/* Slug */}
-                        <TableCell>
+                        <TableCell sx={columnWidths.slug}>
                           <Typography variant="body2" color="textSecondary">
                             {row.slug || 'N/A'}
                           </Typography>
                         </TableCell>
 
                         {/* Products Count */}
-                        <TableCell align="center">
+                        <TableCell align="center" sx={columnWidths.productsCount}>
                           <Typography fontWeight="600">
                             {productsCount}
                           </Typography>
                         </TableCell>
 
+                        {/* Commerce Category One */}
+                        <TableCell sx={columnWidths.commerceCategoryOne}>
+                          <Typography variant="body2">
+                            {row?.commerceCategoriesOne?.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Commerce Category Two */}
+                        <TableCell sx={columnWidths.commerceCategoryTwo}>
+                          <Typography variant="body2">
+                            {row?.commerceCategoriesTwo?.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Commerce Category Three */}
+                        <TableCell sx={columnWidths.commerceCategoryThree}>
+                          <Typography variant="body2">
+                            {row?.commerceCategoriesThree?.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Commerce Category Four */}
+                        <TableCell sx={columnWidths.commerceCategoryFour}>
+                          <Typography variant="body2">
+                            {row?.commerceCategoriesFour?.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
                         {/* Total Price */}
-                        <TableCell align="center">
+                        <TableCell align="center" sx={columnWidths.price}>
                           <Typography fontWeight="600" color="primary">
                             ${row.price ? parseFloat(row.price).toFixed(2) : '0.00'}
                           </Typography>
                         </TableCell>
 
                         {/* Last Updated Date */}
-                        <TableCell>
+                        <TableCell sx={columnWidths.updatedAt}>
                           <Typography variant="body2">
                             {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
                           </Typography>

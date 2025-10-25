@@ -212,8 +212,6 @@ const ListTable = ({
   showCheckBox,
   headCells,
   tableData,
-  allPricingGroupDiscounts = [], // New prop for all discounts
-  pricingGroupsMap = {}, // New prop for pricing group name mapping
   isBrandsList = false,
   setTableData
 }) => {
@@ -222,9 +220,8 @@ const ListTable = ({
     filteredAndSortedProducts,
   } = useContext(ProductContext);
 
-
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('pricingGroup');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -235,7 +232,6 @@ const ListTable = ({
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-
   useEffect(() => {
     if (isBrandsList) {
       setRows(sourceData);
@@ -244,26 +240,28 @@ const ListTable = ({
     }
   }, [sourceData, filteredAndSortedProducts, isBrandsList]);
 
-  // const handleSearch = (event) => {
-  //   const searchValue = event.target.value.toLowerCase();
-  //   setSearch(searchValue);
+  const handleSearch = (event) => {
+    const searchValue = event.target.value.toLowerCase();
+    setSearch(searchValue);
 
-  //   if (isBrandsList) {
-  //     const filteredRows = sourceData.filter((row) => {
-  //       return (
-  //         row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-  //         row?.customerId?.toString().toLowerCase().includes(searchValue)
-  //       );
-  //     });
-  //     setRows(filteredRows);
-  //   } else {
-  //     const filteredRows = filteredAndSortedProducts.filter((row) => {
-  //       return row.title.toLowerCase().includes(searchValue);
-  //     });
-  //     setRows(filteredRows);
-  //   }
-  // };
+    if (isBrandsList) {
+      const filteredRows = sourceData.filter((row) => {
+        const pricingGroupName = row?.pricingGroup?.name?.toLowerCase() || '';
+        const customersCount = row?.customersCount?.toString() || '';
 
+        return (
+          pricingGroupName.includes(searchValue) ||
+          customersCount.includes(searchValue)
+        );
+      });
+      setRows(filteredRows);
+    } else {
+      const filteredRows = filteredAndSortedProducts.filter((row) => {
+        return row.title.toLowerCase().includes(searchValue);
+      });
+      setRows(filteredRows);
+    }
+  };
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -273,19 +271,19 @@ const ListTable = ({
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.name || n.title);
+      const newSelecteds = rows.map((n) => n._id);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
     let newSelected = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -309,150 +307,12 @@ const ListTable = ({
     setPage(0);
   };
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
-
-  const isSelected = (name) => selected.indexOf(name) !== -1;
+  const isSelected = (id) => selected.indexOf(id) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   const theme = useTheme();
   const borderColor = theme.palette.divider;
-  const [customerMap, setCustomerMap] = useState({});
-
-  //delete pricing group
-  // const handleDeletePricingGroup = async (id) => {
-  //   try {
-  //     const res = await axiosInstance.delete(`/pricing-groups-discount/delete-pricing-group-discount/${id}`);
-
-  //     console.log("deleted", res.data);
-
-  //     if (res.data.statusCode === 200) {
-  //       setTableData((prevData) => prevData.filter((item) => item._id !== id));
-  //       setRows((prevRows) => prevRows.filter((item) => item._id !== id));
-  //     }
-  //   } catch (error) {
-  //     console.error('Error deleting category:', error);
-  //   }
-  // };
-
-  const stickyCellStyle = {
-    position: "sticky",
-    left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
-  };
-
-  const handleCustomerIdClick = (id) => {
-    // navigate(`/dashboard/customers-pricing-groups/${id}`);
-  }
-
-  const fetchCustomerDetails = async () => {
-    try {
-      const uniqueCustomerIds = [...new Set(rows.map((r) => r.customerId))].filter(Boolean);
-
-      if (uniqueCustomerIds.length === 0) {
-        console.log("No customer IDs found");
-        return;
-      }
-
-      console.log("Fetching details for customer IDs:", uniqueCustomerIds);
-
-      const responses = await Promise.all(
-        uniqueCustomerIds.map((id) =>
-          axiosInstance.get(`/admin/get-user-by-customerId/${id}`)
-            .then(response => ({ success: true, data: response.data, id }))
-            .catch((err) => {
-              console.error(`API error for id ${id}:`, err.response?.data || err.message);
-              return { success: false, id, error: err };
-            })
-        )
-      );
-
-      console.log("All customer API responses:", responses);
-
-      const map = {};
-      responses.forEach((response) => {
-        if (response.success && response.data?.statusCode === 200) {
-          const customerData = response.data.data;
-
-          // Try multiple possible fields for customer name
-          const customerName =
-            customerData?.customerName ||
-            customerData?.contactName ||
-            customerData?.storeName ||
-            customerData?.name ||
-            "N/A";
-
-          map[response.id] = customerName;
-          console.log(`✅ Mapped ${response.id} to: ${customerName}`);
-        } else {
-          map[response.id] = "Not Found";
-          console.log(`❌ Failed to fetch details for: ${response.id}`);
-        }
-      });
-
-      console.log("Final customer map:", map);
-      setCustomerMap(map);
-    } catch (error) {
-      console.error("Error in fetchCustomerDetails:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (rows.length > 0) {
-      fetchCustomerDetails();
-    }
-  }, [rows]);
-  const handleSearch = (event) => {
-    const searchValue = event.target.value.toLowerCase();
-    setSearch(searchValue);
-
-    if (isBrandsList) {
-      if (searchValue.trim() === '') {
-        // If search is empty, show all tableData
-        setRows(tableData);
-        return;
-      }
-
-      // Filter based on customer ID, customer name, or pricing group names
-      const filteredRows = tableData.filter((row) => {
-        const customerIdMatch = row?.customerId?.toString().toLowerCase().includes(searchValue);
-        const customerNameMatch = customerMap[row.customerId]?.toLowerCase().includes(searchValue);
-
-        // Check if any pricing group name for this customer matches
-        const pricingGroupNames = getCustomerPricingGroupNames(row.customerId).toLowerCase();
-        const pricingGroupMatch = pricingGroupNames.includes(searchValue);
-
-        return customerIdMatch || customerNameMatch || pricingGroupMatch;
-      });
-
-      setRows(filteredRows);
-    } else {
-      // Existing product search logic
-      const filteredRows = filteredAndSortedProducts.filter((row) => {
-        return row.title.toLowerCase().includes(searchValue);
-      });
-      setRows(filteredRows);
-    }
-  };
-
-  const getCustomerPricingGroupNames = (customerId) => {
-    const customerDiscounts = allPricingGroupDiscounts.filter(
-      discount => discount.customerId === customerId
-    );
-
-    return customerDiscounts.map(discount => {
-      const groupId = discount.pricingGroup;
-      // If pricingGroup is an object, use its name directly
-      if (typeof groupId === 'object' && groupId !== null) {
-        return groupId.name;
-      }
-      // If it's a string ID, look it up in the map
-      return pricingGroupsMap[groupId] || `Group ${groupId}`;
-    }).join(', ');
-  };
 
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
@@ -470,66 +330,60 @@ const ListTable = ({
     });
   };
 
-  const handleDeleteClick = (event, id, name, _id) => {
-    event.stopPropagation(); // Prevent row selection
+  const handleDeleteClick = (event, id, name) => {
+    event.stopPropagation();
     setDeleteDialog({
       open: true,
       itemId: id,
       itemName: name,
-      isDeleting: false,
-      _id: _id
+      isDeleting: false
     });
   };
 
-  //delete sales order
-  // Update the delete handler to use the correct endpoint
   const handleDeleteGroupsDiscounts = async () => {
     try {
-      const res = await axiosInstance.delete(`/pricing-groups-discount/delete-pricing-group-discount/${deleteDialog._id}`, {
-        data: { customerId: deleteDialog.originalCustomerId }
-      });
+      setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
+
+      const res = await axiosInstance.delete(`/pricing-groups-discount/delete-pricing-group-discount/${deleteDialog.itemId}`);
 
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
-        setRows(prevRows => prevRows.filter(row => row._id !== deleteDialog.compositeId));
+        setRows(prevRows => prevRows.filter(row => row._id !== deleteDialog.itemId));
 
-        // ✅ Update the parent component's tableData
         if (setTableData) {
-          setTableData(prevData => prevData.filter(item => item._id !== deleteDialog.compositeId));
+          setTableData(prevData => prevData.filter(item => item._id !== deleteDialog.itemId));
         }
-
 
         handleDeleteCancel();
       }
     } catch (error) {
       console.error('Error deleting pricing group discount:', error);
+    } finally {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
     }
   };
 
-  const columnWidths = {
-    serial: { minWidth: '80px' },
-    date: { minWidth: '200px' },
-    document: { minWidth: '200px' },
-    customer: { minWidth: '300px' },
-    salesChannel: { minWidth: '150px' },
-    tracking: { minWidth: '200px' },
-    shipping: { minWidth: '400px', },
-    billing: { minWidth: '400px', },
-    customerPO: { minWidth: '150px' },
-    itemSku: { minWidth: '150px' },
-    packQuantity: { minWidth: '160px' },
-    unitsQuantity: { minWidth: '160px' },
-    amount: { minWidth: '160px' },
-    finalAmount: { minWidth: '160px' },
-    createdAt: { minWidth: '200px' },
-    actions: { minWidth: '160px' },
-  };
-
   const handleEditPricingGroup = (row) => {
-    navigate(`/dashboard/groups-discounts/edit/${row.originalDiscountId}`);
+    navigate(`/dashboard/groups-discounts/edit/${row._id}`);
   }
 
+  const handlePricingGroupClick = (id) => {
+    navigate(`/dashboard/groups-discount/customers/${id}`)
+  }
+
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
+  };
+
+  const headCellStyle = {
+    backgroundColor: '#f0f8ff',
+    fontWeight: 600,
+    zIndex: 4,
+  };
 
   return (
     <Box>
@@ -538,21 +392,21 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder="Search Customer ID, Name, or Pricing Group"
+          placeholder="Search Pricing Group"
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
             <Table
               sx={{
                 minWidth: 1000,
-                borderCollapse: "collapse", // ensures borders connect
+                borderCollapse: "collapse",
                 "& td, & th": {
-                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingTop: "4px",
                   paddingBottom: "4px",
-                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                  borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
-                  borderRight: "none", // no border on last column
+                  borderRight: "none",
                 },
               }}
               aria-labelledby="tableTitle"
@@ -572,13 +426,8 @@ const ListTable = ({
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row, index) => {
-                    const isItemSelected = isSelected(row.name || row.title);
+                    const isItemSelected = isSelected(row._id);
                     const labelId = `enhanced-table-checkbox-${index}`;
-
-                    // Get pricing group name
-                    const pricingGroupName = row.pricingGroup && typeof row.pricingGroup === 'object'
-                      ? row.pricingGroup.name
-                      : pricingGroupsMap[row.pricingGroup] || `Group ${row.pricingGroup}`;
 
                     return (
                       <TableRow
@@ -589,10 +438,15 @@ const ListTable = ({
                         key={row._id}
                         selected={isItemSelected}
                       >
-                        <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
+                        {/* Actions Column */}
+                        <TableCell sx={stickyCellStyle}>
                           <Box display="flex" gap={1}>
                             <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => handleEditPricingGroup(row)}>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleEditPricingGroup(row)}
+                              >
                                 <IconEdit size="1.1rem" />
                               </IconButton>
                             </Tooltip>
@@ -600,7 +454,7 @@ const ListTable = ({
                               <IconButton
                                 size="small"
                                 color="error"
-                                onClick={(e) => handleDeleteClick(e, row.customerId, row.customerName, row.originalDiscountId)}
+                                onClick={(e) => handleDeleteClick(e, row._id, row.pricingGroup?.name || 'Pricing Group Discount')}
                               >
                                 <IconTrash size="1.1rem" />
                               </IconButton>
@@ -608,35 +462,20 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={{ cursor: "pointer", ":hover": { color: "blue" } }}>
-                          <Typography fontWeight="600" onClick={() => handleCustomerIdClick(row.customerId)}>
-                            {row.customerId}
+                        {/* Pricing Group Column */}
+                        <TableCell sx={{ cursor: 'pointer', ":hover": { color: 'blue' } }} onClick={() => handlePricingGroupClick(row.pricingGroup?._id)}>
+                          <Typography variant="body1" fontWeight="600">
+                            {row.pricingGroup?.name || 'N/A'}
                           </Typography>
                         </TableCell>
 
+
+
+                        {/* Last Updated Date Column */}
                         <TableCell>
-                          <Typography fontWeight="600">
-                            {row.customerName}
+                          <Typography variant="body2">
+                            {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
                           </Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography>{pricingGroupName}</Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography
-                            sx={{
-                              color: row.percentage.startsWith('+') ? 'success.main' : 'error.main',
-                              fontWeight: 600
-                            }}
-                          >
-                            {row.percentage}
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography>{format(new Date(row.updatedAt), 'E, MMM d yyyy')}</Typography>
                         </TableCell>
                       </TableRow>
                     );
@@ -644,6 +483,15 @@ const ListTable = ({
                 {emptyRows > 0 && (
                   <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
                     <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
+                  </TableRow>
+                )}
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} align="center" sx={{ py: 3 }}>
+                      <Typography variant="h6" color="textSecondary">
+                        {search ? 'No pricing group discounts found matching your search' : 'No pricing group discounts found'}
+                      </Typography>
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>

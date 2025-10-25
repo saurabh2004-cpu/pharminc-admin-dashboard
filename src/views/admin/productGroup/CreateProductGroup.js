@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { 
-    Grid, 
-    MenuItem, 
-    Select, 
-    FormControl, 
-    Dialog, 
-    DialogTitle, 
-    DialogContent, 
-    Typography, 
-    Box, 
+import {
+    Grid,
+    MenuItem,
+    Select,
+    FormControl,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    Typography,
+    Box,
     DialogActions,
     Chip,
     List,
@@ -31,16 +31,26 @@ const CreateProductGroup = () => {
         name: '',
         slug: '',
         products: [],
-        price: 0,
+        price: null,
+        commerceCategoriesOne: '',
+        commerceCategoriesTwo: '',
+        commerceCategoriesThree: '',
+        commerceCategoriesFour: '',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    
+
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [products, setProducts] = useState([]);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
+
+    // Commerce category states
+    const [categoryOne, setCategoryOne] = useState([]);
+    const [categoryTwo, setCategoryTwo] = useState([]);
+    const [categoryThree, setCategoryThree] = useState([]);
+    const [categoryFour, setCategoryFour] = useState([]);
 
     // Generate slug from name
     const generateSlug = (name) => {
@@ -64,12 +74,12 @@ const CreateProductGroup = () => {
     const handleProductSelection = (e) => {
         const selectedIds = e.target.value;
         setSelectedProductIds(selectedIds);
-        
+
         // Calculate total price from selected products
-        const selectedProducts = products.filter(product => 
+        const selectedProducts = products.filter(product =>
             selectedIds.includes(product._id)
         );
-        
+
         const totalPrice = selectedProducts.reduce((sum, product) => {
             return sum + (product.eachPrice || 0);
         }, 0);
@@ -77,7 +87,6 @@ const CreateProductGroup = () => {
         setFormData(prev => ({
             ...prev,
             products: selectedIds,
-            price: parseFloat(totalPrice.toFixed(2))
         }));
     };
 
@@ -85,19 +94,14 @@ const CreateProductGroup = () => {
     const handleRemoveProduct = (productId) => {
         const updatedSelectedIds = selectedProductIds.filter(id => id !== productId);
         setSelectedProductIds(updatedSelectedIds);
-        
-        const selectedProducts = products.filter(product => 
+
+        const selectedProducts = products.filter(product =>
             updatedSelectedIds.includes(product._id)
         );
-        
-        const totalPrice = selectedProducts.reduce((sum, product) => {
-            return sum + (product.eachPrice || 0);
-        }, 0);
 
         setFormData(prev => ({
             ...prev,
             products: updatedSelectedIds,
-            price: parseFloat(totalPrice.toFixed(2))
         }));
     };
 
@@ -140,6 +144,10 @@ const CreateProductGroup = () => {
             setError('Please upload a thumbnail image');
             return;
         }
+        if (!formData.commerceCategoriesOne) {
+            setError('Please select a brand (Commerce Category One)');
+            return;
+        }
 
         setLoading(true);
         setError('');
@@ -149,7 +157,13 @@ const CreateProductGroup = () => {
         formDataToSend.append('name', formData.name);
         formDataToSend.append('slug', formData.slug);
         formDataToSend.append('price', formData.price.toString());
-        
+        formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
+
+        // Append optional commerce categories
+        if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
+        if (formData.commerceCategoriesThree) formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree);
+        if (formData.commerceCategoriesFour) formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour);
+
         // Append products as array
         selectedProductIds.forEach(productId => {
             formDataToSend.append('products', productId);
@@ -174,10 +188,14 @@ const CreateProductGroup = () => {
                     slug: '',
                     products: [],
                     price: 0,
+                    commerceCategoriesOne: '',
+                    commerceCategoriesTwo: '',
+                    commerceCategoriesThree: '',
+                    commerceCategoriesFour: '',
                 });
                 setSelectedProductIds([]);
                 handleRemoveThumbnail();
-                
+
                 navigate('/dashboard/product-groups/list');
             } else if (res.data.statusCode === 400) {
                 setError(res.data.message);
@@ -218,12 +236,134 @@ const CreateProductGroup = () => {
         }
     };
 
+    // Fetch functions for commerce categories
+    const fetchBrandsList = async () => {
+        try {
+            const response = await axiosInstance.get('/brand/get-brands-list');
+            console.log("response brands", response);
+
+            if (response.data.statusCode === 200) {
+                setCategoryOne(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching brands list:', error);
+            setError('Failed to fetch brands');
+        }
+    };
+
+    const fetchCategoryList = async () => {
+        if (!formData.commerceCategoriesOne) return;
+
+        try {
+            console.log("Fetching categories for brand ID:", formData.commerceCategoriesOne);
+            const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${formData.commerceCategoriesOne}`);
+            console.log("response categories", response);
+
+            if (response.data.statusCode === 200) {
+                setCategoryTwo(response.data.data);
+            } else {
+                setCategoryTwo([]);
+            }
+        } catch (error) {
+            console.error('Error fetching category list:', error);
+            setCategoryTwo([]);
+            setError('Failed to fetch categories');
+        }
+    };
+
+    const fetchSubCategoryList = async () => {
+        if (!formData.commerceCategoriesTwo) return;
+
+        try {
+            console.log("Fetching subcategories for category ID:", formData.commerceCategoriesTwo);
+            const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${formData.commerceCategoriesTwo}`);
+            console.log("response sub categories", response.data.data);
+
+            if (response.data.statusCode === 200) {
+                setCategoryThree(response.data.data);
+            } else {
+                setCategoryThree([]);
+            }
+        } catch (error) {
+            console.error('Error fetching sub category list:', error);
+            setCategoryThree([]);
+            setError('Failed to fetch subcategories');
+        }
+    };
+
+    const fetchSubCategoryTwoList = async () => {
+        if (!formData.commerceCategoriesThree) return;
+
+        try {
+            console.log("Fetching sub-subcategories for subcategory ID:", formData.commerceCategoriesThree);
+            const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${formData.commerceCategoriesThree}`);
+            console.log("response sub categories two", response.data.data);
+
+            if (response.data.statusCode === 200) {
+                setCategoryFour(response.data.data);
+            } else {
+                setCategoryFour([]);
+            }
+        } catch (error) {
+            console.error('Error fetching sub category two list:', error);
+            setCategoryFour([]);
+            setError('Failed to fetch sub-subcategories');
+        }
+    };
+
+    // Effects for commerce category dependencies
+    useEffect(() => {
+        if (formData.commerceCategoriesOne) {
+            fetchCategoryList();
+        } else {
+            // Clear child categories when brand is not selected
+            setCategoryTwo([]);
+            setCategoryThree([]);
+            setCategoryFour([]);
+            setFormData(prev => ({
+                ...prev,
+                commerceCategoriesTwo: '',
+                commerceCategoriesThree: '',
+                commerceCategoriesFour: ''
+            }));
+        }
+    }, [formData.commerceCategoriesOne]);
+
+    useEffect(() => {
+        if (formData.commerceCategoriesTwo) {
+            fetchSubCategoryList();
+        } else {
+            // Clear child categories when category is not selected
+            setCategoryThree([]);
+            setCategoryFour([]);
+            setFormData(prev => ({
+                ...prev,
+                commerceCategoriesThree: '',
+                commerceCategoriesFour: ''
+            }));
+        }
+    }, [formData.commerceCategoriesTwo]);
+
+    useEffect(() => {
+        if (formData.commerceCategoriesThree) {
+            fetchSubCategoryTwoList();
+        } else {
+            // Clear child categories when subcategory is not selected
+            setCategoryFour([]);
+            setFormData(prev => ({
+                ...prev,
+                commerceCategoriesFour: ''
+            }));
+        }
+    }, [formData.commerceCategoriesThree]);
+
     useEffect(() => {
         fetchProducts();
+        fetchBrandsList();
     }, []);
 
     // Get selected products details for display
-    const selectedProductsDetails = products.filter(product => 
+    const selectedProductsDetails = products.filter(product =>
         selectedProductIds.includes(product._id)
     );
 
@@ -318,6 +458,177 @@ const CreateProductGroup = () => {
                     )}
                 </Grid>
 
+                {/* Commerce Category One (Brand) */}
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
+                        Select Commerce Category One (Brand)
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Select
+                            id="commerce-category-one-select"
+                            value={formData.commerceCategoriesOne}
+                            onChange={(e) => {
+                                setFormData({
+                                    ...formData,
+                                    commerceCategoriesOne: e.target.value,
+                                    // Clear child categories when brand changes
+                                    commerceCategoriesTwo: '',
+                                    commerceCategoriesThree: '',
+                                    commerceCategoriesFour: ''
+                                });
+                            }}
+                            disabled={loading || categoryOne.length === 0}
+                            displayEmpty
+                            sx={{
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.23)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.87)',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'primary.main',
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>
+                                {categoryOne.length === 0 ? 'Loading brands...' : 'Select a brand'}
+                            </MenuItem>
+                            {categoryOne.map((category) => (
+                                <MenuItem key={category._id} value={category._id}>
+                                    {category.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+
+                {/* Commerce Category Two */}
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
+                        Select Commerce Category Two
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Select
+                            id="commerce-category-two-select"
+                            value={formData.commerceCategoriesTwo}
+                            onChange={(e) => {
+                                setFormData({
+                                    ...formData,
+                                    commerceCategoriesTwo: e.target.value,
+                                    // Clear child categories when category changes
+                                    commerceCategoriesThree: '',
+                                    commerceCategoriesFour: ''
+                                });
+                            }}
+                            disabled={loading || categoryTwo.length === 0}
+                            displayEmpty
+                            sx={{
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.23)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.87)',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'primary.main',
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>
+                                {categoryTwo.length === 0 ? 'Select brand first...' : 'Select a category'}
+                            </MenuItem>
+                            {categoryTwo.map((category) => (
+                                <MenuItem key={category._id} value={category._id}>
+                                    {category.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+
+                {/* Commerce Category Three */}
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
+                        Select Commerce Category Three
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Select
+                            id="commerceCategoryThree-select"
+                            value={formData.commerceCategoriesThree}
+                            onChange={(e) => {
+                                setFormData({
+                                    ...formData,
+                                    commerceCategoriesThree: e.target.value,
+                                    // Clear child categories when subcategory changes
+                                    commerceCategoriesFour: ''
+                                });
+                            }}
+                            disabled={loading || categoryThree.length === 0}
+                            displayEmpty
+                            sx={{
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.23)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.87)',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'primary.main',
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>
+                                {categoryThree.length === 0 ? 'Select category first...' : 'Select a subcategory'}
+                            </MenuItem>
+                            {categoryThree.map((category) => (
+                                <MenuItem key={category._id} value={category._id}>
+                                    {category.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+
+                {/* Commerce Category Four */}
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
+                        Select Commerce Category Four
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Select
+                            id="commerceCategoryFour-select"
+                            value={formData.commerceCategoriesFour}
+                            onChange={(e) => {
+                                setFormData({ ...formData, commerceCategoriesFour: e.target.value });
+                            }}
+                            disabled={loading || categoryFour.length === 0}
+                            displayEmpty
+                            sx={{
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.23)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.87)',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'primary.main',
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>
+                                {categoryFour.length === 0 ? 'No SubCategory Two Available' : 'Select a sub-subcategory'}
+                            </MenuItem>
+                            {categoryFour.map((category) => (
+                                <MenuItem key={category._id} value={category._id}>
+                                    {category.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+
                 {/* Product Selection */}
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="product-select" sx={{ mt: 2 }}>
@@ -364,8 +675,8 @@ const CreateProductGroup = () => {
                                         <ListItem
                                             key={product._id}
                                             secondaryAction={
-                                                <IconButton 
-                                                    edge="end" 
+                                                <IconButton
+                                                    edge="end"
                                                     onClick={() => handleRemoveProduct(product._id)}
                                                     disabled={loading}
                                                 >
@@ -389,25 +700,24 @@ const CreateProductGroup = () => {
                 <Grid size={6}>
                     <CustomFormLabel htmlFor="price" sx={{ mt: 2 }}>
                         Total Price
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                     <CustomOutlinedInput
                         id="price"
                         fullWidth
-                        value={`$${formData.price.toFixed(2)}`}
-                        sx={{
-                            backgroundColor: '#f5f5f5',
-                            '& .MuiOutlinedInput-input': {
-                                color: '#2E2F7F',
-                                fontWeight: 'bold'
-                            }
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            setFormData(prev => ({
+                                ...prev,
+                                price: value
+                            }));
                         }}
+                        disabled={loading}
+                        placeholder="Enter custom price"
                     />
-                    <Typography variant="caption" color="textSecondary">
-                        Auto-calculated from selected products
-                    </Typography>
                 </Grid>
-
-                
 
                 {/* Error Message */}
                 {error && (
@@ -450,10 +760,7 @@ const CreateProductGroup = () => {
 
             {/* Loading Backdrop */}
             <Backdrop
-                sx={{
-                    color: '#fff',
-                    zIndex: (theme) => theme.zIndex.drawer + 1,
-                }}
+                
                 open={loading}
             >
                 <Box display="flex" flexDirection="column" alignItems="center" gap={2}>

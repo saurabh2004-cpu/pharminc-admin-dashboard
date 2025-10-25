@@ -412,26 +412,7 @@ const Menuitems = [
   //     },
   //   ]
   // },
-  {
-    id: uniqueId(),
-    title: 'Sales Rep ',
-    icon: IconNotebook,
-    href: '/dashboard/sales-rep',
-    children: [
-      {
-        id: uniqueId(),
-        title: ' Create Sales Rep',
-        icon: IconPoint,
-        href: '/dashboard/SalesRep/create',
-      },
-      {
-        id: uniqueId(),
-        title: ' Sales Rep List',
-        icon: IconPoint,
-        href: '/dashboard/SalesRep/list',
-      },
-    ]
-  },
+
   {
     id: uniqueId(),
     title: 'NetTerms',
@@ -507,6 +488,26 @@ const Menuitems = [
         title: 'Tax List',
         icon: IconPoint,
         href: '/dashboard/tax/list',
+      },
+    ]
+  },
+  {
+    id: uniqueId(),
+    title: 'Sales Rep ',
+    icon: IconNotebook,
+    href: '/dashboard/sales-rep',
+    children: [
+      {
+        id: uniqueId(),
+        title: ' Create Sales Rep',
+        icon: IconPoint,
+        href: '/dashboard/SalesRep/create',
+      },
+      {
+        id: uniqueId(),
+        title: ' Sales Rep List',
+        icon: IconPoint,
+        href: '/dashboard/SalesRep/list',
       },
     ]
   },

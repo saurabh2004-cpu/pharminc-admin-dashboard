@@ -26,12 +26,10 @@ import {
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-// import CustomSwitch from '../../../forms/theme-elements/CustomSwitch';
 import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
-import axios from 'axios';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
@@ -41,14 +39,10 @@ function descendingComparator(a, b, orderBy) {
     if (b[orderBy] > a[orderBy]) {
         return 1;
     }
-
     return 0;
 }
 
-function getComparator(
-    order,
-    orderBy,
-) {
+function getComparator(order, orderBy) {
     return order === 'desc'
         ? (a, b) => descendingComparator(a, b, orderBy)
         : (a, b) => -descendingComparator(a, b, orderBy);
@@ -72,14 +66,14 @@ function EnhancedTableHead(props) {
     const stickyCellStyle = {
         position: "sticky",
         left: 0,
-        zIndex: 5, // higher than other cells so it stays on top
-        backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+        zIndex: 5,
+        backgroundColor: '#f0f8ff',
     };
 
     const headCellStyle = {
-        backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+        backgroundColor: '#f0f8ff',
         fontWeight: 600,
-        zIndex: 4, // slightly lower than sticky so sticky overlaps
+        zIndex: 4,
     };
 
     return (
@@ -123,34 +117,13 @@ function EnhancedTableHead(props) {
                         </TableSortLabel>
                     </TableCell>
                 ))}
-
-
             </TableRow>
         </TableHead>
     );
 }
 
 const EnhancedTableToolbar = (props) => {
-    const { numSelected, handleSearch, search, placeholder, rows, headCells } = props;
-
-    const handleExportCSV = async () => {
-        try {
-            const response = await axiosInstance.get(
-                '/pricing-groups-discount/export-pricing-group-discounts',
-                { responseType: 'blob' }
-            );
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute("download", "pricing_group_discounts_export.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (error) {
-            console.error("Error exporting CSV:", error);
-        }
-    };
+    const { numSelected, handleSearch, search, placeholder } = props;
 
     return (
         <Toolbar
@@ -194,135 +167,141 @@ const EnhancedTableToolbar = (props) => {
                     </IconButton>
                 </Tooltip>
             ) : (
-                <>
-                    <Tooltip title="Filter list">
-                        <IconButton>
-                            <IconFilter size="1.2rem" />
-                        </IconButton>
-                    </Tooltip>
-                    {/* <Tooltip title="Export CSV">
-                        <Button size="small" variant="outlined" onClick={handleExportCSV}>Export</Button>
-                    </Tooltip> */}
-                </>
+                <Tooltip title="Filter list">
+                    <IconButton>
+                        <IconFilter size="1.2rem" />
+                    </IconButton>
+                </Tooltip>
             )}
         </Toolbar>
     );
 };
 
-const CustomersPricingGroups = () => {
-    const {
-        filteredAndSortedProducts,
-    } = useContext(ProductContext);
-
+const CustomersByPricingGroups = () => {
     const [order, setOrder] = useState('asc');
-    const [orderBy, setOrderBy] = useState('calories');
+    const [orderBy, setOrderBy] = useState('customerId');
     const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
     const [dense, setDense] = useState(false);
     const [rowsPerPage, setRowsPerPage] = useState(50);
-    const isBrandsList = true;
 
-    const [tableData, setTableData] = React.useState([]);
-    const [error, setError] = useState(''); // Added missing error state
-    const sourceData = tableData || [];
-    const [rows, setRows] = useState(sourceData);
+    const [tableData, setTableData] = useState([]);
+    const [flattenedCustomerData, setFlattenedCustomerData] = useState([]);
+    const [error, setError] = useState('');
+    const [rows, setRows] = useState([]);
     const [search, setSearch] = useState('');
     const navigate = useNavigate();
-    const { id } = useParams();
+    const { pricingGroupId } = useParams();
 
     // Define headCells for the table
     const headCells = [
         {
             key: 1,
-            id: 'CustomerId',
-            label: 'Customer Id',
+            id: 'customerId',
+            label: 'Customer ID',
             numeric: false,
             disablePadding: false
         },
         {
-            key: 1,
-            id: 'CustomerName',
+            key: 2,
+            id: 'customerName',
             label: 'Customer Name',
             numeric: false,
             disablePadding: false
         },
         {
-            key: 1,
-            id: 'cistomerEmail',
+            key: 3,
+            id: 'customerEmail',
             label: 'Customer Email',
             numeric: false,
             disablePadding: false
         },
         {
-            key: 1,
-            id: 'customerPhone',
-            label: 'Customer Phone',
+            key: 4,
+            id: 'percentage',
+            label: 'Discount Percentage',
             numeric: false,
             disablePadding: false
         },
         {
-            key: 1,
-            id: 'Pecentage',
-            label: 'Pecentage',
-            numeric: false,
-            disablePadding: false
-        },
-       
-        {
-            key: 1,
-            id: 'lastUpdatedDate',
+            key: 5,
+            id: 'updatedAt',
             label: 'Last Updated Date',
             numeric: false,
             disablePadding: false
         }
     ];
 
-    const fetchPricingGroupsDiscounts = async () => {
-        try {
-            const response = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discounts-by-customer-id/${id}`);
-            console.log("response pricing groups", response);
+    // Function to flatten the nested customer data
+    const flattenCustomerData = (apiData) => {
+        const flattened = [];
 
-            if (response.data.statusCode === 200) {
-                setTableData(response.data.data);
+        apiData.forEach(pricingGroupDiscount => {
+            if (pricingGroupDiscount.customers && Array.isArray(pricingGroupDiscount.customers)) {
+                pricingGroupDiscount.customers.forEach(customer => {
+                    flattened.push({
+                        // Customer details
+                        _id: customer._id, // The customer discount entry ID
+                        customerId: customer.user?.customerId,
+                        customerName: customer.user?.customerName,
+                        customerEmail: customer.user?.customerEmail,
+                        percentage: customer.percentage,
+                        userId: customer.user?._id, // Add user ID for deletion
+
+                        // Pricing group discount details
+                        pricingGroupDiscountId: pricingGroupDiscount._id,
+                        pricingGroupId: pricingGroupDiscount.pricingGroup,
+                        createdAt: pricingGroupDiscount.createdAt,
+                        updatedAt: pricingGroupDiscount.updatedAt
+                    });
+                });
             }
+        });
 
+        return flattened;
+    };
+
+    const fetchCustomersByPricingGroupId = async () => {
+        try {
+            const res = await axiosInstance.get(`/pricing-groups-discount/get-customers-by-pricing-group-id/${pricingGroupId}`);
+            console.log("response customers by pricing group id ", res);
+
+            if (res.data.statusCode === 200) {
+                setTableData(res.data.data);
+
+                // Flatten the nested customer data
+                const flattenedData = flattenCustomerData(res.data.data);
+                setFlattenedCustomerData(flattenedData);
+                setRows(flattenedData);
+
+
+            } else {
+                console.error(res.data.message);
+                setError(res.data.message);
+            }
         } catch (error) {
-            console.error('Error fetching pricing groups list:', error);
+            console.error(error.message);
             setError(error.message);
         }
     };
 
-    React.useEffect(() => {
-        fetchPricingGroupsDiscounts();
-    }, [id]);
-
     useEffect(() => {
-        if (isBrandsList) {
-            setRows(sourceData);
-        } else {
-            setRows(filteredAndSortedProducts);
-        }
-    }, [sourceData, filteredAndSortedProducts, isBrandsList]);
+        fetchCustomersByPricingGroupId();
+    }, [pricingGroupId]);
 
     const handleSearch = (event) => {
         const searchValue = event.target.value.toLowerCase();
         setSearch(searchValue);
 
-        if (isBrandsList) {
-            const filteredRows = sourceData.filter((row) => {
-                return (
-                    row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-                    row?.customerId?.toString().toLowerCase().includes(searchValue) ||
-                    row?.percentage?.includes(searchValue)
-                );
-            });
-            setRows(filteredRows);
-        } else {
-            const filteredRows = filteredAndSortedProducts.filter((row) => {
-                return row.title.toLowerCase().includes(searchValue);
-            });
-            setRows(filteredRows);
-        }
+        const filteredRows = flattenedCustomerData.filter((row) => {
+            return (
+                row?.customerId?.toLowerCase().includes(searchValue) ||
+                row?.customerName?.toLowerCase().includes(searchValue) ||
+                row?.customerEmail?.toLowerCase().includes(searchValue) ||
+                row?.percentage?.toString().includes(searchValue)
+            );
+        });
+        setRows(filteredRows);
     };
 
     const handleRequestSort = (event, property) => {
@@ -333,19 +312,19 @@ const CustomersPricingGroups = () => {
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelecteds = rows.map((n) => n.name || n.title);
+            const newSelecteds = rows.map((n) => n._id);
             setSelected(newSelecteds);
             return;
         }
         setSelected([]);
     };
 
-    const handleClick = (event, name) => {
-        const selectedIndex = selected.indexOf(name);
+    const handleClick = (event, id) => {
+        const selectedIndex = selected.indexOf(id);
         let newSelected = [];
 
         if (selectedIndex === -1) {
-            newSelected = newSelected.concat(selected, name);
+            newSelected = newSelected.concat(selected, id);
         } else if (selectedIndex === 0) {
             newSelected = newSelected.concat(selected.slice(1));
         } else if (selectedIndex === selected.length - 1) {
@@ -369,11 +348,7 @@ const CustomersPricingGroups = () => {
         setPage(0);
     };
 
-    const handleChangeDense = (event) => {
-        setDense(event.target.checked);
-    };
-
-    const isSelected = (name) => selected.indexOf(name) !== -1;
+    const isSelected = (id) => selected.indexOf(id) !== -1;
 
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
@@ -383,6 +358,8 @@ const CustomersPricingGroups = () => {
     const [deleteDialog, setDeleteDialog] = useState({
         open: false,
         itemId: null,
+        userId: null,
+        pricingGroupDiscountId: null,
         itemName: '',
         isDeleting: false
     });
@@ -391,54 +368,56 @@ const CustomersPricingGroups = () => {
         setDeleteDialog({
             open: false,
             itemId: null,
+            userId: null,
+            pricingGroupDiscountId: null,
             itemName: '',
             isDeleting: false
         });
     };
 
-    const handleDeleteClick = (event, id, name) => {
-        event.stopPropagation(); // Prevent row selection
+    const handleDeleteClick = (event, discountEntryId, customerName, userId, pricingGroupDiscountId) => {
+        event.stopPropagation();
         setDeleteDialog({
             open: true,
-            itemId: id,
-            itemName: name,
+            itemId: discountEntryId,
+            userId: userId,
+            pricingGroupDiscountId: pricingGroupDiscountId,
+            itemName: customerName,
             isDeleting: false
         });
     };
 
-    //delete pricing group discount
-    const handleDeletePricingGroupDiscount = async () => {
+    const handleDeleteCustomerDiscount = async () => {
         try {
             setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
 
             const res = await axiosInstance.delete(
-                `/pricing-groups-discount/delete-pricing-group-discount/${deleteDialog.itemId}`
+                `/pricing-groups-discount/remove-customer-from-pricingGroup-discount/${deleteDialog.userId}/${deleteDialog.pricingGroupDiscountId}`
             );
 
-            console.log("deleted", res.data);
+            console.log("deleted customer from discount", res.data);
 
             if (res.data.statusCode === 200) {
-                setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
-                setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+                // Refresh the data after deletion
+                fetchCustomersByPricingGroupId();
                 handleDeleteCancel();
             }
         } catch (error) {
-            console.error('Error deleting pricing group discount:', error);
+            console.error('Error deleting customer discount:', error);
             setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
         }
     };
 
-    //edit pricing group
-    const handleEditPricingGroup = (id) => {
-        navigate(`/dashboard/groups-discounts/edit/${id}`);
+    const handleEditCustomerDiscount = (customerData) => {
+        navigate(`/dashboard/edit-customers-percentage/${customerData.userId}/${customerData.pricingGroupDiscountId}/${pricingGroupId}`);
     };
+
     const stickyCellStyle = {
         position: "sticky",
         left: 0,
-        zIndex: 5, // higher than other cells so it stays on top
-        backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+        zIndex: 5,
+        backgroundColor: '#f0f8ff',
     };
-
 
     return (
         <Box>
@@ -447,21 +426,19 @@ const CustomersPricingGroups = () => {
                     numSelected={selected.length}
                     search={search}
                     handleSearch={handleSearch}
-                    placeholder={isBrandsList ? "Search Pricing Group Discount" : "Search Product"}
-                    rows={rows}
-                    headCells={headCells}
+                    placeholder="Search Customer ID, Name, Email or Percentage"
                 />
                 <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
                     <TableContainer>
                         <Table
                             sx={{
                                 minWidth: 1000,
-                                borderCollapse: "collapse", // ensures borders connect
+                                borderCollapse: "collapse",
                                 "& td, & th": {
-                                    borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                                    borderRight: "1px solid rgba(224, 224, 224, 1)",
                                 },
                                 "& td:last-child, & th:last-child": {
-                                    borderRight: "none", // no border on last column
+                                    borderRight: "none",
                                 },
                             }}
                             aria-labelledby="tableTitle"
@@ -481,7 +458,7 @@ const CustomersPricingGroups = () => {
                                 {stableSort(rows, getComparator(order, orderBy))
                                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                     .map((row, index) => {
-                                        const isItemSelected = isSelected(row.name || row.title);
+                                        const isItemSelected = isSelected(row._id);
                                         const labelId = `enhanced-table-checkbox-${index}`;
 
                                         return (
@@ -490,67 +467,91 @@ const CustomersPricingGroups = () => {
                                                 role="checkbox"
                                                 aria-checked={isItemSelected}
                                                 tabIndex={-1}
-                                                key={row._id || row.title}
+                                                key={row._id}
                                                 selected={isItemSelected}
                                             >
-                                                {isBrandsList ? (
-                                                    // Brands List View
-                                                    <>
-                                                        <TableCell sx={stickyCellStyle} >
-                                                            <Box display="flex" gap={1}>
-                                                                <Tooltip title="Edit">
-                                                                    <IconButton size="small" color="primary" onClick={() => handleEditPricingGroup(row?._id)}>
-                                                                        <IconEdit size="1.1rem" />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                                <Tooltip title="Delete">
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        color="error"
-                                                                        onClick={(e) => handleDeleteClick(e, row._id, row?.pricingGroup?.name)} 
-                                                                    >
-                                                                        <IconTrash size="1.1rem" />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                            </Box>
-                                                        </TableCell>
+                                                {/* Actions Column */}
+                                                <TableCell sx={stickyCellStyle}>
+                                                    <Box display="flex" gap={1}>
+                                                        <Tooltip title="Edit">
+                                                            <IconButton
+                                                                size="small"
+                                                                color="primary"
+                                                                onClick={() => handleEditCustomerDiscount(row)}
+                                                            >
+                                                                <IconEdit size="1.1rem" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Delete">
+                                                            <IconButton
+                                                                size="small"
+                                                                color="error"
+                                                                onClick={(e) => handleDeleteClick(
+                                                                    e,
+                                                                    row._id,
+                                                                    row.customerName || 'Customer',
+                                                                    row.userId,
+                                                                    row.pricingGroupDiscountId
+                                                                )}
+                                                            >
+                                                                <IconTrash size="1.1rem" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
+                                                </TableCell>
 
-                                                        <TableCell
-                                                        // onClick={() => handleEditPricingGroup(row._id)} sx={{ cursor: 'pointer' }}
-                                                        >
-                                                            <Box display="flex" alignItems="center">
-                                                                <Box sx={{ ml: 2 }}>
-                                                                    <Typography fontWeight="600">
-                                                                        {row?.pricingGroup?.name || 'N/A'}
-                                                                    </Typography>
-                                                                </Box>
-                                                            </Box>
-                                                        </TableCell>
+                                                {/* Customer ID */}
+                                                <TableCell>
+                                                    <Typography fontWeight="600">
+                                                        {row.customerId || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
 
-                                                        <TableCell>
-                                                            <Typography>
-                                                                {row.percentage || ''}
-                                                            </Typography>
-                                                        </TableCell>
+                                                {/* Customer Name */}
+                                                <TableCell>
+                                                    <Typography>
+                                                        {row.customerName || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
 
-                                                        <TableCell>
-                                                            <Typography>
-                                                                {row.updatedAt ? format(new Date(row.createdAt), 'E, MMM d yyyy') : 'N/A'}
-                                                            </Typography>
-                                                        </TableCell>
-                                                    </>
-                                                ) : (
-                                                    // Products List View (original code)
-                                                    <TableCell colSpan={headCells.length + 2}>
-                                                        <Typography>No product view implemented</Typography>
-                                                    </TableCell>
-                                                )}
+                                                {/* Customer Email */}
+                                                <TableCell>
+                                                    <Typography>
+                                                        {row.customerEmail || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
+
+                                                {/* Discount Percentage */}
+                                                <TableCell>
+                                                    <Typography
+                                                        fontWeight="600"
+                                                        color={row.percentage?.startsWith('+') ? 'success.main' : 'error.main'}
+                                                    >
+                                                        {row.percentage || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
+
+                                                {/* Last Updated Date */}
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
                                             </TableRow>
                                         );
                                     })}
                                 {emptyRows > 0 && (
                                     <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                                        <TableCell colSpan={headCells.length + 2} />
+                                        <TableCell colSpan={headCells.length + 1} />
+                                    </TableRow>
+                                )}
+                                {rows.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={headCells.length + 1} align="center" sx={{ py: 3 }}>
+                                            <Typography variant="h6" color="textSecondary">
+                                                {search ? 'No customers found matching your search' : 'No customers found for this pricing group'}
+                                            </Typography>
+                                        </TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -578,13 +579,13 @@ const CustomersPricingGroups = () => {
             <DeleteConfirmationDialog
                 open={deleteDialog.open}
                 onClose={handleDeleteCancel}
-                onConfirm={handleDeletePricingGroupDiscount} // Changed to the new function
+                onConfirm={handleDeleteCustomerDiscount}
                 itemName={deleteDialog.itemName}
                 isDeleting={deleteDialog.isDeleting}
-                itemType="Pricing Group Discount" // Updated item type
+                itemType="Customer Discount"
             />
         </Box>
     );
 };
 
-export default CustomersPricingGroups;
+export default CustomersByPricingGroups;

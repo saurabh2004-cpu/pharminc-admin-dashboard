@@ -732,7 +732,6 @@ const EditProduct = () => {
         <Grid size={6}>
           <CustomFormLabel htmlFor="comparePrice" sx={{ mt: 2 }}>
             Compare Price
-            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
             id="comparePrice"
