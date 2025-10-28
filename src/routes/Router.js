@@ -69,6 +69,10 @@ const EditCustomersPercentage = Loadable(lazy(() => import('../views/admin/group
 const ListNetTerms = Loadable(lazy(() => import('../views/admin/netTerms/ListNetTerms')));
 
 const CreateAdmin = Loadable(lazy(() => import('../views/admin/addAdmin/CreateAdmin')));
+const ListAdmins = Loadable(lazy(() => import('../views/admin/addAdmin/ListAdmins')));
+const EditAdmin = Loadable(lazy(() => import('../views/admin/addAdmin/EditAdmin')));
+
+
 const PendingApprovalCustomers = Loadable(lazy(() => import('../views/admin/customer/PendingApprovalCustomers')));
 
 const CreateSubCategoryTwo = Loadable(lazy(() => import('../views/admin/subCategoryTwo/CreateSubCategoryTwo')));
@@ -203,6 +207,8 @@ const Router = [
       { path: '/dashboard/NetTerms/List', element: <ListNetTerms /> },
 
       { path: '/dashboard/CreateAdmin', element: <CreateAdmin /> },
+      { path: '/dashboard/admin/list', element: <ListAdmins /> },
+      { path: '/dashboard/admin/Edit/:id', element: <EditAdmin /> },
 
       { path: '/dashboard/sub-category-two/create', element: <CreateSubCategoryTwo /> },
       { path: '/dashboard/sub-category-two/list', element: <SubCategoryTwoList /> },
@@ -227,12 +233,12 @@ const Router = [
       { path: '/dashboard/SalesRep/list', element: <ListSalesRep /> },
       { path: '/dashboard/SalesRep/customers/:id', element: <SalesRepCustomersList /> },
       { path: '/dashboard/SalesRep/edit/:id', element: <EditSalesRep /> },
-      
+
       { path: '/dashboard/productGroup/create', element: <CreateProductGroup /> },
       { path: '/dashboard/productGroup/list', element: <ListProductGroup /> },
       { path: '/dashboard/productGroup/products/:id', element: <ListProductGroupProducts /> },
       { path: '/dashboard/productGroup/edit/:id', element: <EditProductGroups /> },
-      
+
       { path: '/dashboard/meta-data/create', element: <CreateMetaData /> },
       { path: '/dashboard/meta-data/List', element: <ListMetaData /> },
       { path: '/dashboard/meta-data/Edit/:id', element: <EditMetaData /> },

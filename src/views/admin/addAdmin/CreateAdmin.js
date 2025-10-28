@@ -47,6 +47,7 @@ const CreateAdmin = () => {
                     username: ''
                 })
                 setError('admin created successfully!');
+                navigate('/dashboard/admin/list')
             } else {
                 setError(res.data.message);
             }

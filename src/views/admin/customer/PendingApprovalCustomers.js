@@ -35,6 +35,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import ApproveConfirmationDialog from './ApproveConfirmationDialog';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -155,14 +156,14 @@ const EnhancedTableToolbar = (props) => {
     const handleExportCSV = async () => {
         try {
             const response = await axiosInstance.get(
-                '/admin/export-users',
+                '/admin/export-unapproved-customers',
                 { responseType: 'blob' }
             );
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement("a");
             link.href = url;
-            link.setAttribute("download", "customers-list.csv");
+            link.setAttribute("download", "unapproved-customers-list.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -225,50 +226,6 @@ const EnhancedTableToolbar = (props) => {
                 </Tooltip>
             ) : (
                 <>
-                    <Tooltip title="Filter list">
-                        <IconButton onClick={handleFilterClick}>
-                            <IconFilter size="1.2rem" />
-                        </IconButton>
-                    </Tooltip>
-                    <Menu
-                        anchorEl={filterAnchorEl}
-                        open={openFilterMenu}
-                        onClose={handleFilterClose}
-                        anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'right',
-                        }}
-                        transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'right',
-                        }}
-                    >
-                        <MenuItem
-                            onClick={() => handleFilterSelect('all')}
-                            selected={approvalFilter === 'all'}
-                        >
-                            <ListItemText>All Customers</ListItemText>
-                        </MenuItem>
-                        <MenuItem
-                            onClick={() => handleFilterSelect('unapproved')}
-                            selected={approvalFilter === 'unapproved'}
-                        >
-                            <ListItemText>Unapproved Only</ListItemText>
-                        </MenuItem>
-                        <MenuItem
-                            onClick={() => handleFilterSelect('approved')}
-                            selected={approvalFilter === 'approved'}
-                        >
-                            <ListItemText>Approved Only</ListItemText>
-                        </MenuItem>
-                    </Menu>
-
-                    {approvalFilter !== 'all' && (
-                        <Typography variant="caption" sx={{ mx: 1, color: 'primary.main' }}>
-                            {getFilterLabel()}
-                        </Typography>
-                    )}
-
                     <Tooltip title="Export CSV">
                         <IconButton onClick={handleExportCSV}>
                             <Button size="small" variant="outlined" >Export</Button>
@@ -503,6 +460,12 @@ const PendingApprovalCustomers = ({
     const [rowsPerPage, setRowsPerPage] = useState(50);
     const [approvalFilter, setApprovalFilter] = useState('all');
     const [tableData, setTableData] = useState([]);
+    const [approveDialog, setApproveDialog] = useState({
+        open: false,
+        customerId: null,
+        customerData: null,
+        isApproving: false
+    });
 
     const sourceData = tableData || [];
     const [rows, setRows] = useState(sourceData);
@@ -533,11 +496,11 @@ const PendingApprovalCustomers = ({
     useEffect(() => {
         let filteredData = sourceData;
 
-        // Apply approval filter first
+        // Apply approval filter using inactive field
         if (approvalFilter === 'unapproved') {
-            filteredData = filteredData.filter(row => row.userApproval === false);
+            filteredData = filteredData.filter(row => row.inactive === true);
         } else if (approvalFilter === 'approved') {
-            filteredData = filteredData.filter(row => row.userApproval === true);
+            filteredData = filteredData.filter(row => row.inactive === false);
         }
 
         // Then apply search filter if search is active
@@ -567,7 +530,7 @@ const PendingApprovalCustomers = ({
                     row.defaultShippingRate?.toString().toLowerCase().includes(searchValue) ||
                     shippingAddressesText.includes(searchValue) ||
                     billingAddressesText.includes(searchValue) ||
-                    (row.inactive ? "inactive" : "active").includes(searchValue) ||
+                    (row.inactive ? "unapproved" : "approved").includes(searchValue) ||
                     (row.createdAt
                         ? new Date(row.createdAt).toLocaleDateString().toLowerCase().includes(searchValue)
                         : false)
@@ -602,24 +565,53 @@ const PendingApprovalCustomers = ({
         setSelected([]);
     };
 
-    const handleClick = (event, name) => {
-        const selectedIndex = selected.indexOf(name);
-        let newSelected = [];
+    const handleApproveClick = (event, customer) => {
+        event.stopPropagation();
+        setApproveDialog({
+            open: true,
+            customerId: customer._id,
+            customerData: customer,
+            isApproving: false
+        });
+    };
 
-        if (selectedIndex === -1) {
-            newSelected = newSelected.concat(selected, name);
-        } else if (selectedIndex === 0) {
-            newSelected = newSelected.concat(selected.slice(1));
-        } else if (selectedIndex === selected.length - 1) {
-            newSelected = newSelected.concat(selected.slice(0, -1));
-        } else if (selectedIndex > 0) {
-            newSelected = newSelected.concat(
-                selected.slice(0, selectedIndex),
-                selected.slice(selectedIndex + 1),
-            );
+    const handleApproveConfirm = async () => {
+        setApproveDialog(prev => ({ ...prev, isApproving: true }));
+
+        try {
+            const response = await axiosInstance.put(`/admin/approve-customer/${approveDialog.customerId}`);
+            console.log("response approval", response);
+
+            if (response.data.statusCode === 200) {
+                // Remove the approved customer from both tableData and rows
+                setTableData((prevData) =>
+                    prevData.filter((customer) => customer._id !== approveDialog.customerId)
+                );
+                setRows((prevRows) =>
+                    prevRows.filter((customer) => customer._id !== approveDialog.customerId)
+                );
+
+                console.log(`Customer ${approveDialog.customerId} approved and removed from pending list`);
+            }
+        } catch (error) {
+            console.error('Error approving customer:', error);
+        } finally {
+            setApproveDialog({
+                open: false,
+                customerId: null,
+                customerData: null,
+                isApproving: false
+            });
         }
+    };
 
-        setSelected(newSelected);
+    const handleApproveCancel = () => {
+        setApproveDialog({
+            open: false,
+            customerId: null,
+            customerData: null,
+            isApproving: false
+        });
     };
 
     const handleChangePage = (event, newPage) => {
@@ -704,11 +696,9 @@ const PendingApprovalCustomers = ({
             }
         } catch (error) {
             console.error('Error fetching customers list:', error);
-            setError('Error fetching customers: ' + error.message);
             setTableData([]);
         }
     }
-
 
     useEffect(() => {
         fetchCustomers();
@@ -900,11 +890,26 @@ const PendingApprovalCustomers = ({
                                                             </TableCell>
 
                                                             <TableCell sx={columnWidths.packBarcodes}>
-                                                                <Chip
-                                                                    label={row.inactive ? 'Inactive' : 'Active'}
-                                                                    color={row.inactive ? 'error' : 'success'}
-                                                                    size="small"
-                                                                />
+                                                                <Box display="flex" alignItems="center" gap={1}>
+                                                                    <Chip
+                                                                        label={row.inactive ? 'Unapproved' : 'Approved'}
+                                                                        color={row.inactive ? 'warning' : 'success'}
+                                                                        size="small"
+                                                                    />
+                                                                    {row.inactive && (
+                                                                        <Tooltip title="Approve Customer">
+                                                                            <Button
+                                                                                size="small"
+                                                                                variant="contained"
+                                                                                color="success"
+                                                                                onClick={(e) => handleApproveClick(e, row)}
+                                                                                sx={{ minWidth: '90px', fontSize: '0.7rem' }}
+                                                                            >
+                                                                                Approve
+                                                                            </Button>
+                                                                        </Tooltip>
+                                                                    )}
+                                                                </Box>
                                                             </TableCell>
 
                                                             <TableCell sx={columnWidths.createdAt}>
@@ -946,6 +951,14 @@ const PendingApprovalCustomers = ({
                 itemName={deleteDialog.itemName}
                 isDeleting={deleteDialog.isDeleting}
                 itemType={"Customers"}
+            />
+
+            <ApproveConfirmationDialog
+                open={approveDialog.open}
+                onClose={handleApproveCancel}
+                onConfirm={handleApproveConfirm}
+                customerData={approveDialog.customerData}
+                isApproving={approveDialog.isApproving}
             />
         </Box>
     );

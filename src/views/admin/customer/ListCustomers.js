@@ -31,12 +31,12 @@ const ListCustomers = () => {
       disablePadding: false,
       label: 'Customer ID',
     },
-    {
-      id: 'markupDiscount',
-      numeric: false,
-      disablePadding: false,
-      label: 'Markup Discount',
-    },
+    // {
+    //   id: 'markupDiscount',
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: 'Markup Discount',
+    // },
     {
       id: 'customerName',
       numeric: false,

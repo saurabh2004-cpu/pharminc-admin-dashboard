@@ -27,6 +27,7 @@ const EditProduct = () => {
     eachBarcodes: '',
     packBarcodes: '',
     comparePrice: null,
+    taxable: false
   });
 
   const [error, setError] = React.useState('');
@@ -59,6 +60,7 @@ const EditProduct = () => {
   const [categoryFour, setCategoryFour] = useState([]);
   const [badges, setBadges] = useState([]);
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
+  const [taxOptions, setTaxOptions] = useState([true, false]);
 
 
   const handleThumbnailChange = (e) => {
@@ -196,7 +198,8 @@ const EditProduct = () => {
       if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
       if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
       if (formData.badge) formDataToSend.append('badge', formData.badge);
-      if(formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
+      if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
+      formDataToSend.append('taxable', formData.taxable);
 
       // Append thumbnail if new one is selected
       if (thumbnailFile) {
@@ -260,6 +263,7 @@ const EditProduct = () => {
           packBarcodes: product.packBarcodes || '',
           badge: product.badge?._id || '',
           comparePrice: product.comparePrice || '',
+          taxable: product.taxable || false
         });
 
         // Set existing images
@@ -947,6 +951,44 @@ const EditProduct = () => {
               {categoryThree.map((category) => (
                 <MenuItem key={category.name} value={category._id}>
                   {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* tax selection */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="taxable-select" sx={{ mt: 2 }}>
+            Select taxable
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="taxable-select"
+              value={formData.taxable}
+              onChange={(e) => {
+                setFormData({ ...formData, taxable: e.target.value });
+              }}
+              disabled={loading || taxOptions.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                {taxOptions.length === 0 ? 'No tax options available' : 'Select a tax option'}
+              </MenuItem>
+              {taxOptions.map((tax) => (
+                <MenuItem key={tax} value={tax}>
+                  {tax === true ? 'Taxable' : 'Non Taxable'}
                 </MenuItem>
               ))}
             </Select>

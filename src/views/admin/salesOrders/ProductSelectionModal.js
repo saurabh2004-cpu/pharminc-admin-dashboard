@@ -325,7 +325,7 @@ const ProductSelectionModal = ({
             }}
         >
             <DialogTitle>
-                <Typography variant="h5">
+                <Typography variant="h4">
                     {step === 1 ? 'Select Product' : 'Create Sales Order'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

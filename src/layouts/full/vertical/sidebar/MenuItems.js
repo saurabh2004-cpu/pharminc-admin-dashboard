@@ -467,6 +467,20 @@ const Menuitems = [
       },
       {
         id: uniqueId(),
+        title: 'Admin List',
+        icon: IconUserPlus,
+        href: '/dashboard/admin/list',
+      },
+      {
+        id: uniqueId(),
+        title: 'Edit Admin',
+        icon: IconUserPlus,
+        href: '/dashboard/admin/Edit',
+      },
+
+
+      {
+        id: uniqueId(),
         title: 'Create Delivery Vendor',
         icon: IconPoint,
         href: '/dashboard/delivery-vendors/create',

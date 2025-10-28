@@ -1,12 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, MenuItem, Select, FormControl, Checkbox, Dialog, DialogTitle, DialogContent, Typography, Box, DialogActions } from '@mui/material';
-import InputAdornment from '@mui/material/InputAdornment';
+import {
+  Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Typography,
+  Box,
+  DialogActions,
+  Card,
+  CardContent,
+  IconButton,
+  Chip
+} from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-// import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
-import { IconUpload, IconFileImport } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconCheck, IconX, IconUserCheck, IconUserOff } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router';
 
 const EditCustomers = () => {
@@ -24,26 +38,188 @@ const EditCustomers = () => {
     comments: '',
     category: '',
     netTerms: '',
-    shippingAddressOne: '',
-    shippingAddressTwo: '',
-    shippingAddressThree: '',
-    shippingCity: '',
-    shippingState: '',
-    shippingZip: '',
-    billingAddressOne: '',
-    billingAddressTwo: '',
-    billingAddressThree: '',
-    billingCity: '',
-    billingState: '',
-    billingZip: '',
+    shippingAddresses: [{
+      shippingAddressOne: '',
+      shippingAddressTwo: '',
+      shippingAddressThree: '',
+      shippingCity: '',
+      shippingState: '',
+      shippingZip: '',
+      isDefault: true
+    }],
+    billingAddresses: [{
+      billingAddressOne: '',
+      billingAddressTwo: '',
+      billingAddressThree: '',
+      billingCity: '',
+      billingState: '',
+      billingZip: '',
+      isDefault: true
+    }],
     password: '',
     inactive: false,
-    markupDiscount: null
+    markupDiscount: []
   });
+
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [statusLoading, setStatusLoading] = React.useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
+  const [pricingGroupDiscounts, setPricingGroupDiscounts] = useState([]);
+  const [pricingGroups, setPricingGroups] = useState([]);
+  const [customerId, setCustomerId] = useState('');
+
+  // Toggle customer active/inactive status
+  const toggleCustomerStatus = async () => {
+    setStatusLoading(true);
+    try {
+      const newStatus = !formData.inactive;
+      
+      const res = await axiosInstance.put(`/admin/update-user-details/${id}`, {
+        ...formData,
+        inactive: newStatus
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (res.data.statusCode === 200) {
+        setFormData(prev => ({
+          ...prev,
+          inactive: newStatus
+        }));
+      } else {
+        setError('Failed to update customer status');
+      }
+    } catch (error) {
+      console.error('Toggle status error:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to update customer status');
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  // Shipping Address Functions
+  const addShippingAddress = () => {
+    setFormData({
+      ...formData,
+      shippingAddresses: [
+        ...formData.shippingAddresses,
+        {
+          shippingAddressOne: '',
+          shippingAddressTwo: '',
+          shippingAddressThree: '',
+          shippingCity: '',
+          shippingState: '',
+          shippingZip: '',
+          isDefault: false
+        }
+      ]
+    });
+  };
+
+  const removeShippingAddress = (index) => {
+    if (formData.shippingAddresses.length > 1) {
+      const updatedAddresses = formData.shippingAddresses.filter((_, i) => i !== index);
+
+      if (formData.shippingAddresses[index].isDefault && updatedAddresses.length > 0) {
+        updatedAddresses[0].isDefault = true;
+      }
+
+      setFormData({
+        ...formData,
+        shippingAddresses: updatedAddresses
+      });
+    }
+  };
+
+  const updateShippingAddress = (index, field, value) => {
+    const updatedAddresses = formData.shippingAddresses.map((address, i) => {
+      if (i === index) {
+        return { ...address, [field]: value };
+      }
+      return address;
+    });
+
+    setFormData({
+      ...formData,
+      shippingAddresses: updatedAddresses
+    });
+  };
+
+  const setDefaultShippingAddress = (index) => {
+    const updatedAddresses = formData.shippingAddresses.map((address, i) => ({
+      ...address,
+      isDefault: i === index
+    }));
+
+    setFormData({
+      ...formData,
+      shippingAddresses: updatedAddresses
+    });
+  };
+
+  // Billing Address Functions
+  const addBillingAddress = () => {
+    setFormData({
+      ...formData,
+      billingAddresses: [
+        ...formData.billingAddresses,
+        {
+          billingAddressOne: '',
+          billingAddressTwo: '',
+          billingAddressThree: '',
+          billingCity: '',
+          billingState: '',
+          billingZip: '',
+          isDefault: false
+        }
+      ]
+    });
+  };
+
+  const removeBillingAddress = (index) => {
+    if (formData.billingAddresses.length > 1) {
+      const updatedAddresses = formData.billingAddresses.filter((_, i) => i !== index);
+
+      if (formData.billingAddresses[index].isDefault && updatedAddresses.length > 0) {
+        updatedAddresses[0].isDefault = true;
+      }
+
+      setFormData({
+        ...formData,
+        billingAddresses: updatedAddresses
+      });
+    }
+  };
+
+  const updateBillingAddress = (index, field, value) => {
+    const updatedAddresses = formData.billingAddresses.map((address, i) => {
+      if (i === index) {
+        return { ...address, [field]: value };
+      }
+      return address;
+    });
+
+    setFormData({
+      ...formData,
+      billingAddresses: updatedAddresses
+    });
+  };
+
+  const setDefaultBillingAddress = (index) => {
+    const updatedAddresses = formData.billingAddresses.map((address, i) => ({
+      ...address,
+      isDefault: i === index
+    }));
+
+    setFormData({
+      ...formData,
+      billingAddresses: updatedAddresses
+    });
+  };
 
   const handleSubmit = async () => {
     // Validation
@@ -64,11 +240,40 @@ const EditCustomers = () => {
       return;
     }
 
+    // Validate at least one complete shipping address
+    const hasValidShippingAddress = formData.shippingAddresses.some(addr =>
+      addr.shippingAddressOne && addr.shippingCity && addr.shippingState && addr.shippingZip
+    );
+    if (!hasValidShippingAddress) {
+      setError('Please provide at least one complete shipping address');
+      return;
+    }
+
+    // Validate at least one complete billing address
+    const hasValidBillingAddress = formData.billingAddresses.some(addr =>
+      addr.billingAddressOne && addr.billingCity && addr.billingState
+    );
+    if (!hasValidBillingAddress) {
+      setError('Please provide at least one complete billing address');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const res = await axiosInstance.put(`/admin/update-user-details/${id}`, formData, {
+      // Prepare the data to send
+      const dataToSend = {
+        ...formData,
+        markupDiscount: pricingGroupDiscounts.map(discount => ({
+          pricingGroup: discount.pricingGroup,
+          percentage: discount.percentage
+        }))
+      };
+
+      console.log("Sending data:", dataToSend);
+
+      const res = await axiosInstance.put(`/admin/update-user-details/${id}`, dataToSend, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -77,41 +282,10 @@ const EditCustomers = () => {
       console.log("update customer response:", res);
 
       if (res.data.statusCode === 200) {
-        // Reset form on success
-        setFormData({
-          customerId: '',
-          customerName: '',
-          contactName: '',
-          contactEmail: '',
-          customerEmail: '',
-          CustomerPhoneNo: '',
-          contactPhone: [],
-          primaryBrand: '',
-          defaultShippingRate: 0,
-          orderApproval: '',
-          comments: '',
-          category: '',
-          netTerms: '',
-          shippingAddressOne: '',
-          shippingAddressTwo: '',
-          shippingAddressThree: '',
-          shippingCity: '',
-          shippingState: '',
-          shippingZip: '',
-          billingAddressOne: '',
-          billingAddressTwo: '',
-          billingAddressThree: '',
-          billingCity: '',
-          billingState: '',
-          billingZip: '',
-          password: '',
-          inactive: false
-        });
-
         navigate('/dashboard/customers/list');
-
       } else if (res.data.statusCode === 400) {
         console.log("Update Customer error:", res.data.message);
+        setError(res.data.message);
       }
 
     } catch (error) {
@@ -129,7 +303,45 @@ const EditCustomers = () => {
       console.log("res user", res)
 
       if (res.data.statusCode === 200) {
-        setFormData(res.data.data);
+        const customerData = res.data.data;
+        
+        // Transform the addresses to include isDefault field
+        const shippingAddresses = customerData.shippingAddresses && customerData.shippingAddresses.length > 0 
+          ? customerData.shippingAddresses.map((addr, index) => ({
+              ...addr,
+              isDefault: index === 0 // Set first address as default
+            }))
+          : [{
+              shippingAddressOne: '',
+              shippingAddressTwo: '',
+              shippingAddressThree: '',
+              shippingCity: '',
+              shippingState: '',
+              shippingZip: '',
+              isDefault: true
+            }];
+
+        const billingAddresses = customerData.billingAddresses && customerData.billingAddresses.length > 0 
+          ? customerData.billingAddresses.map((addr, index) => ({
+              ...addr,
+              isDefault: index === 0 // Set first address as default
+            }))
+          : [{
+              billingAddressOne: '',
+              billingAddressTwo: '',
+              billingAddressThree: '',
+              billingCity: '',
+              billingState: '',
+              billingZip: '',
+              isDefault: true
+            }];
+
+        setFormData({
+          ...customerData,
+          shippingAddresses,
+          billingAddresses
+        });
+        setCustomerId(customerData._id);
       }
     } catch (error) {
       setError(error.message || 'An error occurred');
@@ -137,14 +349,105 @@ const EditCustomers = () => {
     }
   }
 
+  const fetPricingGroupsByCustomerId = async () => {
+    try {
+      const res = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discounts-by-customer-id/${customerId}`);
+
+      console.log("pricing groups by Customer id ", res)
+
+      if (res.data.statusCode === 200) {
+        setPricingGroups(res.data.data);
+        // Transform the data for the table
+        const discounts = res.data.data.map(item => ({
+          _id: item._id,
+          pricingGroup: item.pricingGroup._id,
+          pricingGroupName: item.pricingGroup.name,
+          percentage: item.customers.find(c => c.user._id === customerId)?.percentage || ''
+        }));
+        setPricingGroupDiscounts(discounts);
+
+        // Also set in formData
+        setFormData(prev => ({
+          ...prev,
+          markupDiscount: discounts
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching pricing groups:', error);
+    }
+  }
+
+  const handlePercentageChange = (index, newPercentage) => {
+    const updatedDiscounts = [...pricingGroupDiscounts];
+    updatedDiscounts[index].percentage = newPercentage;
+    setPricingGroupDiscounts(updatedDiscounts);
+
+    // Also update formData markupDiscount
+    setFormData(prev => ({
+      ...prev,
+      markupDiscount: updatedDiscounts
+    }));
+  };
+
+  useEffect(() => {
+    fetPricingGroupsByCustomerId();
+  }, [customerId]);
+
   useEffect(() => {
     fetchCustomer();
   }, [id]);
 
   return (
     <div>
-      <Grid container spacing={2}>
+      {/* Status Header Section */}
+      <Box sx={{ mb: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+        <Grid container alignItems="center" justifyContent="space-between">
+          <Grid item>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography variant="h5" fontWeight="bold">
+                Edit Customer - {formData.customerName || 'Loading...'}
+              </Typography>
+              <Chip 
+                label={formData.inactive ? "UNAPPROVED" : "APPROVED"} 
+                color={formData.inactive ? "error" : "success"}
+                variant="outlined"
+                size="medium"
+              />
+            </Box>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
+              Customer ID: {formData.customerId}
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant={formData.inactive ? "contained" : "outlined"}
+              color={formData.inactive ? "success" : "error"}
+              onClick={toggleCustomerStatus}
+              disabled={statusLoading || loading}
+              startIcon={formData.inactive ? <IconUserCheck size="1.1rem" /> : <IconUserOff size="1.1rem" />}
+              sx={{ 
+                minWidth: '140px',
+                fontWeight: 'bold',
+                ...(formData.inactive ? {
+                  backgroundColor: '#2e7d32',
+                  '&:hover': { backgroundColor: '#1b5e20' }
+                } : {
+                  borderColor: '#d32f2f',
+                  color: '#d32f2f',
+                  '&:hover': { 
+                    backgroundColor: '#d32f2f',
+                    color: 'white'
+                  }
+                })
+              }}
+            >
+              {statusLoading ? 'Updating...' : (formData.inactive ? 'Approve Customer' : 'Unapprove Customer')}
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
 
+      <Grid container spacing={2}>
         {/* Customer ID and Customer Name - Row 1 */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="customerId" sx={{ mt: 2 }}>
@@ -301,7 +604,7 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Net Terms - Single field in row 6 */}
+        {/* Net Terms and Password */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="netTerms" sx={{ mt: 0 }}>
             Net Terms
@@ -314,237 +617,6 @@ const EditCustomers = () => {
             onChange={(e) => setFormData({ ...formData, netTerms: e.target.value })}
             disabled={loading}
             placeholder="Enter Net Terms (e.g., Net 30)"
-          />
-        </Grid>
-
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="netTerms" sx={{ mt: 0 }}>
-            Markup Discount
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="netTerms"
-            fullWidth
-            value={formData.markupDiscount}
-            onChange={(e) => setFormData({ ...formData, markupDiscount: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Markup/Discount value eg: +10/-10"
-          />
-        </Grid>
-
-        {/* Shipping Address Section */}
-        <Grid size={12}>
-          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-            Shipping Address
-            <span style={{ color: 'red' }}>*</span>
-          </Typography>
-        </Grid>
-
-        {/* Shipping Address Line 1 */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="shippingAddressOne" sx={{ mt: 0 }}>
-            Shipping Address Line 1
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
-          <CustomOutlinedInput
-            id="shippingAddressOne"
-            fullWidth
-            value={formData.shippingAddressOne}
-            onChange={(e) => setFormData({ ...formData, shippingAddressOne: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Shipping Address Line 1"
-          />
-        </Grid>
-
-        {/* Shipping Address Line 2 */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="shippingAddressTwo" sx={{ mt: 0 }}>
-            Shipping Address Line 2
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
-          <CustomOutlinedInput
-            id="shippingAddressTwo"
-            fullWidth
-            value={formData.shippingAddressTwo}
-            onChange={(e) => setFormData({ ...formData, shippingAddressTwo: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Shipping Address Line 2 (Optional)"
-          />
-        </Grid>
-
-        {/* Shipping Address Line 3 */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="shippingAddressThree" sx={{ mt: 0 }}>
-            Shipping Address Line 3
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
-          <CustomOutlinedInput
-            id="shippingAddressThree"
-            fullWidth
-            value={formData.shippingAddressThree}
-            onChange={(e) => setFormData({ ...formData, shippingAddressThree: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Shipping Address Line 3 (Optional)"
-          />
-        </Grid>
-
-        {/* Shipping City and State */}
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="shippingCity" sx={{ mt: 0 }}>
-            Shipping City
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="shippingState" sx={{ mt: 0 }}>
-            Shipping State
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={6}>
-          <CustomOutlinedInput
-            id="shippingCity"
-            fullWidth
-            value={formData.shippingCity}
-            onChange={(e) => setFormData({ ...formData, shippingCity: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Shipping City"
-          />
-        </Grid>
-        <Grid size={6}>
-          <CustomOutlinedInput
-            id="shippingState"
-            fullWidth
-            value={formData.shippingState}
-            onChange={(e) => setFormData({ ...formData, shippingState: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Shipping State"
-          />
-        </Grid>
-
-        {/* Shipping Zip */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="shippingZip" sx={{ mt: 0 }}>
-            Shipping ZIP Code
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
-          <CustomOutlinedInput
-            id="shippingZip"
-            fullWidth
-            value={formData.shippingZip}
-            onChange={(e) => setFormData({ ...formData, shippingZip: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Shipping ZIP Code"
-          />
-        </Grid>
-
-        {/* Billing Address Section */}
-        <Grid size={12}>
-          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-            Billing Address
-          </Typography>
-        </Grid>
-
-        {/* Billing Address Line 1 */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="billingAddressOne" sx={{ mt: 0 }}>
-            Billing Address Line 1
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
-          <CustomOutlinedInput
-            id="billingAddressOne"
-            fullWidth
-            value={formData.billingAddressOne}
-            onChange={(e) => setFormData({ ...formData, billingAddressOne: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Billing Address Line 1"
-          />
-        </Grid>
-
-        {/* Billing Address Line 2 */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="billingAddressTwo" sx={{ mt: 0 }}>
-            Billing Address Line 2
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
-          <CustomOutlinedInput
-            id="billingAddressTwo"
-            fullWidth
-            value={formData.billingAddressTwo}
-            onChange={(e) => setFormData({ ...formData, billingAddressTwo: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Billing Address Line 2 (Optional)"
-          />
-        </Grid>
-
-        {/* Billing Address Line 3 */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="billingAddressThree" sx={{ mt: 0 }}>
-            Billing Address Line 3
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
-          <CustomOutlinedInput
-            id="billingAddressThree"
-            fullWidth
-            value={formData.billingAddressThree}
-            onChange={(e) => setFormData({ ...formData, billingAddressThree: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Billing Address Line 3 (Optional)"
-          />
-        </Grid>
-
-        {/* Billing City and State */}
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="billingCity" sx={{ mt: 0 }}>
-            Billing City
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="billingState" sx={{ mt: 0 }}>
-            Billing State
-          </CustomFormLabel>
-        </Grid>
-        <Grid size={6}>
-          <CustomOutlinedInput
-            id="billingCity"
-            fullWidth
-            value={formData.billingCity}
-            onChange={(e) => setFormData({ ...formData, billingCity: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Billing City"
-          />
-        </Grid>
-        <Grid size={6}>
-          <CustomOutlinedInput
-            id="billingState"
-            fullWidth
-            value={formData.billingState}
-            onChange={(e) => setFormData({ ...formData, billingState: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Billing State"
-          />
-        </Grid>
-
-        {/* Billing Zip and Password - Two fields in one row */}
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="billingZip" sx={{ mt: 0 }}>
-            Billing ZIP Code
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="billingZip"
-            fullWidth
-            value={formData.billingZip}
-            onChange={(e) => setFormData({ ...formData, billingZip: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Billing ZIP Code"
           />
         </Grid>
         <Grid size={6}>
@@ -563,13 +635,318 @@ const EditCustomers = () => {
           />
         </Grid>
 
+        {/* Shipping Addresses Section */}
+        <Grid size={12}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>
+            <Typography variant="h6">
+              Shipping Addresses
+              <span style={{ color: 'red' }}>*</span>
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<IconPlus size="1rem" />}
+              onClick={addShippingAddress}
+              disabled={loading}
+              sx={{ borderColor: '#2E2F7F', color: '#2E2F7F' }}
+            >
+              Add New Address
+            </Button>
+          </Box>
+
+          {formData.shippingAddresses.map((address, index) => (
+            <Card key={index} sx={{ mb: 1.5, border: address.isDefault ? '2px solid #2E2F7F' : '1px solid #e0e0e0' }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                    {address.isDefault ? 'Default Shipping Address' : `Shipping Address ${index + 1}`}
+                  </Typography>
+                  <Box>
+                    {!address.isDefault && (
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<IconCheck size="0.7rem" />}
+                        onClick={() => setDefaultShippingAddress(index)}
+                        disabled={loading}
+                        sx={{ color: '#2E2F7F', mr: 1, fontSize: '0.75rem', minWidth: 'auto', px: 1 }}
+                      >
+                        Default
+                      </Button>
+                    )}
+                    {formData.shippingAddresses.length > 1 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => removeShippingAddress(index)}
+                        disabled={loading}
+                        sx={{ color: 'red', p: 0.5 }}
+                      >
+                        <IconTrash size="0.9rem" />
+                      </IconButton>
+                    )}
+                  </Box>
+                </Box>
+
+                <Grid container spacing={1.5}>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 1.5, fontSize: '0.8rem' }}>Address Line 1 *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.shippingAddressOne}
+                      onChange={(e) => updateShippingAddress(index, 'shippingAddressOne', e.target.value)}
+                      disabled={loading}
+                      placeholder="Enter Address Line 1"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 1.5, fontSize: '0.8rem' }}>Address Line 2</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.shippingAddressTwo}
+                      onChange={(e) => updateShippingAddress(index, 'shippingAddressTwo', e.target.value)}
+                      disabled={loading}
+                      placeholder="Address Line 2"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>Address Line 3</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.shippingAddressThree}
+                      onChange={(e) => updateShippingAddress(index, 'shippingAddressThree', e.target.value)}
+                      disabled={loading}
+                      placeholder="Address Line 3"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>City *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.shippingCity}
+                      onChange={(e) => updateShippingAddress(index, 'shippingCity', e.target.value)}
+                      disabled={loading}
+                      placeholder="City"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>State *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.shippingState}
+                      onChange={(e) => updateShippingAddress(index, 'shippingState', e.target.value)}
+                      disabled={loading}
+                      placeholder="State"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>ZIP Code *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.shippingZip}
+                      onChange={(e) => updateShippingAddress(index, 'shippingZip', e.target.value)}
+                      disabled={loading}
+                      placeholder="ZIP"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          ))}
+        </Grid>
+
+        {/* Billing Addresses Section */}
+        <Grid size={12}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>
+            <Typography variant="h6">
+              Billing Addresses
+              <span style={{ color: 'red' }}>*</span>
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<IconPlus size="1rem" />}
+              onClick={addBillingAddress}
+              disabled={loading}
+              sx={{ borderColor: '#2E2F7F', color: '#2E2F7F' }}
+            >
+              Add New Address
+            </Button>
+          </Box>
+
+          {formData.billingAddresses.map((address, index) => (
+            <Card key={index} sx={{ mb: 0.5, border: address.isDefault ? '2px solid #2E2F7F' : '1px solid #e0e0e0' }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                    {address.isDefault ? 'Default Billing Address' : `Billing Address ${index + 1}`}
+                  </Typography>
+                  <Box>
+                    {!address.isDefault && (
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<IconCheck size="0.7rem" />}
+                        onClick={() => setDefaultBillingAddress(index)}
+                        disabled={loading}
+                        sx={{ color: '#2E2F7F', mr: 1, fontSize: '0.75rem', minWidth: 'auto', px: 1 }}
+                      >
+                        Default
+                      </Button>
+                    )}
+                    {formData.billingAddresses.length > 1 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => removeBillingAddress(index)}
+                        disabled={loading}
+                        sx={{ color: 'red', p: 0.5 }}
+                      >
+                        <IconTrash size="0.9rem" />
+                      </IconButton>
+                    )}
+                  </Box>
+                </Box>
+
+                <Grid container spacing={1.5}>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>Address Line 1 *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.billingAddressOne}
+                      onChange={(e) => updateBillingAddress(index, 'billingAddressOne', e.target.value)}
+                      disabled={loading}
+                      placeholder="Enter Address Line 1"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>Address Line 2</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.billingAddressTwo}
+                      onChange={(e) => updateBillingAddress(index, 'billingAddressTwo', e.target.value)}
+                      disabled={loading}
+                      placeholder="Address Line 2"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>Address Line 3</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.billingAddressThree}
+                      onChange={(e) => updateBillingAddress(index, 'billingAddressThree', e.target.value)}
+                      disabled={loading}
+                      placeholder="Address Line 3"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>City *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.billingCity}
+                      onChange={(e) => updateBillingAddress(index, 'billingCity', e.target.value)}
+                      disabled={loading}
+                      placeholder="City"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>State *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.billingState}
+                      onChange={(e) => updateBillingAddress(index, 'billingState', e.target.value)}
+                      disabled={loading}
+                      placeholder="State"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>ZIP Code</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value={address.billingZip}
+                      onChange={(e) => updateBillingAddress(index, 'billingZip', e.target.value)}
+                      disabled={loading}
+                      placeholder="ZIP"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          ))}
+        </Grid>
+
+        {/* Markup discounts Discounts */}
+        <Grid size={12}>
+          <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+            Markup / Discount 
+          </Typography>
+
+          {pricingGroupDiscounts.length > 0 ? (
+            <Box sx={{ overflow: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f5f5f5' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 'bold' }}>
+                      Pricing Group Name
+                    </th>
+                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 'bold' }}>
+                      Percentage
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pricingGroupDiscounts.map((discount, index) => (
+                    <tr key={discount._id}>
+                      <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                        {discount.pricingGroupName}
+                      </td>
+                      <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                        <CustomOutlinedInput
+                          fullWidth
+                          value={discount.percentage}
+                          onChange={(e) => handlePercentageChange(index, e.target.value)}
+                          disabled={loading}
+                          placeholder="Enter percentage (e.g., +10 or -5)"
+                          sx={{ maxWidth: '200px' }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+          ) : (
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              No pricing group discounts found for this customer.
+            </Typography>
+          )}
+        </Grid>
+
         {/* Comments */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="comments" sx={{ mt: 0 }}>
             Comments
           </CustomFormLabel>
-        </Grid>
-        <Grid size={12}>
           <CustomOutlinedInput
             id="comments"
             fullWidth
@@ -581,23 +958,6 @@ const EditCustomers = () => {
             placeholder="Enter Comments (Optional)"
           />
         </Grid>
-
-        {/* Inactive Checkbox */}
-        <Grid size={12} sx={{ mt: 2 }}>
-          <FormControl>
-            <Box display="flex" alignItems="center">
-              <Checkbox
-                checked={formData.inactive}
-                onChange={(e) => setFormData({ ...formData, inactive: e.target.checked })}
-                disabled={loading}
-              />
-              <Typography>Mark as Inactive</Typography>
-            </Box>
-          </FormControl>
-        </Grid>
-
-
-
 
         {/* Error Message */}
         {error && (

@@ -323,12 +323,8 @@ const CreateGroupsDiscounts = () => {
                                         key={customer._id}
                                         value={customer._id} // ✅ Use _id (ObjectId) as value
                                     >
-                                        {customer.customerId} - {customer.customerName || ''}
-                                        {customer.markupDiscount && (
-                                            <Typography component="span" sx={{ ml: 1, color: 'text.secondary', fontSize: '0.875rem' }}>
-                                                ({customer.markupDiscount > 0 ? '+' : ''}{customer.markupDiscount}%)
-                                            </Typography>
-                                        )}
+                                        {customer.customerId} 
+                                        
                                     </MenuItem>
                                 ))
                             )}

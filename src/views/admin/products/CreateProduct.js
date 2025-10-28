@@ -153,7 +153,7 @@ const CreateProduct = () => {
     if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
     if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
-    if (formData.taxable) formDataToSend.append('taxable', formData.taxable);
+    formDataToSend.append('taxable', formData.taxable);
 
     // Append thumbnail image
     formDataToSend.append('thumbnail', thumbnailFile);
@@ -945,6 +945,7 @@ const CreateProduct = () => {
             </Select>
           </FormControl>
         </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
             Select Commerce category four

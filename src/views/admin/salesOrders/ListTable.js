@@ -312,7 +312,21 @@ const ListTable = ({
           row?.status,
           row?.trackingNumber,
           row?.customerPO,
+          row?.packType,
+          row?.discountType,
+          // Include address strings
+          row?.shippingAddress,
+          row?.billingAddress,
+          // Include numeric fields
+          row?.amount?.toString(),
+          row?.finalAmount?.toString(),
+          row?.discountPercentages?.toString(),
+          row?.packQuantity?.toString(),
+          row?.unitsQuantity?.toString(),
+          // Date field
+          row?.date,
         ];
+
         return values.some((val) =>
           (val || "").toString().toLowerCase().includes(searchValue)
         );
@@ -327,26 +341,46 @@ const ListTable = ({
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    if (isBrandsList) {
-      const filteredRows = sourceData.filter((row) => {
+    let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
+
+    if (searchValue) {
+      const filteredRows = baseData.filter((row) => {
+        // Search in all relevant fields including address strings
         return (
-          row?.documentNumber?.toLowerCase().includes(searchValue) ||
-          row?.customerName?.toLowerCase().includes(searchValue) ||
-          row?.itemSku?.toLowerCase().includes(searchValue) ||
-          row?.salesChannel?.toLowerCase().includes(searchValue) ||
-          row?.status?.toLowerCase().includes(searchValue) ||
-          row?.trackingNumber?.toLowerCase().includes(searchValue) ||
-          row?.customerPO?.toLowerCase().includes(searchValue)
+          // Basic fields
+          (row?.documentNumber?.toLowerCase() || '').includes(searchValue) ||
+          (row?.customerName?.toLowerCase() || '').includes(searchValue) ||
+          (row?.itemSku?.toLowerCase() || '').includes(searchValue) ||
+          (row?.salesChannel?.toLowerCase() || '').includes(searchValue) ||
+          (row?.status?.toLowerCase() || '').includes(searchValue) ||
+          (row?.trackingNumber?.toLowerCase() || '').includes(searchValue) ||
+          (row?.customerPO?.toLowerCase() || '').includes(searchValue) ||
+          (row?.packType?.toLowerCase() || '').includes(searchValue) ||
+          (row?.discountType?.toLowerCase() || '').includes(searchValue) ||
+
+          // Shipping Address search (as string)
+          (row?.shippingAddress?.toLowerCase() || '').includes(searchValue) ||
+
+          // Billing Address search (as string)
+          (row?.billingAddress?.toLowerCase() || '').includes(searchValue) ||
+
+          // Amount fields (convert numbers to string)
+          (row?.amount?.toString() || '').includes(searchValue) ||
+          (row?.finalAmount?.toString() || '').includes(searchValue) ||
+          (row?.discountPercentages?.toString() || '').includes(searchValue) ||
+          (row?.packQuantity?.toString() || '').includes(searchValue) ||
+          (row?.unitsQuantity?.toString() || '').includes(searchValue) ||
+
+          // Date fields
+          (row?.date?.toLowerCase() || '').includes(searchValue)
         );
       });
       setRows(filteredRows);
     } else {
-      const filteredRows = filteredAndSortedProducts.filter((row) => {
-        return row.title.toLowerCase().includes(searchValue);
-      });
-      setRows(filteredRows);
+      setRows(baseData);
     }
   };
+
 
   // Updated Date filter functions
   const handleOpenDateFilter = () => {

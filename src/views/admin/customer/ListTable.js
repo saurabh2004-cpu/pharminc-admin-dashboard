@@ -225,50 +225,6 @@ const EnhancedTableToolbar = (props) => {
         </Tooltip>
       ) : (
         <>
-          <Tooltip title="Filter list">
-            <IconButton onClick={handleFilterClick}>
-              <IconFilter size="1.2rem" />
-            </IconButton>
-          </Tooltip>
-          <Menu
-            anchorEl={filterAnchorEl}
-            open={openFilterMenu}
-            onClose={handleFilterClose}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-          >
-            <MenuItem
-              onClick={() => handleFilterSelect('all')}
-              selected={approvalFilter === 'all'}
-            >
-              <ListItemText>All Customers</ListItemText>
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleFilterSelect('unapproved')}
-              selected={approvalFilter === 'unapproved'}
-            >
-              <ListItemText>Unapproved Only</ListItemText>
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleFilterSelect('approved')}
-              selected={approvalFilter === 'approved'}
-            >
-              <ListItemText>Approved Only</ListItemText>
-            </MenuItem>
-          </Menu>
-
-          {approvalFilter !== 'all' && (
-            <Typography variant="caption" sx={{ mx: 1, color: 'primary.main' }}>
-              {getFilterLabel()}
-            </Typography>
-          )}
-
           <Tooltip title="Export CSV">
             <IconButton onClick={handleExportCSV}>
               <Button size="small" variant="outlined" >Export</Button>
@@ -438,9 +394,9 @@ const ListTable = ({
 
     // Apply approval filter first
     if (approvalFilter === 'unapproved') {
-      filteredData = filteredData.filter(row => row.userApproval === false);
+      filteredData = filteredData.filter(row => row.inactive === true);
     } else if (approvalFilter === 'approved') {
-      filteredData = filteredData.filter(row => row.userApproval === true);
+      filteredData = filteredData.filter(row => row.inactive === false);
     }
 
     // Then apply search filter if search is active
@@ -706,11 +662,11 @@ const ListTable = ({
                                 </Typography>
                               </TableCell>
                               
-                              <TableCell sx={columnWidths.sku}>
+                              {/* <TableCell sx={columnWidths.sku}>
                                 <Typography fontWeight="500" variant="subtitle2">
                                   {row.markupDiscount || 'N/A'}
                                 </Typography>
-                              </TableCell>
+                              </TableCell> */}
 
                               <TableCell sx={columnWidths.productName}>
                                 <Typography fontWeight="400">

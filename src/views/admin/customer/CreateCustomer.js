@@ -67,6 +67,8 @@ const CreateCustomer = () => {
   const navigate = useNavigate();
   const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState(null);
+  const [pricingGroups, setPricingGroups] = React.useState([]);
+  const [customerId, setCustomerId] = useState('');
 
   // Add new shipping address
   const addShippingAddress = () => {
@@ -354,6 +356,7 @@ const CreateCustomer = () => {
     const fileInput = document.getElementById('csv-file-input');
     if (fileInput) fileInput.value = '';
   };
+
 
   return (
     <div>
@@ -833,19 +836,6 @@ const CreateCustomer = () => {
                 disabled={loading}
               />
               <Typography>Mark as Inactive</Typography>
-            </Box>
-          </FormControl>
-        </Grid>
-
-        <Grid size={12} sx={{ mt: 2 }}>
-          <FormControl>
-            <Box display="flex" alignItems="center">
-              <Checkbox
-                checked={formData.markupDiscount}
-                onChange={(e) => setFormData({ ...formData, markupDiscount: e.target.checked })}
-                disabled={loading}
-              />
-              <Typography>Enter Markup/Discount value</Typography>
             </Box>
           </FormControl>
         </Grid>
