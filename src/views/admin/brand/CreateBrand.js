@@ -11,8 +11,6 @@ import { CircularProgress, Backdrop } from '@mui/material';
 const CreateBrand = () => {
     const [formData, setFormData] = React.useState({
         name: '',
-        brandImage: null,
-        description: '',
         slug: ''
     });
     const [error, setError] = React.useState('');
@@ -39,12 +37,6 @@ const CreateBrand = () => {
             const submitFormData = new FormData();
             submitFormData.append('name', formData.name);
             submitFormData.append('slug', formData.slug);
-            submitFormData.append('description', formData.description);
-
-            // Append image with the correct field name 'brandImg' (as per backend API)
-            if (formData.brandImage) {
-                submitFormData.append('brandImg', formData.brandImage);
-            }
 
             const res = await axiosInstance.post('/brand/create-brand', submitFormData, {
                 headers: {
@@ -156,46 +148,7 @@ const CreateBrand = () => {
                     />
                 </Grid>
 
-                <Grid size={12}>
-                    <CustomFormLabel
-                        htmlFor="brand-image-file"
-                        sx={{ mt: 0 }}
-                    >
-                        Brand Image
-                        <span style={{ color: 'red' }}>*</span>
-                    </CustomFormLabel>
-                </Grid>
-                <Grid size={12}>
-                    <CustomOutlinedInput
-                        id="brand-image-file"
-                        fullWidth
-                        type="file"
-                        accept=".png,.jpg,.jpeg,.svg"
-                        onChange={(e) => handleBrandImageChange(e)}
-                        inputProps={{
-                            style: { cursor: 'pointer' }
-                        }}
-                    />
-                </Grid>
-
-                <Grid size={12}>
-                    <CustomFormLabel
-                        htmlFor="bi-name"
-                        sx={{ mt: 0 }}
-                    >
-                        Brand Description
-                        <span style={{ color: 'red' }}>*</span>
-                    </CustomFormLabel>
-                </Grid>
-
-                <Grid size={12}>
-                    <CustomOutlinedInput
-                        id="bi-name"
-                        fullWidth
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    />
-                </Grid>
+              
 
                 {/* 2 */}
                 <Grid size={12}>

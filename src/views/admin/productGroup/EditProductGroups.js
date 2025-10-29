@@ -32,27 +32,40 @@ const EditProductGroups = () => {
     slug: '',
     products: [],
     price: null,
+    eachPrice: '',
+    primaryUnitsType: '',
+    pricingGroup: '',
     commerceCategoriesOne: '',
     commerceCategoriesTwo: '',
     commerceCategoriesThree: '',
     commerceCategoriesFour: '',
+    pageTitle: '',
+    storeDescription: '',
+    eachBarcodes: '',
+    packBarcodes: '',
+    taxable: true,
+    comparePrice: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
-  const { id } = useParams();
 
   // Commerce category states
   const [categoryOne, setCategoryOne] = useState([]);
   const [categoryTwo, setCategoryTwo] = useState([]);
   const [categoryThree, setCategoryThree] = useState([]);
   const [categoryFour, setCategoryFour] = useState([]);
+  const [pricingGroups, setPricingGroups] = useState([]);
+  const [taxOptions, setTaxOptions] = useState([true, false]);
 
   // Generate slug from name
   const generateSlug = (name) => {
@@ -77,9 +90,19 @@ const EditProductGroups = () => {
     const selectedIds = e.target.value;
     setSelectedProductIds(selectedIds);
 
+    // Calculate total price from selected products
+    const selectedProducts = products.filter(product =>
+      selectedIds.includes(product._id)
+    );
+
+    const totalPrice = selectedProducts.reduce((sum, product) => {
+      return sum + (product.eachPrice || 0);
+    }, 0);
+
     setFormData(prev => ({
       ...prev,
       products: selectedIds,
+      price: totalPrice
     }));
   };
 
@@ -88,12 +111,22 @@ const EditProductGroups = () => {
     const updatedSelectedIds = selectedProductIds.filter(id => id !== productId);
     setSelectedProductIds(updatedSelectedIds);
 
+    const selectedProducts = products.filter(product =>
+      updatedSelectedIds.includes(product._id)
+    );
+
+    const totalPrice = selectedProducts.reduce((sum, product) => {
+      return sum + (product.eachPrice || 0);
+    }, 0);
+
     setFormData(prev => ({
       ...prev,
       products: updatedSelectedIds,
+      price: totalPrice
     }));
   };
 
+  // Image handling functions
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -107,12 +140,41 @@ const EditProductGroups = () => {
     }
   };
 
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 10) {
+      setError('You can upload a maximum of 10 images');
+      return;
+    }
+
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      setError('Please select only image files');
+      return;
+    }
+
+    setImageFiles(files);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
+    setError('');
+  };
+
   const handleRemoveThumbnail = () => {
     setThumbnailFile(null);
     if (thumbnailPreview) {
       URL.revokeObjectURL(thumbnailPreview);
       setThumbnailPreview(null);
     }
+  };
+
+  const handleRemoveImage = (index) => {
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    setImageFiles(newFiles);
+    setImagePreviews(newPreviews);
   };
 
   const handleSubmit = async () => {
@@ -133,6 +195,10 @@ const EditProductGroups = () => {
       setError('Please select a brand (Commerce Category One)');
       return;
     }
+    if (!formData.eachPrice) {
+      setError('Please enter a price');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -141,23 +207,35 @@ const EditProductGroups = () => {
     const formDataToSend = new FormData();
     formDataToSend.append('name', formData.name);
     formDataToSend.append('slug', formData.slug);
+    formDataToSend.append('eachPrice', formData.eachPrice);
     formDataToSend.append('price', formData.price.toString());
     formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
+    formDataToSend.append('taxable', formData.taxable.toString());
 
-    // Append optional commerce categories
+    // Append all other fields
+    if (formData.primaryUnitsType) formDataToSend.append('primaryUnitsType', formData.primaryUnitsType);
+    if (formData.pricingGroup) formDataToSend.append('pricingGroup', formData.pricingGroup);
     if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
     if (formData.commerceCategoriesThree) formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree);
     if (formData.commerceCategoriesFour) formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour);
+    if (formData.storeDescription) formDataToSend.append('storeDescription', formData.storeDescription);
+    if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
+    if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
+    if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
+    if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
 
-    // Append products as array
-    selectedProductIds.forEach(productId => {
-      formDataToSend.append('products', productId);
-    });
+    // Append products as JSON string
+    formDataToSend.append('products', JSON.stringify(selectedProductIds));
 
     // Append thumbnail image if a new one was selected
     if (thumbnailFile) {
       formDataToSend.append('productGroupThumbnail', thumbnailFile);
     }
+
+    // Append new images if any were selected
+    imageFiles.forEach((file) => {
+      formDataToSend.append('images', file);
+    });
 
     try {
       const res = await axiosInstance.put(`/product-group/update-product-group/${id}`, formDataToSend, {
@@ -203,6 +281,20 @@ const EditProductGroups = () => {
       console.error('Error fetching products list:', error);
       setError('Error fetching products: ' + error.message);
       setProducts([]);
+    }
+  };
+
+  const fetchPricingGroups = async () => {
+    try {
+      const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
+      console.log("response pricing groups", response);
+
+      if (response.data.statusCode === 200) {
+        setPricingGroups(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching pricing groups list:', error);
+      setError('Failed to fetch pricing groups');
     }
   };
 
@@ -295,6 +387,7 @@ const EditProductGroups = () => {
         const commerceCategoriesTwoId = productGroup.commerceCategoriesTwo?._id || '';
         const commerceCategoriesThreeId = productGroup.commerceCategoriesThree?._id || '';
         const commerceCategoriesFourId = productGroup.commerceCategoriesFour?._id || '';
+        const pricingGroupId = productGroup.pricingGroup?._id || '';
 
         // Set form data with product group details
         setFormData({
@@ -302,10 +395,19 @@ const EditProductGroups = () => {
           slug: productGroup.slug || '',
           products: productGroup.products ? productGroup.products.map(p => p._id) : [],
           price: productGroup.price || 0,
+          eachPrice: productGroup.eachPrice || '',
+          primaryUnitsType: productGroup.primaryUnitsType || '',
+          pricingGroup: pricingGroupId,
           commerceCategoriesOne: commerceCategoriesOneId,
           commerceCategoriesTwo: commerceCategoriesTwoId,
           commerceCategoriesThree: commerceCategoriesThreeId,
-          commerceCategoriesFour: commerceCategoriesFourId
+          commerceCategoriesFour: commerceCategoriesFourId,
+          pageTitle: productGroup.pageTitle || '',
+          storeDescription: productGroup.storeDescription || '',
+          eachBarcodes: productGroup.eachBarcodes || '',
+          packBarcodes: productGroup.packBarcodes || '',
+          taxable: productGroup.taxable !== undefined ? productGroup.taxable : true,
+          comparePrice: productGroup.comparePrice || '',
         });
 
         // Set selected product IDs
@@ -317,36 +419,41 @@ const EditProductGroups = () => {
           setThumbnailPreview(productGroup.thumbnail);
         }
 
+        // Set existing images previews
+        if (productGroup.images && Array.isArray(productGroup.images)) {
+          // Filter out the thumbnail from images array to avoid duplication
+          const additionalImages = productGroup.images.filter(img => img !== productGroup.thumbnail);
+          setImagePreviews(additionalImages);
+        }
+
         console.log("Loaded product group:", {
           name: productGroup.name,
           products: productIds,
           price: productGroup.price,
+          eachPrice: productGroup.eachPrice,
           thumbnail: productGroup.thumbnail,
+          images: productGroup.images,
           commerceCategories: {
             one: commerceCategoriesOneId,
             two: commerceCategoriesTwoId,
             three: commerceCategoriesThreeId,
             four: commerceCategoriesFourId
-          }
+          },
+          pricingGroup: pricingGroupId,
+          taxable: productGroup.taxable
         });
 
         // Fetch child categories based on loaded commerce categories
         if (commerceCategoriesOneId) {
-          // First fetch brands, then categories
-          fetchBrandsList().then(() => {
-            fetchCategoryList(commerceCategoriesOneId).then(() => {
-              if (commerceCategoriesTwoId) {
-                fetchSubCategoryList(commerceCategoriesTwoId).then(() => {
-                  if (commerceCategoriesThreeId) {
-                    fetchSubCategoryTwoList(commerceCategoriesThreeId);
-                  }
-                });
-              }
-            });
+          fetchCategoryList(commerceCategoriesOneId).then(() => {
+            if (commerceCategoriesTwoId) {
+              fetchSubCategoryList(commerceCategoriesTwoId).then(() => {
+                if (commerceCategoriesThreeId) {
+                  fetchSubCategoryTwoList(commerceCategoriesThreeId);
+                }
+              });
+            }
           });
-        } else {
-          // If no commerce category one, just fetch brands
-          fetchBrandsList();
         }
       } else {
         setError('Failed to fetch product group details');
@@ -407,6 +514,8 @@ const EditProductGroups = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchPricingGroups();
+    fetchBrandsList();
     fetchProductGroupDetails();
   }, [id]);
 
@@ -415,24 +524,10 @@ const EditProductGroups = () => {
     selectedProductIds.includes(product._id)
   );
 
-  // Calculate total price whenever selected products change
-  useEffect(() => {
-    if (selectedProductIds.length > 0 && products.length > 0) {
-      const totalPrice = selectedProductsDetails.reduce((sum, product) => {
-        return sum + (product.eachPrice || 0);
-      }, 0);
-
-      setFormData(prev => ({
-        ...prev,
-        price: parseFloat(totalPrice.toFixed(2))
-      }));
-    }
-  }, [selectedProductIds, products]);
-
   return (
     <div>
       <Grid container spacing={2}>
-        {/* Product Group Name */}
+        {/* Product Group Name and Slug */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="name" sx={{ mt: 2 }}>
             Product Group Name
@@ -448,10 +543,9 @@ const EditProductGroups = () => {
           />
         </Grid>
 
-        {/* Slug */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="slug" sx={{ mt: 2 }}>
-            Slug
+            Slug 
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
@@ -520,7 +614,171 @@ const EditProductGroups = () => {
           )}
         </Grid>
 
-        {/* Commerce Category One (Brand) */}
+        {/* Multiple Product Images Upload */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="images-upload" sx={{ mt: 2 }}>
+            Product Group Images
+          </CustomFormLabel>
+          <input
+            id="images-upload"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImagesChange}
+            style={{ display: 'none' }}
+          />
+          <Box display="flex" alignItems="center" gap={2}>
+            <Button
+              variant="outlined"
+              component="label"
+              htmlFor="images-upload"
+              startIcon={<IconPhoto size="1.1rem" />}
+              disabled={loading || fetching}
+            >
+              Choose Images
+            </Button>
+            {imageFiles.length > 0 && (
+              <Typography variant="body2" color="primary">
+                {imageFiles.length} image{imageFiles.length > 1 ? 's' : ''} selected
+              </Typography>
+            )}
+          </Box>
+          {imagePreviews.length > 0 && (
+            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {imagePreviews.map((preview, index) => (
+                <Box key={index} sx={{ position: 'relative', display: 'inline-block' }}>
+                  <img
+                    src={preview}
+                    alt={`Product ${index + 1}`}
+                    style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <Button
+                    size="small"
+                    onClick={() => handleRemoveImage(index)}
+                    sx={{
+                      position: 'absolute',
+                      top: -10,
+                      right: -10,
+                      minWidth: 'auto',
+                      padding: '4px',
+                      backgroundColor: 'error.main',
+                      color: 'white',
+                      '&:hover': { backgroundColor: 'error.dark' }
+                    }}
+                  >
+                    <IconX size="1rem" />
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Grid>
+
+        {/* Each Price and Compare Price */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="eachPrice" sx={{ mt: 2 }}>
+            Each Price
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="eachPrice"
+            fullWidth
+            value={formData.eachPrice}
+            onChange={(e) => setFormData({ ...formData, eachPrice: e.target.value })}
+            disabled={loading || fetching}
+            placeholder="Enter Each Price"
+          />
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="comparePrice" sx={{ mt: 2 }}>
+            Compare Price
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="comparePrice"
+            fullWidth
+            value={formData.comparePrice}
+            onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
+            disabled={loading || fetching}
+            placeholder="Enter Compare Price"
+          />
+        </Grid>
+
+        {/* Pricing Group */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="pricing-group-select" sx={{ mt: 2 }}>
+            Select Pricing Group
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="pricing-group-select"
+              value={formData.pricingGroup}
+              onChange={(e) => setFormData({ ...formData, pricingGroup: e.target.value })}
+              disabled={loading || fetching || pricingGroups.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                {pricingGroups.length === 0 ? 'Loading types...' : 'Select a type'}
+              </MenuItem>
+              {pricingGroups.map((group) => (
+                <MenuItem key={group.name} value={group._id}>
+                  {group.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Tax Selection */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="taxable-select" sx={{ mt: 2 }}>
+            Select Taxable
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="taxable-select"
+              value={formData.taxable}
+              onChange={(e) => {
+                setFormData({ ...formData, taxable: e.target.value });
+              }}
+              disabled={loading || fetching || taxOptions.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                {taxOptions.length === 0 ? 'No tax options available' : 'Select a tax option'}
+              </MenuItem>
+              {taxOptions.map((tax) => (
+                <MenuItem key={tax} value={tax}>
+                  {tax === true ? 'Taxable' : 'Non Taxable'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Commerce Categories */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
             Select Commerce Category One (Brand)
@@ -534,7 +792,6 @@ const EditProductGroups = () => {
                 setFormData({
                   ...formData,
                   commerceCategoriesOne: e.target.value,
-                  // Clear child categories when brand changes
                   commerceCategoriesTwo: '',
                   commerceCategoriesThree: '',
                   commerceCategoriesFour: ''
@@ -566,7 +823,6 @@ const EditProductGroups = () => {
           </FormControl>
         </Grid>
 
-        {/* Commerce Category Two */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
             Select Commerce Category Two
@@ -579,7 +835,6 @@ const EditProductGroups = () => {
                 setFormData({
                   ...formData,
                   commerceCategoriesTwo: e.target.value,
-                  // Clear child categories when category changes
                   commerceCategoriesThree: '',
                   commerceCategoriesFour: ''
                 });
@@ -610,7 +865,6 @@ const EditProductGroups = () => {
           </FormControl>
         </Grid>
 
-        {/* Commerce Category Three */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
             Select Commerce Category Three
@@ -623,7 +877,6 @@ const EditProductGroups = () => {
                 setFormData({
                   ...formData,
                   commerceCategoriesThree: e.target.value,
-                  // Clear child categories when subcategory changes
                   commerceCategoriesFour: ''
                 });
               }}
@@ -653,7 +906,6 @@ const EditProductGroups = () => {
           </FormControl>
         </Grid>
 
-        {/* Commerce Category Four */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
             Select Commerce Category Four
@@ -758,26 +1010,61 @@ const EditProductGroups = () => {
           </Grid>
         )}
 
-        {/* Total Price Display */}
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="price" sx={{ mt: 2 }}>
-            Total Price
-            <span style={{ color: 'red' }}>*</span>
+        {/* Store Description */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="storeDescription" sx={{ mt: 2 }}>
+            Store Description
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="price"
+            id="storeDescription"
             fullWidth
-            type="number"
-            value={formData.price}
-            onChange={(e) => {
-              const value = parseFloat(e.target.value);
-              setFormData(prev => ({
-                ...prev,
-                price: value
-              }));
-            }}
+            value={formData.storeDescription}
+            onChange={(e) => setFormData({ ...formData, storeDescription: e.target.value })}
             disabled={loading || fetching}
-            placeholder="Enter custom price"
+            placeholder="Enter Store Description"
+          />
+        </Grid>
+
+        {/* Page Title */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="pageTitle" sx={{ mt: 2 }}>
+            Page Title
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="pageTitle"
+            fullWidth
+            value={formData.pageTitle}
+            onChange={(e) => setFormData({ ...formData, pageTitle: e.target.value })}
+            disabled={loading || fetching}
+            placeholder="Enter Page Title"
+          />
+        </Grid>
+
+        {/* Barcodes */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="eachBarcodes" sx={{ mt: 2 }}>
+            Each Barcodes
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="eachBarcodes"
+            fullWidth
+            value={formData.eachBarcodes}
+            onChange={(e) => setFormData({ ...formData, eachBarcodes: e.target.value })}
+            disabled={loading || fetching}
+            placeholder="Enter Each Barcodes"
+          />
+        </Grid>
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="packBarcodes" sx={{ mt: 2 }}>
+            Pack Barcodes
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="packBarcodes"
+            fullWidth
+            value={formData.packBarcodes}
+            onChange={(e) => setFormData({ ...formData, packBarcodes: e.target.value })}
+            disabled={loading || fetching}
+            placeholder="Enter Pack Barcodes"
           />
         </Grid>
 
@@ -821,21 +1108,8 @@ const EditProductGroups = () => {
         </Grid>
       </Grid>
 
-      {/* Loading Backdrop */}
-      <Backdrop
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-        }}
-        open={fetching}
-      >
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <CircularProgress color="inherit" size={50} />
-          <Typography variant="body2" color="inherit">
-            Loading product group details...
-          </Typography>
-        </Box>
-      </Backdrop>
+      
+     
     </div>
   );
 };

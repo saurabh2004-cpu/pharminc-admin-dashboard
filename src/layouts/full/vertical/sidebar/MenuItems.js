@@ -288,29 +288,22 @@ const Menuitems = [
         icon: IconPoint,
         href: '/dashboard/products/list',
       },
-    ]
-  },
 
-  {
-    id: uniqueId(),
-    title: 'Product Groups',
-    icon: IconShoppingBag,
-    href: '/dashboard/productsGroups',
-    children: [
       {
         id: uniqueId(),
-        title: 'Create Product Group',
+        title: 'Create Kit',
         icon: IconPoint,
         href: '/dashboard/productGroup/create',
       },
       {
         id: uniqueId(),
-        title: 'Product Groups List',
+        title: 'Kit List',
         icon: IconPoint,
         href: '/dashboard/productGroup/list',
       },
     ]
   },
+
 
   {
     id: uniqueId(),

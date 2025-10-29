@@ -30,7 +30,6 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
-import { color } from 'framer-motion';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -83,12 +82,14 @@ function EnhancedTableHead(props) {
     thumbnail: { minWidth: '100px', maxWidth: '100px' },
     name: { minWidth: '200px', maxWidth: '200px' },
     slug: { minWidth: '180px', maxWidth: '180px' },
-    productsCount: { minWidth: '120px', maxWidth: '120px' },
-    commerceCategoryOne: { minWidth: '180px', maxWidth: '180px' },
-    commerceCategoryTwo: { minWidth: '180px', maxWidth: '180px' },
-    commerceCategoryThree: { minWidth: '180px', maxWidth: '180px' },
-    commerceCategoryFour: { minWidth: '180px', maxWidth: '180px' },
+    productsCount: { minWidth: '160px', maxWidth: '160px' },
+    commerceCategoriesOne: { minWidth: '180px', maxWidth: '180px' },
+    commerceCategoriesTwo: { minWidth: '180px', maxWidth: '180px' },
+    commerceCategoriesThree: { minWidth: '180px', maxWidth: '180px' },
+    commerceCategoriesFour: { minWidth: '180px', maxWidth: '180px' },
+    eachPrice: { minWidth: '120px', maxWidth: '120px' },
     price: { minWidth: '120px', maxWidth: '120px' },
+    taxable: { minWidth: '100px', maxWidth: '100px' },
     updatedAt: { minWidth: '150px', maxWidth: '150px' },
   };
 
@@ -197,16 +198,6 @@ const EnhancedTableToolbar = (props) => {
         </Tooltip>
       ) : (
         <>
-          {/* <Tooltip title="Create Product Group">
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleCreateProductGroup}
-              sx={{ backgroundColor: '#2E2F7F', mr: 1 }}
-            >
-              Create Product Group
-            </Button>
-          </Tooltip> */}
           <Tooltip title="Filter list">
             <IconButton>
               <IconFilter size="1.2rem" />
@@ -232,7 +223,7 @@ const ListProductGroup = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  // Define headCells for product groups
+  // Corrected headCells based on API response
   const headCells = [
     {
       id: 'thumbnail',
@@ -259,33 +250,40 @@ const ListProductGroup = () => {
       disablePadding: false,
     },
     {
-      id: 'commerceCategoryOne',
-      label: 'Commerce Category One',
+      id: 'commerceCategoriesOne',
+      label: 'commerce Categories One',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'commerceCategoryTwo',
-      label: 'Commerce Category Two',
+      id: 'commerceCategoriesTwo',
+      label: 'Commerce Categories Two',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'commerceCategoryThree',
-      label: 'Commerce Category Three',
+      id: 'commerceCategoriesThree',
+      label: 'Commerce Categories Three',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'commerceCategoryFour',
-      label: 'Commerce Category Four',
+      id: 'commerceCategoriesFour',
+      label: 'Commerce Categories Four',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'price',
-      label: 'Total Price',
+      id: 'eachPrice',
+      label: 'Each Price',
       numeric: true,
+      disablePadding: false,
+    },
+
+    {
+      id: 'taxable',
+      label: 'Taxable',
+      numeric: false,
       disablePadding: false,
     },
   ];
@@ -294,14 +292,16 @@ const ListProductGroup = () => {
   const columnWidths = {
     actions: { minWidth: '120px', maxWidth: '120px' },
     thumbnail: { minWidth: '100px', maxWidth: '100px' },
-    name: { minWidth: '240px', maxWidth: '280px' },
-    slug: { minWidth: '240px', maxWidth: '280px' },
-    productsCount: { minWidth: '120px', maxWidth: '120px' },
-    commerceCategoryOne: { minWidth: '260px', maxWidth: '300px' },
-    commerceCategoryTwo: { minWidth: '260px', maxWidth: '300px' },
-    commerceCategoryThree: { minWidth: '260px', maxWidth: '300px' },
-    commerceCategoryFour: { minWidth: '180px', maxWidth: '180px' },
+    name: { minWidth: '200px', maxWidth: '300px' },
+    slug: { minWidth: '200px', maxWidth: '300px' },
+    productsCount: { minWidth: '150px', maxWidth: '180px' },
+    commerceCategoriesOne:  { minWidth: '250px', maxWidth: '300px' },
+    commerceCategoriesTwo:  { minWidth: '250px', maxWidth: '300px' },
+    commerceCategoriesThree: { minWidth: '250px', maxWidth: '300px' },
+    commerceCategoriesFour: { minWidth: '250px', maxWidth: '300px' },
+    eachPrice: { minWidth: '120px', maxWidth: '120px' },
     price: { minWidth: '120px', maxWidth: '120px' },
+    taxable: { minWidth: '100px', maxWidth: '100px' },
     updatedAt: { minWidth: '150px', maxWidth: '150px' },
   };
 
@@ -338,11 +338,12 @@ const ListProductGroup = () => {
       return (
         row?.name?.toLowerCase().includes(searchValue) ||
         row?.slug?.toLowerCase().includes(searchValue) ||
+        row?.eachPrice?.toString().includes(searchValue) ||
         row?.price?.toString().includes(searchValue) ||
-        row.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue) ||
-        row.commerceCategoriesTwo?.name?.toLowerCase().includes(searchValue) ||
-        row.commerceCategoriesThree?.name?.toLowerCase().includes(searchValue) ||
-        row.commerceCategoriesFour?.name?.toLowerCase().includes(searchValue)
+        row?.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue) ||
+        row?.commerceCategoriesTwo?.name?.toLowerCase().includes(searchValue) ||
+        row?.commerceCategoriesThree?.name?.toLowerCase().includes(searchValue) ||
+        row?.commerceCategoriesFour?.name?.toLowerCase().includes(searchValue)
       );
     });
     setRows(filteredRows);
@@ -460,7 +461,7 @@ const ListProductGroup = () => {
     position: "sticky",
     left: 0,
     zIndex: 5,
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#ffffff',
     ...columnWidths.actions
   };
 
@@ -551,21 +552,22 @@ const ListProductGroup = () => {
 
                         {/* Thumbnail */}
                         <TableCell sx={columnWidths.thumbnail}>
-                          <Avatar
-                            src={row.thumbnail}
-                            variant="rounded"
-                            sx={{ width: 60, height: 60 }}
-                            alt={row.name}
-                          />
+                          <Box display="flex" alignItems="center" >
+                            <Box>
+                              <img
+                                src={row.thumbnail}
+                                alt={row.sku}
+                                style={{ width: "70px", height: "70px", objectFit: "cover" }}
+                              />
+                            </Box>
+
+                          </Box>
                         </TableCell>
 
                         {/* Group Name */}
-                        <TableCell
-                          sx={columnWidths.name}
-                          onClick={() => handleViewProductGroup(row._id)}
-                        >
+                        <TableCell sx={columnWidths.name}>
                           <Typography
-                            fontWeight="400"
+                            fontWeight="500"
                             variant="body1"
                             sx={{
                               cursor: 'pointer',
@@ -573,6 +575,7 @@ const ListProductGroup = () => {
                                 color: 'primary.main'
                               }
                             }}
+                            onClick={() => handleViewProductGroup(row._id)}
                           >
                             {row.name || 'N/A'}
                           </Typography>
@@ -592,39 +595,59 @@ const ListProductGroup = () => {
                           </Typography>
                         </TableCell>
 
-                        {/* Commerce Category One */}
-                        <TableCell sx={columnWidths.commerceCategoryOne}>
+                        {/* Commerce Category One (Brand) */}
+                        <TableCell sx={columnWidths.commerceCategoriesOne}>
                           <Typography variant="body2">
                             {row?.commerceCategoriesOne?.name || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        {/* Commerce Category Two */}
-                        <TableCell sx={columnWidths.commerceCategoryTwo}>
+                        {/* Commerce Category Two (Category) */}
+                        <TableCell sx={columnWidths.commerceCategoriesTwo}>
                           <Typography variant="body2">
                             {row?.commerceCategoriesTwo?.name || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        {/* Commerce Category Three */}
-                        <TableCell sx={columnWidths.commerceCategoryThree}>
+                        {/* Commerce Category Three (Sub Category) */}
+                        <TableCell sx={columnWidths.commerceCategoriesThree}>
                           <Typography variant="body2">
                             {row?.commerceCategoriesThree?.name || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        {/* Commerce Category Four */}
-                        <TableCell sx={columnWidths.commerceCategoryFour}>
+                        {/* Commerce Category Four (Sub Sub Category) */}
+                        <TableCell sx={columnWidths.commerceCategoriesFour}>
                           <Typography variant="body2">
                             {row?.commerceCategoriesFour?.name || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        {/* Total Price */}
-                        <TableCell align="center" sx={columnWidths.price}>
-                          <Typography fontWeight="600" color="primary">
-                            ${row.price ? parseFloat(row.price).toFixed(2) : '0.00'}
+                        {/* Each Price */}
+                        <TableCell align="center" sx={columnWidths.eachPrice}>
+                          <Typography fontWeight="500">
+                            ${row.eachPrice ? parseFloat(row.eachPrice).toFixed(2) : '0.00'}
                           </Typography>
+                        </TableCell>
+
+
+
+                        {/* Taxable */}
+                        <TableCell align="center" sx={columnWidths.taxable}>
+                          <Box
+                            sx={{
+                              display: 'inline-block',
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: 1,
+                              backgroundColor: row.taxable ? '#e8f5e8' : '#ffebee',
+                              color: row.taxable ? '#2e7d32' : '#d32f2f',
+                              fontWeight: 500,
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            {row.taxable ? 'Taxable' : 'Non-Taxable'}
+                          </Box>
                         </TableCell>
 
                         {/* Last Updated Date */}

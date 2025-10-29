@@ -30,6 +30,14 @@ import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
+  if (orderBy === 'brand') {
+    const aValue = a.brand?.name || '';
+    const bValue = b.brand?.name || '';
+    if (bValue < aValue) return -1;
+    if (bValue > aValue) return 1;
+    return 0;
+  }
+
   if (b[orderBy] < a[orderBy]) {
     return -1;
   }
@@ -60,7 +68,7 @@ function EnhancedTableHead(props) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
-  
+
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
@@ -195,26 +203,50 @@ const BrandPagesListDetails = () => {
       disablePadding: false,
     },
     {
-      id: 'heroImage',
-      label: 'Hero Image',
+      id: 'brandTitle',
+      label: 'Brand Title',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'Question',
-      label: 'Question',
+      id: 'brandDescription',
+      label: 'Brand Description',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'answers',
-      label: 'Answers',
+      id: 'brandImages',
+      label: 'Brand Image',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'heroCarouselImages',
+      label: 'Hero Carousel',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'categories',
+      label: 'Categories',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'brands',
+      label: 'Brand Items',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'questions',
+      label: 'Q&A',
       numeric: false,
       disablePadding: false,
     },
     {
       id: 'carouselImages',
-      label: 'Carousel Images',
+      label: 'Trusted By Images',
       numeric: false,
       disablePadding: false,
     },
@@ -223,7 +255,7 @@ const BrandPagesListDetails = () => {
   const fetchBrandPages = async () => {
     try {
       const response = await axiosInstance.get(`/brand-page/get-all-brand-pages`);
-      console.log("response fetchBrandPages ", response);
+      // console.log("response fetchBrandPages ", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -246,8 +278,16 @@ const BrandPagesListDetails = () => {
     const filteredRows = tableData.filter((row) => {
       return (
         row?.brand?.name?.toLowerCase().includes(searchValue) ||
-        row?.Question?.toLowerCase().includes(searchValue) ||
-        row?.answers?.some(ans => ans.toLowerCase().includes(searchValue))
+        row?.brandTitle?.toLowerCase().includes(searchValue) ||
+        row?.brandDescription?.toLowerCase().includes(searchValue) ||
+        row?.categoryHeadingText?.toLowerCase().includes(searchValue) ||
+        row?.brandHeadingText?.toLowerCase().includes(searchValue) ||
+        row?.QnaHeadingText?.toLowerCase().includes(searchValue) ||
+        row?.trustedByHeadingText?.toLowerCase().includes(searchValue) ||
+        row?.questions?.some(q => q.toLowerCase().includes(searchValue)) ||
+        row?.answers?.some(ans => ans.toLowerCase().includes(searchValue)) ||
+        row?.categories?.some(cat => cat.categoryTitle?.toLowerCase().includes(searchValue)) ||
+        row?.brands?.some(brand => brand.brandUrl?.toLowerCase().includes(searchValue))
       );
     });
     setRows(filteredRows);
@@ -373,7 +413,7 @@ const BrandPagesListDetails = () => {
           <TableContainer>
             <Table
               sx={{
-                minWidth: 1200,
+                minWidth: 1500,
                 borderCollapse: "collapse",
                 "& td, & th": {
                   borderRight: "1px solid rgba(224, 224, 224, 1)",
@@ -414,18 +454,18 @@ const BrandPagesListDetails = () => {
                         <TableCell sx={stickyCellStyle}>
                           <Box display="flex" gap={1}>
                             <Tooltip title="Edit">
-                              <IconButton 
-                                size="small" 
-                                color="primary" 
+                              <IconButton
+                                size="small"
+                                color="primary"
                                 onClick={() => handleEditBrandPage(row._id)}
                               >
                                 <IconEdit size="1.1rem" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete">
-                              <IconButton 
-                                size="small" 
-                                color="error" 
+                              <IconButton
+                                size="small"
+                                color="error"
                                 onClick={(e) => handleDeleteClick(e, row._id, row.brand?.name)}
                               >
                                 <IconTrash size="1.1rem" />
@@ -434,59 +474,213 @@ const BrandPagesListDetails = () => {
                           </Box>
                         </TableCell>
 
-                        <TableCell 
-                          onClick={() => handleEditBrandPage(row._id)} 
-                          sx={{ cursor: 'pointer' }}
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 200 }}
                         >
                           <Typography fontWeight="600">
                             {row?.brand?.name || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        <TableCell 
-                          onClick={() => handleEditBrandPage(row._id)} 
-                          sx={{ cursor: 'pointer' }}
-                        >
-                          <Avatar
-                            src={row?.heroImage}
-                            alt={row?.brand?.name}
-                            variant="rounded"
-                            sx={{ width: 60, height: 60 }}
-                          />
-                        </TableCell>
-
-                        <TableCell 
-                          onClick={() => handleEditBrandPage(row._id)} 
-                          sx={{ cursor: 'pointer' }}
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 200 }}
                         >
                           <Typography>
-                            {row?.Question || 'N/A'}
+                            {row?.brandTitle || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        <TableCell 
-                          onClick={() => handleEditBrandPage(row._id)} 
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 300 }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                            }}
+                          >
+                            {row?.brandDescription || 'No description'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
                           sx={{ cursor: 'pointer' }}
                         >
-                          <Box display="flex" flexDirection="column" gap={0.5}>
-                            {row?.answers?.map((answer, idx) => (
-                              <Chip
+                          {row?.brandImages ? (
+                            <Avatar
+                              src={row.brandImages}
+                              alt="Brand"
+                              variant="rounded"
+                              sx={{ width: 60, height: 60 }}
+                            />
+                          ) : (
+                            <Typography color="text.secondary" fontSize="0.875rem">
+                              No image
+                            </Typography>
+                          )}
+                        </TableCell>
+
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 120 }}
+                        >
+                          <Box display="flex" gap={1} flexWrap="wrap">
+                            {row?.heroCarouselImages?.slice(0, 2).map((img, idx) => (
+                              <Avatar
                                 key={idx}
-                                label={answer}
-                                size="small"
-                                sx={{ maxWidth: 200 }}
+                                src={img}
+                                alt={`Hero ${idx + 1}`}
+                                variant="rounded"
+                                sx={{ width: 50, height: 50 }}
                               />
-                            )) || <Typography color="text.secondary">No answers</Typography>}
+                            ))}
+                            {row?.heroCarouselImages?.length > 2 && (
+                              <Chip
+                                label={`+${row.heroCarouselImages.length - 2}`}
+                                size="small"
+                                color="primary"
+                              />
+                            )}
+                            {!row?.heroCarouselImages?.length && (
+                              <Typography color="text.secondary" fontSize="0.875rem">
+                                No images
+                              </Typography>
+                            )}
                           </Box>
                         </TableCell>
 
-                        <TableCell 
-                          onClick={() => handleEditBrandPage(row._id)} 
-                          sx={{ cursor: 'pointer', minWidth: 250, maxWidth: 300 }}
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 350 }}
                         >
-                          <Box 
-                            display="flex" 
-                            gap={1} 
+                          <Box display="flex" flexDirection="column" gap={0.5}>
+                            {row?.categories?.slice(0, 3).map((category, idx) => (
+                              <Box key={idx} display="flex" alignItems="center" gap={1}>
+                                <Avatar
+                                  src={category.categoryImage}
+                                  alt={category.categoryTitle}
+                                  variant="rounded"
+                                  sx={{ width: 30, height: 30 }}
+                                />
+                                <Box>
+                                  <Typography variant="body2" fontWeight="500">
+                                    {category.categoryTitle}
+                                  </Typography>
+                                  {category.categoryUrl && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      {category.categoryUrl}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+                            ))}
+                            {row?.categories?.length > 3 && (
+                              <Typography variant="caption" color="text.secondary">
+                                +{row.categories.length - 3} more
+                              </Typography>
+                            )}
+                            {!row?.categories?.length && (
+                              <Typography color="text.secondary" fontSize="0.875rem">
+                                No categories
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 300 }}
+                        >
+                          <Box display="flex" flexDirection="column" gap={0.5}>
+                            {row?.brands?.slice(0, 3).map((brandItem, idx) => (
+                              <Box key={idx} display="flex" alignItems="center" gap={1}>
+                                <Avatar
+                                  src={brandItem.brandImage}
+                                  alt="Brand Logo"
+                                  variant="rounded"
+                                  sx={{ width: 30, height: 30 }}
+                                />
+                                <Box>
+                                  <Typography variant="body2">
+                                    {brandItem.brandUrl || 'No URL'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            ))}
+                            {row?.brands?.length > 3 && (
+                              <Typography variant="caption" color="text.secondary">
+                                +{row.brands.length - 3} more
+                              </Typography>
+                            )}
+                            {!row?.brands?.length && (
+                              <Typography color="text.secondary" fontSize="0.875rem">
+                                No brands
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 350 }}
+                        >
+                          <Box display="flex" flexDirection="column" gap={1}>
+                            {row?.questions?.slice(0, 2).map((question, idx) => (
+                              <Box key={idx}>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="500"
+                                  sx={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    maxWidth: 200
+                                  }}
+                                >
+                                  Q: {question}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    maxWidth: 200
+                                  }}
+                                >
+                                  A: {row.answers?.[idx] || 'No answer'}
+                                </Typography>
+                              </Box>
+                            ))}
+                            {row?.questions?.length > 2 && (
+                              <Typography variant="caption" color="text.secondary">
+                                +{row.questions.length - 2} more Q&A
+                              </Typography>
+                            )}
+                            {!row?.questions?.length && (
+                              <Typography color="text.secondary" fontSize="0.875rem">
+                                No Q&A
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 150 }}
+                        >
+                          <Box
+                            display="flex"
+                            gap={1}
                             sx={{
                               overflowX: 'auto',
                               overflowY: 'hidden',
@@ -502,7 +696,7 @@ const BrandPagesListDetails = () => {
                               },
                             }}
                           >
-                            {row?.carouselImages?.map((img, idx) => (
+                            {row?.carouselImages?.slice(0, 3).map((img, idx) => (
                               <Avatar
                                 key={idx}
                                 src={img}
@@ -511,6 +705,13 @@ const BrandPagesListDetails = () => {
                                 sx={{ width: 50, height: 50, flexShrink: 0 }}
                               />
                             ))}
+                            {row?.carouselImages?.length > 3 && (
+                              <Chip
+                                label={`+${row.carouselImages.length - 3}`}
+                                size="small"
+                                color="primary"
+                              />
+                            )}
                             {!row?.carouselImages?.length && (
                               <Typography color="text.secondary" fontSize="0.875rem">
                                 No images
@@ -519,9 +720,12 @@ const BrandPagesListDetails = () => {
                           </Box>
                         </TableCell>
 
-                        <TableCell>
-                          <Typography>
-                            {row.updatedAt ? format(new Date(row.updatedAt), 'E, MMM d yyyy') : 'N/A'}
+                        <TableCell sx={{ cursor: 'pointer', minWidth: 200 }}>
+                          <Typography variant="body2">
+                            {row.updatedAt ? format(new Date(row.updatedAt), 'MMM d, yyyy') : 'N/A'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {row.updatedAt ? format(new Date(row.updatedAt), 'hh:mm a') : ''}
                           </Typography>
                         </TableCell>
                       </TableRow>
