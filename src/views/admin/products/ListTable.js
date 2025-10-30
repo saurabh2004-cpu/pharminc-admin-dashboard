@@ -32,6 +32,7 @@ import {
   Select,
   MenuItem,
   DialogActions,
+  Chip,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -42,6 +43,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import { IconCheck, IconX } from '@tabler/icons';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -1022,6 +1024,17 @@ const ListTable = ({
                                   <Typography fontWeight="400">
                                     {row.packBarcodes || ''}
                                   </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={columnWidths.packBarcodes}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Chip
+                                    label={row.inactive ? 'Inactive' : 'Active'}
+                                    color={row.inactive ? 'error' : 'success'}
+                                  />
                                 </Box>
                               </Box>
                             </TableCell>

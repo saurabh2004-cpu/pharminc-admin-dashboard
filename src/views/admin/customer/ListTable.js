@@ -27,6 +27,15 @@ import {
   MenuItem,
   ListItemText,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  DialogActions,
+  CircularProgress,
+  Radio,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -35,6 +44,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import { IconUserPlus } from '@tabler/icons-react';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -54,6 +64,117 @@ function getComparator(
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
+
+
+const SalesRepAssignmentDialog = ({ open, onClose, customer, salesReps, onAssign }) => {
+  const [selectedSalesRep, setSelectedSalesRep] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
+
+  const handleAssign = async () => {
+    if (!selectedSalesRep) {
+      alert('Please select a sales representative');
+      return;
+    }
+
+    setIsAssigning(true);
+    await onAssign(selectedSalesRep, customer._id);
+    setIsAssigning(false);
+    setSelectedSalesRep('');
+  };
+
+  const handleClose = () => {
+    setSelectedSalesRep('');
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        Assign Customer to Sales Representative
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ mb: 2, mt: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Customer: <strong>{customer?.customerName || 'N/A'}</strong>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Email: <strong>{customer?.customerEmail || customer?.contactEmail || 'N/A'}</strong>
+          </Typography>
+        </Box>
+
+        <FormControl component="fieldset" fullWidth>
+          <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>
+            Select Sales Representative
+          </FormLabel>
+          <RadioGroup
+            value={selectedSalesRep}
+            onChange={(e) => setSelectedSalesRep(e.target.value)}
+          >
+            {salesReps.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+                No sales representatives available
+              </Typography>
+            ) : (
+              salesReps.map((rep) => (
+                <Box
+                  key={rep._id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    p: 1.5,
+                    mb: 1,
+                    border: '1px solid',
+                    borderColor: selectedSalesRep === rep._id ? 'primary.main' : 'divider',
+                    borderRadius: 1,
+                    backgroundColor: selectedSalesRep === rep._id ? 'primary.50' : 'transparent',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                  onClick={() => setSelectedSalesRep(rep._id)}
+                >
+                  <Radio
+                    value={rep._id}
+                    checked={selectedSalesRep === rep._id}
+                    sx={{ mr: 1 }}
+                  />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      {rep.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {rep.email}
+                    </Typography>
+                    <Chip
+                      label={rep.role}
+                      size="small"
+                      color={rep.role === 'Master-Sales-Rep' ? 'primary' : 'default'}
+                      sx={{ ml: 1, height: 20, fontSize: '0.65rem' }}
+                    />
+                  </Box>
+                </Box>
+              ))
+            )}
+          </RadioGroup>
+        </FormControl>
+      </DialogContent>
+      <DialogActions sx={{ p: 2, gap: 1 }}>
+        <Button onClick={handleClose} variant="outlined" disabled={isAssigning}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleAssign}
+          variant="contained"
+          disabled={!selectedSalesRep || isAssigning}
+          startIcon={isAssigning ? <CircularProgress size={16} /> : null}
+        >
+          {isAssigning ? 'Assigning...' : 'Assign'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 function stableSort(array, comparator) {
   const stabilizedThis = array.map((el, index) => [el, index]);
@@ -239,7 +360,7 @@ const EnhancedTableToolbar = (props) => {
 // Helper function to format addresses
 const formatAddress = (address) => {
   if (!address) return 'N/A';
-  
+
   const parts = [
     address.shippingAddressOne || address.billingAddressOne,
     address.shippingAddressTwo || address.billingAddressTwo,
@@ -248,7 +369,7 @@ const formatAddress = (address) => {
     address.shippingState || address.billingState,
     address.shippingZip || address.billingZip
   ].filter(Boolean);
-  
+
   return parts.join(', ');
 };
 
@@ -273,9 +394,9 @@ const AddressesDisplay = ({ addresses, type }) => {
                 size="small"
                 variant={selectedTab === index ? "contained" : "text"}
                 onClick={() => setSelectedTab(index)}
-                sx={{ 
-                  minWidth: 'auto', 
-                  px: 1.5, 
+                sx={{
+                  minWidth: 'auto',
+                  px: 1.5,
                   py: 0.5,
                   fontSize: '0.7rem',
                   mr: 0.5
@@ -297,9 +418,9 @@ const AddressesDisplay = ({ addresses, type }) => {
         }}
       >
         {addresses.slice(selectedTab, selectedTab + 1).map((address, index) => (
-          <Box 
+          <Box
             key={selectedTab}
-            sx={{ 
+            sx={{
               p: 1.5,
               border: '1px solid',
               borderColor: 'primary.light',
@@ -325,7 +446,7 @@ const AddressesDisplay = ({ addresses, type }) => {
                   {line}
                 </Typography>
               ))}
-              
+
               <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
                 {[
                   address.shippingCity || address.billingCity,
@@ -367,6 +488,13 @@ const ListTable = ({
   const [rows, setRows] = useState(sourceData);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const [salesReps, setSalesReps] = useState([]);
+  const [salesRepDialog, setSalesRepDialog] = useState({
+    open: false,
+    customer: null,
+  });
+  const [error, setError] = useState('');
+
 
   // Define column widths
   const columnWidths = {
@@ -404,11 +532,11 @@ const ListTable = ({
       const searchValue = search.toLowerCase();
       filteredData = filteredData.filter((row) => {
         // Search in addresses as well
-        const shippingAddressesText = row.shippingAddresses?.map(addr => 
+        const shippingAddressesText = row.shippingAddresses?.map(addr =>
           Object.values(addr).join(' ').toLowerCase()
         ).join(' ') || '';
-        
-        const billingAddressesText = row.billingAddresses?.map(addr => 
+
+        const billingAddressesText = row.billingAddresses?.map(addr =>
           Object.values(addr).join(' ').toLowerCase()
         ).join(' ') || '';
 
@@ -553,6 +681,61 @@ const ListTable = ({
     backgroundColor: '#f0f8ff',
   };
 
+
+  const fetchSalesAllRep = async () => {
+    try {
+      const response = await axiosInstance.get(`/sales-rep/get-sales-reps`);
+      console.log("fetch all sales reps ", response);
+
+      if (response.data.statusCode === 200) {
+        setSalesReps(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching Sales Representatives list:', error);
+      setError(error.message);
+    }
+  };
+
+  const handleAssignToSalesRep = async (salesRepId, customerId) => {
+    try {
+      console.log("Assigning customer to sales rep:", { salesRepId, customerId });
+
+      const response = await axiosInstance.post(
+        `/sales-rep/add-customer-to-sales-rep/${salesRepId}/${customerId}`
+      );
+
+      if (response.data.statusCode === 200) {
+        console.log('Customer assigned to sales rep successfully');
+        setError('Customer assigned to sales rep successfully');
+        handleCloseSalesRepDialog();
+
+        // Optional: Refresh the table data
+        // refreshTableData();
+      }
+    } catch (error) {
+      console.error('Error assigning customer to sales rep:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to assign customer');
+    }
+  };
+
+  const handleOpenSalesRepDialog = (customer) => {
+    setSalesRepDialog({
+      open: true,
+      customer: customer,
+    });
+  };
+
+  const handleCloseSalesRepDialog = () => {
+    setSalesRepDialog({
+      open: false,
+      customer: null,
+    });
+  };
+
+  useEffect(() => {
+    fetchSalesAllRep();
+  }, [])
+
   return (
     <Box>
       <Box>
@@ -653,6 +836,15 @@ const ListTable = ({
                                       <IconKey size="1.1rem" />
                                     </IconButton>
                                   </Tooltip>
+                                  <Tooltip title="Assign to Sales Rep">
+                                    <IconButton
+                                      size="small"
+                                      color="info"
+                                      onClick={() => handleOpenSalesRepDialog(row)}
+                                    >
+                                      <IconUserPlus size="1.1rem" />
+                                    </IconButton>
+                                  </Tooltip>
                                 </Box>
                               </TableCell>
 
@@ -661,7 +853,7 @@ const ListTable = ({
                                   {row.customerId || 'N/A'}
                                 </Typography>
                               </TableCell>
-                              
+
                               {/* <TableCell sx={columnWidths.sku}>
                                 <Typography fontWeight="500" variant="subtitle2">
                                   {row.markupDiscount || 'N/A'}
@@ -730,23 +922,23 @@ const ListTable = ({
 
                               {/* Shipping Addresses */}
                               <TableCell sx={columnWidths.addresses}>
-                                <AddressesDisplay 
-                                  addresses={row.shippingAddresses} 
-                                  type="Shipping" 
+                                <AddressesDisplay
+                                  addresses={row.shippingAddresses}
+                                  type="Shipping"
                                 />
                               </TableCell>
 
                               {/* Billing Addresses */}
                               <TableCell sx={columnWidths.addresses}>
-                                <AddressesDisplay 
-                                  addresses={row.billingAddresses} 
-                                  type="Billing" 
+                                <AddressesDisplay
+                                  addresses={row.billingAddresses}
+                                  type="Billing"
                                 />
                               </TableCell>
 
                               <TableCell sx={columnWidths.packBarcodes}>
-                                <Chip 
-                                  label={row.inactive ? 'Inactive' : 'Active'} 
+                                <Chip
+                                  label={row.inactive ? 'Inactive' : 'Active'}
                                   color={row.inactive ? 'error' : 'success'}
                                   size="small"
                                 />
@@ -791,6 +983,14 @@ const ListTable = ({
         itemName={deleteDialog.itemName}
         isDeleting={deleteDialog.isDeleting}
         itemType={"Customers"}
+      />
+
+      <SalesRepAssignmentDialog
+        open={salesRepDialog.open}
+        onClose={handleCloseSalesRepDialog}
+        customer={salesRepDialog.customer}
+        salesReps={salesReps}
+        onAssign={handleAssignToSalesRep}
       />
     </Box>
   );

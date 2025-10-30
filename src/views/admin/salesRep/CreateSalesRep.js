@@ -13,7 +13,8 @@ import {
   Select,
   Checkbox,
   ListItemText,
-  InputAdornment
+  InputAdornment,
+  InputLabel
 } from '@mui/material';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
@@ -24,8 +25,10 @@ import { CircularProgress, Backdrop } from '@mui/material';
 
 const CreateSalesRep = () => {
   const [formData, setFormData] = React.useState({
-    salesRepId: '',
+    email: '',
+    name: '',
     password: '',
+    role: 'Sales-Rep', // Default role
     customers: [],
   });
   const [error, setError] = React.useState('');
@@ -34,6 +37,9 @@ const CreateSalesRep = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
+
+  // Role options from schema
+  const roles = ['Sales-Rep', 'Master-Sales-Rep'];
 
   // Check if all customers are selected
   const allCustomersSelected = customers.length > 0 && formData.customers.length === customers.length;
@@ -68,15 +74,42 @@ const CreateSalesRep = () => {
   };
 
   const handleSubmit = async () => {
+    // Clear previous errors
+    setError('');
+
     // Form validation
-    if (!formData.salesRepId || formData.salesRepId.trim() === '') {
-      setError('Please enter a sales rep ID');
+    if (!formData.email || formData.email.trim() === '') {
+      setError('Please enter an email address');
       return;
     }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (!formData.name || formData.name.trim() === '') {
+      setError('Please enter a name');
+      return;
+    }
+
     if (!formData.password || formData.password.trim() === '') {
       setError('Please enter a password');
       return;
     }
+
+    if (formData.password.length < 4) {
+      setError('Password must be at least 4 characters long');
+      return;
+    }
+
+    if (!formData.role) {
+      setError('Please select a role');
+      return;
+    }
+
     if (!formData.customers || formData.customers.length === 0) {
       setError('Please select at least one customer');
       return;
@@ -87,8 +120,10 @@ const CreateSalesRep = () => {
 
       // Prepare data for submission
       const submitData = {
-        salesRepId: formData.salesRepId,
+        email: formData.email.trim(),
+        name: formData.name.trim(),
         password: formData.password,
+        role: formData.role,
         customers: formData.customers
       };
 
@@ -104,8 +139,10 @@ const CreateSalesRep = () => {
 
       if (res.data.statusCode === 200 || res.data.statusCode === 201) {
         setFormData({
-          salesRepId: '',
+          email: '',
+          name: '',
           password: '',
+          role: 'Sales-Rep',
           customers: [],
         });
         setError('Sales representative created successfully!');
@@ -142,7 +179,7 @@ const CreateSalesRep = () => {
     try {
       setLoading(true);
       const formDataForUpload = new FormData();
-      formDataForUpload.append('salesReps', selectedFile); // Updated field name
+      formDataForUpload.append('salesReps', selectedFile);
 
       const res = await axiosInstance.post('/sales-rep/import-sales-reps', formDataForUpload, {
         headers: {
@@ -160,7 +197,7 @@ const CreateSalesRep = () => {
         if (fileInput) fileInput.value = '';
 
         setTimeout(() => {
-          navigate('/dashboard/sales-reps/list'); // Updated navigation path
+          navigate('/dashboard/SalesRep/list');
         }, 2000);
       }
     } catch (error) {
@@ -214,19 +251,73 @@ const CreateSalesRep = () => {
   return (
     <div>
       <Grid container spacing={2}>
-        {/* Sales Rep ID */}
+        {/* Email */}
         <Grid size={12}>
-          <CustomFormLabel htmlFor="sales-rep-id" sx={{ mt: 2 }}>
-            Sales Rep ID
+          <CustomFormLabel htmlFor="email" sx={{ mt: 2 }}>
+            Email
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="sales-rep-id"
+            id="email"
             fullWidth
-            value={formData.salesRepId}
-            onChange={(e) => setFormData({ ...formData, salesRepId: e.target.value })}
-            placeholder="Enter sales rep ID (e.g., SR001)"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="Enter email address (e.g., salesrep@example.com)"
           />
+        </Grid>
+
+        {/* Name */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="name" sx={{ mt: 2 }}>
+            Name
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="name"
+            fullWidth
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Enter full name (e.g., John Doe)"
+          />
+        </Grid>
+
+        {/* Role Selection */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="role-select" sx={{ mt: 2 }}>
+            Role
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="role-select"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              {roles.map((role) => (
+                <MenuItem key={role} value={role}>
+                  {role}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
+            {formData.role === 'Master-Sales-Rep' 
+              ? 'Master Sales Representatives have additional privileges' 
+              : 'Standard Sales Representative role'}
+          </Typography>
         </Grid>
 
         {/* Password */}
@@ -241,8 +332,11 @@ const CreateSalesRep = () => {
             type="password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            placeholder="Enter password"
+            placeholder="Enter password (minimum 6 characters)"
           />
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
+            Password must be at least 6 characters long
+          </Typography>
         </Grid>
 
         {/* Customer Selection - Multiple */}

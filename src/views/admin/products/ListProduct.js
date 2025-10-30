@@ -26,7 +26,7 @@ const ListProduct = () => {
       label: 'Actions',
     },
     {
-       id: 'Image',
+      id: 'Image',
       numeric: false,
       disablePadding: false,
       label: 'Image',
@@ -122,6 +122,12 @@ const ListProduct = () => {
       label: 'Pack Barcodes',
     },
     {
+      id: 'status',
+      numeric: false,
+      disablePadding: false,
+      label: 'Status',
+    },
+    {
       id: 'createdAt',
       numeric: false,
       disablePadding: false,
@@ -136,10 +142,10 @@ const ListProduct = () => {
   const fetchProductsList = async () => {
     try {
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
-      
+
       if (response.data.statusCode === 200) {
         const productsData = response.data.data?.docs || response.data.data || response.data.products
-;
+          ;
         console.log("response products dashboard", response.data);
 
         // Filter out duplicates based on _id

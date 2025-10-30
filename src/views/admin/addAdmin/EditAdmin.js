@@ -19,7 +19,8 @@ const EditAdmin = () => {
     username: '',
     email: '',
     password: '',
-    role: ''
+    role: '',
+    status: 'ACTIVE'
   });
   const { id } = useParams();
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const EditAdmin = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [roles] = useState(["MASTER ADMIN", "SUB ADMIN"]);
+  const [statuses] = useState(["ACTIVE", "INACTIVE"]);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
 
@@ -52,7 +54,9 @@ const EditAdmin = () => {
 
       if (res.data.statusCode === 200) {
         setSuccess('Admin updated successfully!');
-        navigate('/dashboard/admin/list')
+        setTimeout(() => {
+          navigate('/dashboard/admin/list');
+        }, 1500);
       } else {
         setError(res.data.message || 'Failed to update admin');
       }
@@ -76,7 +80,8 @@ const EditAdmin = () => {
           username: adminData.username || '',
           email: adminData.email || '',
           password: '',
-          role: adminData.role || ''
+          role: adminData.role || '',
+          status: adminData.status || 'ACTIVE'
         });
 
       } else {
@@ -115,7 +120,7 @@ const EditAdmin = () => {
   }
 
   return (
-    <Box >
+    <Box>
       <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
         Edit Admin
       </Typography>
@@ -187,6 +192,54 @@ const EditAdmin = () => {
         </FormControl>
       </Box>
 
+      {/* Status Field */}
+      <Box sx={{ mb: 3 }}>
+        <CustomFormLabel htmlFor="status-select">
+          Status
+          <span style={{ color: 'red' }}>*</span>
+        </CustomFormLabel>
+        <FormControl fullWidth>
+          <Select
+            id="status-select"
+            value={formData.status}
+            onChange={(e) => handleInputChange('status', e.target.value)}
+            displayEmpty
+            sx={{
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(0, 0, 0, 0.23)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(0, 0, 0, 0.87)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.main',
+              },
+            }}
+          >
+            <MenuItem value="" disabled>
+              Select status
+            </MenuItem>
+            {statuses.map((status) => (
+              <MenuItem 
+                key={status} 
+                value={status}
+                sx={{
+                  color: status === 'ACTIVE' ? 'success.main' : 'error.main',
+                  fontWeight: 600
+                }}
+              >
+                {status}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
+          {formData.status === 'ACTIVE' 
+            ? 'Admin will be able to log in and access the system' 
+            : 'Admin will not be able to log in to the system'}
+        </Typography>
+      </Box>
+
       {/* Password Field */}
       <Box sx={{ mb: 3 }}>
         <CustomFormLabel htmlFor="password" sx={{ mt: 0 }}>
@@ -237,7 +290,7 @@ const EditAdmin = () => {
         <Button
           variant="outlined"
           color="secondary"
-          onClick={() => navigate('/dashboard/admins/list')}
+          onClick={() => navigate('/dashboard/admin/list')}
           disabled={loading}
         >
           Cancel

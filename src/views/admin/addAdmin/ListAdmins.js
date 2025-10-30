@@ -23,10 +23,15 @@ import {
     InputAdornment,
     Paper,
     Button,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Chip,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconX } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
@@ -123,7 +128,7 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-    const { numSelected, handleSearch, search, placeholder } = props;
+    const { numSelected, handleSearch, search, placeholder, roleFilter, handleRoleFilter, statusFilter, handleStatusFilter } = props;
 
     return (
         <Toolbar
@@ -141,12 +146,13 @@ const EnhancedTableToolbar = (props) => {
                     {numSelected} selected
                 </Typography>
             ) : (
-                <Box sx={{ flex: '1 1 100%' }}>
+                <Box sx={{ flex: '1 1 100%', display: 'flex', gap: 2, alignItems: 'center' }}>
                     <TextField
                         placeholder={placeholder || "Search Admin"}
                         size="small"
                         onChange={handleSearch}
                         value={search}
+                        sx={{ minWidth: 250 }}
                         slotProps={{
                             input: {
                                 startAdornment: (
@@ -157,19 +163,39 @@ const EnhancedTableToolbar = (props) => {
                             }
                         }}
                     />
+                    
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Role Filter</InputLabel>
+                        <Select
+                            value={roleFilter}
+                            label="Role Filter"
+                            onChange={handleRoleFilter}
+                        >
+                            <MenuItem value="ALL">All Roles</MenuItem>
+                            <MenuItem value="MASTER ADMIN">Master Admin</MenuItem>
+                            <MenuItem value="SUB ADMIN">Sub Admin</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Status Filter</InputLabel>
+                        <Select
+                            value={statusFilter}
+                            label="Status Filter"
+                            onChange={handleStatusFilter}
+                        >
+                            <MenuItem value="ALL">All Status</MenuItem>
+                            <MenuItem value="ACTIVE">Active</MenuItem>
+                            <MenuItem value="INACTIVE">Inactive</MenuItem>
+                        </Select>
+                    </FormControl>
                 </Box>
             )}
 
-            {numSelected > 0 ? (
+            {numSelected > 0 && (
                 <Tooltip title="Delete">
                     <IconButton>
                         <IconTrash width="18" />
-                    </IconButton>
-                </Tooltip>
-            ) : (
-                <Tooltip title="Filter list">
-                    <IconButton>
-                        <IconFilter size="1.2rem" />
                     </IconButton>
                 </Tooltip>
             )}
@@ -189,6 +215,8 @@ const ListAdmins = () => {
     const [error, setError] = useState('');
     const [rows, setRows] = useState([]);
     const [search, setSearch] = useState('');
+    const [roleFilter, setRoleFilter] = useState('ALL');
+    const [statusFilter, setStatusFilter] = useState('ALL');
     const navigate = useNavigate();
 
     // Define headCells for the table - Updated to match admin schema
@@ -230,19 +258,57 @@ const ListAdmins = () => {
         }
     ];
 
-    const handleSearch = (event) => {
-        const searchValue = event.target.value.toLowerCase();
-        setSearch(searchValue);
+    // Apply all filters (search, role, status)
+    const applyFilters = () => {
+        let filteredData = [...tableData];
 
-        const filteredRows = tableData.filter((row) => {
-            return (
-                row?.username?.toLowerCase().includes(searchValue) ||
-                row?.email?.toLowerCase().includes(searchValue) ||
-                row?.role?.toLowerCase().includes(searchValue) ||
-                row?.status?.toLowerCase().includes(searchValue)
-            );
-        });
-        setRows(filteredRows);
+        // Apply search filter
+        if (search) {
+            const searchLower = search.toLowerCase();
+            filteredData = filteredData.filter((row) => {
+                const username = row?.username?.toLowerCase() || '';
+                const email = row?.email?.toLowerCase() || '';
+                const role = row?.role?.toLowerCase() || '';
+                const status = row?.status?.toLowerCase() || '';
+                
+                return (
+                    username.includes(searchLower) ||
+                    email.includes(searchLower) ||
+                    role.includes(searchLower) ||
+                    status.includes(searchLower)
+                );
+            });
+        }
+
+        // Apply role filter
+        if (roleFilter !== 'ALL') {
+            filteredData = filteredData.filter((row) => row?.role === roleFilter);
+        }
+
+        // Apply status filter
+        if (statusFilter !== 'ALL') {
+            filteredData = filteredData.filter((row) => row?.status === statusFilter);
+        }
+
+        setRows(filteredData);
+        setPage(0); // Reset to first page when filters change
+    };
+
+    // Update filters whenever search, roleFilter, statusFilter, or tableData changes
+    useEffect(() => {
+        applyFilters();
+    }, [search, roleFilter, statusFilter, tableData]);
+
+    const handleSearch = (event) => {
+        setSearch(event.target.value);
+    };
+
+    const handleRoleFilter = (event) => {
+        setRoleFilter(event.target.value);
+    };
+
+    const handleStatusFilter = (event) => {
+        setStatusFilter(event.target.value);
     };
 
     const handleRequestSort = (event, property) => {
@@ -333,7 +399,6 @@ const ListAdmins = () => {
             if (response.data.statusCode === 200) {
                 // Remove the deleted admin from the local state
                 setTableData(prev => prev.filter(admin => admin._id !== deleteDialog.adminId));
-                setRows(prev => prev.filter(admin => admin._id !== deleteDialog.adminId));
                 
                 // Show success message (you can add a toast notification here)
                 console.log('Admin deleted successfully');
@@ -358,7 +423,6 @@ const ListAdmins = () => {
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);
-                setRows(response.data.data);
             }
         } catch (error) {
             console.error('Error fetching admin data:', error);
@@ -389,7 +453,45 @@ const ListAdmins = () => {
                     search={search}
                     handleSearch={handleSearch}
                     placeholder="Search Admin Name, Email, Role or Status"
+                    roleFilter={roleFilter}
+                    handleRoleFilter={handleRoleFilter}
+                    statusFilter={statusFilter}
+                    handleStatusFilter={handleStatusFilter}
                 />
+                
+                {/* Active Filters Display */}
+                {(roleFilter !== 'ALL' || statusFilter !== 'ALL' || search) && (
+                    <Box sx={{ mx: 2, mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {search && (
+                            <Chip
+                                label={`Search: "${search}"`}
+                                onDelete={() => setSearch('')}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                            />
+                        )}
+                        {roleFilter !== 'ALL' && (
+                            <Chip
+                                label={`Role: ${roleFilter}`}
+                                onDelete={() => setRoleFilter('ALL')}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                            />
+                        )}
+                        {statusFilter !== 'ALL' && (
+                            <Chip
+                                label={`Status: ${statusFilter}`}
+                                onDelete={() => setStatusFilter('ALL')}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                            />
+                        )}
+                    </Box>
+                )}
+
                 <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
                     <TableContainer>
                         <Table
@@ -476,22 +578,22 @@ const ListAdmins = () => {
 
                                                 {/* Role */}
                                                 <TableCell>
-                                                    <Typography
-                                                        fontWeight="600"
-                                                        color={row.role === 'MASTER ADMIN' ? 'primary.main' : 'secondary.main'}
-                                                    >
-                                                        {row.role || 'N/A'}
-                                                    </Typography>
+                                                    <Chip
+                                                        label={row.role || 'N/A'}
+                                                        size="small"
+                                                        color={row.role === 'MASTER ADMIN' ? 'primary' : 'secondary'}
+                                                        sx={{ fontWeight: 600 }}
+                                                    />
                                                 </TableCell>
 
                                                 {/* Status */}
                                                 <TableCell>
-                                                    <Typography
-                                                        fontWeight="600"
-                                                        color={row.status === 'ACTIVE' ? 'success.main' : 'error.main'}
-                                                    >
-                                                        {row.status || 'N/A'}
-                                                    </Typography>
+                                                    <Chip
+                                                        label={row.status || 'N/A'}
+                                                        size="small"
+                                                        color={row.status === 'ACTIVE' ? 'success' : 'error'}
+                                                        sx={{ fontWeight: 600 }}
+                                                    />
                                                 </TableCell>
 
                                                 {/* Last Updated Date */}
@@ -512,7 +614,9 @@ const ListAdmins = () => {
                                     <TableRow>
                                         <TableCell colSpan={headCells.length + 1} align="center" sx={{ py: 3 }}>
                                             <Typography variant="h6" color="textSecondary">
-                                                {search ? 'No admins found matching your search' : 'No admins found'}
+                                                {search || roleFilter !== 'ALL' || statusFilter !== 'ALL' 
+                                                    ? 'No admins found matching your filters' 
+                                                    : 'No admins found'}
                                             </Typography>
                                         </TableCell>
                                     </TableRow>

@@ -14,7 +14,8 @@ import {
   Card,
   CardContent,
   IconButton,
-  Chip
+  Chip,
+  Autocomplete
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -69,6 +70,87 @@ const EditCustomers = () => {
   const [pricingGroupDiscounts, setPricingGroupDiscounts] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [customerId, setCustomerId] = useState('');
+  const [salesReps, setSalesReps] = useState([]);
+  const [selectedSalesRep, setSelectedSalesRep] = useState('');
+  const [currentSalesRep, setCurrentSalesRep] = useState(null);
+  const [salesRepLoading, setSalesRepLoading] = useState(false);
+
+  // Fetch all sales representatives
+  const fetchSalesReps = async () => {
+    try {
+      setSalesRepLoading(true);
+      const response = await axiosInstance.get('/sales-rep/get-sales-reps');
+      if (response.data.statusCode === 200) {
+        setSalesReps(response.data.data);
+        
+        // Find if this customer is assigned to any sales rep
+        const customerSalesRep = response.data.data.find(rep => 
+          rep.customers.includes(id)
+        );
+        
+        if (customerSalesRep) {
+          setCurrentSalesRep(customerSalesRep);
+          setSelectedSalesRep(customerSalesRep._id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sales reps:', error);
+      setError('Failed to load sales representatives');
+    } finally {
+      setSalesRepLoading(false);
+    }
+  };
+
+  // Assign customer to sales rep
+  const assignToSalesRep = async () => {
+    if (!selectedSalesRep) {
+      setError('Please select a sales representative');
+      return;
+    }
+
+    try {
+      setSalesRepLoading(true);
+      const response = await axiosInstance.post(
+        `/sales-rep/add-customer-to-sales-rep/${selectedSalesRep}/${id}`
+      );
+
+      if (response.data.statusCode === 200) {
+        setError('Customer assigned to sales rep successfully');
+        // Refresh sales reps data to get updated assignments
+        await fetchSalesReps();
+      }
+    } catch (error) {
+      console.error('Error assigning customer to sales rep:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to assign customer to sales rep');
+    } finally {
+      setSalesRepLoading(false);
+    }
+  };
+
+  // Remove customer from sales rep
+  const removeFromSalesRep = async () => {
+    if (!currentSalesRep) return;
+
+    try {
+      setSalesRepLoading(true);
+      const response = await axiosInstance.delete(
+        `/sales-rep/remove-customer-from-sales-rep/${currentSalesRep._id}/${id}`
+      );
+
+      if (response.data.statusCode === 200) {
+        setError('Customer removed from sales rep successfully');
+        setCurrentSalesRep(null);
+        setSelectedSalesRep('');
+        // Refresh sales reps data
+        await fetchSalesReps();
+      }
+    } catch (error) {
+      console.error('Error removing customer from sales rep:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to remove customer from sales rep');
+    } finally {
+      setSalesRepLoading(false);
+    }
+  };
 
   // Toggle customer active/inactive status
   const toggleCustomerStatus = async () => {
@@ -389,12 +471,23 @@ const EditCustomers = () => {
     }));
   };
 
+  const handleSalesRepChange = (event) => {
+    const newSalesRepId = event.target.value;
+    setSelectedSalesRep(newSalesRepId);
+    
+    // If the user selects a different sales rep than the current one, clear the current assignment
+    if (currentSalesRep && currentSalesRep._id !== newSalesRepId) {
+      setCurrentSalesRep(null);
+    }
+  };
+
   useEffect(() => {
     fetPricingGroupsByCustomerId();
   }, [customerId]);
 
   useEffect(() => {
     fetchCustomer();
+    fetchSalesReps();
   }, [id]);
 
   return (
@@ -635,6 +728,67 @@ const EditCustomers = () => {
           />
         </Grid>
 
+        {/* Sales Representative Assignment */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="salesRep" sx={{ mt: 0 }}>
+            Sales Representative
+          </CustomFormLabel>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+            <FormControl fullWidth>
+              <Select
+                value={selectedSalesRep}
+                onChange={handleSalesRepChange}
+                disabled={salesRepLoading || loading}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Sales Representative</em>
+                </MenuItem>
+                {salesReps.map((rep) => (
+                  <MenuItem key={rep._id} value={rep._id}>
+                    {rep.name} - {rep.email} ({rep.role})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            {currentSalesRep ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: '200px' }}>
+                <Chip 
+                  label={`Currently assigned to: ${currentSalesRep.name}`}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ fontWeight: 'bold' }}
+                />
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  onClick={removeFromSalesRep}
+                  disabled={salesRepLoading}
+                  startIcon={<IconTrash size="1rem" />}
+                >
+                  Remove
+                </Button>
+              </Box>
+            ) : (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={assignToSalesRep}
+                disabled={!selectedSalesRep || salesRepLoading}
+                sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
+              >
+                {salesRepLoading ? 'Assigning...' : 'Assign'}
+              </Button>
+            )}
+          </Box>
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+            Assign this customer to a sales representative for management
+          </Typography>
+        </Grid>
+
+        {/* Rest of the component remains the same */}
         {/* Shipping Addresses Section */}
         <Grid size={12}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>

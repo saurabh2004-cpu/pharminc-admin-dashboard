@@ -24,8 +24,10 @@ import { CircularProgress, Backdrop } from '@mui/material';
 
 const EditSalesRep = () => {
   const [formData, setFormData] = React.useState({
-    salesRepId: '',
-    password: '', // Note: Password won't be populated for security
+    email: '',
+    name: '',
+    password: '',
+    role: 'Sales-Rep',
     customers: [],
   });
   const [error, setError] = React.useState('');
@@ -34,7 +36,11 @@ const EditSalesRep = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
+  const [fetchLoading, setFetchLoading] = React.useState(true);
   const { id } = useParams();
+
+  // Role options from schema
+  const roles = ['Sales-Rep', 'Master-Sales-Rep'];
 
   // Check if all customers are selected
   const allCustomersSelected = customers.length > 0 && formData.customers.length === customers.length;
@@ -70,24 +76,31 @@ const EditSalesRep = () => {
 
   const fetchSalesRepById = async () => {
     try {
+      setFetchLoading(true);
       const res = await axiosInstance.get(`/sales-rep/get-sales-rep/${id}`);
 
       console.log("fetch sales rep by id ", res);
       
-      // FIXED: Access the data from response.data.data
+      // Access the data from response.data.data
       const salesRepData = res.data.data;
       
       // Extract customer IDs from the populated customers array
-      const customerIds = salesRepData.customers?.map(customer => customer._id) || [];
+      const customerIds = salesRepData.customers?.map(customer => 
+        typeof customer === 'object' ? customer._id : customer
+      ) || [];
       
       setFormData({
-        salesRepId: salesRepData.salesRepId || '',
-        password: '', // Password is hashed, so we don't pre-fill it
+        email: salesRepData.email || '',
+        name: salesRepData.name || '',
+        password: '',
+        role: salesRepData.role || 'Sales-Rep',
         customers: customerIds,
       });
     } catch (error) {
       setError(error.response?.data?.message || error.message || 'An error occurred');
       console.error('Error fetching sales representative by ID:', error);
+    } finally {
+      setFetchLoading(false);
     }
   };
 
@@ -98,11 +111,38 @@ const EditSalesRep = () => {
   }, [id]);
 
   const handleSubmit = async () => {
+    // Clear previous errors
+    setError('');
+
     // Form validation
-    if (!formData.salesRepId || formData.salesRepId.trim() === '') {
-      setError('Please enter a sales rep ID');
+    if (!formData.email || formData.email.trim() === '') {
+      setError('Please enter an email address');
       return;
     }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (!formData.name || formData.name.trim() === '') {
+      setError('Please enter a name');
+      return;
+    }
+
+    if (!formData.role) {
+      setError('Please select a role');
+      return;
+    }
+
+    // Password validation only if it's being changed
+    if (formData.password && formData.password.trim() !== '' && formData.password.length < 4) {
+      setError('Password must be at least 4 characters long');
+      return;
+    }
+
     if (!formData.customers || formData.customers.length === 0) {
       setError('Please select at least one customer');
       return;
@@ -113,7 +153,9 @@ const EditSalesRep = () => {
 
       // Prepare data for submission
       const submitData = {
-        salesRepId: formData.salesRepId,
+        email: formData.email.trim(),
+        name: formData.name.trim(),
+        role: formData.role,
         customers: formData.customers
       };
 
@@ -121,6 +163,8 @@ const EditSalesRep = () => {
       if (formData.password && formData.password.trim() !== '') {
         submitData.password = formData.password;
       }
+
+      console.log("Submitting update data:", submitData);
 
       const res = await axiosInstance.put(`/sales-rep/update-sales-rep/${id}`, submitData, {
         headers: {
@@ -133,7 +177,7 @@ const EditSalesRep = () => {
       if (res.data.statusCode === 200) {
         setError('Sales representative updated successfully!');
         setTimeout(() => {
-          navigate('/dashboard/SalesRep/list'); // FIXED: Corrected navigation path
+          navigate('/dashboard/SalesRep/list');
         }, 2000);
       }
     } catch (error) {
@@ -183,7 +227,7 @@ const EditSalesRep = () => {
         if (fileInput) fileInput.value = '';
 
         setTimeout(() => {
-          navigate('/dashboard/sales-reps/list');
+          navigate('/dashboard/SalesRep/list');
         }, 2000);
       }
     } catch (error) {
@@ -204,7 +248,6 @@ const EditSalesRep = () => {
 
   const fetchCustomers = async () => {
     try {
-      setLoading(true);
       const response = await axiosInstance.get('/admin/get-all-users');
       console.log("response customers", response);
 
@@ -225,14 +268,23 @@ const EditSalesRep = () => {
       console.error('Error fetching customers list:', error);
       setError('Error fetching customers: ' + error.message);
       setCustomers([]);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  if (fetchLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress size={50} />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Loading sales representative data...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <div>
@@ -246,25 +298,82 @@ const EditSalesRep = () => {
       </Box>
 
       <Grid container spacing={2}>
-        {/* Sales Rep ID */}
+        {/* Email */}
         <Grid size={12}>
-          <CustomFormLabel htmlFor="sales-rep-id" sx={{ mt: 2 }}>
-            Sales Rep ID
+          <CustomFormLabel htmlFor="email" sx={{ mt: 2 }}>
+            Email
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="sales-rep-id"
+            id="email"
             fullWidth
-            value={formData.salesRepId}
-            onChange={(e) => setFormData({ ...formData, salesRepId: e.target.value })}
-            placeholder="Enter sales rep ID (e.g., SR001)"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="Enter email address (e.g., salesrep@example.com)"
           />
+        </Grid>
+
+        {/* Name */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="name" sx={{ mt: 2 }}>
+            Name
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="name"
+            fullWidth
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Enter full name (e.g., John Doe)"
+          />
+        </Grid>
+
+        {/* Role Selection */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="role-select" sx={{ mt: 2 }}>
+            Role
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="role-select"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              {roles.map((role) => (
+                <MenuItem key={role} value={role}>
+                  {role}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
+            {formData.role === 'Master-Sales-Rep' 
+              ? 'Master Sales Representatives have additional privileges' 
+              : 'Standard Sales Representative role'}
+          </Typography>
         </Grid>
 
         {/* Password */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="password" sx={{ mt: 2 }}>
             Password
+            <span style={{ color: 'gray', fontSize: '0.85rem', marginLeft: '8px' }}>
+              (Optional)
+            </span>
           </CustomFormLabel>
           <CustomOutlinedInput
             id="password"
@@ -275,7 +384,7 @@ const EditSalesRep = () => {
             placeholder="Enter new password (leave blank to keep current)"
           />
           <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-            Leave blank if you don't want to change the password
+            Leave blank if you don't want to change the password. If changing, password must be at least 4 characters.
           </Typography>
         </Grid>
 
@@ -390,24 +499,15 @@ const EditSalesRep = () => {
           <Button
             variant="outlined"
             color="secondary"
-            onClick={() => navigate('/dashboard/sales-reps/list')}
+            onClick={() => navigate('/dashboard/SalesRep/list')}
             disabled={loading}
-            sx={{ mr: 2 }}
           >
             Cancel
           </Button>
-          {/* <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => setCsvDialogOpen(true)}
-            disabled={loading}
-          >
-            Import CSV
-          </Button> */}
         </Grid>
       </Grid>
 
-      {/* CSV Import Dialog */}
+      {/* CSV Import Dialog - Hidden but kept for future use */}
       <Dialog
         open={csvDialogOpen}
         onClose={handleCloseCsvDialog}

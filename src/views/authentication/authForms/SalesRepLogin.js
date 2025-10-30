@@ -23,7 +23,7 @@ import { useNavigate } from 'react-router';
 
 const SalesRepLogin = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({
-    salesRepId: '',
+    email: '',
     password: '',
   });
 
@@ -55,12 +55,12 @@ const SalesRepLogin = ({ title, subtitle, subtext }) => {
 
       <Stack>
         <Box>
-          <CustomFormLabel htmlFor="username">Sales Rep Id</CustomFormLabel>
+          <CustomFormLabel htmlFor="username">Sales Rep Email</CustomFormLabel>
           <CustomTextField
             id="username"
             variant="outlined"
             fullWidth
-            onChange={(e) => setFormData({ ...formData, salesRepId: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           />
         </Box>
         <Box>

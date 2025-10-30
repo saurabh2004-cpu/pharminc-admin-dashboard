@@ -464,12 +464,7 @@ const Menuitems = [
         icon: IconUserPlus,
         href: '/dashboard/admin/list',
       },
-      {
-        id: uniqueId(),
-        title: 'Edit Admin',
-        icon: IconUserPlus,
-        href: '/dashboard/admin/Edit',
-      },
+      
 
 
       {

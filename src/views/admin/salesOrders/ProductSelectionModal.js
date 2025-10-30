@@ -334,11 +334,7 @@ const ProductSelectionModal = ({
             </DialogTitle>
 
             <DialogContent dividers  sx={{ overflow: 'hidden' }}>
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
-                    </Alert>
-                )}
+                
 
                 {step === 1 ? (
                     // Product Selection Step

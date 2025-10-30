@@ -128,7 +128,7 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, onBackClick, salesRepId } = props;
+  const { numSelected, handleSearch, search, placeholder, onBackClick, salesRepName } = props;
 
   return (
     <Toolbar
@@ -175,6 +175,12 @@ const EnhancedTableToolbar = (props) => {
               }}
             />
           </Box>
+
+          <Box sx={{ marginLeft: 'auto' }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Sales Rep: {salesRepName}
+            </Typography>
+          </Box>
         </Box>
       )}
 
@@ -204,9 +210,10 @@ const SalesRepCustomers = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
   const theme = useTheme();
-  const salesRepId = useSelector((state) => state.auth.salesRepData.salesRepId);
+  const salesRep = useSelector((state) => state.auth.salesRepData);
 
-  console.log("sales rep id in the customers list ", salesRepId)
+  // console.log("sales rep in customers list", salesRep)
+
 
   // Corrected headCells for Customer data
   const headCells = [
@@ -238,25 +245,66 @@ const SalesRepCustomers = () => {
 
   const fetchSalesRepCustomers = async () => {
     try {
-      if (!salesRepId) {
-        setError('Sales Rep ID is missing');
+      if (!salesRep._id) {
+        setError('Sales Rep Id is missing');
         return;
       }
 
-      const response = await axiosInstance.get(`/sales-rep/get-sales-rep-customers/${salesRepId}`);
-      console.log("fetch sales rep customers response", response);
+      // Check if sales rep is Master-Sales-Rep
+      if (salesRep.role === 'Master-Sales-Rep') {
+        // Fetch all customers for Master Sales Rep
+        const response = await axiosInstance.get('/admin/get-all-users');
 
-      if (response.data.statusCode === 200) {
-        // The API returns an array of customer objects directly
-        const customersData = response.data.data || [];
-        setCustomers(customersData);
-        setRows(customersData);
+        // console.log("response of all customers ", response);
 
-        // Set sales rep data for display
-        setSalesRepData({
-          salesRepId: salesRepId,
-          customersCount: customersData.length
-        });
+        if (response.data.statusCode === 200) {
+          const customersData = response.data.data?.docs || response.data.data || response.data;
+
+          // Filter out duplicates based on _id
+          const getUniqueCustomers = (customers) => {
+            if (!Array.isArray(customers)) return [];
+
+            const uniqueCustomers = [];
+            const seenIds = new Set();
+
+            customers.forEach(customer => {
+              if (customer._id && !seenIds.has(customer._id)) {
+                seenIds.add(customer._id);
+                uniqueCustomers.push(customer);
+              }
+            });
+
+            return uniqueCustomers;
+          };
+
+          const uniqueCustomers = getUniqueCustomers(customersData);
+          setCustomers(uniqueCustomers);
+          setRows(uniqueCustomers);
+
+          // Set sales rep data for display
+          setSalesRepData({
+            name: salesRep.name,
+            customersCount: uniqueCustomers.length
+          });
+        }
+      } else {
+        // For non-Master Sales Reps, fetch only their assigned customers
+        const response = await axiosInstance.get(`/sales-rep/get-sales-rep-customers/${salesRep._id}`);
+
+        // console.log("response of get-sales- rep- customers  ", response);
+
+        if (response.data.statusCode === 200) {
+          // The API returns an array of customer objects directly
+          const customersData = response.data.data.customers || [];
+          setCustomers(customersData);
+          setRows(customersData);
+
+          // Set sales rep data for display
+          setSalesRepData({
+            name: salesRep.name,
+            customersCount: customersData.length
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching sales rep customers:', error);
@@ -264,9 +312,11 @@ const SalesRepCustomers = () => {
     }
   };
 
+
+
   useEffect(() => {
     fetchSalesRepCustomers();
-  }, [salesRepId]);
+  }, [salesRep._id, salesRep.role]); // Add salesRep.role to
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
@@ -366,10 +416,9 @@ const SalesRepCustomers = () => {
       setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
 
       const res = await axiosInstance.delete(
-        `/sales-rep/remove-customer-from-sales-rep/${salesRepId}/${deleteDialog.customerId}`
+        `/sales-rep/remove-customer-from-sales-rep/${salesRep._id}/${deleteDialog.customerId}`
       );
 
-      console.log("Customer removed", res.data);
 
       if (res.data.statusCode === 200) {
         // Update the local state to remove the customer
@@ -408,7 +457,8 @@ const SalesRepCustomers = () => {
     }
 
     try {
-      window.location.href = `http://localhost:3002/salesRep/${id}`;
+      const baseUrl = import.meta.env.VITE_FRONTEND_URL;
+      window.open(`${baseUrl}/salesRep/${id}`, '_blank');
     } catch (error) {
       console.error('Navigation failed:', error);
     }
@@ -435,7 +485,7 @@ const SalesRepCustomers = () => {
           handleSearch={handleSearch}
           placeholder="Search customers..."
           onBackClick={handleBackClick}
-          salesRepId={salesRepData?.salesRepId || 'Sales Rep'}
+          salesRepId={salesRepData?.name || ''}
         />
 
 

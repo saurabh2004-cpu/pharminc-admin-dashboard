@@ -125,7 +125,7 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, onBackClick, salesRepId } = props;
+  const { numSelected, handleSearch, search, placeholder, onBackClick, salesRepName } = props;
 
   return (
     <Toolbar
@@ -152,25 +152,29 @@ const EnhancedTableToolbar = (props) => {
           >
             Back
           </Button>
-          
-          <Box sx={{ flex: 1 }}>
-          
-            <TextField
-              placeholder={placeholder || "Search customers..."}
-              size="small"
-              onChange={handleSearch}
-              value={search}
-              sx={{ width: 300 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IconSearch size="1.1rem" />
-                    </InputAdornment>
-                  ),
-                }
-              }}
-            />
+
+          <TextField
+            placeholder={placeholder || "Search customers..."}
+            size="small"
+            onChange={handleSearch}
+            value={search}
+            sx={{ width: 300 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size="1.1rem" />
+                  </InputAdornment>
+                ),
+              }
+            }}
+          />
+
+          {/* Display Sales Rep Name */}
+          <Box sx={{ marginLeft: 'auto' }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Sales Rep: {salesRepName}
+            </Typography>
           </Box>
         </Box>
       )}
@@ -242,14 +246,18 @@ const SalesRepCustomersList = () => {
       console.log("fetch sales rep customers response", response);
 
       if (response.data.statusCode === 200) {
-        // The API returns an array of customer objects directly
-        const customersData = response.data.data || [];
+        // Extract customers array
+        const customersData = response.data.data.customers || [];
         setCustomers(customersData);
         setRows(customersData);
-        
+
+        // Extract sales rep name from the response
+        const salesRepName = response.data.data.name || 'Unknown Sales Rep';
+
         // Set sales rep data for display
         setSalesRepData({
           salesRepId: id,
+          name: salesRepName,  // Add the name here
           customersCount: customersData.length
         });
       }
@@ -371,13 +379,13 @@ const SalesRepCustomersList = () => {
         setCustomers(prev => prev.filter(customer => customer._id !== deleteDialog.customerId));
         setRows(prev => prev.filter(customer => customer._id !== deleteDialog.customerId));
         handleDeleteCancel();
-        
+
         // Update sales rep data count
         setSalesRepData(prev => ({
           ...prev,
           customersCount: prev.customersCount - 1
         }));
-        
+
         // Show success message
         setError(`Customer ${deleteDialog.customerName} removed successfully`);
         setTimeout(() => setError(''), 3000);
@@ -414,10 +422,10 @@ const SalesRepCustomersList = () => {
           handleSearch={handleSearch}
           placeholder="Search customers..."
           onBackClick={handleBackClick}
-          salesRepId={salesRepData?.salesRepId || 'Sales Rep'}
+          salesRepName={salesRepData?.name || ''}
         />
-        
-        
+
+
 
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -464,9 +472,9 @@ const SalesRepCustomersList = () => {
                         <TableCell sx={stickyCellStyle}>
                           <Box display="flex" gap={1}>
                             <Tooltip title="Remove from Sales Rep">
-                              <IconButton 
-                                size="small" 
-                                color="error" 
+                              <IconButton
+                                size="small"
+                                color="error"
                                 onClick={(e) => handleDeleteClick(e, customer._id, customer.customerName)}
                               >
                                 <IconTrash size="1.1rem" />

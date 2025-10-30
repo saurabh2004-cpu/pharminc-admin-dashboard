@@ -21,6 +21,7 @@ import {
   InputAdornment,
   Paper,
   Button,
+  Chip,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -178,7 +179,7 @@ const ListSalesRep = () => {
   const { filteredAndSortedProducts } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('salesRepId');
+  const [orderBy, setOrderBy] = useState('email');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -192,11 +193,23 @@ const ListSalesRep = () => {
   const { id } = useParams();
   const theme = useTheme();
 
-  // Corrected headCells for Sales Rep data
+  // Updated headCells to match schema fields
   const headCells = [
     {
-      id: 'salesRepId',
-      label: 'Sales Rep ID',
+      id: 'email',
+      label: 'Email',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'name',
+      label: 'Name',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'role',
+      label: 'Role',
       numeric: false,
       disablePadding: false,
     },
@@ -239,7 +252,9 @@ const ListSalesRep = () => {
 
     const filteredRows = tableData.filter((row) => {
       return (
-        row?.salesRepId?.toLowerCase().includes(searchValue) ||
+        row?.email?.toLowerCase().includes(searchValue) ||
+        row?.name?.toLowerCase().includes(searchValue) ||
+        row?.role?.toLowerCase().includes(searchValue) ||
         row?.customers?.length?.toString().includes(searchValue)
       );
     });
@@ -254,19 +269,19 @@ const ListSalesRep = () => {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.salesRepId);
+      const newSelecteds = rows.map((n) => n._id);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event, salesRepId) => {
-    const selectedIndex = selected.indexOf(salesRepId);
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
     let newSelected = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, salesRepId);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -290,7 +305,7 @@ const ListSalesRep = () => {
     setPage(0);
   };
 
-  const isSelected = (salesRepId) => selected.indexOf(salesRepId) !== -1;
+  const isSelected = (id) => selected.indexOf(id) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
@@ -312,12 +327,12 @@ const ListSalesRep = () => {
     });
   };
 
-  const handleDeleteClick = (event, id, salesRepId) => {
+  const handleDeleteClick = (event, id, email) => {
     event.stopPropagation();
     setDeleteDialog({
       open: true,
       itemId: id,
-      itemName: salesRepId,
+      itemName: email,
       isDeleting: false
     });
   };
@@ -367,7 +382,7 @@ const ListSalesRep = () => {
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder="Search Sales Representatives"
+          placeholder="Search by Email, Name, or Role"
         />
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer>
@@ -399,7 +414,7 @@ const ListSalesRep = () => {
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row, index) => {
-                    const isItemSelected = isSelected(row.salesRepId);
+                    const isItemSelected = isSelected(row._id);
                     const labelId = `enhanced-table-checkbox-${index}`;
 
                     return (
@@ -411,55 +426,93 @@ const ListSalesRep = () => {
                         key={row._id}
                         selected={isItemSelected}
                       >
+                        {/* Actions Column */}
                         <TableCell sx={stickyCellStyle}>
                           <Box display="flex" gap={1}>
+                            <Tooltip title="View Customers">
+                              <IconButton
+                                size="small"
+                                color="info"
+                                onClick={() => handleViewCustomers(row._id)}
+                              >
+                                <IconEye size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+
                             <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => handleEditSalesRep(row?.salesRepId)}>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleEditSalesRep(row._id)}
+                              >
                                 <IconEdit size="1.1rem" />
                               </IconButton>
                             </Tooltip>
 
                             <Tooltip title="Delete">
-                              <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row?._id, row?.salesRepId)}>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => handleDeleteClick(e, row._id, row.email)}
+                              >
                                 <IconTrash size="1.1rem" />
                               </IconButton>
                             </Tooltip>
                           </Box>
                         </TableCell>
 
-                        <TableCell onClick={() => handleViewCustomers(row.salesRepId)}>
-                          <Typography
-                            fontWeight="600"
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': {
-                                color: theme.palette.primary.main,
-                              },
-                              transition: 'color 0.2s ease',
-                            }}
-                          >
-                            {row?.salesRepId || 'N/A'}
+                        {/* Email */}
+                        <TableCell
+                          sx={{
+                            cursor: 'pointer',
+                            '&:hover': {
+                              color: 'blue',
+                            },
+                          }}
+                          onClick={() => handleViewCustomers(row._id)}>
+                          <Typography fontWeight="600">
+                            {row?.email || 'N/A'}
                           </Typography>
                         </TableCell>
 
-                        <TableCell align="center">
-                          <Typography
-                            fontWeight="600"
-                            onClick={() => handleViewCustomers(row.salesRepId)}
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': {
-                                color: theme.palette.primary.main,
-                              },
-                              transition: 'color 0.2s ease',
-                            }}
-                          >
-                            {row?.customers?.length || 0}
-                          </Typography>
-                        </TableCell>
-
+                        {/* Name */}
                         <TableCell>
                           <Typography>
+                            {row?.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Role */}
+                        <TableCell>
+                          <Chip
+                            label={row?.role || 'Sales-Rep'}
+                            size="small"
+                            color="secondary"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </TableCell>
+
+                        {/* Customers Count */}
+                        <TableCell align="center">
+                          <Chip
+                            label={row?.customers?.length || 0}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            onClick={() => handleViewCustomers(row._id)}
+                            sx={{
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              '&:hover': {
+                                backgroundColor: theme.palette.primary.light,
+                              },
+                            }}
+                          />
+                        </TableCell>
+
+                        {/* Created At */}
+                        <TableCell>
+                          <Typography variant="body2">
                             {row.createdAt ? format(new Date(row.createdAt), 'E, MMM d yyyy') : 'N/A'}
                           </Typography>
                         </TableCell>
@@ -469,6 +522,17 @@ const ListSalesRep = () => {
                 {emptyRows > 0 && (
                   <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
                     <TableCell colSpan={headCells.length + 2} />
+                  </TableRow>
+                )}
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={headCells.length + 1} align="center" sx={{ py: 3 }}>
+                      <Typography variant="h6" color="textSecondary">
+                        {search
+                          ? 'No sales representatives found matching your search'
+                          : 'No sales representatives found'}
+                      </Typography>
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
