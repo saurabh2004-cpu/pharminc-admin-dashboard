@@ -28,6 +28,7 @@ import { CircularProgress, Backdrop } from '@mui/material';
 
 const EditProductGroups = () => {
   const [formData, setFormData] = useState({
+    sku: '',
     name: '',
     slug: '',
     products: [],
@@ -223,6 +224,7 @@ const EditProductGroups = () => {
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
     if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
     if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
+    if(formData.sku) formDataToSend.append('sku', formData.sku);
 
     // Append products as JSON string
     formDataToSend.append('products', JSON.stringify(selectedProductIds));
@@ -391,6 +393,7 @@ const EditProductGroups = () => {
 
         // Set form data with product group details
         setFormData({
+          sku: productGroup.sku || '',
           name: productGroup.name || '',
           slug: productGroup.slug || '',
           products: productGroup.products ? productGroup.products.map(p => p._id) : [],
@@ -544,8 +547,23 @@ const EditProductGroups = () => {
         </Grid>
 
         <Grid size={6}>
+          <CustomFormLabel htmlFor="name" sx={{ mt: 2 }}>
+            Product Group SKU
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="name"
+            fullWidth
+            value={formData.sku}
+            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Product Group SKU"
+          />
+        </Grid>
+
+        <Grid size={6}>
           <CustomFormLabel htmlFor="slug" sx={{ mt: 2 }}>
-            Slug 
+            Slug
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
@@ -1108,8 +1126,8 @@ const EditProductGroups = () => {
         </Grid>
       </Grid>
 
-      
-     
+
+
     </div>
   );
 };

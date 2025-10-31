@@ -29,6 +29,7 @@ import { CircularProgress, Backdrop } from '@mui/material';
 
 const CreateProductGroup = () => {
     const [formData, setFormData] = useState({
+        sku: '',
         name: '',
         slug: '',
         products: [],
@@ -232,6 +233,7 @@ const CreateProductGroup = () => {
         if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
         if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
         if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
+        if (formData.sku) formDataToSend.append('sku', formData.sku);
 
         // Append products as JSON string
         formDataToSend.append('products', JSON.stringify(selectedProductIds));
@@ -598,6 +600,21 @@ const CreateProductGroup = () => {
                 </Grid>
 
                 <Grid size={6}>
+                    <CustomFormLabel htmlFor="name" sx={{ mt: 2 }}>
+                        Product Group SKU
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                    <CustomOutlinedInput
+                        id="name"
+                        fullWidth
+                        value={formData.sku}
+                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        disabled={loading}
+                        placeholder="Enter Product Group SKU"
+                    />
+                </Grid>
+
+                <Grid size={6}>
                     <CustomFormLabel htmlFor="slug" sx={{ mt: 2 }}>
                         Slug
                         <span style={{ color: 'red' }}>*</span>
@@ -758,9 +775,9 @@ const CreateProductGroup = () => {
                     />
                 </Grid>
 
-                
 
-                
+
+
                 {/* Pricing Group */}
                 <Grid size={6}>
                     <CustomFormLabel htmlFor="pricing-group-select" sx={{ mt: 2 }}>
@@ -1399,7 +1416,7 @@ const CreateProductGroup = () => {
                 </DialogActions>
             </Dialog>
 
-           
+
         </div>
     );
 };

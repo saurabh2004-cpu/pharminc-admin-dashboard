@@ -232,6 +232,12 @@ const ListProductGroup = () => {
       disablePadding: false,
     },
     {
+      id: 'sku',
+      label: 'SKU',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
       id: 'name',
       label: 'Group Name',
       numeric: false,
@@ -295,8 +301,8 @@ const ListProductGroup = () => {
     name: { minWidth: '200px', maxWidth: '300px' },
     slug: { minWidth: '200px', maxWidth: '300px' },
     productsCount: { minWidth: '150px', maxWidth: '180px' },
-    commerceCategoriesOne:  { minWidth: '250px', maxWidth: '300px' },
-    commerceCategoriesTwo:  { minWidth: '250px', maxWidth: '300px' },
+    commerceCategoriesOne: { minWidth: '250px', maxWidth: '300px' },
+    commerceCategoriesTwo: { minWidth: '250px', maxWidth: '300px' },
     commerceCategoriesThree: { minWidth: '250px', maxWidth: '300px' },
     commerceCategoriesFour: { minWidth: '250px', maxWidth: '300px' },
     eachPrice: { minWidth: '120px', maxWidth: '120px' },
@@ -336,6 +342,7 @@ const ListProductGroup = () => {
 
     const filteredRows = tableData.filter((row) => {
       return (
+        row.sku?.toLowerCase().includes(searchValue) ||
         row?.name?.toLowerCase().includes(searchValue) ||
         row?.slug?.toLowerCase().includes(searchValue) ||
         row?.eachPrice?.toString().includes(searchValue) ||
@@ -564,6 +571,22 @@ const ListProductGroup = () => {
                           </Box>
                         </TableCell>
 
+                        <TableCell sx={columnWidths.name}>
+                          <Typography
+                            fontWeight="500"
+                            variant="body1"
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': {
+                                color: 'primary.main'
+                              }
+                            }}
+                            onClick={() => handleViewProductGroup(row._id)}
+                          >
+                            {row.sku || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
                         {/* Group Name */}
                         <TableCell sx={columnWidths.name}>
                           <Typography
@@ -580,6 +603,7 @@ const ListProductGroup = () => {
                             {row.name || 'N/A'}
                           </Typography>
                         </TableCell>
+
 
                         {/* Slug */}
                         <TableCell sx={columnWidths.slug}>
