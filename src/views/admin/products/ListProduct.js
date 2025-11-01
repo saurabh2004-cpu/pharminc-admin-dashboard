@@ -98,6 +98,13 @@ const ListProduct = () => {
       label: 'Commerce Category Four',
     },
     {
+      id: 'Badges',
+      numeric: false,
+      disablePadding: false,
+      label: 'Badges',
+    },
+
+    {
       id: 'storeDescription',
       numeric: false,
       disablePadding: false,

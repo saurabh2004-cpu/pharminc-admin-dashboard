@@ -323,8 +323,8 @@ const CreateGroupsDiscounts = () => {
                                         key={customer._id}
                                         value={customer._id} // ✅ Use _id (ObjectId) as value
                                     >
-                                        {customer.customerId} 
-                                        
+                                        {customer.customerId} -{customer.customerName || ''}
+
                                     </MenuItem>
                                 ))
                             )}

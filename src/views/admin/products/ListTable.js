@@ -985,6 +985,16 @@ const ListTable = ({
                               </Box>
                             </TableCell>
 
+                            <TableCell sx={columnWidths.subCategory}>
+                              <Box display="flex" alignItems="center">
+                                <Box>
+                                  <Typography fontWeight="400">
+                                    {row?.badge?.name || 'ANY'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+
                             <TableCell sx={columnWidths.storeDescription}>
                               <Box display="flex" alignItems="center">
                                 <Box>

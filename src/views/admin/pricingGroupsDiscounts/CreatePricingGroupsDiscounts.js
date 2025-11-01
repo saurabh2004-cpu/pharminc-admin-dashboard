@@ -350,7 +350,7 @@ const CreatePricingGroupsDiscounts = () => {
                             </MenuItem>
                             {Array.isArray(products) && products.map((product) => (
                                 <MenuItem key={product._id} value={product.sku}>
-                                    {product.sku} - {product.name || ''}
+                                    {product.sku} - {product.ProductName || ''}
                                 </MenuItem>
                             ))}
                         </Select>

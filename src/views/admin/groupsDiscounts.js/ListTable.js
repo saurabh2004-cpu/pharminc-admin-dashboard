@@ -441,7 +441,7 @@ const ListTable = ({
                         {/* Actions Column */}
                         <TableCell sx={stickyCellStyle}>
                           <Box display="flex" gap={1}>
-                            <Tooltip title="Edit">
+                            {/* <Tooltip title="Edit">
                               <IconButton
                                 size="small"
                                 color="primary"
@@ -449,7 +449,7 @@ const ListTable = ({
                               >
                                 <IconEdit size="1.1rem" />
                               </IconButton>
-                            </Tooltip>
+                            </Tooltip> */}
                             <Tooltip title="Delete">
                               <IconButton
                                 size="small"

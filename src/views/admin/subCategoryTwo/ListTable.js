@@ -217,7 +217,7 @@ const ListTable = ({
 
     if (isBrandsList) {
       const filteredRows = sourceData.filter((row) => {
-        return (row.name.toLowerCase().includes(searchValue) || row.subCategory.name.toLowerCase().includes(searchValue));
+        return (row?.name.toLowerCase().includes(searchValue) || row.subCategory?.name.toLowerCase().includes(searchValue));
       });
       setRows(filteredRows);
     } else {
@@ -348,13 +348,13 @@ const ListTable = ({
                 {stableSort(rows, getComparator(order, orderBy))
                   ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   ?.map((row, index) => {
-                    const isItemSelected = isSelected(row.name || row.title);
+                    const isItemSelected = isSelected(row?.name || row.title);
                     const labelId = `enhanced-table-checkbox-${index}`;
 
                     return (
                       <TableRow
                         hover
-                        // onClick={(event) => handleClick(event, row.name || row.title)}
+                        // onClick={(event) => handleClick(event, row?.name || row.title)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
@@ -382,7 +382,7 @@ const ListTable = ({
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton size="small" color="error" onClick={(event) => handleDeleteClick(event, row._id, row.name)}>
+                                  <IconButton size="small" color="error" onClick={(event) => handleDeleteClick(event, row._id, row?.name)}>
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
@@ -396,13 +396,13 @@ const ListTable = ({
                                   }}
                                 >
                                   <Typography fontWeight="600">
-                                    {row.name}
+                                    {row?.name}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
                             <TableCell>
-                              <Typography>{row.subCategory.name || 'N/A'}</Typography>
+                              <Typography>{row.subCategory?.name || 'N/A'}</Typography>
                             </TableCell>
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
