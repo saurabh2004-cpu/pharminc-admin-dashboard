@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     Grid,
     MenuItem,
@@ -17,13 +17,16 @@ import {
     ListItemText,
     IconButton,
     Card,
-    CardContent
+    CardContent,
+    Autocomplete,
+    TextField,
+    InputAdornment
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
-import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash } from '@tabler/icons-react';
+import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash, IconSearch } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 
@@ -58,6 +61,7 @@ const CreateProductGroup = () => {
     const [imagePreviews, setImagePreviews] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
+    const [productSearchQuery, setProductSearchQuery] = useState('');
 
     // Commerce category states
     const [categoryOne, setCategoryOne] = useState([]);
@@ -72,6 +76,27 @@ const CreateProductGroup = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [imageDialogOpen, setImageDialogOpen] = useState(false);
     const [selectedImages, setSelectedImages] = useState([]);
+
+    const filteredProducts = useMemo(() => {
+        if (!Array.isArray(products)) return [];
+
+        if (!productSearchQuery.trim()) {
+            return products;
+        }
+
+        const query = productSearchQuery.toLowerCase();
+        return products.filter(product =>
+            product.sku?.toLowerCase().includes(query) ||
+            product.ProductName?.toLowerCase().includes(query) ||
+            product.eachPrice?.toString().includes(query)
+        );
+    }, [products, productSearchQuery]);
+
+    // Add this handler
+    const handleProductSearch = (event) => {
+        setProductSearchQuery(event.target.value);
+    };
+
 
     // Generate slug from name
     const generateSlug = (name) => {
@@ -784,33 +809,210 @@ const CreateProductGroup = () => {
                         Select Pricing Group
                     </CustomFormLabel>
                     <FormControl fullWidth>
-                        <Select
+                        <Autocomplete
                             id="pricing-group-select"
-                            value={formData.pricingGroup}
-                            onChange={(e) => setFormData({ ...formData, pricingGroup: e.target.value })}
-                            disabled={loading || pricingGroups.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
+                            value={pricingGroups.find(group => group._id === formData.pricingGroup) || null}
+                            onChange={(event, newValue) => {
+                                setFormData({ ...formData, pricingGroup: newValue ? newValue._id : '' });
                             }}
-                        >
-                            <MenuItem value="" disabled>
-                                {pricingGroups.length === 0 ? 'Loading types...' : 'Select a type'}
-                            </MenuItem>
-                            {pricingGroups.map((group) => (
-                                <MenuItem key={group.name} value={group._id}>
-                                    {group.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            options={pricingGroups}
+                            getOptionLabel={(option) => option.name || ''}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || pricingGroups.length === 0}
+                            noOptionsText={pricingGroups.length === 0 ? 'Loading types...' : 'No pricing groups found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={pricingGroups.length === 0 ? 'Loading types...' : 'Search and select a pricing group'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
+                    </FormControl>
+                </Grid>
+
+                {/* Commerce Categories */}
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
+                        Select Commerce Category One (Brand)
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Autocomplete
+                            id="commerce-category-one-select"
+                            value={categoryOne.find(category => category._id === formData.commerceCategoriesOne) || null}
+                            onChange={(event, newValue) => {
+                                setFormData({
+                                    ...formData,
+                                    commerceCategoriesOne: newValue ? newValue._id : '',
+                                    commerceCategoriesTwo: '',
+                                    commerceCategoriesThree: '',
+                                    commerceCategoriesFour: ''
+                                });
+                            }}
+                            options={categoryOne}
+                            getOptionLabel={(option) => option.name || ''}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || categoryOne.length === 0}
+                            noOptionsText={categoryOne.length === 0 ? 'Loading brands...' : 'No brands found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={categoryOne.length === 0 ? 'Loading brands...' : 'Search and select a brand'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
+                    </FormControl>
+                </Grid>
+
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
+                        Select Commerce Category Two
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Autocomplete
+                            id="commerce-category-two-select"
+                            value={categoryTwo.find(category => category._id === formData.commerceCategoriesTwo) || null}
+                            onChange={(event, newValue) => {
+                                setFormData({
+                                    ...formData,
+                                    commerceCategoriesTwo: newValue ? newValue._id : '',
+                                    commerceCategoriesThree: '',
+                                    commerceCategoriesFour: ''
+                                });
+                            }}
+                            options={categoryTwo}
+                            getOptionLabel={(option) => option.name || ''}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || categoryTwo.length === 0}
+                            noOptionsText={categoryTwo.length === 0 ? 'Select brand first...' : 'No categories found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={categoryTwo.length === 0 ? 'Select brand first...' : 'Search and select a category'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
+                    </FormControl>
+                </Grid>
+
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
+                        Select Commerce Category Three
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Autocomplete
+                            id="commerceCategoryThree-select"
+                            value={categoryThree.find(category => category._id === formData.commerceCategoriesThree) || null}
+                            onChange={(event, newValue) => {
+                                setFormData({
+                                    ...formData,
+                                    commerceCategoriesThree: newValue ? newValue._id : '',
+                                    commerceCategoriesFour: ''
+                                });
+                            }}
+                            options={categoryThree}
+                            getOptionLabel={(option) => option.name || ''}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || categoryThree.length === 0}
+                            noOptionsText={categoryThree.length === 0 ? 'Select category first...' : 'No subcategories found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={categoryThree.length === 0 ? 'Select category first...' : 'Search and select a subcategory'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
+                    </FormControl>
+                </Grid>
+
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
+                        Select Commerce Category Four
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                        <Autocomplete
+                            id="commerceCategoryFour-select"
+                            value={categoryFour.find(category => category._id === formData.commerceCategoriesFour) || null}
+                            onChange={(event, newValue) => {
+                                setFormData({ ...formData, commerceCategoriesFour: newValue ? newValue._id : '' });
+                            }}
+                            options={categoryFour}
+                            getOptionLabel={(option) => option.name || ''}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || categoryFour.length === 0}
+                            noOptionsText={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'No sub-subcategories found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'Search and select a sub-subcategory'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
                     </FormControl>
                 </Grid>
 
@@ -852,171 +1054,6 @@ const CreateProductGroup = () => {
                     </FormControl>
                 </Grid>
 
-                {/* Commerce Categories */}
-                <Grid size={6}>
-                    <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
-                        Select Commerce Category One (Brand)
-                        <span style={{ color: 'red' }}>*</span>
-                    </CustomFormLabel>
-                    <FormControl fullWidth>
-                        <Select
-                            id="commerce-category-one-select"
-                            value={formData.commerceCategoriesOne}
-                            onChange={(e) => {
-                                setFormData({
-                                    ...formData,
-                                    commerceCategoriesOne: e.target.value,
-                                    commerceCategoriesTwo: '',
-                                    commerceCategoriesThree: '',
-                                    commerceCategoriesFour: ''
-                                });
-                            }}
-                            disabled={loading || categoryOne.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                {categoryOne.length === 0 ? 'Loading brands...' : 'Select a brand'}
-                            </MenuItem>
-                            {categoryOne.map((category) => (
-                                <MenuItem key={category._id} value={category._id}>
-                                    {category.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
-
-                <Grid size={6}>
-                    <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
-                        Select Commerce Category Two
-                    </CustomFormLabel>
-                    <FormControl fullWidth>
-                        <Select
-                            id="commerce-category-two-select"
-                            value={formData.commerceCategoriesTwo}
-                            onChange={(e) => {
-                                setFormData({
-                                    ...formData,
-                                    commerceCategoriesTwo: e.target.value,
-                                    commerceCategoriesThree: '',
-                                    commerceCategoriesFour: ''
-                                });
-                            }}
-                            disabled={loading || categoryTwo.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                {categoryTwo.length === 0 ? 'Select brand first...' : 'Select a category'}
-                            </MenuItem>
-                            {categoryTwo.map((category) => (
-                                <MenuItem key={category._id} value={category._id}>
-                                    {category.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
-
-                <Grid size={6}>
-                    <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
-                        Select Commerce Category Three
-                    </CustomFormLabel>
-                    <FormControl fullWidth>
-                        <Select
-                            id="commerceCategoryThree-select"
-                            value={formData.commerceCategoriesThree}
-                            onChange={(e) => {
-                                setFormData({
-                                    ...formData,
-                                    commerceCategoriesThree: e.target.value,
-                                    commerceCategoriesFour: ''
-                                });
-                            }}
-                            disabled={loading || categoryThree.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                {categoryThree.length === 0 ? 'Select category first...' : 'Select a subcategory'}
-                            </MenuItem>
-                            {categoryThree.map((category) => (
-                                <MenuItem key={category._id} value={category._id}>
-                                    {category.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
-
-                <Grid size={6}>
-                    <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
-                        Select Commerce Category Four
-                    </CustomFormLabel>
-                    <FormControl fullWidth>
-                        <Select
-                            id="commerceCategoryFour-select"
-                            value={formData.commerceCategoriesFour}
-                            onChange={(e) => {
-                                setFormData({ ...formData, commerceCategoriesFour: e.target.value });
-                            }}
-                            disabled={loading || categoryFour.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                {categoryFour.length === 0 ? 'No SubCategory Two Available' : 'Select a sub-subcategory'}
-                            </MenuItem>
-                            {categoryFour.map((category) => (
-                                <MenuItem key={category._id} value={category._id}>
-                                    {category.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
-
                 {/* Product Selection */}
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="product-select" sx={{ mt: 2 }}>
@@ -1037,15 +1074,53 @@ const CreateProductGroup = () => {
                                 }
                                 return `${selected.length} product(s) selected`;
                             }}
+                            MenuProps={{
+                                PaperProps: {
+                                    style: {
+                                        maxHeight: 400,
+                                    },
+                                },
+                            }}
                         >
+                            {/* Search Input */}
+                            <Box sx={{ px: 2, py: 1, position: 'sticky', top: 0, backgroundColor: 'background.paper', zIndex: 1 }}>
+                                <TextField
+                                    size="small"
+                                    placeholder="Search products..."
+                                    fullWidth
+                                    value={productSearchQuery}
+                                    onChange={handleProductSearch}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <IconSearch size="1rem" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Box>
+
                             <MenuItem value="" disabled>
                                 {!Array.isArray(products) || products.length === 0 ? 'Loading products...' : 'Select products'}
                             </MenuItem>
-                            {Array.isArray(products) && products.map((product) => (
-                                <MenuItem key={product._id} value={product._id}>
-                                    {product.sku} - {product.ProductName} - ${product.eachPrice}
+
+                            {Array.isArray(products) && filteredProducts.length > 0 ? (
+                                filteredProducts.map((product) => (
+                                    <MenuItem key={product._id} value={product._id}>
+                                        <Checkbox checked={selectedProductIds.indexOf(product._id) > -1} />
+                                        <ListItemText
+                                            primary={`${product.sku} - ${product.ProductName}`}
+                                            secondary={`$${product.eachPrice}`}
+                                        />
+                                    </MenuItem>
+                                ))
+                            ) : (
+                                <MenuItem disabled>
+                                    No products found
                                 </MenuItem>
-                            ))}
+                            )}
                         </Select>
                     </FormControl>
                 </Grid>
@@ -1170,7 +1245,7 @@ const CreateProductGroup = () => {
                     >
                         {loading ? 'Creating...' : 'Create Product Group'}
                     </Button>
-                    <Button
+                    {/* <Button
                         variant="outlined"
                         color="secondary"
                         onClick={() => setCsvDialogOpen(true)}
@@ -1186,7 +1261,7 @@ const CreateProductGroup = () => {
                         sx={{ ml: 2 }}
                     >
                         Import Product Images
-                    </Button>
+                    </Button> */}
                     <Button
                         variant="outlined"
                         color="secondary"

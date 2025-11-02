@@ -21,10 +21,12 @@ import {
   InputAdornment,
   Paper,
   Button,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import { IconFilter, IconSearch, IconTrash, IconEdit, IconCalendar, IconX } from '@tabler/icons-react';
+import { IconFilter, IconSearch, IconTrash, IconEdit, IconCalendar, IconX, IconDownload } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
@@ -298,6 +300,13 @@ const ListTable = ({
     isDeleting: false
   });
 
+  // Snackbar state for export notifications
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
   useEffect(() => {
     let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
 
@@ -336,6 +345,67 @@ const ListTable = ({
       setRows(baseData);
     }
   }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
+
+  // Show snackbar notification
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({
+      open: true,
+      message,
+      severity
+    });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  // Export by document number function
+  const handleExportByDocumentNumber = async (documentNumber) => {
+    if (!documentNumber) {
+      showSnackbar('No document number found for this order', 'error');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(
+        '/sales-order/export-sales-orders-by-document-number',
+        {
+          params: { documentNumber },
+          responseType: 'blob'
+        }
+      );
+
+      // Check if response is successful
+      if (response.status === 200) {
+        // Create blob and download file
+        const blob = new Blob([response.data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `sales-orders-${documentNumber}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        
+        showSnackbar(`Sales orders for document ${documentNumber} exported successfully!`);
+      }
+    } catch (error) {
+      console.error('Error exporting sales orders by document number:', error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        showSnackbar(`No sales orders found with document number: ${documentNumber}`, 'warning');
+      } else if (error.response?.status === 400) {
+        showSnackbar('Document number is required', 'error');
+      } else {
+        showSnackbar('Error exporting sales orders', 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
@@ -558,10 +628,12 @@ const ListTable = ({
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
         setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
         handleDeleteCancel();
+        showSnackbar('Sales order deleted successfully', 'success');
       }
     } catch (error) {
       console.error('Error deleting sales order:', error);
       setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
+      showSnackbar('Error deleting sales order', 'error');
     }
   };
 
@@ -593,7 +665,7 @@ const ListTable = ({
     amount: { minWidth: '160px' },
     finalAmount: { minWidth: '160px' },
     createdAt: { minWidth: '200px' },
-    actions: { minWidth: '160px' },
+    actions: { minWidth: '200px' }, // Increased width to accommodate new button
   };
 
   const stickyCellStyle = {
@@ -680,12 +752,44 @@ const ListTable = ({
                         <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
                           <Box display="flex" gap={1}>
                             <Tooltip title="Edit">
-                              <IconButton size="small" color="primary" onClick={() => handleEditSalesOrder(row.documentNumber)}>
+                              <IconButton 
+                                size="small" 
+                                color="primary" 
+                                onClick={() => handleEditSalesOrder(row.documentNumber)}
+                                disabled={loading}
+                              >
                                 <IconEdit size="1.1rem" />
                               </IconButton>
                             </Tooltip>
+                            
+                            <Tooltip title="Export by Document Number">
+                              <IconButton 
+                                size="small" 
+                                color="secondary" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExportByDocumentNumber(row.documentNumber);
+                                }}
+                                disabled={loading}
+                                sx={{
+                                  color: 'green',
+                                  '&:hover': {
+                                    backgroundColor: 'green',
+                                    color: 'white'
+                                  }
+                                }}
+                              >
+                                <IconDownload size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+
                             <Tooltip title="Delete">
-                              <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, row._id, row?.documentNumber)}>
+                              <IconButton 
+                                size="small" 
+                                color="error" 
+                                onClick={(e) => handleDeleteClick(e, row._id, row?.documentNumber)}
+                                disabled={loading}
+                              >
                                 <IconTrash size="1.1rem" />
                               </IconButton>
                             </Tooltip>
@@ -820,6 +924,22 @@ const ListTable = ({
         isDeleting={deleteDialog.isDeleting}
         itemType={"Sales Order"}
       />
+
+      {/* Snackbar for export notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

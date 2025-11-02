@@ -14,7 +14,8 @@ import {
   Checkbox,
   ListItemText,
   InputAdornment,
-  InputLabel
+  InputLabel,
+  Chip
 } from '@mui/material';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
@@ -22,6 +23,8 @@ import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import { Autocomplete, TextField } from '@mui/material';
+
 
 const CreateSalesRep = () => {
   const [formData, setFormData] = React.useState({
@@ -314,8 +317,8 @@ const CreateSalesRep = () => {
             </Select>
           </FormControl>
           <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
-            {formData.role === 'Master-Sales-Rep' 
-              ? 'Master Sales Representatives have additional privileges' 
+            {formData.role === 'Master-Sales-Rep'
+              ? 'Master Sales Representatives have additional privileges'
               : 'Standard Sales Representative role'}
           </Typography>
         </Grid>
@@ -346,67 +349,129 @@ const CreateSalesRep = () => {
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="customer-select"
               multiple
-              value={formData.customers}
-              onChange={handleCustomerChange}
+              value={customers.filter(customer => formData.customers.includes(customer._id))}
+              onChange={(event, newValue, reason, details) => {
+                // Handle "Select All" functionality
+                if (details?.option?.selectAll) {
+                  if (allCustomersSelected) {
+                    // Deselect all
+                    handleCustomerChange({
+                      target: {
+                        value: []
+                      }
+                    });
+                  } else {
+                    // Select all
+                    handleCustomerChange({
+                      target: {
+                        value: customers.map(c => c._id)
+                      }
+                    });
+                  }
+                } else {
+                  // Normal selection
+                  handleCustomerChange({
+                    target: {
+                      value: newValue.map(customer => customer._id)
+                    }
+                  });
+                }
+              }}
+              options={[
+                // Add "Select All" as first option
+                ...(customers.length > 0 ? [{ _id: 'select-all', customerName: 'Select All Customers', customerId: `${customers.length} customers available`, selectAll: true }] : []),
+                ...customers
+              ]}
+              getOptionLabel={(option) => {
+                if (option.selectAll) {
+                  return `Select All Customers (${customers.length})`;
+                }
+                return option.customerName || option.name || '';
+              }}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || !Array.isArray(customers) || customers.length === 0}
-              displayEmpty
-              renderValue={(selected) => {
-                if (selected.length === 0) {
-                  return 'Select customers';
+              disableCloseOnSelect
+              noOptionsText={!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'No customers found'}
+              renderOption={(props, option, { selected }) => {
+                const { key, ...otherProps } = props;
+                if (option.selectAll) {
+                  return (
+                    <li key={key} {...otherProps}>
+                      <Checkbox
+                        checked={allCustomersSelected}
+                        indeterminate={formData.customers.length > 0 && !allCustomersSelected}
+                        style={{ marginRight: 8 }}
+                      />
+                      <ListItemText
+                        primary="Select All Customers"
+                        secondary={`${customers.length} customers available`}
+                      />
+                    </li>
+                  );
                 }
+                return (
+                  <li key={key} {...otherProps}>
+                    <Checkbox
+                      checked={selected}
+                      style={{ marginRight: 8 }}
+                    />
+                    <ListItemText
+                      primary={option.customerName || option.name}
+                      secondary={`ID: ${option.customerId || option._id}`}
+                    />
+                  </li>
+                );
+              }}
+              renderTags={(value, getTagProps) => {
                 if (allCustomersSelected) {
-                  return `All Customers (${customers.length})`;
+                  return (
+                    <Chip
+                      label={`All Customers (${customers.length})`}
+                      size="small"
+                      onDelete={() => {
+                        handleCustomerChange({
+                          target: {
+                            value: []
+                          }
+                        });
+                      }}
+                    />
+                  );
                 }
-                const selectedNames = selected.map(customerId => {
-                  const customer = customers.find(c => c._id === customerId);
-                  return customer ? (customer.customerName || customer.name || customerId) : customerId;
-                });
-                return selectedNames.join(', ');
+                return value
+                  .filter(option => !option.selectAll)
+                  .map((option, index) => (
+                    <Chip
+                      {...getTagProps({ index })}
+                      key={option._id}
+                      label={option.customerName || option.name || option._id}
+                      size="small"
+                    />
+                  ));
               }}
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'Select customers'}
-              </MenuItem>
-
-              {/* Select All Option */}
-              {Array.isArray(customers) && customers.length > 0 && (
-                <MenuItem value="select-all">
-                  <Checkbox
-                    checked={allCustomersSelected}
-                    indeterminate={formData.customers.length > 0 && !allCustomersSelected}
-                  />
-                  <ListItemText
-                    primary="Select All Customers"
-                    secondary={`${customers.length} customers available`}
-                  />
-                </MenuItem>
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'Search and select customers'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
               )}
-
-              {/* Customer List */}
-              {Array.isArray(customers) && customers.map((customer) => (
-                <MenuItem key={customer._id} value={customer._id}>
-                  <Checkbox checked={formData.customers.indexOf(customer._id) > -1} />
-                  <ListItemText
-                    primary={customer.customerName || customer.name}
-                    secondary={`ID: ${customer.customerId || customer._id}`}
-                  />
-                </MenuItem>
-              ))}
-            </Select>
+            />
           </FormControl>
 
           {/* Selection Summary */}

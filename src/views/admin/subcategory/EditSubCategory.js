@@ -7,6 +7,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import { Autocomplete, TextField } from '@mui/material';
 
 const EditSubCategory = () => {
   const [formData, setFormData] = React.useState({
@@ -108,7 +109,7 @@ const EditSubCategory = () => {
 
       if (response.data.statusCode === 200) {
         const subcategoryData = response.data.data;
-        
+
         // Handle different possible structures of category data
         let categoryId = '';
         if (subcategoryData.category) {
@@ -191,33 +192,41 @@ const EditSubCategory = () => {
         </Grid>
         <Grid size={12}>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="category-select"
-              value={formData.category}
-              onChange={handleCategoryChange}
-              disabled={loading || categoryList.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+              value={categoryList.find(category => category._id === formData.category) || null}
+              onChange={(event, newValue) => {
+                handleCategoryChange({
+                  target: {
+                    value: newValue ? newValue._id : ''
+                  }
+                });
               }}
-            >
-              <MenuItem value="" disabled>
-                {categoryList.length === 0 ? 'Loading categories...' : 'Select a category'}
-              </MenuItem>
-              {categoryList.map((category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={categoryList}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || categoryList.length === 0}
+              noOptionsText={categoryList.length === 0 ? 'Loading categories...' : 'No categories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryList.length === 0 ? 'Loading categories...' : 'Search and select a category'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
 

@@ -19,6 +19,7 @@ import CustomOutlinedInput from '../../../components/forms/theme-elements/Custom
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import { Autocomplete, TextField } from '@mui/material';
 
 const CreateGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
@@ -234,37 +235,45 @@ const CreateGroupsDiscounts = () => {
                 </Grid>
                 <Grid size={12}>
                     <FormControl fullWidth>
-                        <Select
+                        <Autocomplete
                             id="pricing-group-select"
-                            value={formData.pricingGroupId}
-                            onChange={handlePricingGroupChange}
-                            disabled={loading || !Array.isArray(pricingGroups) || pricingGroups.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
+                            value={pricingGroups.find(group => group._id === formData.pricingGroupId) || null}
+                            onChange={(event, newValue) => {
+                                handlePricingGroupChange({
+                                    target: {
+                                        value: newValue ? newValue._id : ''
+                                    }
+                                });
                             }}
-                        >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'Select a pricing group'}
-                            </MenuItem>
-                            {Array.isArray(pricingGroups) && pricingGroups.map((group) => (
-                                <MenuItem key={group._id} value={group._id}>
-                                    {group.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            options={Array.isArray(pricingGroups) ? pricingGroups : []}
+                            getOptionLabel={(option) => option.name || ''}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || !Array.isArray(pricingGroups) || pricingGroups.length === 0}
+                            noOptionsText={!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'No pricing groups found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'Search and select a pricing group'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
                     </FormControl>
                 </Grid>
 
-                {/* ✅ CORRECTED: Multiple Customer Selection with ObjectIds */}
+                {/* ✅ CORRECTED: Multiple Customer Selection with Search */}
                 <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="customer-select"
@@ -279,56 +288,52 @@ const CreateGroupsDiscounts = () => {
                 </Grid>
                 <Grid size={12}>
                     <FormControl fullWidth>
-                        <Select
+                        <Autocomplete
                             id="customer-select"
                             multiple
-                            value={formData.customers}
-                            onChange={handleCustomerChange}
-                            disabled={loading || !Array.isArray(customers) || customers.length === 0}
-                            input={<OutlinedInput />}
-                            renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((customerId) => {
-                                        // Find customer by _id (ObjectId)
-                                        const customer = customers.find(c => c._id === customerId);
-                                        return (
-                                            <Chip
-                                                key={customerId}
-                                                label={`${customer?.customerId || 'Unknown'}${customer?.customerName ? ' - ' + customer.customerName : ''}`}
-                                                size="small"
-                                            />
-                                        );
-                                    })}
-                                </Box>
-                            )}
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
+                            value={customers.filter(customer => formData.customers.includes(customer._id))}
+                            onChange={(event, newValue) => {
+                                handleCustomerChange({
+                                    target: {
+                                        value: newValue.map(customer => customer._id)
+                                    }
+                                });
                             }}
-                        >
-                            {!Array.isArray(customers) || customers.length === 0 ? (
-                                <MenuItem disabled>
-                                    Loading customers...
-                                </MenuItem>
-                            ) : (
-                                customers.map((customer) => (
-                                    <MenuItem
-                                        key={customer._id}
-                                        value={customer._id} // ✅ Use _id (ObjectId) as value
-                                    >
-                                        {customer.customerId} -{customer.customerName || ''}
-
-                                    </MenuItem>
+                            options={Array.isArray(customers) ? customers : []}
+                            getOptionLabel={(option) => `${option.customerId}${option.customerName ? ' - ' + option.customerName : ''}`}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || !Array.isArray(customers) || customers.length === 0}
+                            noOptionsText={!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'No customers found'}
+                            renderTags={(value, getTagProps) =>
+                                value.map((option, index) => (
+                                    <Chip
+                                        {...getTagProps({ index })}
+                                        key={option._id}
+                                        label={`${option.customerId || 'Unknown'}${option.customerName ? ' - ' + option.customerName : ''}`}
+                                        size="small"
+                                    />
                                 ))
+                            }
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'Search and select customers'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
                             )}
-                        </Select>
+                        />
                     </FormControl>
                     {formData.customers.length > 0 && (
                         <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.secondary' }}>

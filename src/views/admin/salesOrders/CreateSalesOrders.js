@@ -652,48 +652,51 @@ const CreateSalesOrders = () => {
           </FormControl>
         </Grid>
 
-        {/* Pack Quantity and Units Quantity - Two per row */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="pack-quantity" sx={{ mt: 2 }}>
             Pack Quantity
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
-              id="item-sku-select"
-              value={formData.packType}
-              onChange={(e) => {
+            <Autocomplete
+              id="pack-quantity-select"
+              value={packTypes.find(pack => pack.name === formData.packType) || null}
+              onChange={(event, newValue) => {
                 setFormData({
                   ...formData,
-                  packQuantity: e.target.value.quantity,
-                  packType: e.target.value.name
-                })
+                  packQuantity: newValue ? newValue.quantity : '',
+                  packType: newValue ? newValue.name : ''
+                });
               }}
-              disabled={loading || productsList.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {packTypes.length === 0 ? 'Loading products...' : 'Select a product'}
-              </MenuItem>
-              {packTypes.map((packType) => (
-                <MenuItem key={packType._id} value={packType}>
-                  {packType.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={packTypes}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || packTypes.length === 0}
+              noOptionsText={packTypes.length === 0 ? 'Loading pack types...' : 'No pack types found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={packTypes.length === 0 ? 'Loading pack types...' : 'Search and select a pack type'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
+
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="units-quantity" sx={{ mt: 2 }}>
             Units Quantity

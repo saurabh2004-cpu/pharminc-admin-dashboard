@@ -7,6 +7,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconBuildingArch, IconFileImport, IconMail, IconMessage2, IconPhone, IconUpload, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import { Autocomplete, TextField } from '@mui/material';
 
 const CreateCategory = () => {
     const [formData, setFormData] = React.useState({
@@ -225,33 +226,41 @@ const CreateCategory = () => {
                 </Grid>
                 <Grid size={12}>
                     <FormControl fullWidth>
-                        <Select
+                        <Autocomplete
                             id="brand-select"
-                            value={formData.brand}
-                            onChange={handleBrandChange}
-                            disabled={loading || brandsList.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
+                            value={brandsList.find(brand => brand._id === formData.brand) || null}
+                            onChange={(event, newValue) => {
+                                handleBrandChange({
+                                    target: {
+                                        value: newValue ? newValue._id : ''
+                                    }
+                                });
                             }}
-                        >
-                            <MenuItem value="" disabled>
-                                {brandsList.length === 0 ? 'Loading brands...' : 'Select a brand'}
-                            </MenuItem>
-                            {brandsList.map((brand) => (
-                                <MenuItem key={brand._id} value={brand._id}>
-                                    {brand.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            options={brandsList}
+                            getOptionLabel={(option) => option.name || ''}
+                            isOptionEqualToValue={(option, value) => option._id === value._id}
+                            disabled={loading || brandsList.length === 0}
+                            noOptionsText={brandsList.length === 0 ? 'Loading brands...' : 'No brands found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={brandsList.length === 0 ? 'Loading brands...' : 'Search and select a brand'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
                     </FormControl>
                 </Grid>
 

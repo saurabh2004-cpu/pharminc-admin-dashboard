@@ -18,6 +18,7 @@ import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import { Autocomplete, TextField } from '@mui/material';
 
 const CreatePricingGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
@@ -232,48 +233,6 @@ const CreatePricingGroupsDiscounts = () => {
     return (
         <div>
             <Grid container>
-                {/* Pricing Group Selection */}
-                {/* <Grid size={12}>
-                    <CustomFormLabel
-                        htmlFor="pricing-group-select"
-                        sx={{ mt: 2 }}
-                    >
-                        Select Pricing Group *
-                    </CustomFormLabel>
-                </Grid>
-                <Grid size={12}>
-                    <FormControl fullWidth>
-                        <Select
-                            id="pricing-group-select"
-                            value={formData.pricingGroupId}
-                            onChange={handlePricingGroupChange}
-                            disabled={loading || !Array.isArray(pricingGroups) || pricingGroups.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'Select a pricing group'}
-                            </MenuItem>
-                            {Array.isArray(pricingGroups) && pricingGroups.map((group) => (
-                                <MenuItem key={group._id} value={group._id}>
-                                    {group.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid> */}
-
-                {/* Customer Selection */}
                 <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="customer-select"
@@ -285,33 +244,41 @@ const CreatePricingGroupsDiscounts = () => {
                 </Grid>
                 <Grid size={12}>
                     <FormControl fullWidth>
-                        <Select
+                        <Autocomplete
                             id="customer-select"
-                            value={formData.customerId}
-                            onChange={handleCustomerChange}
-                            disabled={loading || !Array.isArray(customers) || customers.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
+                            value={customers.find(customer => customer.customerId === formData.customerId) || null}
+                            onChange={(event, newValue) => {
+                                handleCustomerChange({
+                                    target: {
+                                        value: newValue ? newValue.customerId : ''
+                                    }
+                                });
                             }}
-                        >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'Select a customer'}
-                            </MenuItem>
-                            {Array.isArray(customers) && customers.map((customer) => (
-                                <MenuItem key={customer._id} value={customer.customerId}>
-                                    {customer.customerId} - {customer.customerName || ''}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            options={Array.isArray(customers) ? customers : []}
+                            getOptionLabel={(option) => `${option.customerId}${option.customerName ? ' - ' + option.customerName : ''}`}
+                            isOptionEqualToValue={(option, value) => option.customerId === value.customerId}
+                            disabled={loading || !Array.isArray(customers) || customers.length === 0}
+                            noOptionsText={!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'No customers found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={!Array.isArray(customers) || customers.length === 0 ? 'Loading customers...' : 'Search and select a customer'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
                     </FormControl>
                 </Grid>
 
@@ -327,33 +294,41 @@ const CreatePricingGroupsDiscounts = () => {
                 </Grid>
                 <Grid size={12}>
                     <FormControl fullWidth>
-                        <Select
+                        <Autocomplete
                             id="product-sku-select"
-                            value={formData.productSku}
-                            onChange={handleProductSkuChange}
-                            disabled={loading || !Array.isArray(products) || products.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
+                            value={products.find(product => product.sku === formData.productSku) || null}
+                            onChange={(event, newValue) => {
+                                handleProductSkuChange({
+                                    target: {
+                                        value: newValue ? newValue.sku : ''
+                                    }
+                                });
                             }}
-                        >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(products) || products.length === 0 ? 'Loading products...' : 'Select a product'}
-                            </MenuItem>
-                            {Array.isArray(products) && products.map((product) => (
-                                <MenuItem key={product._id} value={product.sku}>
-                                    {product.sku} - {product.ProductName || ''}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            options={Array.isArray(products) ? products : []}
+                            getOptionLabel={(option) => `${option.sku}${option.ProductName ? ' - ' + option.ProductName : ''}`}
+                            isOptionEqualToValue={(option, value) => option.sku === value.sku}
+                            disabled={loading || !Array.isArray(products) || products.length === 0}
+                            noOptionsText={!Array.isArray(products) || products.length === 0 ? 'Loading products...' : 'No products found'}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={!Array.isArray(products) || products.length === 0 ? 'Loading products...' : 'Search and select a product'}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: 'rgba(0, 0, 0, 0.87)',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: 'primary.main',
+                                            },
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
                     </FormControl>
                 </Grid>
 

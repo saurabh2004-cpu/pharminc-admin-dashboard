@@ -5,6 +5,7 @@ import CustomFormLabel from '../.../../../../components/forms/theme-elements/Cus
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import { Autocomplete, TextField } from '@mui/material';
 
 const CreateSubCategoryTwo = () => {
   const [formData, setFormData] = React.useState({
@@ -172,47 +173,56 @@ const CreateSubCategoryTwo = () => {
           />
         </Grid>
 
-        {/* Category Selection */}
+        {/* SubCategory Selection */}
         <Grid size={12}>
-          <CustomFormLabel htmlFor="category-select" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="subcategory-select" sx={{ mt: 2 }}>
             Select subCategory
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
         </Grid>
         <Grid size={12}>
           <FormControl fullWidth>
-            <Select
-              id="category-select"
-              value={formData.category}
-              onChange={handleCategoryChange}
-              disabled={loading || subCategoryList.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+            <Autocomplete
+              id="subcategory-select"
+              value={subCategoryList.find(subcategory => subcategory._id === formData.subCategory) || null}
+              onChange={(event, newValue) => {
+                handleCategoryChange({
+                  target: {
+                    value: newValue ? newValue._id : ''
+                  }
+                });
               }}
-            >
-              <MenuItem value="" disabled>
-                {subCategoryList.length === 0
-                  ? 'Loading categories...'
-                  : 'Select a category'}
-              </MenuItem>
-              {subCategoryList.map((subcategory) => (
-                <MenuItem key={subcategory._id} value={subcategory._id}>
-                  {subcategory.name} ({subcategory.category?.name})
-                </MenuItem>
-              ))}
-            </Select>
+              options={subCategoryList}
+              getOptionLabel={(option) =>
+                option.category?.name
+                  ? `${option.name} (${option.category.name})`
+                  : option.name
+              }
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || subCategoryList.length === 0}
+              noOptionsText={subCategoryList.length === 0 ? 'Loading subcategories...' : 'No subcategories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={subCategoryList.length === 0 ? 'Loading subcategories...' : 'Search and select a subcategory'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
-
         {/* Slug (auto-generated) */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="subcategory-slug" sx={{ mt: 2 }}>

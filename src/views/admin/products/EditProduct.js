@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, MenuItem, Select, FormControl, Checkbox, Dialog, DialogTitle, DialogContent, Typography, Box, DialogActions } from '@mui/material';
+import { Grid, MenuItem, Select, FormControl, Checkbox, Dialog, Chip, DialogTitle, DialogContent, Typography, Box, DialogActions } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -7,6 +7,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import axiosInstance from '../../../axios/axiosInstance';
 import { IconUpload, IconFileImport, IconX, IconPhoto } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router';
+import { Autocomplete, TextField } from '@mui/material';
 
 const EditProduct = () => {
   const [formData, setFormData] = React.useState({
@@ -26,7 +27,7 @@ const EditProduct = () => {
     storeDescription: '',
     eachBarcodes: '',
     packBarcodes: '',
-    comparePrice: null,
+    comparePrice: 0,
     taxable: false
   });
 
@@ -769,48 +770,51 @@ const EditProduct = () => {
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="types-of-packs-select"
               multiple
-              value={formData.typesOfPacks}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({ ...formData, typesOfPacks: Array.isArray(value) ? value : [value] });
-              }}
-              disabled={loading || packTypes.length === 0}
-              displayEmpty
-              renderValue={(selected) => {
-                if (selected.length === 0) {
-                  return 'Select pack types';
-                }
-                const selectedNames = selected.map(id => {
-                  const pack = packTypes.find(p => p._id === id);
-                  return pack ? pack.name : id;
+              value={packTypes.filter(pack => formData.typesOfPacks.includes(pack._id))}
+              onChange={(event, newValue) => {
+                setFormData({
+                  ...formData,
+                  typesOfPacks: newValue.map(pack => pack._id)
                 });
-                return selectedNames.join(', ');
               }}
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {packTypes.length === 0 ? 'Loading types...' : 'Select pack types'}
-              </MenuItem>
-              {packTypes.map((type) => (
-                <MenuItem key={type._id} value={type._id}>
-                  <Checkbox checked={formData.typesOfPacks.indexOf(type._id) > -1} />
-                  {type.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={packTypes}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || packTypes.length === 0}
+              noOptionsText={packTypes.length === 0 ? 'Loading types...' : 'No pack types found'}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={packTypes.length === 0 ? 'Loading types...' : 'Search and select pack types'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
 
@@ -820,68 +824,77 @@ const EditProduct = () => {
             Select PricingGroup
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="pricing-group-select"
-              value={formData.pricingGroup}
-              onChange={(e) => setFormData({ ...formData, pricingGroup: e.target.value })}
-              disabled={loading || pricingGroups.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+              value={pricingGroups.find(group => group._id === formData.pricingGroup) || null}
+              onChange={(event, newValue) => {
+                setFormData({ ...formData, pricingGroup: newValue ? newValue._id : '' });
               }}
-            >
-              <MenuItem value="" disabled>
-                {pricingGroups.length === 0 ? 'Loading types...' : 'Select a type'}
-              </MenuItem>
-              {pricingGroups.map((group) => (
-                <MenuItem key={group.name} value={group._id}>
-                  {group.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={pricingGroups}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || pricingGroups.length === 0}
+              noOptionsText={pricingGroups.length === 0 ? 'Loading types...' : 'No pricing groups found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={pricingGroups.length === 0 ? 'Loading types...' : 'Search and select a type'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
             Select Commerce category One
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="commerce-category-one-select"
-              value={formData.commerceCategoriesOne}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesOne: e.target.value })}
-              disabled={loading || categoryOne.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+              value={categoryOne.find(category => category._id === formData.commerceCategoriesOne) || null}
+              onChange={(event, newValue) => {
+                setFormData({ ...formData, commerceCategoriesOne: newValue ? newValue._id : '' });
               }}
-            >
-              <MenuItem value="" disabled>
-                {categoryOne.length === 0 ? 'Loading types...' : 'Select a type'}
-              </MenuItem>
-              {categoryOne.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={categoryOne}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || categoryOne.length === 0}
+              noOptionsText={categoryOne.length === 0 ? 'Loading types...' : 'No categories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryOne.length === 0 ? 'Loading types...' : 'Search and select a type'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
 
@@ -892,33 +905,37 @@ const EditProduct = () => {
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="commerce-category-two-select"
-              value={formData.commerceCategoriesTwo}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesTwo: e.target.value })}
-              disabled={loading || categoryTwo.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+              value={categoryTwo.find(category => category._id === formData.commerceCategoriesTwo) || null}
+              onChange={(event, newValue) => {
+                setFormData({ ...formData, commerceCategoriesTwo: newValue ? newValue._id : '' });
               }}
-            >
-              <MenuItem value="" disabled>
-                {categoryTwo.length === 0 ? 'Loading types...' : 'Select a type'}
-              </MenuItem>
-              {categoryTwo.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={categoryTwo}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || categoryTwo.length === 0}
+              noOptionsText={categoryTwo.length === 0 ? 'Loading types...' : 'No categories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryTwo.length === 0 ? 'Loading types...' : 'Search and select a type'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
 
@@ -927,33 +944,76 @@ const EditProduct = () => {
             Select Commerce category Three
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="commerceCategoryThree-select"
-              value={formData.commerceCategoriesThree}
-              onChange={(e) => handleSubcategoryThreeChange(e.target.value)}
-              disabled={loading || categoryThree.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+              value={categoryThree.find(category => category._id === formData.commerceCategoriesThree) || null}
+              onChange={(event, newValue) => {
+                handleSubcategoryThreeChange(newValue ? newValue._id : '');
               }}
-            >
-              <MenuItem value="" disabled>
-                {categoryThree.length === 0 ? 'Loading types...' : 'Select a type'}
-              </MenuItem>
-              {categoryThree.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={categoryThree}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || categoryThree.length === 0}
+              noOptionsText={categoryThree.length === 0 ? 'Loading types...' : 'No categories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryThree.length === 0 ? 'Loading types...' : 'Search and select a type'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerce-category-four-select" sx={{ mt: 2 }}>
+            Select Commerce category four
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Autocomplete
+              id="commerce-category-four-select"
+              value={categoryFour.find(category => category._id === formData.commerceCategoriesFour) || null}
+              onChange={(event, newValue) => {
+                setFormData({ ...formData, commerceCategoriesFour: newValue ? newValue._id : '' });
+              }}
+              options={categoryFour}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || categoryFour.length === 0}
+              noOptionsText={categoryFour.length === 0 ? 'NO CATEGORY' : 'No categories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryFour.length === 0 ? 'NO CATEGORY' : 'Search and select a type'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
 
@@ -995,73 +1055,44 @@ const EditProduct = () => {
           </FormControl>
         </Grid>
 
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="commerce-category-four-select" sx={{ mt: 2 }}>
-            Select Commerce category four
-          </CustomFormLabel>
-          <FormControl fullWidth>
-            <Select
-              id="commerce-category-four-select"
-              value={formData.commerceCategoriesFour}
-              onChange={(e) => setFormData({ ...formData, commerceCategoriesFour: e.target.value })}
-              disabled={loading || categoryFour.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {categoryFour.length === 0 ? 'NO CATEGORY' : 'Select a type'}
-              </MenuItem>
-              {categoryFour.map((category) => (
-                <MenuItem key={category.name} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
+
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="badge-select" sx={{ mt: 2 }}>
             Select badge
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="badge-select"
-              value={formData.badge}
-              onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-              disabled={loading || badges.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+              value={badges.find(badge => badge._id === formData.badge) || null}
+              onChange={(event, newValue) => {
+                setFormData({ ...formData, badge: newValue ? newValue._id : '' });
               }}
-            >
-              <MenuItem value="" disabled>
-                {badges.length === 0 ? 'NO BADGES' : 'Select a badge'}
-              </MenuItem>
-              {badges?.map((badge) => (
-                <MenuItem key={badge.name} value={badge._id}>
-                  {badge.name} - (text-{badge.text})
-                </MenuItem>
-              ))}
-            </Select>
+              options={badges}
+              getOptionLabel={(option) => `${option.name} - (text-${option.text})`}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || badges.length === 0}
+              noOptionsText={badges.length === 0 ? 'NO BADGES' : 'No badges found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={badges.length === 0 ? 'NO BADGES' : 'Search and select a badge'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
 
