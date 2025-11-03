@@ -117,6 +117,8 @@ const CreateMetaData = Loadable(lazy(() => import('../views/admin/metaData/Creat
 const ListMetaData = Loadable(lazy(() => import('../views/admin/metaData/ListMetaData')));
 const EditMetaData = Loadable(lazy(() => import('../views/admin/metaData/EditMetaData')));
 
+const ListContactUsData = Loadable(lazy(() => import('../views/admin/contactUsData/ListContactUsData')));
+
 
 
 const Router = [
@@ -200,7 +202,7 @@ const Router = [
       { path: '/dashboard/customers/create', element: <CreateCustomer /> },
       { path: '/dashboard/customers/list', element: <ListCustomers /> },
       { path: '/dashboard/customers/edit/:id', element: <EditCustomer /> },
-      { path: '/dashboard/customers/change-password/:id', element: <ChnagePassword /> },
+      { path: '/dashboard/customers/change-password/:id/:email', element: <ChnagePassword /> },
       { path: '/dashboard/customers/PendingCustomers', element: <PendingApprovalCustomers /> },
 
 
@@ -242,6 +244,8 @@ const Router = [
       { path: '/dashboard/meta-data/create', element: <CreateMetaData /> },
       { path: '/dashboard/meta-data/List', element: <ListMetaData /> },
       { path: '/dashboard/meta-data/Edit/:id', element: <EditMetaData /> },
+
+      { path: '/dashboard/contact-us-data/List', element: <ListContactUsData /> },
     ],
   },
 

@@ -670,8 +670,8 @@ const ListTable = ({
     navigate(`/dashboard/customers/edit/${id}`);
   };
 
-  const handleChangePassword = (id) => {
-    navigate(`/dashboard/customers/change-password/${id}`);
+  const handleChangePassword = (id, email) => {
+    navigate(`/dashboard/customers/change-password/${id}/${email}`);
   };
 
   const stickyCellStyle = {
@@ -831,7 +831,7 @@ const ListTable = ({
                                     <IconButton
                                       size="small"
                                       color="secondary"
-                                      onClick={() => handleChangePassword(row._id)}
+                                      onClick={() => handleChangePassword(row._id, row.customerEmail)}
                                     >
                                       <IconKey size="1.1rem" />
                                     </IconButton>

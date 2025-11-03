@@ -51,8 +51,8 @@ const Reset = () => {
   }, [location]);
 
   const validatePasswords = () => {
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (newPassword.length < 4) {
+      setError('Password must be at least 4 characters long');
       return false;
     }
     if (newPassword !== confirmPassword) {
@@ -81,7 +81,7 @@ const Reset = () => {
       if (response.status === 200) {
         setSuccess('Password changed successfully! Redirecting to login...');
         setTimeout(() => {
-          navigate('/auth/login');
+          navigate('http://localhost:3002/login');
         }, 2000);
       } else {
         setError('Failed to change password');

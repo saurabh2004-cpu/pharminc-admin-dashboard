@@ -282,11 +282,24 @@ const CustomersSalesOrders = () => {
 
     // Calculate tax and total amounts
     const calculateOrderTotals = (products) => {
-        const orderTotal = products.reduce((sum, product) => sum + (parseFloat(product.amount) || 0), 0);
+
+        const orderTotal = products.reduce((sum, product) => {
+            const quantity = parseInt(product.packQuantity) * parseInt(product.unitsQuantity);
+
+            console.log(`product-${product.sku} - total quantity - ${quantity}`)
+            
+            const itemTotal = parseFloat(product.amount) * quantity;
+
+            console.log(`product-${product.sku} - total amount - ${itemTotal}`)
+            return sum + (itemTotal || 0);
+        }, 0);
 
         const taxAmount = products.reduce((sum, product) => {
             if (product.taxApplied && product.taxPercentages > 0) {
-                return sum + (parseFloat(product.amount) || 0) * (product.taxPercentages / 100);
+                const quantity = parseInt(product.packQuantity) * parseInt(product.unitsQuantity);
+                const itemSubtotal = parseFloat(product.amount) * quantity;
+                const itemTax = itemSubtotal * (product.taxPercentages / 100);
+                return sum + itemTax;
             }
             return sum;
         }, 0);
@@ -294,9 +307,9 @@ const CustomersSalesOrders = () => {
         const finalAmount = orderTotal + taxAmount;
 
         return {
-            orderTotal: orderTotal,
-            taxAmount: taxAmount,
-            finalAmount: finalAmount
+            orderTotal: parseFloat(orderTotal.toFixed(2)),
+            taxAmount: parseFloat(taxAmount.toFixed(2)),
+            finalAmount: parseFloat(finalAmount.toFixed(2))
         };
     };
 
@@ -1361,6 +1374,7 @@ const CustomersSalesOrders = () => {
                 onClose={handleCloseModal}
                 tableData={tableData}
                 documentNo={documentNo}
+                customerName={tableData[0]?.customerName || ''}
                 onSalesOrderCreated={handleSalesOrderCreated}
             />
 

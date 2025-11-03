@@ -365,6 +365,20 @@ const Menuitems = [
       },
     ]
   },
+  {
+    id: uniqueId(),
+    title: 'Contact Us Data',
+    icon: IconNotebook,
+    href: '/dashboard/contact-us-data',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'List Contact Us Data',
+        icon: IconPoint,
+        href: '/dashboard/contact-us-data/List',
+      },
+    ]
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Customer Specific Amounts ',
@@ -406,20 +420,20 @@ const Menuitems = [
   //   ]
   // },
 
-  {
-    id: uniqueId(),
-    title: 'NetTerms',
-    icon: IconCalendar,
-    href: '/dashboard/NetTerms',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Net Terms',
-        icon: IconPoint,
-        href: '/dashboard/NetTerms/List',
-      },
-    ]
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'NetTerms',
+  //   icon: IconCalendar,
+  //   href: '/dashboard/NetTerms',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Net Terms',
+  //       icon: IconPoint,
+  //       href: '/dashboard/NetTerms/List',
+  //     },
+  //   ]
+  // },
 
   // {
   //   id: uniqueId(),

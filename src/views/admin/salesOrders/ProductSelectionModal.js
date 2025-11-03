@@ -17,22 +17,19 @@ import {
     TableRow,
     Paper,
     Radio,
-    FormControlLabel,
-    RadioGroup,
     Divider,
     InputAdornment,
     CircularProgress,
     Alert,
     FormControl,
-    MenuItem
+    MenuItem,
+    Card,
+    CardContent
 } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { Select } from '@mui/material';
 
 const ProductSelectionModal = ({
     open,
@@ -41,14 +38,16 @@ const ProductSelectionModal = ({
     documentNo,
     onSalesOrderCreated
 }) => {
-    const [selectedProduct, setSelectedProduct] = useState('');
+    const [selectedProduct, setSelectedProduct] = useState(null);
     const [productSearch, setProductSearch] = useState('');
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [productList, setProductList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [step, setStep] = useState(1); // 1: Product Selection, 2: Form
+    const [packTypes, setPackTypes] = useState([]);
 
+    console.log("First order:", tableData[0]);
 
     // Form data state
     const [formData, setFormData] = useState({
@@ -62,18 +61,17 @@ const ProductSelectionModal = ({
         customerPO: '',
         itemSku: '',
         packQuantity: 1,
+        packType: '',
         unitsQuantity: 1,
-        amount: 0
+        amount: 0,
+        comments: ''
     });
-
-
 
     // Initialize form data with existing order data
     useEffect(() => {
         if (tableData && tableData.length > 0) {
             const firstOrder = tableData[0];
-
-            console.log("First orderiiiiiiiiiiiii:", firstOrder.customerName);
+            console.log("First order:", firstOrder);
 
             setFormData(prev => ({
                 ...prev,
@@ -82,10 +80,9 @@ const ProductSelectionModal = ({
                 salesChannel: firstOrder.salesChannel || '',
                 shippingAddress: firstOrder.shippingAddress || '',
                 billingAddress: firstOrder.billingAddress || '',
-                date: firstOrder.date,
-                trackingNumber: firstOrder.trackingNumber,
-                customerPO: firstOrder.customerPO
-
+                date: firstOrder.date || new Date().toISOString().split('T')[0],
+                trackingNumber: firstOrder.trackingNumber || '',
+                customerPO: firstOrder.customerPO || ''
             }));
         }
     }, [tableData, documentNo]);
@@ -97,7 +94,7 @@ const ProductSelectionModal = ({
             const response = await axiosInstance.get('/products/get-all-products-dashboard');
 
             if (response.data.statusCode === 200) {
-                const productsData = response.data.data?.docs || response.data.data || response.data.data.products;
+                const productsData = response.data.data?.docs || response.data.data || response.data.data?.products || [];
 
                 // Filter unique products and only active ones
                 const getUniqueProducts = (products) => {
@@ -128,28 +125,35 @@ const ProductSelectionModal = ({
         }
     };
 
-    const fetchProductsAvailablePackTypes = async () => {
+    // Fetch pack types for selected product
+    const fetchProductsAvailablePackTypes = async (sku) => {
+        if (!sku) return;
+        
         try {
-            const response = await axiosInstance.get(`/products/get-products-pack-types/${formData.itemSku}`);
-            console.log("response products pack types", response);
+            const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
+            console.log("Pack types response:", response.data);
 
-            if (response.status === 200) {
-                setFormData(prev => ({
-                    ...prev,
-                    packType: response.data.data
-                }))
+            if (response.status === 200 && response.data.data) {
+                setPackTypes(response.data.data);
+                
+                // Auto-select the first pack type if available
+                if (response.data.data.length > 0) {
+                    const firstPack = response.data.data[0];
+                    setFormData(prev => ({
+                        ...prev,
+                        packQuantity: firstPack.quantity.toString(),
+                        packType: firstPack.name
+                    }));
+                    
+                    // Recalculate amount with initial values
+                    recalculateAmount(firstPack.quantity.toString(), formData.unitsQuantity);
+                }
             }
-
         } catch (error) {
             console.error('Error fetching products pack types:', error);
-            setError(error.message);
+            setPackTypes([]);
         }
     };
-
-    useEffect(() => {
-        fetchProductsAvailablePackTypes();
-    }, [formData.itemSku]);
-
 
     // Filter products based on search
     useEffect(() => {
@@ -166,64 +170,121 @@ const ProductSelectionModal = ({
 
     // Handle product selection
     const handleProductSelect = (product) => {
+        console.log("Product selected:", product);
         setSelectedProduct(product);
         setFormData(prev => ({
             ...prev,
             itemSku: product.sku || '',
             amount: product.eachPrice || 0
         }));
+        
+        // Fetch pack types for the selected product
+        fetchProductsAvailablePackTypes(product.sku);
+    };
+
+    // Recalculate amount when quantities change
+    const recalculateAmount = (packQty, unitQty) => {
+        if (!selectedProduct) return;
+        
+        const packQuantity = parseInt(packQty) || 1;
+        const unitsQuantity = parseInt(unitQty) || 1;
+        const totalQuantity = packQuantity * unitsQuantity;
+        const unitPrice = selectedProduct.eachPrice || 0;
+        const totalAmount = unitPrice * totalQuantity;
+        
+        setFormData(prev => ({
+            ...prev,
+            amount: parseFloat(totalAmount.toFixed(2))
+        }));
     };
 
     // Handle form input changes
     const handleInputChange = (field, value) => {
+        console.log(`Field ${field} changed to:`, value);
+        
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
 
-        // Calculate total amount when quantities change
-        if (field === 'packQuantity' || field === 'unitsQuantity') {
-            const selectedProd = productList.find(p => p._id === selectedProduct);
-            if (selectedProd) {
-                const packQty = field === 'packQuantity' ? parseInt(value) || 1 : formData.packQuantity;
-                const unitQty = field === 'unitsQuantity' ? parseInt(value) || 1 : formData.unitsQuantity;
-                const totalAmount = selectedProd.eachPrice * unitQty;
-
+        // Recalculate amount when quantities change
+        if (field === 'packQuantity') {
+            recalculateAmount(value, formData.unitsQuantity);
+            
+            // Also update packType if it exists in packTypes
+            const selectedPack = packTypes.find(pack => pack.quantity.toString() === value.toString());
+            if (selectedPack) {
                 setFormData(prev => ({
                     ...prev,
-                    amount: totalAmount
+                    packType: selectedPack.name
                 }));
             }
+        }
+        
+        if (field === 'unitsQuantity') {
+            recalculateAmount(formData.packQuantity, value);
+        }
+    };
+
+    // Handle pack type selection
+    const handlePackTypeChange = (e) => {
+        const selectedPackQuantity = e.target.value;
+        const selectedPack = packTypes.find(pack => pack.quantity.toString() === selectedPackQuantity.toString());
+        
+        console.log("Pack type selected:", selectedPack);
+        
+        if (selectedPack) {
+            setFormData(prev => ({
+                ...prev,
+                packQuantity: selectedPack.quantity.toString(),
+                packType: selectedPack.name
+            }));
+            
+            // Recalculate amount with new pack quantity
+            recalculateAmount(selectedPack.quantity.toString(), formData.unitsQuantity);
         }
     };
 
     // Handle form submission
     const handleSubmit = async () => {
-
         console.log("Submitting form data:", formData);
-        // Validation
-        if (!formData.customerName.trim()) {
+        console.log("Selected product:", selectedProduct);
+
+        // Enhanced validation
+        if (!formData.customerName?.trim()) {
             setError('Customer name is required');
             return;
         }
 
-        if (!formData.salesChannel.trim()) {
+        if (!formData.salesChannel?.trim()) {
             setError('Sales channel is required');
             return;
         }
 
-        if (!formData.itemSku.trim()) {
+        if (!formData.itemSku?.trim()) {
             setError('Item SKU is required');
             return;
         }
 
         if (!formData.packQuantity || formData.packQuantity <= 0) {
-            setError('Pack quantity is required');
+            setError('Valid pack quantity is required');
             return;
         }
 
-        if (!formData.amount) {
-            setError('Amount is required');
+        if (!formData.unitsQuantity || formData.unitsQuantity <= 0) {
+            setError('Valid units quantity is required');
+            return;
+        }
+
+        if (!formData.amount || formData.amount <= 0) {
+            setError('Valid amount is required');
+            return;
+        }
+
+        // Check if we have enough stock
+        const totalItems = parseInt(formData.packQuantity) * parseInt(formData.unitsQuantity);
+        if (selectedProduct && selectedProduct.stockLevel < totalItems) {
+            setError(`Insufficient stock. Required: ${totalItems}, Available: ${selectedProduct.stockLevel}`);
             return;
         }
 
@@ -231,47 +292,51 @@ const ProductSelectionModal = ({
         setError('');
 
         try {
-            const res = await axiosInstance.post('/sales-order/create-sales-order', formData, {
+            // Prepare the payload
+            const payload = {
+                date: formData.date,
+                documentNumber: formData.documentNumber,
+                customerName: formData.customerName,
+                salesChannel: formData.salesChannel,
+                trackingNumber: formData.trackingNumber,
+                shippingAddress: formData.shippingAddress,
+                billingAddress: formData.billingAddress,
+                customerPO: formData.customerPO,
+                itemSku: formData.itemSku,
+                packQuantity: parseInt(formData.packQuantity),
+                packType: formData.packType,
+                unitsQuantity: parseInt(formData.unitsQuantity),
+                amount: parseFloat(formData.amount),
+                comments: formData.comments || ''
+            };
+
+            console.log("Sending payload to API:", payload);
+
+            const res = await axiosInstance.post('/sales-order/create-sales-order', payload, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
 
-            console.log("Create sales order response:", res);
+            console.log("Create sales order response:", res.data);
 
             if (res.data.statusCode === 200) {
-
-                console.log("created sales order ", res.data);
+                console.log("Sales order created successfully:", res.data.data);
+                
                 // Call parent callback to refresh data
                 if (onSalesOrderCreated) {
                     onSalesOrderCreated();
                 }
 
                 // Reset and close modal
-                setStep(1);
-                setSelectedProduct('');
-                setProductSearch('');
-                setFormData({
-                    date: new Date().toISOString().split('T')[0],
-                    documentNumber: documentNo || '',
-                    customerName: '',
-                    salesChannel: '',
-                    trackingNumber: '',
-                    shippingAddress: '',
-                    billingAddress: '',
-                    customerPO: '',
-                    itemSku: '',
-                    packQuantity: 1,
-                    unitsQuantity: 1,
-                    amount: 0
-                });
-                onClose();
-            } else if (res.data.statusCode === 400) {
+                handleClose();
+            } else {
                 setError(res.data.message || 'Failed to create sales order');
             }
         } catch (error) {
             console.error('Create sales order error:', error);
-            setError(error.response?.data?.message || error.message || 'Failed to create sales order');
+            const errorMessage = error.response?.data?.message || error.message || 'Failed to create sales order';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -281,24 +346,34 @@ const ProductSelectionModal = ({
     useEffect(() => {
         if (open) {
             fetchProductsList();
+            setError('');
+            setStep(1);
         }
     }, [open]);
-
-    useEffect(() => {
-        const totalItems = formData.packQuantity * formData.unitsQuantity;
-        const totalAmount = selectedProduct.eachPrice * totalItems;
-        setFormData(prev => ({
-            ...prev,
-            amount: totalAmount
-        }))
-    }, [formData.packQuantity, formData.unitsQuantity])
 
     // Handle modal close
     const handleClose = () => {
         setStep(1);
-        setSelectedProduct('');
+        setSelectedProduct(null);
         setProductSearch('');
         setError('');
+        setPackTypes([]);
+        setFormData({
+            date: new Date().toISOString().split('T')[0],
+            documentNumber: documentNo || '',
+            customerName: '',
+            salesChannel: '',
+            trackingNumber: '',
+            shippingAddress: '',
+            billingAddress: '',
+            customerPO: '',
+            itemSku: '',
+            packQuantity: 1,
+            packType: '',
+            unitsQuantity: 1,
+            amount: 0,
+            comments: ''
+        });
         onClose();
     };
 
@@ -312,29 +387,39 @@ const ProductSelectionModal = ({
         setStep(2);
     };
 
-
+    // Handle back to product selection
+    const handleBack = () => {
+        setStep(1);
+        setError('');
+    };
 
     return (
         <Dialog
             open={open}
             onClose={handleClose}
-            maxWidth="lg"
+            maxWidth="md"
             fullWidth
             PaperProps={{
-                sx: { minHeight: '600px' }
+                sx: { minHeight: '600px', maxHeight: '90vh' }
             }}
         >
             <DialogTitle>
-                <Typography variant="h4">
-                    {step === 1 ? 'Select Product' : 'Create Sales Order'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    {step === 1 ? 'Choose a product to add to sales order' : 'Fill in the details for new sales order'}
-                </Typography>
+                <Box>
+                    <Typography variant="h4" component="div" sx={{ fontSize: '1.5rem', fontWeight: 600 }}>
+                        {step === 1 ? 'Select Product' : 'Create Sales Order'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        {step === 1 ? 'Choose a product to add to sales order' : 'Fill in the details for new sales order'}
+                    </Typography>
+                </Box>
             </DialogTitle>
 
-            <DialogContent dividers  sx={{ overflow: 'hidden' }}>
-                
+            <DialogContent dividers sx={{ overflow: 'hidden' }}>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
 
                 {step === 1 ? (
                     // Product Selection Step
@@ -360,14 +445,14 @@ const ProductSelectionModal = ({
                             </Box>
                         ) : (
                             <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
-                                <Table stickyHeader>
+                                <Table stickyHeader size="small">
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell>Select</TableCell>
+                                            <TableCell width="60px">Select</TableCell>
                                             <TableCell>SKU</TableCell>
                                             <TableCell>Product Name</TableCell>
-                                            <TableCell>Price</TableCell>
-                                            <TableCell>Stock Level</TableCell>
+                                            <TableCell align="right">Price</TableCell>
+                                            <TableCell align="right">Stock Level</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -375,19 +460,16 @@ const ProductSelectionModal = ({
                                             <TableRow
                                                 key={product._id}
                                                 hover
-                                                selected={selectedProduct._id === product._id}
+                                                selected={selectedProduct?._id === product._id}
+                                                onClick={() => handleProductSelect(product)}
+                                                sx={{ cursor: 'pointer' }}
                                             >
                                                 <TableCell>
-                                                    <RadioGroup
-                                                        value={selectedProduct._id}
+                                                    <Radio
+                                                        checked={selectedProduct?._id === product._id}
                                                         onChange={() => handleProductSelect(product)}
-                                                    >
-                                                        <FormControlLabel
-                                                            value={product._id}
-                                                            control={<Radio size="small" />}
-                                                            label=""
-                                                        />
-                                                    </RadioGroup>
+                                                        size="small"
+                                                    />
                                                 </TableCell>
                                                 <TableCell>
                                                     <Typography variant="body2" fontWeight={500}>
@@ -399,13 +481,16 @@ const ProductSelectionModal = ({
                                                         {product.ProductName || 'N/A'}
                                                     </Typography>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell align="right">
                                                     <Typography variant="body2">
-                                                        ${product.eachPrice || '0.00'}
+                                                        ${(product.eachPrice || 0).toFixed(2)}
                                                     </Typography>
                                                 </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">
+                                                <TableCell align="right">
+                                                    <Typography 
+                                                        variant="body2" 
+                                                        color={product.stockLevel > 0 ? 'success.main' : 'error.main'}
+                                                    >
                                                         {product.stockLevel || 0}
                                                     </Typography>
                                                 </TableCell>
@@ -415,7 +500,7 @@ const ProductSelectionModal = ({
                                             <TableRow>
                                                 <TableCell colSpan={5} align="center">
                                                     <Typography variant="body2" color="text.secondary">
-                                                        No products found
+                                                        {loading ? 'Loading...' : 'No products found'}
                                                     </Typography>
                                                 </TableCell>
                                             </TableRow>
@@ -426,191 +511,229 @@ const ProductSelectionModal = ({
                         )}
                     </Box>
                 ) : (
-                    // Form Step
-                    <Grid container spacing={3}>
+                    // Form Step - Improved Clean UI with 2 fields per row
+                    <Box>
+                        {/* Selected Product Info */}
+                        {selectedProduct && (
+                            <Card variant="outlined" sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom color="primary">
+                                        Selected Product
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body2">
+                                                <strong>Product Name:</strong> {selectedProduct.ProductName}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body2">
+                                                <strong>SKU:</strong> {selectedProduct.sku}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body2">
+                                                <strong>Unit Price:</strong> ${(selectedProduct.eachPrice || 0).toFixed(2)}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body2">
+                                                <strong>Available Stock:</strong> {selectedProduct.stockLevel}
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
+                                </CardContent>
+                            </Card>
+                        )}
 
-                        <Grid item xs={12} fullWidth>
-                            <Typography variant="h6" gutterBottom>
-                                Selected Product: {productList.find(p => p._id === selectedProduct._id)?.ProductName}
-                            </Typography>
-                            <Divider sx={{ mb: 2 }} />
-                        </Grid>
+                        <Divider sx={{ mb: 3 }} />
 
-                        {/* <Grid size={12}>
-                            <CustomFormLabel htmlFor="date" sx={{ mt: 0 }}>
-                                Date
-                            </CustomFormLabel>
-                            <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                <DatePicker
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e })}
-                                    renderInput={(params) => <CustomOutlinedInput {...params} />}
-                                    slotProps={{
-                                        textField: {
-                                            fullWidth: true,
-                                            placeholder: "Select date",
-                                            id: "date"
-                                        }
-                                    }}
+                        {/* Order Information - Clean Grid Layout */}
+                        <Grid container spacing={3}>
+                            {/* Row 1 */}
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="document-number">
+                                    Document Number
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="document-number"
+                                    fullWidth
+                                    value={formData.documentNumber}
+                                    disabled
                                 />
-                            </LocalizationProvider>
-                        </Grid> */}
+                            </Grid>
 
-                        {/* <Grid size={6}>
-                            <CustomFormLabel htmlFor="customer-po" sx={{ mt: 2 }}>
-                                Document Number
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="customer-po"
-                                fullWidth
-                                disabled
-                                value={formData.documentNumber}
-                                onChange={(e) => handleInputChange('documentNumber', e.target.value)}
-                            />
-                        </Grid> */}
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="customer-name">
+                                    Customer Name
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="customer-name"
+                                    fullWidth
+                                    value={formData.customerName}
+                                    disabled
+                                />
+                            </Grid>
 
-                        {/* <Grid size={6}>
-                            <CustomFormLabel htmlFor="customer-name" sx={{ mt: 2 }}>
-                                Customer Name *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="customer-name"
-                                fullWidth
-                                disabled
-                                value={formData.customerName}
-                                onChange={(e) => handleInputChange('customerName', e.target.value)}
-                            />
-                        </Grid> */}
-                        {/* <Grid size={6}>
-                            <CustomFormLabel htmlFor="Sales-Channel" sx={{ mt: 2 }}>
-                                Sales Channel  *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="Sales-Channel"
-                                fullWidth
-                                disabled
-                                value={formData.salesChannel}
-                                onChange={(e) => handleInputChange('salesChannel', e.target.value)}
-                            />
-                        </Grid> */}
-                        {/* <Grid size={6}>
-                            <CustomFormLabel htmlFor="Shipping-address" sx={{ mt: 2 }}>
-                                Shipping Address *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="Shipping-address"
-                                fullWidth
-                                disabled
-                                value={formData.shippingAddress}
-                                onChange={(e) => handleInputChange('shippingAddress', e.target.value)}
-                            />
-                        </Grid> */}
-                        {/* <Grid size={6}>
-                            <CustomFormLabel htmlFor="billing-address" sx={{ mt: 2 }}>
-                                Billing Address *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="billing-address"
-                                fullWidth
-                                disabled
-                                value={formData.billingAddress}
-                                onChange={(e) => handleInputChange('billingAddress', e.target.value)}
-                            />
-                        </Grid> */}
-                        {/* <Grid size={6}>
-                            <CustomFormLabel htmlFor="tracking-no" sx={{ mt: 2 }}>
-                                Tracking Number *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="tracking-no"
-                                fullWidth
-                                disabled
-                                value={formData.trackingNumber}
-                                onChange={(e) => handleInputChange('trackingNumber', e.target.value)}
-                            />
-                        </Grid> */}
+                            {/* Row 2 */}
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="sales-channel">
+                                    Sales Channel
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="sales-channel"
+                                    fullWidth
+                                    value={formData.salesChannel}
+                                    disabled
+                                />
+                            </Grid>
 
-                        {/* <Grid size={6}>
-                            <CustomFormLabel htmlFor="customner-po" sx={{ mt: 2 }}>
-                                Customer PO *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="customer-po"
-                                fullWidth
-                                disabled
-                                value={formData.customerPO}
-                                onChange={(e) => handleInputChange('customerPO', e.target.value)}
-                            />
-                        </Grid> */}
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="date">
+                                    Order Date
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="date"
+                                    fullWidth
+                                    type="date"
+                                    value={formData.date}
+                                    onChange={(e) => handleInputChange('date', e.target.value)}
+                                />
+                            </Grid>
 
-                        <Grid size={6}>
-                            <CustomFormLabel htmlFor="pricing-group-select" sx={{ mt: 2 }}>
-                                Pack Type *
-                            </CustomFormLabel>
-                            <FormControl fullWidth>
-                                <Select
-                                    id="pricing-group-select"
-                                    value={formData.packQuantity}
-                                    onChange={(e) => handleInputChange('packQuantity', e.target.value)}
-                                    disabled={loading || selectedProduct.typesOfPacks.length === 0}
-                                    displayEmpty
-                                    sx={{
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: 'rgba(0, 0, 0, 0.23)',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: 'rgba(0, 0, 0, 0.87)',
-                                        },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: 'primary.main',
-                                        },
-                                    }}
-                                >
-                                    <MenuItem value="" disabled>
-                                        {selectedProduct.typesOfPacks.length === 0 ? 'Loading types...' : 'Select a type'}
-                                    </MenuItem>
-                                    {selectedProduct.typesOfPacks.map((pack) => (
-                                        <MenuItem key={pack.name} value={pack.quantity}>
-                                            {pack.name} : Qty -{pack.quantity}
+                            {/* Row 3 - Product Details */}
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="pack-type">
+                                    Pack Type *
+                                </CustomFormLabel>
+                                <FormControl fullWidth>
+                                    <TextField
+                                        select
+                                        id="pack-type"
+                                        value={formData.packQuantity}
+                                        onChange={handlePackTypeChange}
+                                        disabled={packTypes.length === 0 || loading}
+                                        size="small"
+                                    >
+                                        <MenuItem value="" disabled>
+                                            {packTypes.length === 0 ? 'Loading pack types...' : 'Select pack type'}
                                         </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                                        {packTypes.map((pack) => (
+                                            <MenuItem key={pack._id} value={pack.quantity.toString()}>
+                                                {pack.name} (Quantity: {pack.quantity})
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                </FormControl>
+                                {formData.packType && (
+                                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                                        Selected: {formData.packType}
+                                    </Typography>
+                                )}
+                            </Grid>
 
-                        <Grid size={6}>
-                            <CustomFormLabel htmlFor="units-qty" sx={{ mt: 2 }}>
-                                Units Quantity *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="units-qty"
-                                fullWidth
-                                value={formData.unitsQuantity}
-                                onChange={(e) => handleInputChange('unitsQuantity', e.target.value)}
-                            />
-                        </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="units-quantity">
+                                    Units Quantity *
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="units-quantity"
+                                    fullWidth
+                                    type="number"
+                                    value={formData.unitsQuantity}
+                                    onChange={(e) => handleInputChange('unitsQuantity', e.target.value)}
+                                    inputProps={{ 
+                                        min: 1,
+                                        max: selectedProduct ? selectedProduct.stockLevel : undefined
+                                    }}
+                                    disabled={loading}
+                                />
+                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                                    Total Items: {parseInt(formData.packQuantity) * parseInt(formData.unitsQuantity)}
+                                </Typography>
+                            </Grid>
 
-                        <Grid size={6}>
-                            <CustomFormLabel htmlFor="Amount" sx={{ mt: 2 }}>
-                                Amount *
-                            </CustomFormLabel>
-                            <CustomOutlinedInput
-                                id="Amount"
-                                fullWidth
-                                value={formData.amount}
-                                disabled
-                                onChange={(e) => {
-                                    const totalItems = formData.unitsQuantity * formData.packQuantity;
-                                    const totalAmount = formData.eachPrice * totalItems;
-                                    handleInputChange('amount', totalAmount);
-                                }}
-                            />
+                            {/* Row 4 - Amount Calculation */}
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="unit-price">
+                                    Unit Price
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="unit-price"
+                                    fullWidth
+                                    value={(selectedProduct?.eachPrice || 0).toFixed(2)}
+                                    disabled
+                                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="total-amount">
+                                    Total Amount
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="total-amount"
+                                    fullWidth
+                                    value={formData.amount.toFixed(2)}
+                                    disabled
+                                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                                />
+                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                                    Calculation: ${(selectedProduct?.eachPrice || 0).toFixed(2)} × {formData.packQuantity} × {formData.unitsQuantity}
+                                </Typography>
+                            </Grid>
+
+                            {/* Row 5 - Optional Fields */}
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="tracking-number">
+                                    Tracking Number
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="tracking-number"
+                                    fullWidth
+                                    value={formData.trackingNumber}
+                                    onChange={(e) => handleInputChange('trackingNumber', e.target.value)}
+                                    placeholder="Optional"
+                                    disabled={loading}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <CustomFormLabel htmlFor="customer-po">
+                                    Customer PO
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="customer-po"
+                                    fullWidth
+                                    value={formData.customerPO}
+                                    onChange={(e) => handleInputChange('customerPO', e.target.value)}
+                                    placeholder="Optional"
+                                    disabled={loading}
+                                />
+                            </Grid>
+
+                            {/* Row 6 - Comments (Full Width) */}
+                            <Grid item xs={12}>
+                                <CustomFormLabel htmlFor="comments">
+                                    Comments
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="comments"
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    value={formData.comments}
+                                    onChange={(e) => handleInputChange('comments', e.target.value)}
+                                    placeholder="Add any comments or notes..."
+                                    disabled={loading}
+                                />
+                            </Grid>
                         </Grid>
-                    </Grid>
+                    </Box>
                 )}
             </DialogContent>
 
-            <DialogActions>
+            <DialogActions sx={{ p: 3 }}>
                 <Button onClick={handleClose} disabled={loading}>
                     Cancel
                 </Button>
@@ -624,15 +747,16 @@ const ProductSelectionModal = ({
                     </Button>
                 ) : (
                     <>
-                        <Button onClick={() => setStep(1)} disabled={loading}>
+                        <Button onClick={handleBack} disabled={loading}>
                             Back
                         </Button>
                         <Button
                             onClick={handleSubmit}
                             variant="contained"
-                        // disabled={loading}
+                            disabled={loading}
+                            startIcon={loading ? <CircularProgress size={16} /> : null}
                         >
-                            {loading ? <CircularProgress size={20} /> : 'Create Sales Order'}
+                            {loading ? 'Creating...' : 'Create Sales Order'}
                         </Button>
                     </>
                 )}
