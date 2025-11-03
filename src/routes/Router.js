@@ -200,7 +200,7 @@ const Router = [
       { path: '/dashboard/customers/create', element: <CreateCustomer /> },
       { path: '/dashboard/customers/list', element: <ListCustomers /> },
       { path: '/dashboard/customers/edit/:id', element: <EditCustomer /> },
-      { path: '/dashboard/customers/change-password/:email', element: <ChnagePassword /> },
+      { path: '/dashboard/customers/change-password/:id', element: <ChnagePassword /> },
       { path: '/dashboard/customers/PendingCustomers', element: <PendingApprovalCustomers /> },
 
 

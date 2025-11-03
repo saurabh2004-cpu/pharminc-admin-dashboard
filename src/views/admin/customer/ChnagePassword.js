@@ -16,7 +16,7 @@ const ChnagePassword = () => {
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const navigate = useNavigate();
-  const { email } = useParams();
+  const { id } = useParams();
 
 
   const handleSubmit = async () => {
