@@ -47,9 +47,7 @@ const ProductSelectionModal = ({
     const [step, setStep] = useState(1); // 1: Product Selection, 2: Form
     const [packTypes, setPackTypes] = useState([]);
 
-    console.log("First order:", tableData[0]);
-
-    // Form data state
+    // Form data state - FIXED: Initialize with proper values
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         documentNumber: documentNo || '',
@@ -60,18 +58,18 @@ const ProductSelectionModal = ({
         billingAddress: '',
         customerPO: '',
         itemSku: '',
-        packQuantity: 1,
+        packQuantity: '',
         packType: '',
         unitsQuantity: 1,
         amount: 0,
         comments: ''
     });
 
-    // Initialize form data with existing order data
+    // FIXED: Better initialization that preserves customer data
     useEffect(() => {
-        if (tableData && tableData.length > 0) {
+        if (open && tableData && tableData.length > 0) {
             const firstOrder = tableData[0];
-            console.log("First order:", firstOrder);
+            console.log("Initializing form with order data:", firstOrder);
 
             setFormData(prev => ({
                 ...prev,
@@ -80,12 +78,14 @@ const ProductSelectionModal = ({
                 salesChannel: firstOrder.salesChannel || '',
                 shippingAddress: firstOrder.shippingAddress || '',
                 billingAddress: firstOrder.billingAddress || '',
-                date: firstOrder.date || new Date().toISOString().split('T')[0],
+                date: firstOrder.date ? new Date(firstOrder.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                 trackingNumber: firstOrder.trackingNumber || '',
                 customerPO: firstOrder.customerPO || ''
             }));
+
+            console.log("Form initialized with customer:", firstOrder.customerName);
         }
-    }, [tableData, documentNo]);
+    }, [open, tableData, documentNo]);
 
     // Fetch products list
     const fetchProductsList = async () => {
@@ -125,28 +125,40 @@ const ProductSelectionModal = ({
         }
     };
 
-    // Fetch pack types for selected product
+    // FIXED: Improved pack types fetching with better amount calculation
     const fetchProductsAvailablePackTypes = async (sku) => {
         if (!sku) return;
-        
+
         try {
             const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
             console.log("Pack types response:", response.data);
 
             if (response.status === 200 && response.data.data) {
                 setPackTypes(response.data.data);
-                
+
                 // Auto-select the first pack type if available
                 if (response.data.data.length > 0) {
                     const firstPack = response.data.data[0];
+                    
+                    // FIXED: Calculate amount immediately when pack type is set
+                    const newPackQuantity = parseInt(firstPack.quantity);
+                    const currentUnitsQuantity = formData.unitsQuantity || 1;
+                    const unitPrice = selectedProduct?.eachPrice || 0;
+                    const totalAmount = unitPrice * (newPackQuantity * currentUnitsQuantity);
+
                     setFormData(prev => ({
                         ...prev,
                         packQuantity: firstPack.quantity.toString(),
-                        packType: firstPack.name
+                        packType: firstPack.name,
+                        amount: parseFloat(totalAmount.toFixed(2))
                     }));
-                    
-                    // Recalculate amount with initial values
-                    recalculateAmount(firstPack.quantity.toString(), formData.unitsQuantity);
+
+                    console.log("Amount calculated on pack type selection:", {
+                        unitPrice,
+                        packQuantity: newPackQuantity,
+                        unitsQuantity: currentUnitsQuantity,
+                        totalAmount: totalAmount.toFixed(2)
+                    });
                 }
             }
         } catch (error) {
@@ -168,84 +180,103 @@ const ProductSelectionModal = ({
         }
     }, [productSearch, productList]);
 
-    // Handle product selection
+    // FIXED: Improved amount calculation function
+    const recalculateAmount = (packQty, unitQty, product = selectedProduct) => {
+        if (!product) return 0;
+
+        const packQuantity = parseInt(packQty) || 1;
+        const unitsQuantity = parseInt(unitQty) || 1;
+        const totalQuantity = packQuantity * unitsQuantity;
+        const unitPrice = product.eachPrice || 0;
+        const totalAmount = unitPrice * totalQuantity;
+
+        console.log("Recalculating amount:", {
+            unitPrice,
+            packQuantity,
+            unitsQuantity,
+            totalQuantity,
+            totalAmount: totalAmount.toFixed(2)
+        });
+
+        return parseFloat(totalAmount.toFixed(2));
+    };
+
+    // FIXED: Improved product selection with immediate amount calculation
     const handleProductSelect = (product) => {
         console.log("Product selected:", product);
         setSelectedProduct(product);
+        
+        // Calculate initial amount with default quantities
+        const initialPackQuantity = formData.packQuantity || '1';
+        const initialUnitsQuantity = formData.unitsQuantity || 1;
+        const initialAmount = recalculateAmount(initialPackQuantity, initialUnitsQuantity, product);
+
         setFormData(prev => ({
             ...prev,
             itemSku: product.sku || '',
-            amount: product.eachPrice || 0
+            amount: initialAmount
         }));
-        
+
+        console.log("Initial amount set to:", initialAmount);
+
         // Fetch pack types for the selected product
         fetchProductsAvailablePackTypes(product.sku);
     };
 
-    // Recalculate amount when quantities change
-    const recalculateAmount = (packQty, unitQty) => {
-        if (!selectedProduct) return;
-        
-        const packQuantity = parseInt(packQty) || 1;
-        const unitsQuantity = parseInt(unitQty) || 1;
-        const totalQuantity = packQuantity * unitsQuantity;
-        const unitPrice = selectedProduct.eachPrice || 0;
-        const totalAmount = unitPrice * totalQuantity;
-        
-        setFormData(prev => ({
-            ...prev,
-            amount: parseFloat(totalAmount.toFixed(2))
-        }));
-    };
-
-    // Handle form input changes
+    // FIXED: Improved form input changes with better amount recalculation
     const handleInputChange = (field, value) => {
         console.log(`Field ${field} changed to:`, value);
-        
-        setFormData(prev => ({
-            ...prev,
+
+        const updatedFormData = {
+            ...formData,
             [field]: value
-        }));
+        };
 
         // Recalculate amount when quantities change
-        if (field === 'packQuantity') {
-            recalculateAmount(value, formData.unitsQuantity);
+        if (field === 'packQuantity' || field === 'unitsQuantity') {
+            const packQty = field === 'packQuantity' ? value : updatedFormData.packQuantity;
+            const unitQty = field === 'unitsQuantity' ? value : updatedFormData.unitsQuantity;
             
-            // Also update packType if it exists in packTypes
+            const newAmount = recalculateAmount(packQty, unitQty);
+            updatedFormData.amount = newAmount;
+
+            console.log("Amount updated to:", newAmount);
+        }
+
+        // Update packType if packQuantity changes and matches a pack type
+        if (field === 'packQuantity' && packTypes.length > 0) {
             const selectedPack = packTypes.find(pack => pack.quantity.toString() === value.toString());
             if (selectedPack) {
-                setFormData(prev => ({
-                    ...prev,
-                    packType: selectedPack.name
-                }));
+                updatedFormData.packType = selectedPack.name;
+                console.log("Pack type updated to:", selectedPack.name);
             }
         }
-        
-        if (field === 'unitsQuantity') {
-            recalculateAmount(formData.packQuantity, value);
-        }
+
+        setFormData(updatedFormData);
     };
 
-    // Handle pack type selection
+    // FIXED: Improved pack type change handler
     const handlePackTypeChange = (e) => {
         const selectedPackQuantity = e.target.value;
         const selectedPack = packTypes.find(pack => pack.quantity.toString() === selectedPackQuantity.toString());
-        
+
         console.log("Pack type selected:", selectedPack);
-        
+
         if (selectedPack) {
+            const newAmount = recalculateAmount(selectedPack.quantity.toString(), formData.unitsQuantity);
+
             setFormData(prev => ({
                 ...prev,
                 packQuantity: selectedPack.quantity.toString(),
-                packType: selectedPack.name
+                packType: selectedPack.name,
+                amount: newAmount
             }));
-            
-            // Recalculate amount with new pack quantity
-            recalculateAmount(selectedPack.quantity.toString(), formData.unitsQuantity);
+
+            console.log("Amount after pack type change:", newAmount);
         }
     };
 
-    // Handle form submission
+    // FIXED: Improved form submission with better validation
     const handleSubmit = async () => {
         console.log("Submitting form data:", formData);
         console.log("Selected product:", selectedProduct);
@@ -312,7 +343,7 @@ const ProductSelectionModal = ({
 
             console.log("Sending payload to API:", payload);
 
-            const res = await axiosInstance.post('/sales-order/create-sales-order', payload, {
+            const res = await axiosInstance.post('/sales-order/add-product-to-sales-order', payload, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -322,7 +353,7 @@ const ProductSelectionModal = ({
 
             if (res.data.statusCode === 200) {
                 console.log("Sales order created successfully:", res.data.data);
-                
+
                 // Call parent callback to refresh data
                 if (onSalesOrderCreated) {
                     onSalesOrderCreated();
@@ -348,32 +379,27 @@ const ProductSelectionModal = ({
             fetchProductsList();
             setError('');
             setStep(1);
+            // Don't reset selectedProduct here to allow multiple additions
         }
     }, [open]);
 
-    // Handle modal close
+    // FIXED: Improved modal close handler
     const handleClose = () => {
         setStep(1);
         setSelectedProduct(null);
         setProductSearch('');
         setError('');
         setPackTypes([]);
-        setFormData({
-            date: new Date().toISOString().split('T')[0],
-            documentNumber: documentNo || '',
-            customerName: '',
-            salesChannel: '',
-            trackingNumber: '',
-            shippingAddress: '',
-            billingAddress: '',
-            customerPO: '',
+        // Don't reset form data completely - preserve customer info for next addition
+        setFormData(prev => ({
+            ...prev,
             itemSku: '',
-            packQuantity: 1,
+            packQuantity: '',
             packType: '',
             unitsQuantity: 1,
             amount: 0,
             comments: ''
-        });
+        }));
         onClose();
     };
 
@@ -383,6 +409,16 @@ const ProductSelectionModal = ({
             setError('Please select a product');
             return;
         }
+        
+        // FIXED: Ensure amount is calculated before proceeding
+        if (formData.amount === 0) {
+            const calculatedAmount = recalculateAmount(
+                formData.packQuantity || '1', 
+                formData.unitsQuantity || 1
+            );
+            setFormData(prev => ({ ...prev, amount: calculatedAmount }));
+        }
+        
         setError('');
         setStep(2);
     };
@@ -406,11 +442,16 @@ const ProductSelectionModal = ({
             <DialogTitle>
                 <Box>
                     <Typography variant="h4" component="div" sx={{ fontSize: '1.5rem', fontWeight: 600 }}>
-                        {step === 1 ? 'Select Product' : 'Create Sales Order'}
+                        {step === 1 ? 'Select Product' : 'Add Product to Sales Order'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {step === 1 ? 'Choose a product to add to sales order' : 'Fill in the details for new sales order'}
+                        {step === 1 ? 'Choose a product to add to sales order' : `Add product to order #${documentNo}`}
                     </Typography>
+                    {step === 2 && formData.customerName && (
+                        <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 0.5 }}>
+                            Customer: {formData.customerName}
+                        </Typography>
+                    )}
                 </Box>
             </DialogTitle>
 
@@ -487,8 +528,8 @@ const ProductSelectionModal = ({
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell align="right">
-                                                    <Typography 
-                                                        variant="body2" 
+                                                    <Typography
+                                                        variant="body2"
                                                         color={product.stockLevel > 0 ? 'success.main' : 'error.main'}
                                                     >
                                                         {product.stockLevel || 0}
@@ -511,7 +552,7 @@ const ProductSelectionModal = ({
                         )}
                     </Box>
                 ) : (
-                    // Form Step - Improved Clean UI with 2 fields per row
+                    // Form Step
                     <Box>
                         {/* Selected Product Info */}
                         {selectedProduct && (
@@ -548,21 +589,9 @@ const ProductSelectionModal = ({
 
                         <Divider sx={{ mb: 3 }} />
 
-                        {/* Order Information - Clean Grid Layout */}
+                        {/* Order Information */}
                         <Grid container spacing={3}>
-                            {/* Row 1 */}
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="document-number">
-                                    Document Number
-                                </CustomFormLabel>
-                                <CustomOutlinedInput
-                                    id="document-number"
-                                    fullWidth
-                                    value={formData.documentNumber}
-                                    disabled
-                                />
-                            </Grid>
-
+                            {/* Customer Info (Read-only) */}
                             <Grid item xs={12} sm={6}>
                                 <CustomFormLabel htmlFor="customer-name">
                                     Customer Name
@@ -575,7 +604,6 @@ const ProductSelectionModal = ({
                                 />
                             </Grid>
 
-                            {/* Row 2 */}
                             <Grid item xs={12} sm={6}>
                                 <CustomFormLabel htmlFor="sales-channel">
                                     Sales Channel
@@ -588,20 +616,7 @@ const ProductSelectionModal = ({
                                 />
                             </Grid>
 
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="date">
-                                    Order Date
-                                </CustomFormLabel>
-                                <CustomOutlinedInput
-                                    id="date"
-                                    fullWidth
-                                    type="date"
-                                    value={formData.date}
-                                    onChange={(e) => handleInputChange('date', e.target.value)}
-                                />
-                            </Grid>
-
-                            {/* Row 3 - Product Details */}
+                            {/* Product Details */}
                             <Grid item xs={12} sm={6}>
                                 <CustomFormLabel htmlFor="pack-type">
                                     Pack Type *
@@ -642,18 +657,18 @@ const ProductSelectionModal = ({
                                     type="number"
                                     value={formData.unitsQuantity}
                                     onChange={(e) => handleInputChange('unitsQuantity', e.target.value)}
-                                    inputProps={{ 
+                                    inputProps={{
                                         min: 1,
                                         max: selectedProduct ? selectedProduct.stockLevel : undefined
                                     }}
                                     disabled={loading}
                                 />
                                 <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                                    Total Items: {parseInt(formData.packQuantity) * parseInt(formData.unitsQuantity)}
+                                    Total Items: {parseInt(formData.packQuantity || 1) * parseInt(formData.unitsQuantity || 1)}
                                 </Typography>
                             </Grid>
 
-                            {/* Row 4 - Amount Calculation */}
+                            {/* Amount Calculation */}
                             <Grid item xs={12} sm={6}>
                                 <CustomFormLabel htmlFor="unit-price">
                                     Unit Price
@@ -679,54 +694,8 @@ const ProductSelectionModal = ({
                                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
                                 />
                                 <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                                    Calculation: ${(selectedProduct?.eachPrice || 0).toFixed(2)} × {formData.packQuantity} × {formData.unitsQuantity}
+                                    Calculation: ${(selectedProduct?.eachPrice || 0).toFixed(2)} × {formData.packQuantity || 1} × {formData.unitsQuantity || 1}
                                 </Typography>
-                            </Grid>
-
-                            {/* Row 5 - Optional Fields */}
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="tracking-number">
-                                    Tracking Number
-                                </CustomFormLabel>
-                                <CustomOutlinedInput
-                                    id="tracking-number"
-                                    fullWidth
-                                    value={formData.trackingNumber}
-                                    onChange={(e) => handleInputChange('trackingNumber', e.target.value)}
-                                    placeholder="Optional"
-                                    disabled={loading}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="customer-po">
-                                    Customer PO
-                                </CustomFormLabel>
-                                <CustomOutlinedInput
-                                    id="customer-po"
-                                    fullWidth
-                                    value={formData.customerPO}
-                                    onChange={(e) => handleInputChange('customerPO', e.target.value)}
-                                    placeholder="Optional"
-                                    disabled={loading}
-                                />
-                            </Grid>
-
-                            {/* Row 6 - Comments (Full Width) */}
-                            <Grid item xs={12}>
-                                <CustomFormLabel htmlFor="comments">
-                                    Comments
-                                </CustomFormLabel>
-                                <CustomOutlinedInput
-                                    id="comments"
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    value={formData.comments}
-                                    onChange={(e) => handleInputChange('comments', e.target.value)}
-                                    placeholder="Add any comments or notes..."
-                                    disabled={loading}
-                                />
                             </Grid>
                         </Grid>
                     </Box>
@@ -756,7 +725,7 @@ const ProductSelectionModal = ({
                             disabled={loading}
                             startIcon={loading ? <CircularProgress size={16} /> : null}
                         >
-                            {loading ? 'Creating...' : 'Create Sales Order'}
+                            {loading ? 'Adding...' : 'Add Product'}
                         </Button>
                     </>
                 )}

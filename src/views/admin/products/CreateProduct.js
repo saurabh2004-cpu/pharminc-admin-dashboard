@@ -31,6 +31,7 @@ const CreateProduct = () => {
     productImg: '',
     taxable: true,
     comparePrice: '',
+    sequence: null,
 
   });
   const [error, setError] = React.useState('');
@@ -995,6 +996,21 @@ const CreateProduct = () => {
             </Select>
           </FormControl>
         </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+            Sequence
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="stockLevel"
+            fullWidth
+            value={formData.sequence}
+            onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Sequence "
+          />
+        </Grid>
+
 
 
 

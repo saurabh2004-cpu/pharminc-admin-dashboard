@@ -28,7 +28,8 @@ const EditProduct = () => {
     eachBarcodes: '',
     packBarcodes: '',
     comparePrice: 0,
-    taxable: false
+    taxable: false,
+    sequence: null,
   });
 
   const [error, setError] = React.useState('');
@@ -264,7 +265,8 @@ const EditProduct = () => {
           packBarcodes: product.packBarcodes || '',
           badge: product.badge?._id || '',
           comparePrice: product.comparePrice || '',
-          taxable: product.taxable || false
+          taxable: product.taxable || false,
+          sequence: product.sequence || null,
         });
 
         // Set existing images
@@ -1055,6 +1057,19 @@ const EditProduct = () => {
           </FormControl>
         </Grid>
 
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+            Sequence
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="stockLevel"
+            fullWidth
+            value={formData.sequence}
+            onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Sequence"
+          />
+        </Grid>
 
 
         <Grid size={6}>

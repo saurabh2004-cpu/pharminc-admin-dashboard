@@ -540,6 +540,66 @@ const EditCustomers = () => {
         </Grid>
       </Box>
 
+       {/* Sales Representative Assignment */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="salesRep" sx={{ mt: 0 }}>
+            Sales Representative
+          </CustomFormLabel>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+            <FormControl fullWidth>
+              <Select
+                value={selectedSalesRep}
+                onChange={handleSalesRepChange}
+                disabled={salesRepLoading || loading}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Sales Representative</em>
+                </MenuItem>
+                {salesReps.map((rep) => (
+                  <MenuItem key={rep._id} value={rep._id}>
+                    {rep.name} - {rep.email} ({rep.role})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            {currentSalesRep ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: '200px' }}>
+                <Chip 
+                  label={`Currently assigned to: ${currentSalesRep.name}`}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ fontWeight: 'bold' }}
+                />
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  onClick={removeFromSalesRep}
+                  disabled={salesRepLoading}
+                  startIcon={<IconTrash size="1rem" />}
+                >
+                  Remove
+                </Button>
+              </Box>
+            ) : (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={assignToSalesRep}
+                disabled={!selectedSalesRep || salesRepLoading}
+                sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
+              >
+                {salesRepLoading ? 'Assigning...' : 'Assign'}
+              </Button>
+            )}
+          </Box>
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+            Assign this customer to a sales representative for management
+          </Typography>
+        </Grid>
+
       <Grid container spacing={2}>
         {/* Customer ID and Customer Name - Row 1 */}
         <Grid size={6}>
@@ -728,67 +788,6 @@ const EditCustomers = () => {
           />
         </Grid>
 
-        {/* Sales Representative Assignment */}
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="salesRep" sx={{ mt: 0 }}>
-            Sales Representative
-          </CustomFormLabel>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-            <FormControl fullWidth>
-              <Select
-                value={selectedSalesRep}
-                onChange={handleSalesRepChange}
-                disabled={salesRepLoading || loading}
-                displayEmpty
-              >
-                <MenuItem value="">
-                  <em>Select Sales Representative</em>
-                </MenuItem>
-                {salesReps.map((rep) => (
-                  <MenuItem key={rep._id} value={rep._id}>
-                    {rep.name} - {rep.email} ({rep.role})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            {currentSalesRep ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: '200px' }}>
-                <Chip 
-                  label={`Currently assigned to: ${currentSalesRep.name}`}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ fontWeight: 'bold' }}
-                />
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  onClick={removeFromSalesRep}
-                  disabled={salesRepLoading}
-                  startIcon={<IconTrash size="1rem" />}
-                >
-                  Remove
-                </Button>
-              </Box>
-            ) : (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={assignToSalesRep}
-                disabled={!selectedSalesRep || salesRepLoading}
-                sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
-              >
-                {salesRepLoading ? 'Assigning...' : 'Assign'}
-              </Button>
-            )}
-          </Box>
-          <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-            Assign this customer to a sales representative for management
-          </Typography>
-        </Grid>
-
-        {/* Rest of the component remains the same */}
         {/* Shipping Addresses Section */}
         <Grid size={12}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>

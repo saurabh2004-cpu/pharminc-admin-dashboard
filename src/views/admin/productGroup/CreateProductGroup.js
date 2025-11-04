@@ -50,6 +50,7 @@ const CreateProductGroup = () => {
         packBarcodes: '',
         taxable: true,
         comparePrice: '',
+        sequence: '',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -259,6 +260,7 @@ const CreateProductGroup = () => {
         if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
         if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
         if (formData.sku) formDataToSend.append('sku', formData.sku);
+        if (formData.sequence) formDataToSend.append('sequence', formData.sequence);
 
         // Append products as JSON string
         formDataToSend.append('products', JSON.stringify(selectedProductIds));
@@ -1052,6 +1054,20 @@ const CreateProductGroup = () => {
                             ))}
                         </Select>
                     </FormControl>
+                </Grid>
+
+                <Grid size={6}>
+                    <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+                        Sequence
+                    </CustomFormLabel>
+                    <CustomOutlinedInput
+                        id="stockLevel"
+                        fullWidth
+                        value={formData.sequence}
+                        onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+                        disabled={loading}
+                        placeholder="Enter Sequence "
+                    />
                 </Grid>
 
                 {/* Product Selection */}

@@ -46,6 +46,7 @@ const EditProductGroups = () => {
     packBarcodes: '',
     taxable: true,
     comparePrice: '',
+    sequence: null,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -224,7 +225,8 @@ const EditProductGroups = () => {
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
     if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
     if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
-    if(formData.sku) formDataToSend.append('sku', formData.sku);
+    if (formData.sku) formDataToSend.append('sku', formData.sku);
+    if (formData.sequence !== null) formDataToSend.append('sequence', formData.sequence);
 
     // Append products as JSON string
     formDataToSend.append('products', JSON.stringify(selectedProductIds));
@@ -411,6 +413,7 @@ const EditProductGroups = () => {
           packBarcodes: productGroup.packBarcodes || '',
           taxable: productGroup.taxable !== undefined ? productGroup.taxable : true,
           comparePrice: productGroup.comparePrice || '',
+          sequence: productGroup.sequence !== undefined ? productGroup.sequence : null,
         });
 
         // Set selected product IDs
@@ -794,6 +797,20 @@ const EditProductGroups = () => {
               ))}
             </Select>
           </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+            Sequence
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="stockLevel"
+            fullWidth
+            value={formData.sequence}
+            onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Sequence "
+          />
         </Grid>
 
         {/* Commerce Categories */}
