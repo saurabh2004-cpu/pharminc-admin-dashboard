@@ -28,18 +28,24 @@ const CreateMetaData = () => {
     const [error, setError] = React.useState('');
     const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
     const [selectedFile, setSelectedFile] = React.useState(null);
-    const navigate = useNavigate();
+    const navigate = useNavigate(); 
     const [loading, setLoading] = React.useState(false);
     const [pages, setPages] = React.useState([
         'home',
         'brand',
+        'point-accessories',
+        "asra-aromas",
+        "matador-wholesale",
         'cart',
         'checkout',
         'contact-us',
-        'login',
+        'login', 
         'my-account-review',
+        'point-accessories',
         'product-details',
+        "product-listing",
         'reset-password',
+        'salesRep',
         'search',
         'sign-up',
         'thank-you',
