@@ -23,16 +23,16 @@ import { useNavigate, useParams } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 
 // File Preview Component for individual items
-const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, required = false, existingImage = null }) => (
+const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, required = false, existingImage = null, onRemoveExisting = null }) => (
   <Box sx={{ mb: 2 }}>
     <CustomFormLabel>
       {title}
       {required && <span style={{ color: 'red' }}>*</span>}
     </CustomFormLabel>
-    
+
     {/* Show existing image if no new file is selected */}
     {existingImage && !preview && (
-      <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+      <Box sx={{ position: 'relative', display: 'inline-block', mb: 2, mr: 2 }}>
         <img
           src={existingImage}
           alt={`Existing ${title}`}
@@ -44,15 +44,32 @@ const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, require
             borderRadius: '4px',
           }}
         />
+        {onRemoveExisting && (
+          <IconButton
+            size="small"
+            color="error"
+            onClick={onRemoveExisting}
+            sx={{
+              position: 'absolute',
+              top: -8,
+              right: -8,
+              backgroundColor: 'white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              '&:hover': { backgroundColor: '#ffebee' }
+            }}
+          >
+            <IconX size="1rem" />
+          </IconButton>
+        )}
         <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
           Current image
         </Typography>
       </Box>
     )}
-    
+
     {/* Show new file preview */}
     {preview && (
-      <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+      <Box sx={{ position: 'relative', display: 'inline-block', mb: 2, mr: 2 }}>
         <img
           src={preview}
           alt={`Preview`}
@@ -73,6 +90,7 @@ const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, require
             top: -8,
             right: -8,
             backgroundColor: 'white',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             '&:hover': { backgroundColor: '#ffebee' }
           }}
         >
@@ -83,7 +101,7 @@ const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, require
         </Typography>
       </Box>
     )}
-    
+
     <CustomOutlinedInput
       fullWidth
       type="file"
@@ -93,22 +111,23 @@ const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, require
         style: { cursor: 'pointer' },
         multiple: false
       }}
+      sx={{ mt: 1 }}
     />
   </Box>
 );
 
 // Bulk File Preview Component (for hero carousel and carousel images)
-const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler, existingImages = [] }) => (
+const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler, existingImages = [], onRemoveExisting = null }) => (
   <Box sx={{ mb: 2 }}>
     <CustomFormLabel>
       {title}
       {title.includes('*') && <span style={{ color: 'red' }}>*</span>}
     </CustomFormLabel>
-    
+
     {/* Show existing images */}
     {existingImages.length > 0 && (
       <Box sx={{ mb: 2 }}>
-        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+        <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 'bold' }}>
           Current images:
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
@@ -125,16 +144,33 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
                   borderRadius: '4px',
                 }}
               />
+              {onRemoveExisting && (
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => onRemoveExisting(index)}
+                  sx={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    backgroundColor: 'white',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    '&:hover': { backgroundColor: '#ffebee' }
+                  }}
+                >
+                  <IconX size="1rem" />
+                </IconButton>
+              )}
             </Box>
           ))}
         </Box>
       </Box>
     )}
-    
+
     {/* Show new file previews */}
     {previews.length > 0 && (
       <Box sx={{ mb: 2 }}>
-        <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'green' }}>
+        <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'green', fontWeight: 'bold' }}>
           New images selected:
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
@@ -160,6 +196,7 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
                   top: -8,
                   right: -8,
                   backgroundColor: 'white',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                   '&:hover': { backgroundColor: '#ffebee' }
                 }}
               >
@@ -170,7 +207,7 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
         </Box>
       </Box>
     )}
-    
+
     <CustomOutlinedInput
       fullWidth
       type="file"
@@ -244,6 +281,13 @@ const EditBrandPage = () => {
   const [existingHeroCarouselImages, setExistingHeroCarouselImages] = useState([]);
   const [existingCarouselImages, setExistingCarouselImages] = useState([]);
 
+  // Removed existing images state
+  const [removedExistingImages, setRemovedExistingImages] = useState({
+    brandImage: false,
+    heroCarousel: [],
+    carousel: []
+  });
+
   const fetchBrandPageById = async () => {
     try {
       const response = await axiosInstance.get(`/brand-page/get-brand-page/${id}`);
@@ -251,12 +295,19 @@ const EditBrandPage = () => {
 
       if (response.data.statusCode === 200) {
         const data = response.data.data;
-        
+
         // Set existing images
         setExistingBrandImage(data.brandImages || '');
         setExistingHeroCarouselImages(data.heroCarouselImages || []);
         setExistingCarouselImages(data.carouselImages || []);
-        
+
+        // Initialize removed images arrays
+        setRemovedExistingImages({
+          brandImage: false,
+          heroCarousel: Array(data.heroCarouselImages?.length || 0).fill(false),
+          carousel: Array(data.carouselImages?.length || 0).fill(false)
+        });
+
         // Transform categories and brands for the form
         const transformedCategories = data.categories?.map(cat => ({
           categoryTitle: cat.categoryTitle || '',
@@ -341,6 +392,7 @@ const EditBrandPage = () => {
   const handleHeroCarouselImagesChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      // Add new files to existing array (don't replace)
       setHeroCarouselImages([...heroCarouselImages, ...files]);
 
       const newPreviews = [];
@@ -361,6 +413,7 @@ const EditBrandPage = () => {
   const handleCarouselImagesChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      // Add new files to existing array (don't replace)
       setCarouselImages([...carouselImages, ...files]);
 
       const newPreviews = [];
@@ -438,6 +491,56 @@ const EditBrandPage = () => {
     newBrands[index].brandImagePreview = '';
     setFormData({ ...formData, brands: newBrands });
   };
+
+  // Remove existing images handlers
+  const removeExistingBrandImage = () => {
+    setRemovedExistingImages(prev => ({
+      ...prev,
+      brandImage: true
+    }));
+    setExistingBrandImage('');
+  };
+
+  const removeExistingHeroCarouselImage = (index) => {
+    setRemovedExistingImages(prev => ({
+      ...prev,
+      heroCarousel: prev.heroCarousel.map((item, i) => i === index ? true : item)
+    }));
+  };
+
+  const removeExistingCarouselImage = (index) => {
+    setRemovedExistingImages(prev => ({
+      ...prev,
+      carousel: prev.carousel.map((item, i) => i === index ? true : item)
+    }));
+  };
+
+  const removeExistingCategoryImage = (categoryIndex) => {
+    const newCategories = [...formData.categories];
+    newCategories[categoryIndex].categoryImagePreview = '';
+    setFormData({ ...formData, categories: newCategories });
+  };
+
+  const removeExistingBrandLogo = (brandIndex) => {
+    const newBrands = [...formData.brands];
+    newBrands[brandIndex].brandImagePreview = '';
+    setFormData({ ...formData, brands: newBrands });
+  };
+
+  // Helper function to filter existing images based on removal status
+  const getFilteredExistingImages = (images, removedIndices) => {
+    return images.filter((_, index) => !removedIndices[index]);
+  };
+
+  const filteredExistingHeroCarouselImages = getFilteredExistingImages(
+    existingHeroCarouselImages,
+    removedExistingImages.heroCarousel
+  );
+
+  const filteredExistingCarouselImages = getFilteredExistingImages(
+    existingCarouselImages,
+    removedExistingImages.carousel
+  );
 
   // Categories Handlers
   const handleCategoryChange = (index, field, value) => {
@@ -563,7 +666,6 @@ const EditBrandPage = () => {
       // Create FormData for update
       const submitFormData = new FormData();
 
-      // Append all text fields including the new global category colors
       Object.keys(formData).forEach(key => {
         if (key !== 'categories' && key !== 'brands' && key !== 'questions' && key !== 'answers') {
           submitFormData.append(key, formData[key]);
@@ -585,11 +687,25 @@ const EditBrandPage = () => {
       submitFormData.append('questions', JSON.stringify(formData.questions.filter(q => q.trim())));
       submitFormData.append('answers', JSON.stringify(formData.answers.filter(a => a.trim())));
 
+      // Append removed existing images info
+      submitFormData.append('removedBrandImage', removedExistingImages.brandImage.toString());
+      submitFormData.append('removedHeroCarouselIndices', JSON.stringify(
+        removedExistingImages.heroCarousel
+          .map((removed, index) => removed ? index : -1)
+          .filter(index => index !== -1)
+      ));
+      submitFormData.append('removedCarouselIndices', JSON.stringify(
+        removedExistingImages.carousel
+          .map((removed, index) => removed ? index : -1)
+          .filter(index => index !== -1)
+      ));
+
       // Append files only if they are selected (for update)
       if (brandImage) {
         submitFormData.append('brandImages', brandImage);
       }
 
+      // Append new hero carousel images (these will be ADDED to existing ones)
       heroCarouselImages.forEach(image => {
         submitFormData.append('heroCarouselImages', image);
       });
@@ -608,6 +724,7 @@ const EditBrandPage = () => {
         }
       });
 
+      // Append new carousel images (these will be ADDED to existing ones)
       carouselImages.forEach(image => {
         submitFormData.append('carouselImages', image);
       });
@@ -637,7 +754,7 @@ const EditBrandPage = () => {
       <Typography variant="h4" sx={{ mb: 3 }}>
         Edit Brand Page
       </Typography>
-      
+
       <Grid container spacing={2}>
         {/* Brand Selection */}
         <Grid size={12}>
@@ -725,6 +842,7 @@ const EditBrandPage = () => {
             }}
             onFileChange={handleBrandImageChange}
             existingImage={existingBrandImage}
+            onRemoveExisting={removeExistingBrandImage}
           />
         </Grid>
 
@@ -735,7 +853,8 @@ const EditBrandPage = () => {
             onRemove={removeHeroCarouselImage}
             acceptMultiple={true}
             fileHandler={handleHeroCarouselImagesChange}
-            existingImages={existingHeroCarouselImages}
+            existingImages={filteredExistingHeroCarouselImages}
+            onRemoveExisting={removeExistingHeroCarouselImage}
           />
         </Grid>
 
@@ -848,6 +967,7 @@ const EditBrandPage = () => {
                       onRemove={() => removeCategoryImage(index)}
                       onFileChange={(e) => handleCategoryImageChange(index, e)}
                       existingImage={category.categoryImagePreview && typeof category.categoryImagePreview === 'string' && category.categoryImagePreview.startsWith('http') ? category.categoryImagePreview : null}
+                      onRemoveExisting={() => removeExistingCategoryImage(index)}
                     />
                   </Grid>
                 </Grid>
@@ -946,6 +1066,7 @@ const EditBrandPage = () => {
                       onRemove={() => removeBrandLogo(index)}
                       onFileChange={(e) => handleBrandLogoChange(index, e)}
                       existingImage={brandItem.brandImagePreview && typeof brandItem.brandImagePreview === 'string' && brandItem.brandImagePreview.startsWith('http') ? brandItem.brandImagePreview : null}
+                      onRemoveExisting={() => removeExistingBrandLogo(index)}
                     />
                   </Grid>
                 </Grid>
@@ -1087,7 +1208,8 @@ const EditBrandPage = () => {
             onRemove={removeCarouselImage}
             acceptMultiple={true}
             fileHandler={handleCarouselImagesChange}
-            existingImages={existingCarouselImages}
+            existingImages={filteredExistingCarouselImages}
+            onRemoveExisting={removeExistingCarouselImage}
           />
         </Grid>
 
