@@ -171,7 +171,7 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
     {previews.length > 0 && (
       <Box sx={{ mb: 2 }}>
         <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'green', fontWeight: 'bold' }}>
-          New images selected:
+          New images to add:
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
           {previews.map((preview, index) => (
@@ -219,7 +219,7 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
       }}
     />
     <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-      {acceptMultiple ? 'You can select multiple images at once' : 'Select one image'}
+      {acceptMultiple ? 'You can select multiple images at once - they will be added to existing images' : 'Select one image'}
     </Typography>
   </Box>
 );
@@ -227,14 +227,10 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
 const EditBrandPage = () => {
   const [formData, setFormData] = useState({
     brand: '',
-
-    // Brand Section
     brandTitle: '',
     brandTitleColor: '#000000',
     brandDescription: '',
     brandDescriptionColor: '#000000',
-
-    // Category Section
     categoryHeadingText: '',
     categoryHeadingTextColor: '#000000',
     categoryDescription: '',
@@ -242,22 +238,16 @@ const EditBrandPage = () => {
     categoryTitleBgColor: '#004b97ff',
     categoryTitleColor: '#000000ff',
     categories: [{ categoryTitle: '', categoryUrl: '', categoryImage: null, categoryImagePreview: '' }],
-
-    // Brands Section
     brandHeadingText: '',
     brandHeadingTextColor: '#000000',
     brandHeadingDescription: '',
     brandHeadingDescriptionColor: '#000000',
     brands: [{ brandUrl: '', brandImage: null, brandImagePreview: '' }],
-
-    // Q&A Section
     QnaSectionBgColor: '#ffffff',
     QnaHeadingText: '',
     QnaHeadingTextColor: '#000000',
     questions: [''],
     answers: [''],
-
-    // Trusted By Section
     trustedByHeadingText: '',
     trustedByHeadingTextColor: '#000000'
   });
