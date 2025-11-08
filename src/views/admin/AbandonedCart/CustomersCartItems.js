@@ -234,7 +234,7 @@ const CustomersCartItems = () => {
 
       if (res.data.statusCode === 200) {
         // Transform the data to flat structure
-        const transformedData = res.data.data.map(item => {
+        const transformedData = res.data.data.items.map(item => {
           // Calculate total price: (packQuantity * unitsQuantity) * eachPrice
           const totalPrice = (item.packQuentity * item.unitsQuantity) * item.product.eachPrice;
 

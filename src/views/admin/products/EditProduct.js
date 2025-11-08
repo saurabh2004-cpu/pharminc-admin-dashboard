@@ -53,7 +53,6 @@ const EditProduct = () => {
   const [imageDialogOpen, setImageDialogOpen] = React.useState(false);
   const [selectedImages, setSelectedImages] = React.useState([]);
 
-
   const [packTypes, setPackTypes] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [categoryOne, setCategoryOne] = useState([]);
@@ -63,7 +62,6 @@ const EditProduct = () => {
   const [badges, setBadges] = useState([]);
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
   const [taxOptions, setTaxOptions] = useState([true, false]);
-
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
@@ -151,7 +149,6 @@ const EditProduct = () => {
     setImagePreviews(newPreviews);
   };
 
-
   const handleSubmit = async () => {
     // Validation
     if (!formData.sku.trim()) {
@@ -185,6 +182,13 @@ const EditProduct = () => {
       formDataToSend.append('stockLevel', formData.stockLevel);
       formDataToSend.append('pricingGroup', formData.pricingGroup);
 
+      // FIXED: Always append sequence field, even when empty
+      if (formData.sequence === null || formData.sequence === '' || formData.sequence === undefined) {
+        formDataToSend.append('sequence', '');
+      } else {
+        formDataToSend.append('sequence', formData.sequence);
+      }
+
       // Append array fields
       formData.typesOfPacks.forEach(pack => {
         formDataToSend.append('typesOfPacks', pack);
@@ -200,8 +204,17 @@ const EditProduct = () => {
       if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
       if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
       if (formData.badge) formDataToSend.append('badge', formData.badge);
-      if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
+
+      if (formData.comparePrice === null || formData.comparePrice === '' || formData.comparePrice === undefined) {
+        formDataToSend.append('comparePrice', '');
+      } else {
+        formDataToSend.append('comparePrice', formData.comparePrice);
+      }
+      
       formDataToSend.append('taxable', formData.taxable);
+
+      console.log("Sequence value being sent:", formData.sequence);
+      console.log("Type of sequence:", typeof formData.sequence);
 
       // Append thumbnail if new one is selected
       if (thumbnailFile) {
@@ -266,7 +279,7 @@ const EditProduct = () => {
           badge: product.badge?._id || '',
           comparePrice: product.comparePrice || '',
           taxable: product.taxable || false,
-          sequence: product.sequence || null,
+          sequence: product.sequence,
         });
 
         // Set existing images
@@ -465,6 +478,16 @@ const EditProduct = () => {
   const handleSubcategoryThreeChange = (value) => {
     setFormData({ ...formData, commerceCategoriesThree: value, commerceCategoriesFour: '' });
     fetchSubCategoryTwoList(value);
+  };
+
+  // Handle sequence input change
+  const handleSequenceChange = (e) => {
+    const value = e.target.value;
+    // Convert empty string to null, otherwise convert to number
+    setFormData({
+      ...formData,
+      sequence: value === '' ? null : Number(value)
+    });
   };
 
   React.useEffect(() => {
@@ -688,7 +711,6 @@ const EditProduct = () => {
           )}
         </Grid>
 
-
         {/* SKU and Product Name - Two per row */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="pack-name" sx={{ mt: 2 }}>
@@ -743,10 +765,17 @@ const EditProduct = () => {
           <CustomOutlinedInput
             id="comparePrice"
             fullWidth
-            value={formData.comparePrice}
-            onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
+            value={formData.comparePrice === null ? '' : formData.comparePrice}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                comparePrice: value === '' ? null : Number(value)
+              });
+            }}
             disabled={loading}
-            placeholder="Enter Compare Price "
+            placeholder="Enter Compare Price (leave empty to remove)"
+            type="number"
           />
         </Grid>
 
@@ -762,6 +791,22 @@ const EditProduct = () => {
             onChange={(e) => setFormData({ ...formData, stockLevel: e.target.value })}
             disabled={loading}
             placeholder="Enter stock Level"
+          />
+        </Grid>
+
+        {/* Sequence Field - FIXED */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="sequence" sx={{ mt: 2 }}>
+            Sequence
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="sequence"
+            fullWidth
+            value={formData.sequence === null ? '' : formData.sequence}
+            onChange={handleSequenceChange}
+            disabled={loading}
+            placeholder="Enter Sequence (leave empty for auto)"
+            type="number"
           />
         </Grid>
 
@@ -1056,21 +1101,6 @@ const EditProduct = () => {
             </Select>
           </FormControl>
         </Grid>
-
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
-            Sequence
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="stockLevel"
-            fullWidth
-            value={formData.sequence}
-            onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Sequence"
-          />
-        </Grid>
-
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="badge-select" sx={{ mt: 2 }}>
