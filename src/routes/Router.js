@@ -119,6 +119,8 @@ const EditMetaData = Loadable(lazy(() => import('../views/admin/metaData/EditMet
 
 const ListContactUsData = Loadable(lazy(() => import('../views/admin/contactUsData/ListContactUsData')));
 
+const AdminEmails = Loadable(lazy(() => import('../views/admin/adminEmailsManager/AdminEmails')));
+
 
 
 const Router = [
@@ -246,6 +248,9 @@ const Router = [
       { path: '/dashboard/meta-data/Edit/:id', element: <EditMetaData /> },
 
       { path: '/dashboard/contact-us-data/List', element: <ListContactUsData /> },
+
+      { path: '/dashboard/admin/emails', element: <AdminEmails /> },
+
     ],
   },
 

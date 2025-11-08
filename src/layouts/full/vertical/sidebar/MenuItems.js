@@ -547,6 +547,20 @@ const Menuitems = [
       },
     ]
   },
+  {
+    id: uniqueId(),
+    title: 'Admin Emails',
+    icon: IconCalendar,
+    href: '/dashboard/meta-data',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Manage Admin Emails',
+        icon: IconPoint,
+        href: '/dashboard/admin/emails',
+      },
+    ]
+  },
 
 
 
