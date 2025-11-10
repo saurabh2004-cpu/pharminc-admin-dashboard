@@ -23,7 +23,7 @@ import { useNavigate, useParams } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 
 // File Preview Component for individual items
-const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, required = false, existingImage = null, onRemoveExisting = null }) => (
+const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, required = false, existingImage = null, onRemoveExisting = null, error = false }) => (
   <Box sx={{ mb: 2 }}>
     <CustomFormLabel>
       {title}
@@ -111,13 +111,25 @@ const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, require
         style: { cursor: 'pointer' },
         multiple: false
       }}
-      sx={{ mt: 1 }}
+      sx={{ 
+        mt: 1,
+        borderColor: error ? 'red' : undefined,
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: error ? 'red' : undefined,
+        }
+      }}
+      error={error}
     />
+    {error && (
+      <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+        {title} is required
+      </Typography>
+    )}
   </Box>
 );
 
 // Bulk File Preview Component (for hero carousel and carousel images)
-const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler, existingImages = [], onRemoveExisting = null }) => (
+const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler, existingImages = [], onRemoveExisting = null, error = false }) => (
   <Box sx={{ mb: 2 }}>
     <CustomFormLabel>
       {title}
@@ -217,10 +229,22 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
         style: { cursor: 'pointer' },
         multiple: acceptMultiple
       }}
+      sx={{
+        borderColor: error ? 'red' : undefined,
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: error ? 'red' : undefined,
+        }
+      }}
+      error={error}
     />
     <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
       {acceptMultiple ? 'You can select multiple images at once - they will be added to existing images' : 'Select one image'}
     </Typography>
+    {error && (
+      <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+        {title} is required
+      </Typography>
+    )}
   </Box>
 );
 
@@ -253,6 +277,7 @@ const EditBrandPage = () => {
   });
 
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [brands, setBrands] = useState([]);
@@ -376,6 +401,8 @@ const EditBrandPage = () => {
       reader.onloadend = () => setBrandImagePreview(reader.result);
       reader.readAsDataURL(file);
       setError('');
+      // Clear validation error for brand image
+      setValidationErrors(prev => ({ ...prev, brandImage: false }));
     }
   };
 
@@ -397,6 +424,8 @@ const EditBrandPage = () => {
         reader.readAsDataURL(file);
       });
       setError('');
+      // Clear validation error for hero carousel
+      setValidationErrors(prev => ({ ...prev, heroCarouselImages: false }));
     }
   };
 
@@ -418,6 +447,8 @@ const EditBrandPage = () => {
         reader.readAsDataURL(file);
       });
       setError('');
+      // Clear validation error for carousel images
+      setValidationErrors(prev => ({ ...prev, carouselImages: false }));
     }
   };
 
@@ -435,6 +466,11 @@ const EditBrandPage = () => {
       };
       reader.readAsDataURL(file);
       setError('');
+      // Clear validation error for this category image
+      setValidationErrors(prev => ({
+        ...prev,
+        [`categoryImage_${index}`]: false
+      }));
     }
   };
 
@@ -452,6 +488,11 @@ const EditBrandPage = () => {
       };
       reader.readAsDataURL(file);
       setError('');
+      // Clear validation error for this brand logo
+      setValidationErrors(prev => ({
+        ...prev,
+        [`brandLogo_${index}`]: false
+      }));
     }
   };
 
@@ -537,6 +578,14 @@ const EditBrandPage = () => {
     const newCategories = [...formData.categories];
     newCategories[index][field] = value;
     setFormData({ ...formData, categories: newCategories });
+    
+    // Clear validation error when user starts typing
+    if (field === 'categoryTitle' && value.trim()) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [`categoryTitle_${index}`]: false
+      }));
+    }
   };
 
   const addCategory = () => {
@@ -579,12 +628,28 @@ const EditBrandPage = () => {
     const newQuestions = [...formData.questions];
     newQuestions[index] = value;
     setFormData({ ...formData, questions: newQuestions });
+    
+    // Clear validation error when user starts typing
+    if (value.trim()) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [`question_${index}`]: false
+      }));
+    }
   };
 
   const handleAnswerChange = (index, value) => {
     const newAnswers = [...formData.answers];
     newAnswers[index] = value;
     setFormData({ ...formData, answers: newAnswers });
+    
+    // Clear validation error when user starts typing
+    if (value.trim()) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [`answer_${index}`]: false
+      }));
+    }
   };
 
   const addQnA = () => {
@@ -603,55 +668,95 @@ const EditBrandPage = () => {
     }
   };
 
+  // Validation function
+  const validateForm = () => {
+    const errors = {};
+
+    // Required field validations
+    if (!formData.brand) {
+      errors.brand = 'Brand selection is required';
+    }
+    if (!formData.brandTitle.trim()) {
+      errors.brandTitle = 'Brand title is required';
+    }
+    if (!formData.categoryHeadingText.trim()) {
+      errors.categoryHeadingText = 'Category heading text is required';
+    }
+    if (!formData.brandHeadingText.trim()) {
+      errors.brandHeadingText = 'Brand heading text is required';
+    }
+    if (!formData.QnaHeadingText.trim()) {
+      errors.QnaHeadingText = 'Q&A heading text is required';
+    }
+    if (!formData.trustedByHeadingText.trim()) {
+      errors.trustedByHeadingText = 'Trusted by heading text is required';
+    }
+
+    // Brand image validation
+    if (!existingBrandImage && !brandImage) {
+      errors.brandImage = true;
+    }
+
+    // Hero carousel images validation
+    if (filteredExistingHeroCarouselImages.length === 0 && heroCarouselImages.length === 0) {
+      errors.heroCarouselImages = true;
+    }
+
+    // Carousel images validation
+    if (filteredExistingCarouselImages.length === 0 && carouselImages.length === 0) {
+      errors.carouselImages = true;
+    }
+
+    // Categories validation
+    formData.categories.forEach((category, index) => {
+      if (!category.categoryTitle.trim()) {
+        errors[`categoryTitle_${index}`] = true;
+      }
+      // Category image validation
+      if (!category.categoryImagePreview && !category.categoryImage) {
+        errors[`categoryImage_${index}`] = true;
+      }
+    });
+
+    // Q&A validation
+    formData.questions.forEach((question, index) => {
+      if (!question.trim()) {
+        errors[`question_${index}`] = true;
+      }
+    });
+
+    formData.answers.forEach((answer, index) => {
+      if (!answer.trim()) {
+        errors[`answer_${index}`] = true;
+      }
+    });
+
+    // Check if at least one category has title
+    const hasValidCategory = formData.categories.some(cat => cat.categoryTitle.trim());
+    if (!hasValidCategory) {
+      errors.categories = 'At least one category with title is required';
+    }
+
+    // Check if at least one Q&A pair is complete
+    const hasValidQnA = formData.questions.some((q, index) => q.trim() && formData.answers[index]?.trim());
+    if (!hasValidQnA) {
+      errors.qna = 'At least one complete Q&A pair is required';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async () => {
+    // Validate form before submission
+    if (!validateForm()) {
+      setError('Please Fill All Required Fields ...');
+      return;
+    }
+
     try {
-      // Basic validation
-      if (!formData.brand) {
-        setError('Please select a brand');
-        return;
-      }
-      if (!formData.brandTitle) {
-        setError('Please enter brand title');
-        return;
-      }
-      if (!formData.categoryHeadingText) {
-        setError('Please enter category heading text');
-        return;
-      }
-      if (!formData.brandHeadingText) {
-        setError('Please enter brand heading text');
-        return;
-      }
-      if (!formData.QnaHeadingText) {
-        setError('Please enter Q&A heading text');
-        return;
-      }
-      if (!formData.trustedByHeadingText) {
-        setError('Please enter trusted by heading text');
-        return;
-      }
-
-      // Validate categories
-      const validCategories = formData.categories.filter(cat => cat.categoryTitle.trim());
-      if (validCategories.length === 0) {
-        setError('Please provide at least one category with a title');
-        return;
-      }
-
-      // Validate Q&A
-      const validQuestions = formData.questions.filter(q => q.trim());
-      const validAnswers = formData.answers.filter(a => a.trim());
-
-      if (validQuestions.length === 0 || validAnswers.length === 0) {
-        setError('Please provide at least one question and answer');
-        return;
-      }
-      if (validQuestions.length !== validAnswers.length) {
-        setError('Number of questions and answers must match');
-        return;
-      }
-
       setLoading(true);
+      setError('');
 
       // Create FormData for update
       const submitFormData = new FormData();
@@ -752,11 +857,16 @@ const EditBrandPage = () => {
             Select Brand
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
-          <FormControl fullWidth>
+          <FormControl fullWidth error={!!validationErrors.brand}>
             <Select
               id="brand-select"
               value={formData.brand}
-              onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, brand: e.target.value });
+                if (e.target.value) {
+                  setValidationErrors(prev => ({ ...prev, brand: false }));
+                }
+              }}
               disabled={loading || brands.length === 0}
               displayEmpty
             >
@@ -770,6 +880,11 @@ const EditBrandPage = () => {
               ))}
             </Select>
           </FormControl>
+          {validationErrors.brand && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+              {validationErrors.brand}
+            </Typography>
+          )}
         </Grid>
 
         {/* Brand Section */}
@@ -786,7 +901,13 @@ const EditBrandPage = () => {
             value={formData.brandTitle}
             onChange={(e) => setFormData({ ...formData, brandTitle: e.target.value })}
             placeholder="Enter brand title"
+            error={!!validationErrors.brandTitle}
           />
+          {validationErrors.brandTitle && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+              {validationErrors.brandTitle}
+            </Typography>
+          )}
         </Grid>
 
         <Grid size={6}>
@@ -833,18 +954,21 @@ const EditBrandPage = () => {
             onFileChange={handleBrandImageChange}
             existingImage={existingBrandImage}
             onRemoveExisting={removeExistingBrandImage}
+            error={validationErrors.brandImage}
+            required={true}
           />
         </Grid>
 
         <Grid size={12}>
           <BulkFilePreviewSection
-            title="Hero Carousel Images"
+            title="Hero Carousel Images *"
             previews={heroCarouselPreviews}
             onRemove={removeHeroCarouselImage}
             acceptMultiple={true}
             fileHandler={handleHeroCarouselImagesChange}
             existingImages={filteredExistingHeroCarouselImages}
             onRemoveExisting={removeExistingHeroCarouselImage}
+            error={validationErrors.heroCarouselImages}
           />
         </Grid>
 
@@ -862,7 +986,13 @@ const EditBrandPage = () => {
             value={formData.categoryHeadingText}
             onChange={(e) => setFormData({ ...formData, categoryHeadingText: e.target.value })}
             placeholder="Enter category heading text"
+            error={!!validationErrors.categoryHeadingText}
           />
+          {validationErrors.categoryHeadingText && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+              {validationErrors.categoryHeadingText}
+            </Typography>
+          )}
         </Grid>
 
         <Grid size={6}>
@@ -921,7 +1051,7 @@ const EditBrandPage = () => {
         {/* Category Items with Individual Image Uploads */}
         {formData.categories.map((category, index) => (
           <Grid size={12} key={index}>
-            <Card variant="outlined" sx={{ mb: 2 }}>
+            <Card variant="outlined" sx={{ mb: 2, borderColor: validationErrors[`categoryTitle_${index}`] ? 'red' : undefined }}>
               <CardContent>
                 <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                   <Typography variant="h6">Category {index + 1}</Typography>
@@ -939,7 +1069,13 @@ const EditBrandPage = () => {
                       value={category.categoryTitle}
                       onChange={(e) => handleCategoryChange(index, 'categoryTitle', e.target.value)}
                       placeholder="Enter category title"
+                      error={!!validationErrors[`categoryTitle_${index}`]}
                     />
+                    {validationErrors[`categoryTitle_${index}`] && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                        Category title is required
+                      </Typography>
+                    )}
                   </Grid>
                   <Grid size={6}>
                     <CustomFormLabel>Category URL</CustomFormLabel>
@@ -952,12 +1088,14 @@ const EditBrandPage = () => {
                   </Grid>
                   <Grid size={12}>
                     <IndividualFilePreview
-                      title="Category Image"
+                      title="Category Image *"
                       preview={category.categoryImagePreview && typeof category.categoryImagePreview === 'string' && !category.categoryImagePreview.startsWith('data:') ? '' : category.categoryImagePreview}
                       onRemove={() => removeCategoryImage(index)}
                       onFileChange={(e) => handleCategoryImageChange(index, e)}
                       existingImage={category.categoryImagePreview && typeof category.categoryImagePreview === 'string' && category.categoryImagePreview.startsWith('http') ? category.categoryImagePreview : null}
                       onRemoveExisting={() => removeExistingCategoryImage(index)}
+                      error={!!validationErrors[`categoryImage_${index}`]}
+                      required={true}
                     />
                   </Grid>
                 </Grid>
@@ -965,6 +1103,14 @@ const EditBrandPage = () => {
             </Card>
           </Grid>
         ))}
+
+        {validationErrors.categories && (
+          <Grid size={12}>
+            <Typography variant="caption" color="error" sx={{ display: 'block', mb: 2 }}>
+              {validationErrors.categories}
+            </Typography>
+          </Grid>
+        )}
 
         <Grid size={12}>
           <Button
@@ -991,7 +1137,13 @@ const EditBrandPage = () => {
             value={formData.brandHeadingText}
             onChange={(e) => setFormData({ ...formData, brandHeadingText: e.target.value })}
             placeholder="Enter brand heading text"
+            error={!!validationErrors.brandHeadingText}
           />
+          {validationErrors.brandHeadingText && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+              {validationErrors.brandHeadingText}
+            </Typography>
+          )}
         </Grid>
 
         <Grid size={6}>
@@ -1057,6 +1209,7 @@ const EditBrandPage = () => {
                       onFileChange={(e) => handleBrandLogoChange(index, e)}
                       existingImage={brandItem.brandImagePreview && typeof brandItem.brandImagePreview === 'string' && brandItem.brandImagePreview.startsWith('http') ? brandItem.brandImagePreview : null}
                       onRemoveExisting={() => removeExistingBrandLogo(index)}
+                      error={!!validationErrors[`brandLogo_${index}`]}
                     />
                   </Grid>
                 </Grid>
@@ -1090,7 +1243,13 @@ const EditBrandPage = () => {
             value={formData.QnaHeadingText}
             onChange={(e) => setFormData({ ...formData, QnaHeadingText: e.target.value })}
             placeholder="Enter Q&A heading text"
+            error={!!validationErrors.QnaHeadingText}
           />
+          {validationErrors.QnaHeadingText && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+              {validationErrors.QnaHeadingText}
+            </Typography>
+          )}
         </Grid>
 
         <Grid size={6}>
@@ -1116,7 +1275,7 @@ const EditBrandPage = () => {
         {/* Q&A Items */}
         {formData.questions.map((question, index) => (
           <Grid size={12} key={index}>
-            <Card variant="outlined" sx={{ mb: 2 }}>
+            <Card variant="outlined" sx={{ mb: 2, borderColor: (validationErrors[`question_${index}`] || validationErrors[`answer_${index}`]) ? 'red' : undefined }}>
               <CardContent>
                 <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                   <Typography variant="h6">Q&A {index + 1}</Typography>
@@ -1128,16 +1287,22 @@ const EditBrandPage = () => {
                 </Box>
                 <Grid container spacing={2}>
                   <Grid size={12}>
-                    <CustomFormLabel>Question</CustomFormLabel>
+                    <CustomFormLabel>Question *</CustomFormLabel>
                     <CustomOutlinedInput
                       fullWidth
                       value={question}
                       onChange={(e) => handleQuestionChange(index, e.target.value)}
                       placeholder="Enter question"
+                      error={!!validationErrors[`question_${index}`]}
                     />
+                    {validationErrors[`question_${index}`] && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                        Question is required
+                      </Typography>
+                    )}
                   </Grid>
                   <Grid size={12}>
-                    <CustomFormLabel>Answer</CustomFormLabel>
+                    <CustomFormLabel>Answer *</CustomFormLabel>
                     <CustomOutlinedInput
                       fullWidth
                       multiline
@@ -1145,13 +1310,27 @@ const EditBrandPage = () => {
                       value={formData.answers[index]}
                       onChange={(e) => handleAnswerChange(index, e.target.value)}
                       placeholder="Enter answer"
+                      error={!!validationErrors[`answer_${index}`]}
                     />
+                    {validationErrors[`answer_${index}`] && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                        Answer is required
+                      </Typography>
+                    )}
                   </Grid>
                 </Grid>
               </CardContent>
             </Card>
           </Grid>
         ))}
+
+        {validationErrors.qna && (
+          <Grid size={12}>
+            <Typography variant="caption" color="error" sx={{ display: 'block', mb: 2 }}>
+              {validationErrors.qna}
+            </Typography>
+          </Grid>
+        )}
 
         <Grid size={12}>
           <Button
@@ -1178,7 +1357,13 @@ const EditBrandPage = () => {
             value={formData.trustedByHeadingText}
             onChange={(e) => setFormData({ ...formData, trustedByHeadingText: e.target.value })}
             placeholder="Enter trusted by heading text"
+            error={!!validationErrors.trustedByHeadingText}
           />
+          {validationErrors.trustedByHeadingText && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+              {validationErrors.trustedByHeadingText}
+            </Typography>
+          )}
         </Grid>
 
         <Grid size={6}>
@@ -1193,13 +1378,14 @@ const EditBrandPage = () => {
 
         <Grid size={12}>
           <BulkFilePreviewSection
-            title="Carousel Images"
+            title="Carousel Images *"
             previews={carouselImagePreviews}
             onRemove={removeCarouselImage}
             acceptMultiple={true}
             fileHandler={handleCarouselImagesChange}
             existingImages={filteredExistingCarouselImages}
             onRemoveExisting={removeExistingCarouselImage}
+            error={validationErrors.carouselImages}
           />
         </Grid>
 
