@@ -11,7 +11,9 @@ const EditSubCategoryTwo = () => {
   const [formData, setFormData] = React.useState({
     name: '',
     slug: '',
-    subCategory: ''  // Initialize as empty string instead of undefined variable
+    subCategory: '',
+    description: '',
+    descriptionColour: '#000000',
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -56,7 +58,7 @@ const EditSubCategoryTwo = () => {
 
     setFormData({
       ...formData,
-      subCategory: categoryId,  // Changed from 'category' to 'subCategory'
+      subCategory: categoryId,
     });
 
     setSelectedSubCategory(categoryObj || null);
@@ -64,15 +66,15 @@ const EditSubCategoryTwo = () => {
     // regenerate slug if subcategory name is already typed
     if (formData.name.trim() && categoryObj) {
       const subSlug = formData.name.trim().replace(/\s+/g, '-').toLowerCase();
-      const brandSlug = categoryObj.category?.brand?.name  // Fixed path
+      const brandSlug = categoryObj.category?.brand?.name
         ?.trim()
         .replace(/\s+/g, '-')
         .toLowerCase();
-      const catSlug = categoryObj.category?.name  // Fixed path
+      const catSlug = categoryObj.category?.name
         ?.trim()
         .replace(/\s+/g, '-')
         .toLowerCase();
-      const subCatSlug = categoryObj?.name  // This is the subcategory name
+      const subCatSlug = categoryObj?.name
         ?.trim()
         .replace(/\s+/g, '-')
         .toLowerCase();
@@ -90,7 +92,7 @@ const EditSubCategoryTwo = () => {
       setError('SubcategoryTwo name is required');
       return;
     }
-    if (!formData.subCategory) {  // Changed from 'category' to 'subCategory'
+    if (!formData.subCategory) {
       setError('Please select a sub category');
       return;
     }
@@ -100,7 +102,7 @@ const EditSubCategoryTwo = () => {
 
     try {
       const res = await axiosInstance.put(
-        `/subcategoryTwo/update-sub-category-two/${id}`,  // Updated endpoint for edit
+        `/subcategoryTwo/update-sub-category-two/${id}`,
         formData,
         {
           headers: {
@@ -150,7 +152,9 @@ const EditSubCategoryTwo = () => {
         setFormData({
           name: data.name || '',
           slug: data.slug || '',
-          subCategory: data.subCategory?._id || data.subCategory || ''  // Handle both populated and non-populated cases
+          subCategory: data.subCategory?._id || data.subCategory || '',
+          description: data.description || '',
+          descriptionColour: data.descriptionColour || '#000000',
         });
 
         // Set the selected subcategory object for display purposes
@@ -203,6 +207,78 @@ const EditSubCategoryTwo = () => {
             disabled={loading}
             placeholder="Enter subcategory two name"
           />
+        </Grid>
+
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="subcategory-two-Description" sx={{ mt: 0 }}>
+            SubCategory Two Description
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <CustomOutlinedInput
+            id="subcategory-two-Description"
+            fullWidth
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            disabled={loading}
+            placeholder="Enter subcategory two Description"
+          />
+        </Grid>
+
+        {/* Description Colour */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="description-colour" sx={{ mt: 2 }}>
+            Description Colour
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <input
+              type="color"
+              id="description-colour"
+              value={formData.descriptionColour}
+              onChange={(e) => setFormData({ ...formData, descriptionColour: e.target.value })}
+              disabled={loading}
+              style={{
+                width: '60px',
+                height: '40px',
+                border: '1px solid rgba(0, 0, 0, 0.23)',
+                borderRadius: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+              }}
+            />
+            <CustomOutlinedInput
+              fullWidth
+              value={formData.descriptionColour}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow typing hex colors
+                if (/^#[0-9A-Fa-f]{0,6}$/.test(value) || value === '') {
+                  setFormData({ ...formData, descriptionColour: value });
+                }
+              }}
+              disabled={loading}
+              placeholder="#000000"
+              inputProps={{
+                maxLength: 7,
+                style: { textTransform: 'uppercase' }
+              }}
+            />
+          </div>
+          {/* <div
+            style={{
+              marginTop: '8px',
+              padding: '8px 12px',
+              backgroundColor: formData.descriptionColour,
+              color: getContrastColor(formData.descriptionColour),
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: 500,
+            }}
+          >
+            Preview: Description text color
+          </div> */}
         </Grid>
 
         {/* Category Selection */}
@@ -305,7 +381,13 @@ const EditSubCategoryTwo = () => {
             variant="outlined"
             color="secondary"
             onClick={() => {
-              setFormData({ name: '', slug: '', subCategory: '' });
+              setFormData({ 
+                name: '', 
+                slug: '', 
+                subCategory: '', 
+                description: '', 
+                descriptionColour: '#000000' 
+              });
               setSelectedSubCategory(null);
               setError('');
             }}
@@ -319,5 +401,18 @@ const EditSubCategoryTwo = () => {
     </div>
   );
 };
+
+// Helper function to determine contrasting text color
+function getContrastColor(hexColor) {
+  if (!hexColor || hexColor.length < 7) return '#000000';
+  
+  const r = parseInt(hexColor.substr(1, 2), 16);
+  const g = parseInt(hexColor.substr(3, 2), 16);
+  const b = parseInt(hexColor.substr(5, 2), 16);
+  
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  return luminance > 0.5 ? '#000000' : '#FFFFFF';
+}
 
 export default EditSubCategoryTwo;

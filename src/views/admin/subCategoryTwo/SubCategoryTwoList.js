@@ -32,6 +32,20 @@ const SubCategoryList = () => {
             label: 'Category Name',
         },
         {
+            id: 'description',
+            numeric: false,
+            disablePadding: false,
+            label: 'Category Description',
+        },
+
+        {
+            id: 'description-color',
+            numeric: false,
+            disablePadding: false,
+            label: 'Category Description Color',
+        },
+
+        {
             id: 'subCategory',
             numeric: false,
             disablePadding: false,

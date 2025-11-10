@@ -32,6 +32,18 @@ const CategoriesList = () => {
             label: 'Category Name',
         },
         {
+            id: 'description',
+            numeric: false,
+            disablePadding: false,
+            label: 'Category Description',
+        },
+        {
+            id: 'description-colour',
+            numeric: false,
+            disablePadding: false,
+            label: 'Category Description Colour',
+        },
+        {
             id: 'brand',
             numeric: false,
             disablePadding: false,

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Grid, MenuItem, Select, FormControl } from '@mui/material';
+import { Grid, MenuItem, Select, FormControl, Box, Typography } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -13,7 +13,9 @@ const CreateCategory = () => {
     const [formData, setFormData] = React.useState({
         name: '',
         slug: '',
-        brand: ''
+        brand: '',
+        description: '',
+        descriptionColour: '#000000',
     });
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
@@ -53,6 +55,10 @@ const CreateCategory = () => {
             setError('Please select a brand');
             return;
         }
+        if (!formData.description.trim()) {
+            setError('Category description is required');
+            return;
+        }
 
         setLoading(true);
         setError('');
@@ -79,12 +85,13 @@ const CreateCategory = () => {
             }
 
             if (res.data.statusCode === 200) {
-                // Reset form on success (only for create mode)
                 if (!isEditMode) {
                     setFormData({
                         name: '',
                         slug: '',
-                        brand: ''
+                        brand: '',
+                        description: '',
+                        descriptionColour: '#000000'
                     });
                 }
 
@@ -122,14 +129,15 @@ const CreateCategory = () => {
 
         try {
             const res = await axiosInstance.get(`/category/get-category/${id}`);
-            console.log("res", res)
 
             if (res.data.statusCode === 200) {
                 const categoryData = res.data.data;
                 setFormData({
                     name: categoryData.name || '',
                     slug: categoryData.slug || '',
-                    brand: categoryData.brand?._id || ''
+                    brand: categoryData.brand?._id || '',
+                    description: categoryData.description || '',
+                    descriptionColour: categoryData.descriptionColour || '#000000'
                 });
                 setCategory(categoryData);
             }
@@ -146,12 +154,20 @@ const CreateCategory = () => {
                 setFormData({
                     name: category.name || '',
                     slug: category.slug || '',
-                    brand: category.brand?._id || ''
+                    brand: category.brand?._id || '',
+                    description: category.description || '',
+                    descriptionColour: category.descriptionColour || '#000000'
                 });
             }
         } else {
             // In create mode, clear all fields
-            setFormData({ name: '', slug: '', brand: '' });
+            setFormData({ 
+                name: '', 
+                slug: '', 
+                brand: '', 
+                description: '',
+                descriptionColour: '#000000' 
+            });
         }
         setError('');
     };
@@ -169,6 +185,13 @@ const CreateCategory = () => {
     return (
         <div>
             <Grid container spacing={2}>
+                {/* Page Title */}
+                <Grid size={12}>
+                    <Typography variant="h4" sx={{ mb: 2, fontWeight: 600 }}>
+                        {isEditMode ? 'Edit Category' : 'Create New Category'}
+                    </Typography>
+                </Grid>
+
                 {/* Category Name */}
                 <Grid size={12}>
                     <CustomFormLabel
@@ -176,6 +199,7 @@ const CreateCategory = () => {
                         sx={{ mt: 0 }}
                     >
                         Category Name
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -189,6 +213,92 @@ const CreateCategory = () => {
                     />
                 </Grid>
 
+                {/* Category Description */}
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="category-description"
+                        sx={{ mt: 0 }}
+                    >
+                        Category Description
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                </Grid>
+                <Grid size={12}>
+                    <CustomOutlinedInput
+                        id="category-description"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        disabled={loading}
+                        placeholder="Enter category description"
+                    />
+                </Grid>
+
+                {/* Description Color */}
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="description-colour"
+                        sx={{ mt: 0 }}
+                    >
+                        Description Color
+                    </CustomFormLabel>
+                </Grid>
+                <Grid size={12}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <CustomOutlinedInput
+                            id="description-colour"
+                            type="color"
+                            value={formData.descriptionColour}
+                            onChange={(e) => setFormData({ ...formData, descriptionColour: e.target.value })}
+                            disabled={loading}
+                            sx={{
+                                width: '100px',
+                                height: '56px',
+                                padding: '4px',
+                                cursor: 'pointer',
+                                '& input[type="color"]': {
+                                    cursor: 'pointer',
+                                    border: 'none',
+                                    width: '100%',
+                                    height: '100%'
+                                }
+                            }}
+                        />
+                        <CustomOutlinedInput
+                            fullWidth
+                            value={formData.descriptionColour}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Allow hex color format validation
+                                if (/^#[0-9A-Fa-f]{0,6}$/.test(value) || value === '') {
+                                    setFormData({ ...formData, descriptionColour: value });
+                                }
+                            }}
+                            disabled={loading}
+                            placeholder="#000000"
+                            inputProps={{
+                                maxLength: 7,
+                                pattern: '^#[0-9A-Fa-f]{6}$'
+                            }}
+                        />
+                        <Box
+                            sx={{
+                                width: '56px',
+                                height: '56px',
+                                backgroundColor: formData.descriptionColour,
+                                border: '1px solid rgba(0, 0, 0, 0.23)',
+                                borderRadius: '4px',
+                                flexShrink: 0
+                            }}
+                        />
+                    </Box>
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                        Choose a color for the category description text. Preview shown on the right.
+                    </Typography>
+                </Grid>
+
                 {/* Brand Selection */}
                 <Grid size={12}>
                     <CustomFormLabel
@@ -196,6 +306,7 @@ const CreateCategory = () => {
                         sx={{ mt: 2 }}
                     >
                         Select Brand
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -242,6 +353,7 @@ const CreateCategory = () => {
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="category-slug" sx={{ mt: 2 }}>
                         Slug
+                        <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
@@ -278,7 +390,7 @@ const CreateCategory = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ minWidth: '120px' }}
+                        sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
                     >
                         {loading
                             ? (isEditMode ? 'Updating...' : 'Creating...')

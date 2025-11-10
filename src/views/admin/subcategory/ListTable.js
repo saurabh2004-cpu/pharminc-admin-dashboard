@@ -407,6 +407,32 @@ const ListTable = ({
                               </Box>
                             </TableCell>
                             <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Box
+                                  sx={{
+                                    ml: 2,
+                                  }}
+                                >
+                                  <Typography fontWeight="600">
+                                    {row?.description || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Box
+                                  sx={{
+                                    ml: 2,
+                                  }}
+                                >
+                                  <Typography fontWeight="600">
+                                    {row?.descriptionColour || ''}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
                               <Typography>{row.category?.name || 'N/A'}</Typography>
                             </TableCell>
                             <TableCell>

@@ -12,7 +12,9 @@ const CreateSubCategory = () => {
   const [formData, setFormData] = React.useState({
     name: '',
     slug: '',
-    category: ''
+    category: '',
+    description: '',
+    descriptionColour: '#000000',
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -107,6 +109,8 @@ const CreateSubCategory = () => {
           name: '',
           slug: '',
           category: '',
+          description: '',
+          descriptionColour: '#000000',
         });
         navigate('/dashboard/sub-category/list');
       } else if (res.data.statusCode === 400) {
@@ -145,10 +149,8 @@ const CreateSubCategory = () => {
     try {
       setLoading(true);
       const formDataForUpload = new FormData();
-      // Correct field name for pricing groups discounts
       formDataForUpload.append('commerce-categories', selectedFile);
 
-      // Correct API endpoint for pricing groups discounts import
       const res = await axiosInstance.post('/brand/import-commerce-categories', formDataForUpload, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -161,7 +163,6 @@ const CreateSubCategory = () => {
         setCsvDialogOpen(false);
         setSelectedFile(null);
 
-        // Reset file input
         const fileInput = document.getElementById('csv-file-input');
         if (fileInput) fileInput.value = '';
 
@@ -179,7 +180,6 @@ const CreateSubCategory = () => {
     setCsvDialogOpen(false);
     setSelectedFile(null);
     setError('');
-    // Reset file input
     const fileInput = document.getElementById('csv-file-input');
     if (fileInput) fileInput.value = '';
   };
@@ -187,10 +187,6 @@ const CreateSubCategory = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // if (!file.name.toLowerCase().endsWith('.csv') || !file.name.toLowerCase().endsWith('.xlsx') ) {
-      //     setError('Please select a valid CSV file');
-      //     // return;
-      // }
       setSelectedFile(file);
       setError('');
     }
@@ -219,6 +215,87 @@ const CreateSubCategory = () => {
             disabled={loading}
             placeholder="Enter subcategory name"
           />
+        </Grid>
+
+        {/* Description */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="subcategory-description" sx={{ mt: 2 }}>
+            Description
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <CustomOutlinedInput
+            id="subcategory-description"
+            fullWidth
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            disabled={loading}
+            placeholder="Enter subcategory description"
+          />
+        </Grid>
+
+        {/* Description Colour */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="description-colour" sx={{ mt: 2 }}>
+            Description Colour
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <input
+              id="description-colour"
+              type="color"
+              value={formData.descriptionColour}
+              onChange={(e) => setFormData({ ...formData, descriptionColour: e.target.value })}
+              disabled={loading}
+              style={{
+                width: '60px',
+                height: '40px',
+                border: '1px solid rgba(0, 0, 0, 0.23)',
+                borderRadius: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+              }}
+            />
+            <CustomOutlinedInput
+              fullWidth
+              value={formData.descriptionColour}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow hex color format with or without #
+                if (value.match(/^#?[0-9A-Fa-f]{0,6}$/)) {
+                  const formattedValue = value.startsWith('#') ? value : `#${value}`;
+                  setFormData({ ...formData, descriptionColour: formattedValue });
+                }
+              }}
+              disabled={loading}
+              placeholder="#000000"
+              inputProps={{
+                maxLength: 7,
+              }}
+            />
+            {formData.description && (
+              <Box
+                sx={{
+                  minWidth: '100px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(0, 0, 0, 0.12)',
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: formData.descriptionColour,
+                    fontWeight: 500,
+                  }}
+                >
+                  Preview
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Grid>
 
         {/* Category Selection */}
@@ -321,7 +398,13 @@ const CreateSubCategory = () => {
             variant="outlined"
             color="secondary"
             onClick={() => {
-              setFormData({ name: '', slug: '', category: '' });
+              setFormData({ 
+                name: '', 
+                slug: '', 
+                category: '', 
+                description: '', 
+                descriptionColour: '#000000' 
+              });
               setSelectedCategory(null);
               setError('');
             }}
@@ -350,7 +433,6 @@ const CreateSubCategory = () => {
         maxWidth="sm"
         fullWidth
       >
-        {/* Loading Backdrop */}
         <Backdrop
           sx={{
             color: '#fff',
@@ -374,7 +456,7 @@ const CreateSubCategory = () => {
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Select a CSV file to import multiple commerce categories  at once.
+              Select a CSV file to import multiple commerce categories at once.
             </Typography>
 
             <input

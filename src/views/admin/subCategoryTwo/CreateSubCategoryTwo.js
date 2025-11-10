@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Grid, MenuItem, Select, FormControl } from '@mui/material';
+import { Grid, MenuItem, Select, FormControl, Box, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
@@ -11,7 +11,9 @@ const CreateSubCategoryTwo = () => {
   const [formData, setFormData] = React.useState({
     name: '',
     slug: '',
-    subCategory: ''
+    subCategory: '',
+    description: '',
+    descriptionColour: '#000000',
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -115,6 +117,8 @@ const CreateSubCategoryTwo = () => {
           name: '',
           slug: '',
           subCategory: '',
+          description: '',
+          descriptionColour: '#000000',
         });
         navigate('/dashboard/sub-category-two/list');
       } else if (res.data.statusCode === 400) {
@@ -173,10 +177,91 @@ const CreateSubCategoryTwo = () => {
           />
         </Grid>
 
+        {/* Description */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="subcategory-two-description" sx={{ mt: 2 }}>
+            SubCategory Two Description
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <CustomOutlinedInput
+            id="subcategory-two-description"
+            fullWidth
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            disabled={loading}
+            placeholder="Enter subcategory two description"
+          />
+        </Grid>
+
+        {/* Description Colour */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="description-colour" sx={{ mt: 2 }}>
+            Description Colour
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <input
+              id="description-colour"
+              type="color"
+              value={formData.descriptionColour}
+              onChange={(e) => setFormData({ ...formData, descriptionColour: e.target.value })}
+              disabled={loading}
+              style={{
+                width: '60px',
+                height: '40px',
+                border: '1px solid rgba(0, 0, 0, 0.23)',
+                borderRadius: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+              }}
+            />
+            <CustomOutlinedInput
+              fullWidth
+              value={formData.descriptionColour}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow hex color format with or without #
+                if (value.match(/^#?[0-9A-Fa-f]{0,6}$/)) {
+                  const formattedValue = value.startsWith('#') ? value : `#${value}`;
+                  setFormData({ ...formData, descriptionColour: formattedValue });
+                }
+              }}
+              disabled={loading}
+              placeholder="#000000"
+              inputProps={{
+                maxLength: 7,
+              }}
+            />
+            {formData.description && (
+              <Box
+                sx={{
+                  minWidth: '100px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(0, 0, 0, 0.12)',
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: formData.descriptionColour,
+                    fontWeight: 500,
+                  }}
+                >
+                  Preview
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Grid>
+
         {/* SubCategory Selection */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="subcategory-select" sx={{ mt: 2 }}>
-            Select subCategory
+            Select SubCategory
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
         </Grid>
@@ -223,6 +308,7 @@ const CreateSubCategoryTwo = () => {
             />
           </FormControl>
         </Grid>
+
         {/* Slug (auto-generated) */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="subcategory-slug" sx={{ mt: 2 }}>
@@ -266,14 +352,20 @@ const CreateSubCategoryTwo = () => {
             disabled={loading}
             sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
           >
-            {loading ? 'Creating...' : 'Create SubCategory'}
+            {loading ? 'Creating...' : 'Create SubCategory Two'}
           </Button>
           <Button
             variant="outlined"
             color="secondary"
             onClick={() => {
-              setFormData({ name: '', slug: '', category: '' });
-              setSelectedCategory(null);
+              setFormData({ 
+                name: '', 
+                slug: '', 
+                subCategory: '', 
+                description: '', 
+                descriptionColour: '#000000' 
+              });
+              setSelectedSubCategory(null);
               setError('');
             }}
             disabled={loading}

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Grid, MenuItem, Select, FormControl } from '@mui/material';
+import { Grid, MenuItem, Select, FormControl, Box, Typography } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -8,12 +8,15 @@ import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import { set } from 'lodash';
 
 const EditSubCategory = () => {
   const [formData, setFormData] = React.useState({
     name: '',
     slug: '',
-    category: ''
+    category: '',
+    description: '',
+    descriptionColour: '#000000'
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -79,7 +82,13 @@ const EditSubCategory = () => {
   };
 
   const handleClear = () => {
-    setFormData({ name: '', slug: '', category: '' });
+    setFormData({ 
+      name: '', 
+      slug: '', 
+      category: '', 
+      description: '', 
+      descriptionColour: '#000000' 
+    });
     setError('');
   };
 
@@ -126,7 +135,9 @@ const EditSubCategory = () => {
         setFormData({
           name: subcategoryData.name || '',
           slug: subcategoryData.slug || '',
-          category: categoryId
+          category: categoryId,
+          description: subcategoryData.description || '',
+          descriptionColour: subcategoryData.descriptionColour || '#000000',
         });
       } else {
         setError('Failed to fetch subcategory details');
@@ -179,6 +190,90 @@ const EditSubCategory = () => {
             disabled={loading}
             placeholder="Enter subcategory name"
           />
+        </Grid>
+
+        {/* Description */}
+        <Grid size={12}>
+          <CustomFormLabel
+            htmlFor="subcategory-description"
+            sx={{ mt: 2 }}
+          >
+            SubCategory Description
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <CustomOutlinedInput
+            id="subcategory-description"
+            fullWidth
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            disabled={loading}
+            placeholder="Enter subcategory description"
+          />
+        </Grid>
+
+        {/* Description Colour */}
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="description-colour" sx={{ mt: 2 }}>
+            Description Colour
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <input
+              id="description-colour"
+              type="color"
+              value={formData.descriptionColour}
+              onChange={(e) => setFormData({ ...formData, descriptionColour: e.target.value })}
+              disabled={loading}
+              style={{
+                width: '60px',
+                height: '40px',
+                border: '1px solid rgba(0, 0, 0, 0.23)',
+                borderRadius: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+              }}
+            />
+            <CustomOutlinedInput
+              fullWidth
+              value={formData.descriptionColour}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow hex color format with or without #
+                if (value.match(/^#?[0-9A-Fa-f]{0,6}$/)) {
+                  const formattedValue = value.startsWith('#') ? value : `#${value}`;
+                  setFormData({ ...formData, descriptionColour: formattedValue });
+                }
+              }}
+              disabled={loading}
+              placeholder="#000000"
+              inputProps={{
+                maxLength: 7,
+              }}
+            />
+            {formData.description && (
+              <Box
+                sx={{
+                  minWidth: '100px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(0, 0, 0, 0.12)',
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: formData.descriptionColour,
+                    fontWeight: 500,
+                  }}
+                >
+                  Preview
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Grid>
 
         {/* Category Selection */}

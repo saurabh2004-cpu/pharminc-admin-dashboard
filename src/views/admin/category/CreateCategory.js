@@ -12,8 +12,10 @@ import { Autocomplete, TextField } from '@mui/material';
 const CreateCategory = () => {
     const [formData, setFormData] = React.useState({
         name: '',
+        description: '',
         slug: '',
-        brand: ''
+        brand: '',
+        descriptionColour: '#000000', // Default color
     });
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
@@ -76,6 +78,10 @@ const CreateCategory = () => {
             setError('Please select a brand');
             return;
         }
+        if (!formData.description.trim()) {
+            setError('Category description is required');
+            return;
+        }
 
         setLoading(true);
         setError('');
@@ -93,14 +99,17 @@ const CreateCategory = () => {
                 // Reset form on success
                 setFormData({
                     name: '',
+                    description: '',
                     slug: '',
-                    brand: ''
+                    brand: '',
+                    descriptionColour: '#000000'
                 });
 
                 navigate('/dashboard/category/list');
 
             } else if (res.data.statusCode === 400) {
                 console.log("Create category error:", res.data.message);
+                setError(res.data.message || 'Failed to create category');
             }
 
         } catch (error) {
@@ -134,10 +143,8 @@ const CreateCategory = () => {
         try {
             setLoading(true);
             const formDataForUpload = new FormData();
-            // Correct field name for pricing groups discounts
             formDataForUpload.append('commerce-categories', selectedFile);
 
-            // Correct API endpoint for pricing groups discounts import
             const res = await axiosInstance.post('/brand/import-commerce-categories', formDataForUpload, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -176,15 +183,21 @@ const CreateCategory = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // if (!file.name.toLowerCase().endsWith('.csv') || !file.name.toLowerCase().endsWith('.xlsx') ) {
-            //     setError('Please select a valid CSV file');
-            //     // return;
-            // }
             setSelectedFile(file);
             setError('');
         }
     };
 
+    const handleClearForm = () => {
+        setFormData({ 
+            name: '', 
+            description: '',
+            slug: '', 
+            brand: '',
+            descriptionColour: '#000000' 
+        });
+        setError('');
+    };
 
     useEffect(() => {
         fetchBrandsList();
@@ -212,6 +225,92 @@ const CreateCategory = () => {
                         disabled={loading}
                         placeholder="Enter category name"
                     />
+                </Grid>
+
+                {/* Category Description */}
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="category-description"
+                        sx={{ mt: 0 }}
+                    >
+                        Category Description
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                </Grid>
+                <Grid size={12}>
+                    <CustomOutlinedInput
+                        id="category-description"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        disabled={loading}
+                        placeholder="Enter category description"
+                    />
+                </Grid>
+
+                {/* Description Color */}
+                <Grid size={12}>
+                    <CustomFormLabel
+                        htmlFor="description-colour"
+                        sx={{ mt: 0 }}
+                    >
+                        Description Color
+                    </CustomFormLabel>
+                </Grid>
+                <Grid size={12}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <CustomOutlinedInput
+                            id="description-colour"
+                            type="color"
+                            value={formData.descriptionColour}
+                            onChange={(e) => setFormData({ ...formData, descriptionColour: e.target.value })}
+                            disabled={loading}
+                            sx={{
+                                width: '100px',
+                                height: '56px',
+                                padding: '4px',
+                                cursor: 'pointer',
+                                '& input[type="color"]': {
+                                    cursor: 'pointer',
+                                    border: 'none',
+                                    width: '100%',
+                                    height: '100%'
+                                }
+                            }}
+                        />
+                        <CustomOutlinedInput
+                            fullWidth
+                            value={formData.descriptionColour}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Allow hex color format validation
+                                if (/^#[0-9A-Fa-f]{0,6}$/.test(value) || value === '') {
+                                    setFormData({ ...formData, descriptionColour: value });
+                                }
+                            }}
+                            disabled={loading}
+                            placeholder="#000000"
+                            inputProps={{
+                                maxLength: 7,
+                                pattern: '^#[0-9A-Fa-f]{6}$'
+                            }}
+                        />
+                        <Box
+                            sx={{
+                                width: '56px',
+                                height: '56px',
+                                backgroundColor: formData.descriptionColour,
+                                border: '1px solid rgba(0, 0, 0, 0.23)',
+                                borderRadius: '4px',
+                                flexShrink: 0
+                            }}
+                        />
+                    </Box>
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                        Choose a color for the category description text. Preview shown on the right.
+                    </Typography>
                 </Grid>
 
                 {/* Brand Selection */}
@@ -312,10 +411,7 @@ const CreateCategory = () => {
                     <Button
                         variant="outlined"
                         color="secondary"
-                        onClick={() => {
-                            setFormData({ name: '', slug: '', brand: '' });
-                            setError('');
-                        }}
+                        onClick={handleClearForm}
                         disabled={loading}
                         sx={{ ml: 2, minWidth: '120px' }}
                     >
@@ -365,7 +461,7 @@ const CreateCategory = () => {
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                            Select a CSV file to import multiple commerce categories  at once.
+                            Select a CSV file to import multiple commerce categories at once.
                         </Typography>
 
                         <input
