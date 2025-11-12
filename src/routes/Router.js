@@ -121,6 +121,9 @@ const ListContactUsData = Loadable(lazy(() => import('../views/admin/contactUsDa
 
 const AdminEmails = Loadable(lazy(() => import('../views/admin/adminEmailsManager/AdminEmails')));
 
+const CreateCarouselImages = Loadable(lazy(() => import('../views/admin/homeCarousel/CreateCarouselImages')));
+const EditCarouselImages = Loadable(lazy(() => import('../views/admin/homeCarousel/EditCarouselImages')));
+
 
 
 const Router = [
@@ -250,6 +253,11 @@ const Router = [
       { path: '/dashboard/contact-us-data/List', element: <ListContactUsData /> },
 
       { path: '/dashboard/admin/emails', element: <AdminEmails /> },
+
+      { path: '/dashboard/home-page-carousel/Create', element: <CreateCarouselImages /> },
+      { path: '/dashboard/home-page-carousel/Edit', element: <EditCarouselImages /> },
+
+
 
     ],
   },

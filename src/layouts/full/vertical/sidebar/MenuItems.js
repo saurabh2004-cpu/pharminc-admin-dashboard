@@ -379,26 +379,26 @@ const Menuitems = [
       },
     ]
   },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Customer Specific Amounts ',
-  //   icon: IconNotebook,
-  //   href: '/dashboard/customer-specific-amounts',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: ' Create Customer Specific Amounts',
-  //       icon: IconPoint,
-  //       href: '/dashboard/customer-specific-amounts/create',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: ' Customer Specific Amounts',
-  //       icon: IconPoint,
-  //       href: '/dashboard/customer-specific-amounts/list',
-  //     },
-  //   ]
-  // },
+  {
+    id: uniqueId(),
+    title: 'Home Page Carousel ',
+    icon: IconNotebook,
+    href: '/dashboard/home-page-carousel',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Upload Images',
+        icon: IconPoint,
+        href: '/dashboard/home-page-carousel/Create',
+      },
+      {
+        id: uniqueId(),
+        title: ' Edit Images',
+        icon: IconPoint,
+        href: '/dashboard/home-page-carousel/Edit',
+      },
+    ]
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Bulk Discounts ',
