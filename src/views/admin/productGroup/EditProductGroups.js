@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Grid,
   MenuItem,
   Select,
   FormControl,
+  Checkbox,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -16,13 +17,17 @@ import {
   ListItemText,
   IconButton,
   Card,
-  CardContent
+  CardContent,
+  Autocomplete,
+  TextField,
+  InputAdornment,
+  Alert
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
-import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash } from '@tabler/icons-react';
+import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash, IconSearch, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 
@@ -60,6 +65,10 @@ const EditProductGroups = () => {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [productPackTypes, setProductPackTypes] = useState({});
+  const [productUnitsQuantities, setProductUnitsQuantities] = useState({});
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [stockWarnings, setStockWarnings] = useState({});
 
   // Commerce category states
   const [categoryOne, setCategoryOne] = useState([]);
@@ -68,6 +77,26 @@ const EditProductGroups = () => {
   const [categoryFour, setCategoryFour] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [taxOptions, setTaxOptions] = useState([true, false]);
+
+  // Filter products for search
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+
+    if (!productSearchQuery.trim()) {
+      return products;
+    }
+
+    const query = productSearchQuery.toLowerCase();
+    return products.filter(product =>
+      product.sku?.toLowerCase().includes(query) ||
+      product.ProductName?.toLowerCase().includes(query) ||
+      product.eachPrice?.toString().includes(query)
+    );
+  }, [products, productSearchQuery]);
+
+  const handleProductSearch = (event) => {
+    setProductSearchQuery(event.target.value);
+  };
 
   // Generate slug from name
   const generateSlug = (name) => {
@@ -87,12 +116,72 @@ const EditProductGroups = () => {
     }));
   };
 
+  // Stock level checking
+  const checkStockLevel = (productId, packTypeId = null, unitsQuantity = null) => {
+    const product = products.find(p => p._id === productId);
+    if (!product) return { isValid: true, message: '' };
+
+    const packIdToUse = packTypeId || productPackTypes[productId];
+    const unitsToUse = unitsQuantity !== null ? unitsQuantity : (productUnitsQuantities[productId] || 1);
+
+    if (!packIdToUse) return { isValid: true, message: '' };
+
+    const packQuantity = getPackQuantity(productId, packIdToUse);
+    const totalRequestedQuantity = packQuantity * unitsToUse;
+    const availableStock = product.stockLevel || 0;
+
+    if (totalRequestedQuantity > availableStock) {
+      const exceedsBy = totalRequestedQuantity - availableStock;
+      return {
+        isValid: false,
+        message: `Stock level exceeds by ${exceedsBy} units. Available: ${availableStock}. Please change pack type or reduce units quantity.`,
+        exceedsBy,
+        availableStock,
+        requestedQuantity: totalRequestedQuantity
+      };
+    }
+
+    return { isValid: true, message: '' };
+  };
+
+  const handlePackTypeChange = (productId, packTypeId) => {
+    setProductPackTypes(prev => ({
+      ...prev,
+      [productId]: packTypeId
+    }));
+
+    const stockCheck = checkStockLevel(productId, packTypeId);
+    setStockWarnings(prev => ({
+      ...prev,
+      [productId]: stockCheck
+    }));
+
+    // Reset units quantity to 1 when pack type changes
+    setProductUnitsQuantities(prev => ({
+      ...prev,
+      [productId]: 1
+    }));
+  };
+
+  const handleUnitsQuantityChange = (productId, quantity) => {
+    const newQuantity = parseInt(quantity) || 0;
+    setProductUnitsQuantities(prev => ({
+      ...prev,
+      [productId]: newQuantity
+    }));
+
+    const stockCheck = checkStockLevel(productId, null, newQuantity);
+    setStockWarnings(prev => ({
+      ...prev,
+      [productId]: stockCheck
+    }));
+  };
+
   // Handle product selection
   const handleProductSelection = (e) => {
     const selectedIds = e.target.value;
     setSelectedProductIds(selectedIds);
 
-    // Calculate total price from selected products
     const selectedProducts = products.filter(product =>
       selectedIds.includes(product._id)
     );
@@ -100,6 +189,27 @@ const EditProductGroups = () => {
     const totalPrice = selectedProducts.reduce((sum, product) => {
       return sum + (product.eachPrice || 0);
     }, 0);
+
+    const newPackTypes = { ...productPackTypes };
+    const newUnitsQuantities = { ...productUnitsQuantities };
+    const newStockWarnings = { ...stockWarnings };
+
+    selectedIds.forEach(id => {
+      if (!newPackTypes[id]) {
+        const product = products.find(p => p._id === id);
+        if (product && product.typesOfPacks && product.typesOfPacks.length > 0) {
+          newPackTypes[id] = product.typesOfPacks[0]._id;
+          newUnitsQuantities[id] = 1;
+
+          const stockCheck = checkStockLevel(id, product.typesOfPacks[0]._id, 1);
+          newStockWarnings[id] = stockCheck;
+        }
+      }
+    });
+
+    setProductPackTypes(newPackTypes);
+    setProductUnitsQuantities(newUnitsQuantities);
+    setStockWarnings(newStockWarnings);
 
     setFormData(prev => ({
       ...prev,
@@ -121,11 +231,60 @@ const EditProductGroups = () => {
       return sum + (product.eachPrice || 0);
     }, 0);
 
+    const newPackTypes = { ...productPackTypes };
+    const newUnitsQuantities = { ...productUnitsQuantities };
+    const newStockWarnings = { ...stockWarnings };
+    delete newPackTypes[productId];
+    delete newUnitsQuantities[productId];
+    delete newStockWarnings[productId];
+
+    setProductPackTypes(newPackTypes);
+    setProductUnitsQuantities(newUnitsQuantities);
+    setStockWarnings(newStockWarnings);
+
     setFormData(prev => ({
       ...prev,
       products: updatedSelectedIds,
       price: totalPrice
     }));
+  };
+
+  const getPackQuantity = (productId, packTypeId) => {
+    const product = products.find(p => p._id === productId);
+    if (product && product.typesOfPacks) {
+      const pack = product.typesOfPacks.find(p => p._id === packTypeId);
+      return pack ? parseInt(pack.quantity) : 1;
+    }
+    return 1;
+  };
+
+  const getPackTypeName = (productId, packTypeId) => {
+    const product = products.find(p => p._id === productId);
+    if (product && product.typesOfPacks) {
+      const pack = product.typesOfPacks.find(p => p._id === packTypeId);
+      return pack ? pack.name : 'Each';
+    }
+    return 'Each';
+  };
+
+  const hasStockIssues = () => {
+    return Object.values(stockWarnings).some(warning => warning && !warning.isValid);
+  };
+
+  const prepareProductsData = () => {
+    return selectedProductIds.map(productId => {
+      const packTypeId = productPackTypes[productId];
+      const packQuantity = getPackQuantity(productId, packTypeId);
+      const unitsQuantity = productUnitsQuantities[productId] || 1;
+      const packTypeName = getPackTypeName(productId, packTypeId);
+
+      return {
+        product: productId,
+        packType: packTypeName,
+        packQuantity: packQuantity,
+        unitsQuantity: unitsQuantity
+      };
+    });
   };
 
   // Image handling functions
@@ -202,13 +361,36 @@ const EditProductGroups = () => {
       return;
     }
 
+    const missingPackTypes = selectedProductIds.filter(id => !productPackTypes[id]);
+    if (missingPackTypes.length > 0) {
+      setError('Please select pack types for all selected products');
+      return;
+    }
+
+    const missingUnitsQuantities = selectedProductIds.filter(id =>
+      !productUnitsQuantities[id] || productUnitsQuantities[id] <= 0
+    );
+    if (missingUnitsQuantities.length > 0) {
+      setError('Please enter valid units quantities for all selected products');
+      return;
+    }
+
+    if (hasStockIssues()) {
+      setError('Some products have stock level issues. Please resolve them before updating the product group.');
+      return;
+    }
+
     setLoading(true);
     setError('');
+
+    // Prepare products data with new structure
+    const productsData = prepareProductsData();
 
     // Create FormData object for multipart form submission
     const formDataToSend = new FormData();
     formDataToSend.append('name', formData.name);
     formDataToSend.append('slug', formData.slug);
+    formDataToSend.append('sku', formData.sku);
     formDataToSend.append('eachPrice', formData.eachPrice);
     formDataToSend.append('price', formData.price.toString());
     formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
@@ -225,11 +407,10 @@ const EditProductGroups = () => {
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
     if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
     if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
-    if (formData.sku) formDataToSend.append('sku', formData.sku);
     if (formData.sequence !== null) formDataToSend.append('sequence', formData.sequence);
 
-    // Append products as JSON string
-    formDataToSend.append('products', JSON.stringify(selectedProductIds));
+    // Append products as JSON string with new structure
+    formDataToSend.append('products', JSON.stringify(productsData));
 
     // Append thumbnail image if a new one was selected
     if (thumbnailFile) {
@@ -264,6 +445,7 @@ const EditProductGroups = () => {
     }
   };
 
+  // Fetch functions (same as before)
   const fetchProducts = async () => {
     try {
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
@@ -302,7 +484,6 @@ const EditProductGroups = () => {
     }
   };
 
-  // Fetch functions for commerce categories
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
@@ -398,7 +579,7 @@ const EditProductGroups = () => {
           sku: productGroup.sku || '',
           name: productGroup.name || '',
           slug: productGroup.slug || '',
-          products: productGroup.products ? productGroup.products.map(p => p._id) : [],
+          products: productGroup.products ? productGroup.products.map(p => p.product._id) : [],
           price: productGroup.price || 0,
           eachPrice: productGroup.eachPrice || '',
           primaryUnitsType: productGroup.primaryUnitsType || '',
@@ -417,36 +598,68 @@ const EditProductGroups = () => {
         });
 
         // Set selected product IDs
-        const productIds = productGroup.products ? productGroup.products.map(p => p._id) : [];
+        const productIds = productGroup.products ? productGroup.products.map(p => p.product._id) : [];
         setSelectedProductIds(productIds);
 
-        // Set thumbnail preview if exists
-        if (productGroup.thumbnail) {
-          setThumbnailPreview(productGroup.thumbnail);
+        // Set pack types and quantities from existing product group data
+        const packTypes = {};
+        const unitsQuantities = {};
+        const stockWarningsData = {};
+
+        if (productGroup.products && productGroup.products.length > 0) {
+          productGroup.products.forEach(productItem => {
+            const productId = productItem.product._id;
+
+            // Find the pack type ID by matching the packType name
+            const product = products.find(p => p._id === productId);
+            if (product && product.typesOfPacks) {
+              const packType = product.typesOfPacks.find(pack =>
+                pack.name === productItem.packType
+              );
+              if (packType) {
+                packTypes[productId] = packType._id;
+                unitsQuantities[productId] = productItem.unitsQuantity;
+
+                // Check stock level
+                const stockCheck = checkStockLevel(productId, packType._id, productItem.unitsQuantity);
+                stockWarningsData[productId] = stockCheck;
+              }
+            }
+          });
         }
 
-        // Set existing images previews
-        if (productGroup.images && Array.isArray(productGroup.images)) {
-          // Filter out the thumbnail from images array to avoid duplication
-          const additionalImages = productGroup.images.filter(img => img !== productGroup.thumbnail);
-          setImagePreviews(additionalImages);
+        setProductPackTypes(packTypes);
+        setProductUnitsQuantities(unitsQuantities);
+        setStockWarnings(stockWarningsData);
+
+        // IMPORTANT: Set thumbnail preview using the actual S3 URL from the response
+        if (productGroup.thumbnailUrl) {
+          setThumbnailPreview(productGroup.thumbnailUrl);
+        } else if (productGroup.thumbnail) {
+          // Fallback: construct URL if thumbnailUrl is not available
+          setThumbnailPreview(`https://${process.env.CLAUDE_FRONT_URL}/product-group-images/${productGroup.thumbnail}`);
         }
 
-        console.log("Loaded product group:", {
+        // IMPORTANT: Set existing images previews using the actual S3 URLs from the response
+        if (productGroup.imageUrls && Array.isArray(productGroup.imageUrls)) {
+          // Use the imageUrls array which contains full S3 URLs
+          setImagePreviews(productGroup.imageUrls);
+        } else if (productGroup.images && Array.isArray(productGroup.images)) {
+          // Fallback: construct URLs if imageUrls is not available
+          const imageUrls = productGroup.images.map(image =>
+            `https://${process.env.CLAUDE_FRONT_URL}/product-group-images/${image}`
+          );
+          setImagePreviews(imageUrls);
+        }
+
+        console.log("Loaded product group with images:", {
           name: productGroup.name,
-          products: productIds,
-          price: productGroup.price,
-          eachPrice: productGroup.eachPrice,
           thumbnail: productGroup.thumbnail,
+          thumbnailUrl: productGroup.thumbnailUrl,
           images: productGroup.images,
-          commerceCategories: {
-            one: commerceCategoriesOneId,
-            two: commerceCategoriesTwoId,
-            three: commerceCategoriesThreeId,
-            four: commerceCategoriesFourId
-          },
-          pricingGroup: pricingGroupId,
-          taxable: productGroup.taxable
+          imageUrls: productGroup.imageUrls,
+          thumbnailPreview: productGroup.thumbnailUrl,
+          imagePreviews: productGroup.imageUrls || productGroup.images
         });
 
         // Fetch child categories based on loaded commerce categories
@@ -522,8 +735,13 @@ const EditProductGroups = () => {
     fetchProducts();
     fetchPricingGroups();
     fetchBrandsList();
-    fetchProductGroupDetails();
-  }, [id]);
+  }, []);
+
+  useEffect(() => {
+    if (products.length > 0 && id) {
+      fetchProductGroupDetails();
+    }
+  }, [products, id]);
 
   // Get selected products details for display
   const selectedProductsDetails = products.filter(product =>
@@ -550,16 +768,16 @@ const EditProductGroups = () => {
         </Grid>
 
         <Grid size={6}>
-          <CustomFormLabel htmlFor="name" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="sku" sx={{ mt: 2 }}>
             Product Group SKU
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="name"
+            id="sku"
             fullWidth
             value={formData.sku}
             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-            disabled={loading}
+            disabled={loading || fetching}
             placeholder="Enter Product Group SKU"
           />
         </Grid>
@@ -608,29 +826,46 @@ const EditProductGroups = () => {
               </Typography>
             )}
           </Box>
+
+          {/* Show current thumbnail preview */}
           {thumbnailPreview && (
-            <Box sx={{ mt: 2, position: 'relative', display: 'inline-block' }}>
-              <img
-                src={thumbnailPreview}
-                alt="Thumbnail preview"
-                style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #ddd' }}
-              />
-              <Button
-                size="small"
-                onClick={handleRemoveThumbnail}
-                sx={{
-                  position: 'absolute',
-                  top: -10,
-                  right: -10,
-                  minWidth: 'auto',
-                  padding: '4px',
-                  backgroundColor: 'error.main',
-                  color: 'white',
-                  '&:hover': { backgroundColor: 'error.dark' }
-                }}
-              >
-                <IconX size="1rem" />
-              </Button>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                Current Thumbnail:
+              </Typography>
+              <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                <img
+                  src={thumbnailPreview}
+                  alt="Thumbnail preview"
+                  style={{
+                    maxWidth: '200px',
+                    maxHeight: '200px',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    console.error('Error loading thumbnail:', thumbnailPreview);
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <Button
+                  size="small"
+                  onClick={handleRemoveThumbnail}
+                  sx={{
+                    position: 'absolute',
+                    top: -10,
+                    right: -10,
+                    minWidth: 'auto',
+                    padding: '4px',
+                    backgroundColor: 'error.main',
+                    color: 'white',
+                    '&:hover': { backgroundColor: 'error.dark' }
+                  }}
+                >
+                  <IconX size="1rem" />
+                </Button>
+              </Box>
             </Box>
           )}
         </Grid>
@@ -660,37 +895,57 @@ const EditProductGroups = () => {
             </Button>
             {imageFiles.length > 0 && (
               <Typography variant="body2" color="primary">
-                {imageFiles.length} image{imageFiles.length > 1 ? 's' : ''} selected
+                {imageFiles.length} new image{imageFiles.length > 1 ? 's' : ''} selected
               </Typography>
             )}
           </Box>
+
+          {/* Show current images previews */}
           {imagePreviews.length > 0 && (
-            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              {imagePreviews.map((preview, index) => (
-                <Box key={index} sx={{ position: 'relative', display: 'inline-block' }}>
-                  <img
-                    src={preview}
-                    alt={`Product ${index + 1}`}
-                    style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '4px', border: '1px solid #ddd' }}
-                  />
-                  <Button
-                    size="small"
-                    onClick={() => handleRemoveImage(index)}
-                    sx={{
-                      position: 'absolute',
-                      top: -10,
-                      right: -10,
-                      minWidth: 'auto',
-                      padding: '4px',
-                      backgroundColor: 'error.main',
-                      color: 'white',
-                      '&:hover': { backgroundColor: 'error.dark' }
-                    }}
-                  >
-                    <IconX size="1rem" />
-                  </Button>
-                </Box>
-              ))}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                Current Images ({imagePreviews.length}):
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {imagePreviews.map((preview, index) => (
+                  <Box key={index} sx={{ position: 'relative', display: 'inline-block' }}>
+                    <img
+                      src={preview}
+                      alt={`Product image ${index + 1}`}
+                      style={{
+                        maxWidth: '150px',
+                        maxHeight: '150px',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd',
+                        objectFit: 'cover'
+                      }}
+                      onError={(e) => {
+                        console.error('Error loading image:', preview);
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <Button
+                      size="small"
+                      onClick={() => handleRemoveImage(index)}
+                      sx={{
+                        position: 'absolute',
+                        top: -10,
+                        right: -10,
+                        minWidth: 'auto',
+                        padding: '4px',
+                        backgroundColor: 'error.main',
+                        color: 'white',
+                        '&:hover': { backgroundColor: 'error.dark' }
+                      }}
+                    >
+                      <IconX size="1rem" />
+                    </Button>
+                    <Typography variant="caption" display="block" textAlign="center" sx={{ mt: 0.5 }}>
+                      Image {index + 1}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
             </Box>
           )}
         </Grid>
@@ -731,33 +986,210 @@ const EditProductGroups = () => {
             Select Pricing Group
           </CustomFormLabel>
           <FormControl fullWidth>
-            <Select
+            <Autocomplete
               id="pricing-group-select"
-              value={formData.pricingGroup}
-              onChange={(e) => setFormData({ ...formData, pricingGroup: e.target.value })}
-              disabled={loading || fetching || pricingGroups.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
+              value={pricingGroups.find(group => group._id === formData.pricingGroup) || null}
+              onChange={(event, newValue) => {
+                setFormData({ ...formData, pricingGroup: newValue ? newValue._id : '' });
               }}
-            >
-              <MenuItem value="" disabled>
-                {pricingGroups.length === 0 ? 'Loading types...' : 'Select a type'}
-              </MenuItem>
-              {pricingGroups.map((group) => (
-                <MenuItem key={group.name} value={group._id}>
-                  {group.name}
-                </MenuItem>
-              ))}
-            </Select>
+              options={pricingGroups}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || fetching || pricingGroups.length === 0}
+              noOptionsText={pricingGroups.length === 0 ? 'Loading types...' : 'No pricing groups found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={pricingGroups.length === 0 ? 'Loading types...' : 'Search and select a pricing group'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+          </FormControl>
+        </Grid>
+
+        {/* Commerce Categories */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
+            Select Commerce Category One (Brand)
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Autocomplete
+              id="commerce-category-one-select"
+              value={categoryOne.find(category => category._id === formData.commerceCategoriesOne) || null}
+              onChange={(event, newValue) => {
+                setFormData({
+                  ...formData,
+                  commerceCategoriesOne: newValue ? newValue._id : '',
+                  commerceCategoriesTwo: '',
+                  commerceCategoriesThree: '',
+                  commerceCategoriesFour: ''
+                });
+              }}
+              options={categoryOne}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || fetching || categoryOne.length === 0}
+              noOptionsText={categoryOne.length === 0 ? 'Loading brands...' : 'No brands found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryOne.length === 0 ? 'Loading brands...' : 'Search and select a brand'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
+            Select Commerce Category Two
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Autocomplete
+              id="commerce-category-two-select"
+              value={categoryTwo.find(category => category._id === formData.commerceCategoriesTwo) || null}
+              onChange={(event, newValue) => {
+                setFormData({
+                  ...formData,
+                  commerceCategoriesTwo: newValue ? newValue._id : '',
+                  commerceCategoriesThree: '',
+                  commerceCategoriesFour: ''
+                });
+              }}
+              options={categoryTwo}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || fetching || categoryTwo.length === 0}
+              noOptionsText={categoryTwo.length === 0 ? 'Select brand first...' : 'No categories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryTwo.length === 0 ? 'Select brand first...' : 'Search and select a category'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
+            Select Commerce Category Three
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Autocomplete
+              id="commerceCategoryThree-select"
+              value={categoryThree.find(category => category._id === formData.commerceCategoriesThree) || null}
+              onChange={(event, newValue) => {
+                setFormData({
+                  ...formData,
+                  commerceCategoriesThree: newValue ? newValue._id : '',
+                  commerceCategoriesFour: ''
+                });
+              }}
+              options={categoryThree}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || fetching || categoryThree.length === 0}
+              noOptionsText={categoryThree.length === 0 ? 'Select category first...' : 'No subcategories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryThree.length === 0 ? 'Select category first...' : 'Search and select a subcategory'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
+            Select Commerce Category Four
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Autocomplete
+              id="commerceCategoryFour-select"
+              value={categoryFour.find(category => category._id === formData.commerceCategoriesFour) || null}
+              onChange={(event, newValue) => {
+                setFormData({ ...formData, commerceCategoriesFour: newValue ? newValue._id : '' });
+              }}
+              options={categoryFour}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              disabled={loading || fetching || categoryFour.length === 0}
+              noOptionsText={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'No sub-subcategories found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'Search and select a sub-subcategory'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.23)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(0, 0, 0, 0.87)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
         </Grid>
 
@@ -800,182 +1232,17 @@ const EditProductGroups = () => {
         </Grid>
 
         <Grid size={6}>
-          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="sequence" sx={{ mt: 2 }}>
             Sequence
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="stockLevel"
+            id="sequence"
             fullWidth
             value={formData.sequence}
             onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Sequence "
+            disabled={loading || fetching}
+            placeholder="Enter Sequence"
           />
-        </Grid>
-
-        {/* Commerce Categories */}
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
-            Select Commerce Category One (Brand)
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-          <FormControl fullWidth>
-            <Select
-              id="commerce-category-one-select"
-              value={formData.commerceCategoriesOne}
-              onChange={(e) => {
-                setFormData({
-                  ...formData,
-                  commerceCategoriesOne: e.target.value,
-                  commerceCategoriesTwo: '',
-                  commerceCategoriesThree: '',
-                  commerceCategoriesFour: ''
-                });
-              }}
-              disabled={loading || fetching || categoryOne.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {categoryOne.length === 0 ? 'Loading brands...' : 'Select a brand'}
-              </MenuItem>
-              {categoryOne.map((category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
-            Select Commerce Category Two
-          </CustomFormLabel>
-          <FormControl fullWidth>
-            <Select
-              id="commerce-category-two-select"
-              value={formData.commerceCategoriesTwo}
-              onChange={(e) => {
-                setFormData({
-                  ...formData,
-                  commerceCategoriesTwo: e.target.value,
-                  commerceCategoriesThree: '',
-                  commerceCategoriesFour: ''
-                });
-              }}
-              disabled={loading || fetching || categoryTwo.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {categoryTwo.length === 0 ? 'Select brand first...' : 'Select a category'}
-              </MenuItem>
-              {categoryTwo.map((category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
-            Select Commerce Category Three
-          </CustomFormLabel>
-          <FormControl fullWidth>
-            <Select
-              id="commerceCategoryThree-select"
-              value={formData.commerceCategoriesThree}
-              onChange={(e) => {
-                setFormData({
-                  ...formData,
-                  commerceCategoriesThree: e.target.value,
-                  commerceCategoriesFour: ''
-                });
-              }}
-              disabled={loading || fetching || categoryThree.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {categoryThree.length === 0 ? 'Select category first...' : 'Select a subcategory'}
-              </MenuItem>
-              {categoryThree.map((category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
-            Select Commerce Category Four
-          </CustomFormLabel>
-          <FormControl fullWidth>
-            <Select
-              id="commerceCategoryFour-select"
-              value={formData.commerceCategoriesFour}
-              onChange={(e) => {
-                setFormData({ ...formData, commerceCategoriesFour: e.target.value });
-              }}
-              disabled={loading || fetching || categoryFour.length === 0}
-              displayEmpty
-              sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 0, 0, 0.87)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                {categoryFour.length === 0 ? 'No SubCategory Two Available' : 'Select a sub-subcategory'}
-              </MenuItem>
-              {categoryFour.map((category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </Grid>
 
         {/* Product Selection */}
@@ -998,47 +1265,193 @@ const EditProductGroups = () => {
                 }
                 return `${selected.length} product(s) selected`;
               }}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 400,
+                  },
+                },
+              }}
             >
+              {/* Search Input */}
+              <Box sx={{ px: 2, py: 1, position: 'sticky', top: 0, backgroundColor: 'background.paper', zIndex: 1 }}>
+                <TextField
+                  size="small"
+                  placeholder="Search products..."
+                  fullWidth
+                  value={productSearchQuery}
+                  onChange={handleProductSearch}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconSearch size="1rem" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
+
               <MenuItem value="" disabled>
                 {!Array.isArray(products) || products.length === 0 ? 'Loading products...' : 'Select products'}
               </MenuItem>
-              {Array.isArray(products) && products.map((product) => (
-                <MenuItem key={product._id} value={product._id}>
-                  {product.sku} - {product.ProductName} - ${product.eachPrice}
+
+              {Array.isArray(products) && filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <MenuItem key={product._id} value={product._id}>
+                    <Checkbox checked={selectedProductIds.indexOf(product._id) > -1} />
+                    <ListItemText
+                      primary={`${product.sku} - ${product.ProductName}`}
+                      secondary={`$${product.eachPrice} | Stock: ${product.stockLevel || 0}`}
+                    />
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>
+                  No products found
                 </MenuItem>
-              ))}
+              )}
             </Select>
           </FormControl>
         </Grid>
 
-        {/* Selected Products Display */}
+        {/* Selected Products Display with Pack Type and Units Quantity Selection */}
         {selectedProductsDetails.length > 0 && (
           <Grid size={12}>
             <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
               Selected Products ({selectedProductsDetails.length})
             </Typography>
+
+            {hasStockIssues() && (
+              <Alert
+                severity="warning"
+                sx={{ mb: 2 }}
+                icon={<IconAlertCircle />}
+              >
+                Some products have stock level issues. Please adjust pack types or quantities before updating the product group.
+              </Alert>
+            )}
+
             <Card variant="outlined">
               <CardContent>
                 <List dense>
-                  {selectedProductsDetails.map((product) => (
-                    <ListItem
-                      key={product._id}
-                      secondaryAction={
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleRemoveProduct(product._id)}
-                          disabled={loading || fetching}
-                        >
-                          <IconTrash size="1rem" />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={`${product.sku} - ${product.ProductName}`}
-                        secondary={`Price: $${product.eachPrice}`}
-                      />
-                    </ListItem>
-                  ))}
+                  {selectedProductsDetails.map((product) => {
+                    const stockWarning = stockWarnings[product._id];
+                    const hasStockIssue = stockWarning && !stockWarning.isValid;
+
+                    return (
+                      <ListItem
+                        key={product._id}
+                        secondaryAction={
+                          <IconButton
+                            edge="end"
+                            onClick={() => handleRemoveProduct(product._id)}
+                            disabled={loading || fetching}
+                          >
+                            <IconTrash size="1rem" />
+                          </IconButton>
+                        }
+                      >
+                        <Box sx={{ width: '100%' }}>
+                          <ListItemText
+                            primary={`${product.sku} - ${product.ProductName}`}
+                            secondary={
+                              <Box>
+                                <Typography variant="body2" color="textSecondary">
+                                  Price: ${product.eachPrice} | Available Stock: {product.stockLevel || 0}
+                                </Typography>
+                                {hasStockIssue && (
+                                  <Alert
+                                    severity="error"
+                                    sx={{ mt: 1 }}
+                                    icon={<IconAlertCircle size={18} />}
+                                  >
+                                    {stockWarning.message}
+                                  </Alert>
+                                )}
+                              </Box>
+                            }
+                          />
+
+                          <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                            {/* Pack Type Selection */}
+                            {product.typesOfPacks && product.typesOfPacks.length > 0 && (
+                              <FormControl sx={{ minWidth: 200 }} error={hasStockIssue}>
+                                <CustomFormLabel htmlFor={`pack-type-${product._id}`}>
+                                  Pack Type
+                                </CustomFormLabel>
+                                <Select
+                                  id={`pack-type-${product._id}`}
+                                  value={productPackTypes[product._id] || ''}
+                                  onChange={(e) => handlePackTypeChange(product._id, e.target.value)}
+                                  displayEmpty
+                                  size="small"
+                                  disabled={loading || fetching}
+                                >
+                                  <MenuItem value="" disabled>
+                                    Select Pack Type
+                                  </MenuItem>
+                                  {product.typesOfPacks.map((pack) => (
+                                    <MenuItem key={pack._id} value={pack._id}>
+                                      {pack.name} (Pack Qty: {pack.quantity})
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            )}
+
+                            {/* Units Quantity Input */}
+                            <FormControl sx={{ minWidth: 150 }} error={hasStockIssue}>
+                              <CustomFormLabel htmlFor={`units-quantity-${product._id}`}>
+                                Units Quantity
+                              </CustomFormLabel>
+                              <CustomOutlinedInput
+                                id={`units-quantity-${product._id}`}
+                                type="number"
+                                value={productUnitsQuantities[product._id] ?? 1}
+                                onChange={(e) => handleUnitsQuantityChange(product._id, e.target.value)}
+                                disabled={loading || fetching}
+                                placeholder="Enter units"
+                                size="small"
+                                inputProps={{ min: 1 }}
+                              />
+                            </FormControl>
+
+                            {/* Display Pack Quantity (read-only) */}
+                            {productPackTypes[product._id] && (
+                              <FormControl sx={{ minWidth: 150 }}>
+                                <CustomFormLabel htmlFor={`pack-quantity-${product._id}`}>
+                                  Pack Quantity
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                  id={`pack-quantity-${product._id}`}
+                                  value={getPackQuantity(product._id, productPackTypes[product._id])}
+                                  disabled
+                                  size="small"
+                                />
+                              </FormControl>
+                            )}
+
+                            {/* Display Total Requested Quantity */}
+                            {productPackTypes[product._id] && (
+                              <FormControl sx={{ minWidth: 150 }}>
+                                <CustomFormLabel htmlFor={`total-quantity-${product._id}`}>
+                                  Total Units
+                                </CustomFormLabel>
+                                <CustomOutlinedInput
+                                  id={`total-quantity-${product._id}`}
+                                  value={getPackQuantity(product._id, productPackTypes[product._id]) * (productUnitsQuantities[product._id] || 1)}
+                                  disabled
+                                  size="small"
+                                />
+                              </FormControl>
+                            )}
+                          </Box>
+                        </Box>
+                      </ListItem>
+                    );
+                  })}
                 </List>
               </CardContent>
             </Card>
@@ -1053,6 +1466,8 @@ const EditProductGroups = () => {
           <CustomOutlinedInput
             id="storeDescription"
             fullWidth
+            multiline
+            rows={4}
             value={formData.storeDescription}
             onChange={(e) => setFormData({ ...formData, storeDescription: e.target.value })}
             disabled={loading || fetching}
@@ -1126,7 +1541,7 @@ const EditProductGroups = () => {
             variant="contained"
             color="primary"
             onClick={handleSubmit}
-            disabled={loading || fetching}
+            disabled={loading || fetching || hasStockIssues()}
             sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
           >
             {loading ? 'Updating...' : 'Update Product Group'}
@@ -1142,9 +1557,6 @@ const EditProductGroups = () => {
           </Button>
         </Grid>
       </Grid>
-
-
-
     </div>
   );
 };

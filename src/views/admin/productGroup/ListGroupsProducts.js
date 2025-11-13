@@ -20,7 +20,6 @@ import {
   TextField,
   InputAdornment,
   Paper,
-  Button,
   Chip,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
@@ -31,10 +30,18 @@ import { useNavigate, useParams } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
+  // Handle nested product object
+  const aValue = orderBy.startsWith('product.') 
+    ? a.product?.[orderBy.split('.')[1]]
+    : a[orderBy];
+  const bValue = orderBy.startsWith('product.') 
+    ? b.product?.[orderBy.split('.')[1]]
+    : b[orderBy];
+
+  if (bValue < aValue) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (bValue > aValue) {
     return 1;
   }
   return 0;
@@ -159,6 +166,9 @@ const EnhancedTableToolbar = (props) => {
               <Typography variant="h6" fontWeight="600">
                 {productGroupInfo.name}
               </Typography>
+              <Typography variant="caption" color="textSecondary">
+                SKU: {productGroupInfo.sku} | Total Products: {productGroupInfo.products?.length || 0}
+              </Typography>
             </Box>
           )}
 
@@ -200,7 +210,7 @@ const EnhancedTableToolbar = (props) => {
 
 const ListProductGroupProducts = () => {
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('sku');
+  const [orderBy, setOrderBy] = useState('product.sku');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -224,43 +234,61 @@ const ListProductGroupProducts = () => {
       disablePadding: false,
     },
     {
-      id: 'sku',
+      id: 'product.sku',
       label: 'SKU',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'ProductName',
+      id: 'product.ProductName',
       label: 'Product Name',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'eachPrice',
+      id: 'packType',
+      label: 'Pack Type',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'packQuantity',
+      label: 'Pack Qty',
+      numeric: true,
+      disablePadding: false,
+    },
+    {
+      id: 'unitsQuantity',
+      label: 'Units Qty',
+      numeric: true,
+      disablePadding: false,
+    },
+    {
+      id: 'product.eachPrice',
       label: 'Price',
       numeric: true,
       disablePadding: false,
     },
     {
-      id: 'type',
+      id: 'product.type',
       label: 'Type',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'stockLevel',
+      id: 'product.stockLevel',
       label: 'Stock',
       numeric: true,
       disablePadding: false,
     },
     {
-      id: 'pricingGroup',
+      id: 'product.pricingGroup',
       label: 'Pricing Group',
       numeric: false,
       disablePadding: false,
     },
     {
-      id: 'brand',
+      id: 'product.commerceCategoriesOne',
       label: 'Brand',
       numeric: false,
       disablePadding: false,
@@ -304,368 +332,401 @@ const ListProductGroupProducts = () => {
     setSearch(searchValue);
 
     const filteredRows = tableData.filter((row) => {
+      const product = row.product || {};
       return (
-        row?.sku?.toLowerCase().includes(searchValue) ||
-        row?.ProductName?.toLowerCase().includes(searchValue) ||
-        row?.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
-        row?.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue) ||
-        row?.type?.toLowerCase().includes(searchValue)
+        product.sku?.toLowerCase().includes(searchValue) ||
+        product.ProductName?.toLowerCase().includes(searchValue) ||
+        product.pricingGroup?.name?.toLowerCase().includes(searchValue) ||
+        product.commerceCategoriesOne?.name?.toLowerCase().includes(searchValue) ||
+        product.type?.toLowerCase().includes(searchValue) ||
+        row.packType?.toLowerCase().includes(searchValue)
       );
-  });
-  setRows(filteredRows);
-};
+    });
+    setRows(filteredRows);
+  };
 
-const handleRequestSort = (event, property) => {
-  const isAsc = orderBy === property && order === 'asc';
-  setOrder(isAsc ? 'desc' : 'asc');
-  setOrderBy(property);
-};
+  const handleRequestSort = (event, property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
 
-const handleSelectAllClick = (event) => {
-  if (event.target.checked) {
-    const newSelecteds = rows.map((n) => n._id);
-    setSelected(newSelecteds);
-    return;
-  }
-  setSelected([]);
-};
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelecteds = rows.map((n) => n._id);
+      setSelected(newSelecteds);
+      return;
+    }
+    setSelected([]);
+  };
 
-const handleClick = (event, productId) => {
-  const selectedIndex = selected.indexOf(productId);
-  let newSelected = [];
+  const handleClick = (event, itemId) => {
+    const selectedIndex = selected.indexOf(itemId);
+    let newSelected = [];
 
-  if (selectedIndex === -1) {
-    newSelected = newSelected.concat(selected, productId);
-  } else if (selectedIndex === 0) {
-    newSelected = newSelected.concat(selected.slice(1));
-  } else if (selectedIndex === selected.length - 1) {
-    newSelected = newSelected.concat(selected.slice(0, -1));
-  } else if (selectedIndex > 0) {
-    newSelected = newSelected.concat(
-      selected.slice(0, selectedIndex),
-      selected.slice(selectedIndex + 1),
-    );
-  }
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, itemId);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1),
+      );
+    }
 
-  setSelected(newSelected);
-};
+    setSelected(newSelected);
+  };
 
-const handleChangePage = (event, newPage) => {
-  setPage(newPage);
-};
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
 
-const handleChangeRowsPerPage = (event) => {
-  setRowsPerPage(parseInt(event.target.value, 10));
-  setPage(0);
-};
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
-const isSelected = (productId) => selected.indexOf(productId) !== -1;
+  const isSelected = (itemId) => selected.indexOf(itemId) !== -1;
 
-const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-const theme = useTheme();
-const borderColor = theme.palette.divider;
+  const theme = useTheme();
+  const borderColor = theme.palette.divider;
 
-const [deleteDialog, setDeleteDialog] = useState({
-  open: false,
-  productId: null,
-  productName: '',
-  isDeleting: false
-});
-
-const handleDeleteCancel = () => {
-  setDeleteDialog({
+  const [deleteDialog, setDeleteDialog] = useState({
     open: false,
-    productId: null,
+    itemId: null,
     productName: '',
     isDeleting: false
   });
-};
 
-const handleRemoveClick = (event, productId, productName) => {
-  event.stopPropagation();
-  setDeleteDialog({
-    open: true,
-    productId,
-    productName,
-    isDeleting: false
-  });
-};
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      open: false,
+      itemId: null,
+      productName: '',
+      isDeleting: false
+    });
+  };
 
-// Remove product from product group
-const handleRemoveFromGroup = async () => {
-  try {
-    setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
+  const handleRemoveClick = (event, itemId, productName) => {
+    event.stopPropagation();
+    setDeleteDialog({
+      open: true,
+      itemId,
+      productName,
+      isDeleting: false
+    });
+  };
 
-    const res = await axiosInstance.delete(
-      `/product-group/remove-product-from-product-group/${id}/${deleteDialog.productId}`
-    );
+  // Remove product from product group
+  const handleRemoveFromGroup = async () => {
+    try {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
 
-    console.log("removed product from group", res.data);
+      const res = await axiosInstance.delete(
+        `/product-group/remove-product-from-product-group/${id}/${deleteDialog.itemId}`
+      );
 
-    if (res.data.statusCode === 200) {
-      // Remove product from local state
-      setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.productId));
-      setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.productId));
+      console.log("removed product from group", res.data);
 
-      // Update product group info
-      setProductGroupInfo(prev => ({
-        ...prev,
-        products: prev.products.filter(product => product._id !== deleteDialog.productId),
-        price: prev.price - (prev.products.find(p => p._id === deleteDialog.productId)?.eachPrice || 0)
-      }));
+      if (res.data.statusCode === 200) {
+        // Remove product from local state
+        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
+        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
 
-      handleDeleteCancel();
+        // Update product group info
+        if (productGroupInfo) {
+          setProductGroupInfo(prev => ({
+            ...prev,
+            products: prev.products.filter(item => item._id !== deleteDialog.itemId)
+          }));
+        }
+
+        handleDeleteCancel();
+      }
+    } catch (error) {
+      console.error('Error removing product from group:', error);
+      setError(error.response?.data?.message || error.message || 'Error removing product from group');
+    } finally {
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
     }
-  } catch (error) {
-    console.error('Error removing product from group:', error);
-    setError(error.response?.data?.message || error.message || 'Error removing product from group');
-  } finally {
-    setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
+  };
+
+  // Edit product
+  const handleEditProduct = (productId) => {
+    navigate(`/dashboard/products/edit/${productId}`);
+  };
+
+  // Back to product groups list
+  const handleBack = () => {
+    navigate('/dashboard/productGroup/list');
+  };
+
+  const stickyCellStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 5,
+    backgroundColor: '#ffffff',
+  };
+
+  // Column widths for better layout
+  const columnWidths = {
+    actions: { minWidth: '120px' },
+    image: { minWidth: '100px' },
+    sku: { minWidth: '150px' },
+    ProductName: { minWidth: '250px' },
+    packType: { minWidth: '150px' },
+    packQuantity: { minWidth: '100px' },
+    unitsQuantity: { minWidth: '100px' },
+    eachPrice: { minWidth: '100px' },
+    type: { minWidth: '150px' },
+    stockLevel: { minWidth: '100px' },
+    pricingGroup: { minWidth: '180px' },
+    brand: { minWidth: '180px' },
+    createdAt: { minWidth: '150px' },
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <Typography>Loading product group products...</Typography>
+      </Box>
+    );
   }
-};
 
-// Edit product
-const handleEditProduct = (productId) => {
-  navigate(`/dashboard/products/edit/${productId}`);
-};
-
-// Back to product groups list
-const handleBack = () => {
-  navigate('/dashboard/productGroup/list');
-};
-
-const stickyCellStyle = {
-  position: "sticky",
-  left: 0,
-  zIndex: 5,
-  backgroundColor: '#f0f8ff',
-};
-
-// Column widths for better layout
-const columnWidths = {
-  actions: { minWidth: '120px' },
-  image: { minWidth: '100px' },
-  sku: { minWidth: '150px' },
-  ProductName: { minWidth: '250px' },
-  eachPrice: { minWidth: '100px' },
-  type: { minWidth: '150px' },
-  stockLevel: { minWidth: '100px' },
-  pricingGroup: { minWidth: '180px' },
-  brand: { minWidth: '180px' },
-  createdAt: { minWidth: '150px' },
-};
-
-if (loading) {
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-      <Typography>Loading product group products...</Typography>
+    <Box>
+      <Box>
+        <EnhancedTableToolbar
+          numSelected={selected.length}
+          search={search}
+          handleSearch={handleSearch}
+          placeholder="Search Products in Group"
+          productGroupInfo={productGroupInfo}
+          onBack={handleBack}
+        />
+
+        <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
+          <TableContainer>
+            <Table
+              sx={{
+                minWidth: 1500,
+                borderCollapse: "collapse",
+                "& td, & th": {
+                  borderRight: "1px solid rgba(224, 224, 224, 1)",
+                },
+                "& td:last-child, & th:last-child": {
+                  borderRight: "none",
+                },
+              }}
+              aria-labelledby="tableTitle"
+              size={dense ? "small" : "medium"}
+            >
+              <EnhancedTableHead
+                numSelected={selected.length}
+                order={order}
+                orderBy={orderBy}
+                onSelectAllClick={handleSelectAllClick}
+                onRequestSort={handleRequestSort}
+                rowCount={rows.length}
+                showCheckBox={false}
+                headCells={headCells}
+              />
+              <TableBody>
+                {stableSort(rows, getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((row, index) => {
+                    const isItemSelected = isSelected(row._id);
+                    const product = row.product || {};
+
+                    return (
+                      <TableRow
+                        hover
+                        role="checkbox"
+                        aria-checked={isItemSelected}
+                        tabIndex={-1}
+                        key={row._id}
+                        selected={isItemSelected}
+                      >
+                        {/* Actions Column */}
+                        <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
+                          <Box display="flex" gap={1}>
+                            <Tooltip title="Edit Product">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleEditProduct(product._id)}
+                              >
+                                <IconEdit size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Remove from Group">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => handleRemoveClick(e, row._id, product.ProductName)}
+                              >
+                                <IconTrash size="1.1rem" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+
+                        {/* Product Image */}
+                        <TableCell sx={columnWidths.image}>
+                          <Box
+                            component="img"
+                            src={product.thumbnailUrl || product.images || '/default-product.png'}
+                            alt={product.ProductName}
+                            onError={(e) => {
+                              e.target.src = '/default-product.png';
+                            }}
+                            sx={{
+                              width: 60,
+                              height: 60,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '1px solid #e0e0e0'
+                            }}
+                          />
+                        </TableCell>
+
+                        {/* SKU */}
+                        <TableCell sx={columnWidths.sku}>
+                          <Typography fontWeight="600" variant="body2">
+                            {product.sku || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Product Name */}
+                        <TableCell sx={columnWidths.ProductName}>
+                          <Typography fontWeight="500">
+                            {product.ProductName || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Pack Type */}
+                        <TableCell sx={columnWidths.packType}>
+                          <Chip 
+                            label={row.packType || 'N/A'} 
+                            size="small" 
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </TableCell>
+
+                        {/* Pack Quantity */}
+                        <TableCell align="center" sx={columnWidths.packQuantity}>
+                          <Typography fontWeight="600">
+                            {row.packQuantity || 0}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Units Quantity */}
+                        <TableCell align="center" sx={columnWidths.unitsQuantity}>
+                          <Typography fontWeight="600" color="primary">
+                            {row.unitsQuantity || 0}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Price */}
+                        <TableCell align="center" sx={columnWidths.eachPrice}>
+                          <Typography fontWeight="600">
+                            ${product.eachPrice ? parseFloat(product.eachPrice).toFixed(2) : '0.00'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Type */}
+                        <TableCell sx={columnWidths.type}>
+                          <Typography fontWeight="600">
+                            {product.type || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Stock Level */}
+                        <TableCell align="center" sx={columnWidths.stockLevel}>
+                          <Chip
+                            label={product.stockLevel || 0}
+                            size="small"
+                            color={product.stockLevel > 50 ? 'success' : product.stockLevel > 0 ? 'warning' : 'error'}
+                          />
+                        </TableCell>
+
+                        {/* Pricing Group */}
+                        <TableCell sx={columnWidths.pricingGroup}>
+                          <Typography variant="body2">
+                            {product.pricingGroup?.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Brand */}
+                        <TableCell sx={columnWidths.brand}>
+                          <Typography variant="body2">
+                            {product.commerceCategoriesOne?.name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Created Date */}
+                        <TableCell sx={columnWidths.createdAt}>
+                          <Typography variant="body2">
+                            {product.createdAt ? format(new Date(product.createdAt), 'E, MMM d yyyy') : 'N/A'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                {emptyRows > 0 && (
+                  <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
+                    <TableCell colSpan={headCells.length + 2} />
+                  </TableRow>
+                )}
+                {rows.length === 0 && !loading && (
+                  <TableRow>
+                    <TableCell colSpan={headCells.length + 2} align="center" sx={{ py: 3 }}>
+                      <Typography variant="h6" color="textSecondary">
+                        {search ? 'No products found matching your search' : 'No products in this group'}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 30, 50, 100]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      </Box>
+
+      {/* Show error if any */}
+      {error && (
+        <Box sx={{ p: 2 }}>
+          <Typography color="error">Error: {error}</Typography>
+        </Box>
+      )}
+
+      <DeleteConfirmationDialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        onConfirm={handleRemoveFromGroup}
+        itemName={deleteDialog.productName}
+        isDeleting={deleteDialog.isDeleting}
+        itemType={"Product from Group"}
+        actionText="Remove"
+        message="Are you sure you want to remove this product from the product group?"
+      />
     </Box>
   );
-}
-
-return (
-  <Box>
-    <Box>
-      <EnhancedTableToolbar
-        numSelected={selected.length}
-        search={search}
-        handleSearch={handleSearch}
-        placeholder="Search Products in Group"
-        productGroupInfo={productGroupInfo}
-        onBack={handleBack}
-      />
-
-      <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
-        <TableContainer>
-          <Table
-            sx={{
-              minWidth: 1200,
-              borderCollapse: "collapse",
-              "& td, & th": {
-                borderRight: "1px solid rgba(224, 224, 224, 1)",
-              },
-              "& td:last-child, & th:last-child": {
-                borderRight: "none",
-              },
-            }}
-            aria-labelledby="tableTitle"
-            size={dense ? "small" : "medium"}
-          >
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              onSelectAllClick={handleSelectAllClick}
-              onRequestSort={handleRequestSort}
-              rowCount={rows.length}
-              showCheckBox={false}
-              headCells={headCells}
-            />
-            <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row, index) => {
-                  const isItemSelected = isSelected(row._id);
-
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={row._id}
-                      selected={isItemSelected}
-                    >
-                      {/* Actions Column */}
-                      <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
-                        <Box display="flex" gap={1}>
-                          <Tooltip title="Edit Product">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleEditProduct(row._id)}
-                            >
-                              <IconEdit size="1.1rem" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Remove from Group">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={(e) => handleRemoveClick(e, row._id, row.ProductName)}
-                            >
-                              <IconTrash size="1.1rem" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
-
-                      {/* Product Image */}
-                      <TableCell sx={columnWidths.image}>
-                        <Box
-                          component="img"
-                          src={row.images?.[0] || '/default-product.png'}
-                          alt={row.ProductName}
-                          sx={{
-                            width: 60,
-                            height: 60,
-                            objectFit: 'cover',
-                            borderRadius: 1
-                          }}
-                        />
-                      </TableCell>
-
-                      {/* SKU */}
-                      <TableCell sx={columnWidths.sku}>
-                        <Typography fontWeight="600" variant="body2">
-                          {row.sku || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      {/* Product Name */}
-                      <TableCell sx={columnWidths.ProductName}>
-                        <Typography fontWeight="500">
-                          {row.ProductName || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      {/* Price */}
-                      <TableCell align="center" sx={columnWidths.eachPrice}>
-                        <Typography fontWeight="600" >
-                          ${row.eachPrice ? parseFloat(row.eachPrice).toFixed(2) : '0.00'}
-                        </Typography>
-                      </TableCell>
-
-                      {/* Type */}
-                      <TableCell sx={columnWidths.type}>
-                        <Typography
-                          fontWeight="600"
-                        >
-                          {row.type}
-                        </Typography>
-                      </TableCell>
-
-                      {/* Stock Level */}
-                      <TableCell align="center" sx={columnWidths.stockLevel}>
-                        <Typography
-                          fontWeight="600"
-                        >
-                          {row.stockLevel || 0}
-                        </Typography>
-                      </TableCell>
-
-                      {/* Pricing Group */}
-                      <TableCell sx={columnWidths.pricingGroup}>
-                        <Typography variant="body2">
-                          {row.pricingGroup?.name || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      {/* Brand */}
-                      <TableCell sx={columnWidths.brand}>
-                        <Typography variant="body2">
-                          {row.commerceCategoriesOne?.name || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      {/* Created Date */}
-                      <TableCell sx={columnWidths.createdAt}>
-                        <Typography variant="body2">
-                          {row.createdAt ? format(new Date(row.createdAt), 'E, MMM d yyyy') : 'N/A'}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              {emptyRows > 0 && (
-                <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                  <TableCell colSpan={headCells.length + 2} />
-                </TableRow>
-              )}
-              {rows.length === 0 && !loading && (
-                <TableRow>
-                  <TableCell colSpan={headCells.length + 2} align="center" sx={{ py: 3 }}>
-                    <Typography variant="h6" color="textSecondary">
-                      {search ? 'No products found matching your search' : 'No products in this group'}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 30, 50, 100]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-    </Box>
-
-    {/* Show error if any */}
-    {error && (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">Error: {error}</Typography>
-      </Box>
-    )}
-
-    <DeleteConfirmationDialog
-      open={deleteDialog.open}
-      onClose={handleDeleteCancel}
-      onConfirm={handleRemoveFromGroup}
-      itemName={deleteDialog.productName}
-      isDeleting={deleteDialog.isDeleting}
-      itemType={"Product from Group"}
-      actionText="Remove"
-      message="Are you sure you want to remove this product from the product group?"
-    />
-  </Box>
-);
 };
 
 export default ListProductGroupProducts;

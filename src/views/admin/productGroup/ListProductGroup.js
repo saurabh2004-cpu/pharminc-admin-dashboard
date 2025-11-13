@@ -562,7 +562,7 @@ const ListProductGroup = () => {
                           <Box display="flex" alignItems="center" >
                             <Box>
                               <img
-                                src={row.thumbnail}
+                                src={row.thumbnailUrl}
                                 alt={row.sku}
                                 style={{ width: "70px", height: "70px", objectFit: "cover" }}
                               />

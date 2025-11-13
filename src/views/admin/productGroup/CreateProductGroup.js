@@ -20,13 +20,14 @@ import {
     CardContent,
     Autocomplete,
     TextField,
-    InputAdornment
+    InputAdornment,
+    Alert
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
-import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash, IconSearch } from '@tabler/icons-react';
+import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash, IconSearch, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 
@@ -62,7 +63,10 @@ const CreateProductGroup = () => {
     const [imagePreviews, setImagePreviews] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
+    const [productPackTypes, setProductPackTypes] = useState({});
+    const [productUnitsQuantities, setProductUnitsQuantities] = useState({});
     const [productSearchQuery, setProductSearchQuery] = useState('');
+    const [stockWarnings, setStockWarnings] = useState({});
 
     // Commerce category states
     const [categoryOne, setCategoryOne] = useState([]);
@@ -93,13 +97,10 @@ const CreateProductGroup = () => {
         );
     }, [products, productSearchQuery]);
 
-    // Add this handler
     const handleProductSearch = (event) => {
         setProductSearchQuery(event.target.value);
     };
 
-
-    // Generate slug from name
     const generateSlug = (name) => {
         return name
             .toLowerCase()
@@ -107,7 +108,6 @@ const CreateProductGroup = () => {
             .replace(/(^-|-$)/g, '');
     };
 
-    // Handle name change and auto-generate slug
     const handleNameChange = (e) => {
         const name = e.target.value;
         setFormData(prev => ({
@@ -117,12 +117,69 @@ const CreateProductGroup = () => {
         }));
     };
 
-    // Handle product selection
+    const checkStockLevel = (productId, packTypeId = null, unitsQuantity = null) => {
+        const product = products.find(p => p._id === productId);
+        if (!product) return { isValid: true, message: '' };
+
+        const packIdToUse = packTypeId || productPackTypes[productId];
+        const unitsToUse = unitsQuantity !== null ? unitsQuantity : (productUnitsQuantities[productId] || 1);
+
+        if (!packIdToUse) return { isValid: true, message: '' };
+
+        const packQuantity = getPackQuantity(productId, packIdToUse);
+        const totalRequestedQuantity = packQuantity * unitsToUse;
+        const availableStock = product.stockLevel || 0;
+
+        if (totalRequestedQuantity > availableStock) {
+            const exceedsBy = totalRequestedQuantity - availableStock;
+            return {
+                isValid: false,
+                message: `Stock level exceeds by ${exceedsBy} units. Available: ${availableStock}. Please change pack type or reduce units quantity.`,
+                exceedsBy,
+                availableStock,
+                requestedQuantity: totalRequestedQuantity
+            };
+        }
+
+        return { isValid: true, message: '' };
+    };
+
+    const handlePackTypeChange = (productId, packTypeId) => {
+        setProductPackTypes(prev => ({
+            ...prev,
+            [productId]: packTypeId
+        }));
+
+        const stockCheck = checkStockLevel(productId, packTypeId);
+        setStockWarnings(prev => ({
+            ...prev,
+            [productId]: stockCheck
+        }));
+
+        setProductUnitsQuantities(prev => ({
+            ...prev,
+            [productId]: 1
+        }));
+    };
+
+    const handleUnitsQuantityChange = (productId, quantity) => {
+        const newQuantity = parseInt(quantity) || 0;
+        setProductUnitsQuantities(prev => ({
+            ...prev,
+            [productId]: newQuantity
+        }));
+
+        const stockCheck = checkStockLevel(productId, null, newQuantity);
+        setStockWarnings(prev => ({
+            ...prev,
+            [productId]: stockCheck
+        }));
+    };
+
     const handleProductSelection = (e) => {
         const selectedIds = e.target.value;
         setSelectedProductIds(selectedIds);
 
-        // Calculate total price from selected products
         const selectedProducts = products.filter(product =>
             selectedIds.includes(product._id)
         );
@@ -131,6 +188,27 @@ const CreateProductGroup = () => {
             return sum + (product.eachPrice || 0);
         }, 0);
 
+        const newPackTypes = { ...productPackTypes };
+        const newUnitsQuantities = { ...productUnitsQuantities };
+        const newStockWarnings = { ...stockWarnings };
+
+        selectedIds.forEach(id => {
+            if (!newPackTypes[id]) {
+                const product = products.find(p => p._id === id);
+                if (product && product.typesOfPacks && product.typesOfPacks.length > 0) {
+                    newPackTypes[id] = product.typesOfPacks[0]._id;
+                    newUnitsQuantities[id] = 1;
+                    
+                    const stockCheck = checkStockLevel(id, product.typesOfPacks[0]._id, 1);
+                    newStockWarnings[id] = stockCheck;
+                }
+            }
+        });
+        
+        setProductPackTypes(newPackTypes);
+        setProductUnitsQuantities(newUnitsQuantities);
+        setStockWarnings(newStockWarnings);
+
         setFormData(prev => ({
             ...prev,
             products: selectedIds,
@@ -138,7 +216,6 @@ const CreateProductGroup = () => {
         }));
     };
 
-    // Remove selected product
     const handleRemoveProduct = (productId) => {
         const updatedSelectedIds = selectedProductIds.filter(id => id !== productId);
         setSelectedProductIds(updatedSelectedIds);
@@ -151,6 +228,17 @@ const CreateProductGroup = () => {
             return sum + (product.eachPrice || 0);
         }, 0);
 
+        const newPackTypes = { ...productPackTypes };
+        const newUnitsQuantities = { ...productUnitsQuantities };
+        const newStockWarnings = { ...stockWarnings };
+        delete newPackTypes[productId];
+        delete newUnitsQuantities[productId];
+        delete newStockWarnings[productId];
+        
+        setProductPackTypes(newPackTypes);
+        setProductUnitsQuantities(newUnitsQuantities);
+        setStockWarnings(newStockWarnings);
+
         setFormData(prev => ({
             ...prev,
             products: updatedSelectedIds,
@@ -158,7 +246,44 @@ const CreateProductGroup = () => {
         }));
     };
 
-    // Image handling functions
+    const getPackQuantity = (productId, packTypeId) => {
+        const product = products.find(p => p._id === productId);
+        if (product && product.typesOfPacks) {
+            const pack = product.typesOfPacks.find(p => p._id === packTypeId);
+            return pack ? parseInt(pack.quantity) : 1;
+        }
+        return 1;
+    };
+
+    const getPackTypeName = (productId, packTypeId) => {
+        const product = products.find(p => p._id === productId);
+        if (product && product.typesOfPacks) {
+            const pack = product.typesOfPacks.find(p => p._id === packTypeId);
+            return pack ? pack.name : 'Each';
+        }
+        return 'Each';
+    };
+
+    const hasStockIssues = () => {
+        return Object.values(stockWarnings).some(warning => warning && !warning.isValid);
+    };
+
+    const prepareProductsData = () => {
+        return selectedProductIds.map(productId => {
+            const packTypeId = productPackTypes[productId];
+            const packQuantity = getPackQuantity(productId, packTypeId);
+            const unitsQuantity = productUnitsQuantities[productId] || 1;
+            const packTypeName = getPackTypeName(productId, packTypeId);
+
+            return {
+                product: productId,
+                packType: packTypeName,
+                packQuantity: packQuantity,
+                unitsQuantity: unitsQuantity
+            };
+        });
+    };
+
     const handleThumbnailChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -210,7 +335,6 @@ const CreateProductGroup = () => {
     };
 
     const handleSubmit = async () => {
-        // Validation
         if (!formData.name.trim()) {
             setError('Please enter a product group name');
             return;
@@ -236,19 +360,39 @@ const CreateProductGroup = () => {
             return;
         }
 
+        const missingPackTypes = selectedProductIds.filter(id => !productPackTypes[id]);
+        if (missingPackTypes.length > 0) {
+            setError('Please select pack types for all selected products');
+            return;
+        }
+
+        const missingUnitsQuantities = selectedProductIds.filter(id =>
+            !productUnitsQuantities[id] || productUnitsQuantities[id] <= 0
+        );
+        if (missingUnitsQuantities.length > 0) {
+            setError('Please enter valid units quantities for all selected products');
+            return;
+        }
+
+        if (hasStockIssues()) {
+            setError('Some products have stock level issues. Please resolve them before creating the product group.');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
-        // Create FormData object for multipart form submission
+        const productsData = prepareProductsData();
+
         const formDataToSend = new FormData();
         formDataToSend.append('name', formData.name);
         formDataToSend.append('slug', formData.slug);
+        formDataToSend.append('sku', formData.sku);
         formDataToSend.append('eachPrice', formData.eachPrice);
         formDataToSend.append('price', formData.price.toString());
         formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
         formDataToSend.append('taxable', formData.taxable.toString());
 
-        // Append all other fields
         if (formData.primaryUnitsType) formDataToSend.append('primaryUnitsType', formData.primaryUnitsType);
         if (formData.pricingGroup) formDataToSend.append('pricingGroup', formData.pricingGroup);
         if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
@@ -259,13 +403,10 @@ const CreateProductGroup = () => {
         if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
         if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
         if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
-        if (formData.sku) formDataToSend.append('sku', formData.sku);
         if (formData.sequence) formDataToSend.append('sequence', formData.sequence);
 
-        // Append products as JSON string
-        formDataToSend.append('products', JSON.stringify(selectedProductIds));
+        formDataToSend.append('products', JSON.stringify(productsData));
 
-        // Append images
         formDataToSend.append('productGroupThumbnail', thumbnailFile);
         imageFiles.forEach((file) => {
             formDataToSend.append('images', file);
@@ -281,8 +422,8 @@ const CreateProductGroup = () => {
             console.log("Create product group response:", res);
 
             if (res.data.statusCode === 200) {
-                // Reset form on success
                 setFormData({
+                    sku: '',
                     name: '',
                     slug: '',
                     products: [],
@@ -300,8 +441,12 @@ const CreateProductGroup = () => {
                     packBarcodes: '',
                     taxable: true,
                     comparePrice: '',
+                    sequence: '',
                 });
                 setSelectedProductIds([]);
+                setProductPackTypes({});
+                setProductUnitsQuantities({});
+                setStockWarnings({});
                 handleRemoveThumbnail();
                 setImageFiles([]);
                 imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
@@ -320,7 +465,6 @@ const CreateProductGroup = () => {
         }
     };
 
-    // File import handlers
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -437,7 +581,6 @@ const CreateProductGroup = () => {
         if (fileInput) fileInput.value = '';
     };
 
-    // Fetch functions
     const fetchProducts = async () => {
         try {
             setLoading(true);
@@ -553,7 +696,6 @@ const CreateProductGroup = () => {
         }
     };
 
-    // Effects for commerce category dependencies
     useEffect(() => {
         if (formData.commerceCategoriesOne) {
             fetchCategoryList();
@@ -602,7 +744,6 @@ const CreateProductGroup = () => {
         fetchBrandsList();
     }, []);
 
-    // Get selected products details for display
     const selectedProductsDetails = products.filter(product =>
         selectedProductIds.includes(product._id)
     );
@@ -627,12 +768,12 @@ const CreateProductGroup = () => {
                 </Grid>
 
                 <Grid size={6}>
-                    <CustomFormLabel htmlFor="name" sx={{ mt: 2 }}>
+                    <CustomFormLabel htmlFor="sku" sx={{ mt: 2 }}>
                         Product Group SKU
                         <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
                     <CustomOutlinedInput
-                        id="name"
+                        id="sku"
                         fullWidth
                         value={formData.sku}
                         onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
@@ -801,9 +942,6 @@ const CreateProductGroup = () => {
                         placeholder="Enter Compare Price"
                     />
                 </Grid>
-
-
-
 
                 {/* Pricing Group */}
                 <Grid size={6}>
@@ -1057,16 +1195,16 @@ const CreateProductGroup = () => {
                 </Grid>
 
                 <Grid size={6}>
-                    <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+                    <CustomFormLabel htmlFor="sequence" sx={{ mt: 2 }}>
                         Sequence
                     </CustomFormLabel>
                     <CustomOutlinedInput
-                        id="stockLevel"
+                        id="sequence"
                         fullWidth
                         value={formData.sequence}
                         onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
                         disabled={loading}
-                        placeholder="Enter Sequence "
+                        placeholder="Enter Sequence"
                     />
                 </Grid>
 
@@ -1128,7 +1266,7 @@ const CreateProductGroup = () => {
                                         <Checkbox checked={selectedProductIds.indexOf(product._id) > -1} />
                                         <ListItemText
                                             primary={`${product.sku} - ${product.ProductName}`}
-                                            secondary={`$${product.eachPrice}`}
+                                            secondary={`$${product.eachPrice} | Stock: ${product.stockLevel || 0}`}
                                         />
                                     </MenuItem>
                                 ))
@@ -1141,34 +1279,141 @@ const CreateProductGroup = () => {
                     </FormControl>
                 </Grid>
 
-                {/* Selected Products Display */}
+                {/* Selected Products Display with Pack Type and Units Quantity Selection */}
                 {selectedProductsDetails.length > 0 && (
                     <Grid size={12}>
                         <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
                             Selected Products ({selectedProductsDetails.length})
                         </Typography>
+                        
+                        {hasStockIssues() && (
+                            <Alert 
+                                severity="warning" 
+                                sx={{ mb: 2 }}
+                                icon={<IconAlertCircle />}
+                            >
+                                Some products have stock level issues. Please adjust pack types or quantities before creating the product group.
+                            </Alert>
+                        )}
+
                         <Card variant="outlined">
                             <CardContent>
                                 <List dense>
-                                    {selectedProductsDetails.map((product) => (
-                                        <ListItem
-                                            key={product._id}
-                                            secondaryAction={
-                                                <IconButton
-                                                    edge="end"
-                                                    onClick={() => handleRemoveProduct(product._id)}
-                                                    disabled={loading}
-                                                >
-                                                    <IconTrash size="1rem" />
-                                                </IconButton>
-                                            }
-                                        >
-                                            <ListItemText
-                                                primary={`${product.sku} - ${product.ProductName}`}
-                                                secondary={`Price: $${product.eachPrice}`}
-                                            />
-                                        </ListItem>
-                                    ))}
+                                    {selectedProductsDetails.map((product) => {
+                                        const stockWarning = stockWarnings[product._id];
+                                        const hasStockIssue = stockWarning && !stockWarning.isValid;
+
+                                        return (
+                                            <ListItem
+                                                key={product._id}
+                                                secondaryAction={
+                                                    <IconButton
+                                                        edge="end"
+                                                        onClick={() => handleRemoveProduct(product._id)}
+                                                        disabled={loading}
+                                                    >
+                                                        <IconTrash size="1rem" />
+                                                    </IconButton>
+                                                }
+                                            >
+                                                <Box sx={{ width: '100%' }}>
+                                                    <ListItemText
+                                                        primary={`${product.sku} - ${product.ProductName}`}
+                                                        secondary={
+                                                            <Box>
+                                                                <Typography variant="body2" color="textSecondary">
+                                                                    Price: ${product.eachPrice} | Available Stock: {product.stockLevel || 0}
+                                                                </Typography>
+                                                                {hasStockIssue && (
+                                                                    <Alert 
+                                                                        severity="error" 
+                                                                        sx={{ mt: 1 }}
+                                                                        icon={<IconAlertCircle size={18} />}
+                                                                    >
+                                                                        {stockWarning.message}
+                                                                    </Alert>
+                                                                )}
+                                                            </Box>
+                                                        }
+                                                    />
+
+                                                    <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                                                        {/* Pack Type Selection */}
+                                                        {product.typesOfPacks && product.typesOfPacks.length > 0 && (
+                                                            <FormControl sx={{ minWidth: 200 }} error={hasStockIssue}>
+                                                                <CustomFormLabel htmlFor={`pack-type-${product._id}`}>
+                                                                    Pack Type
+                                                                </CustomFormLabel>
+                                                                <Select
+                                                                    id={`pack-type-${product._id}`}
+                                                                    value={productPackTypes[product._id] || ''}
+                                                                    onChange={(e) => handlePackTypeChange(product._id, e.target.value)}
+                                                                    displayEmpty
+                                                                    size="small"
+                                                                >
+                                                                    <MenuItem value="" disabled>
+                                                                        Select Pack Type
+                                                                    </MenuItem>
+                                                                    {product.typesOfPacks.map((pack) => (
+                                                                        <MenuItem key={pack._id} value={pack._id}>
+                                                                            {pack.name} (Pack Qty: {pack.quantity})
+                                                                        </MenuItem>
+                                                                    ))}
+                                                                </Select>
+                                                            </FormControl>
+                                                        )}
+
+                                                        {/* Units Quantity Input */}
+                                                        <FormControl sx={{ minWidth: 150 }} error={hasStockIssue}>
+                                                            <CustomFormLabel htmlFor={`units-quantity-${product._id}`}>
+                                                                Units Quantity
+                                                            </CustomFormLabel>
+                                                            <CustomOutlinedInput
+                                                                id={`units-quantity-${product._id}`}
+                                                                type="number"
+                                                                value={productUnitsQuantities[product._id] ?? 1}
+                                                                onChange={(e) => handleUnitsQuantityChange(product._id, e.target.value)}
+                                                                disabled={loading}
+                                                                placeholder="Enter units"
+                                                                size="small"
+                                                                inputProps={{ min: 1 }}
+                                                            />
+                                                        </FormControl>
+
+                                                        {/* Display Pack Quantity (read-only) */}
+                                                        {productPackTypes[product._id] && (
+                                                            <FormControl sx={{ minWidth: 150 }}>
+                                                                <CustomFormLabel htmlFor={`pack-quantity-${product._id}`}>
+                                                                    Pack Quantity
+                                                                </CustomFormLabel>
+                                                                <CustomOutlinedInput
+                                                                    id={`pack-quantity-${product._id}`}
+                                                                    value={getPackQuantity(product._id, productPackTypes[product._id])}
+                                                                    disabled
+                                                                    size="small"
+                                                                />
+                                                            </FormControl>
+                                                        )}
+
+                                                        {/* Display Total Requested Quantity */}
+                                                        {productPackTypes[product._id] && (
+                                                            <FormControl sx={{ minWidth: 150 }}>
+                                                                <CustomFormLabel htmlFor={`total-quantity-${product._id}`}>
+                                                                    Total Units
+                                                                </CustomFormLabel>
+                                                                <CustomOutlinedInput
+                                                                    id={`total-quantity-${product._id}`}
+                                                                    value={getPackQuantity(product._id, productPackTypes[product._id]) * (productUnitsQuantities[product._id] || 1)}
+                                                                    disabled
+                                                                    size="small"
+                                                                />
+                                                            </FormControl>
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            </ListItem>
+                                        );
+                                    })}
                                 </List>
                             </CardContent>
                         </Card>
@@ -1183,6 +1428,8 @@ const CreateProductGroup = () => {
                     <CustomOutlinedInput
                         id="storeDescription"
                         fullWidth
+                        multiline
+                        rows={4}
                         value={formData.storeDescription}
                         onChange={(e) => setFormData({ ...formData, storeDescription: e.target.value })}
                         disabled={loading}
@@ -1256,28 +1503,11 @@ const CreateProductGroup = () => {
                         variant="contained"
                         color="primary"
                         onClick={handleSubmit}
-                        disabled={loading}
+                        disabled={loading || hasStockIssues()}
                         sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
                     >
                         {loading ? 'Creating...' : 'Create Product Group'}
                     </Button>
-                    {/* <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => setCsvDialogOpen(true)}
-                        sx={{ ml: 2 }}
-                    >
-                        Import CSV
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => setImageDialogOpen(true)}
-                        startIcon={<IconPhoto size="1.1rem" />}
-                        sx={{ ml: 2 }}
-                    >
-                        Import Product Images
-                    </Button> */}
                     <Button
                         variant="outlined"
                         color="secondary"
@@ -1506,8 +1736,6 @@ const CreateProductGroup = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
-
         </div>
     );
 };
