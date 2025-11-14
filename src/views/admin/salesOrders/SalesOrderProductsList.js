@@ -287,7 +287,7 @@ const CustomersSalesOrders = () => {
             const quantity = parseInt(product.packQuantity) * parseInt(product.unitsQuantity);
 
             console.log(`product-${product.sku} - total quantity - ${quantity}`)
-            
+
             const itemTotal = parseFloat(product.amount) * quantity;
 
             console.log(`product-${product.sku} - total amount - ${itemTotal}`)
@@ -1072,7 +1072,7 @@ const CustomersSalesOrders = () => {
                                                     <TableCell sx={{ width: 100 }}>
                                                         <Box>
                                                             <Typography variant="body2">
-                                                                {row.discountPercentages || ""}
+                                                                {row.discountType.trim() === "Compare Price" ? `$ ${row.discountPercentages}` : row.discountPercentages + "%"}
                                                             </Typography>
                                                         </Box>
                                                     </TableCell>
