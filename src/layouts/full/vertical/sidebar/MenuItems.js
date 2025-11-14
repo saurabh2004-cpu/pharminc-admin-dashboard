@@ -163,27 +163,7 @@ const Menuitems = [
     ]
 
   },
-  {
-    id: uniqueId(),
-    title: 'Pricing Groups',
-    icon: IconTags,
-    href: '/dashboard/pricing-groups',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Create Pricing Group',
-        icon: IconPoint,
-        href: '/dashboard/pricing-groups/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'List Pricing Groups',
-        icon: IconPoint,
-        href: '/dashboard/pricing-groups/list',
-      },
-    ]
 
-  },
   {
     id: uniqueId(),
     title: 'Groups Discounts',
@@ -460,6 +440,29 @@ const Menuitems = [
     navlabel: true,
     subheader: 'Setting And Configuration',
   },
+
+  {
+    id: uniqueId(),
+    title: 'Pricing Groups',
+    icon: IconTags,
+    href: '/dashboard/pricing-groups',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Pricing Group',
+        icon: IconPoint,
+        href: '/dashboard/pricing-groups/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'List Pricing Groups',
+        icon: IconPoint,
+        href: '/dashboard/pricing-groups/list',
+      },
+    ]
+
+  },
+
   {
     id: uniqueId(),
     title: 'Settings',
@@ -478,7 +481,7 @@ const Menuitems = [
         icon: IconUserPlus,
         href: '/dashboard/admin/list',
       },
-      
+
 
 
       {
