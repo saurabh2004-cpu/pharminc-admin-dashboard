@@ -367,9 +367,9 @@ const CustomersSalesOrders = () => {
     };
 
     const handleSubmit = async () => {
-        if (!formData.customerName.trim()) return setError("Customer name is required");
-        if (!formData.salesChannel.trim()) return setError("Sales channel is required");
-        if (!formData.itemSku.trim()) return setError("Item SKU is required");
+        if (!formData.customerName?.trim()) return setError("Customer name is required");
+        if (!formData.salesChannel?.trim()) return setError("Sales channel is required");
+        if (!formData.itemSku?.trim()) return setError("Item SKU is required");
         if (!formData.packQuantity || formData.packQuantity <= 0)
             return setError("Pack quantity is required");
         if (!formData.amount) return setError("Amount is required");
@@ -1072,7 +1072,7 @@ const CustomersSalesOrders = () => {
                                                     <TableCell sx={{ width: 100 }}>
                                                         <Box>
                                                             <Typography variant="body2">
-                                                                {row.discountType.trim() === "Compare Price" ? `$ ${row.discountPercentages}` : row.discountPercentages + "%"}
+                                                                {row.discountType?.trim() === "Compare Price" ? `$ ${row.discountPercentages}` : row.discountPercentages + "%"}
                                                             </Typography>
                                                         </Box>
                                                     </TableCell>
@@ -1206,7 +1206,7 @@ const CustomersSalesOrders = () => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
                                             {tableData[0]?.billingAddress instanceof Object ?
-                                                `${tableData[0]?.billingAddress.billingAddressLineOne || ''} ${tableData[0]?.billingAddress.billingAddressLineTwo || ''} ${tableData[0]?.billingAddress.billingAddressLineThree || ''} ${tableData[0]?.billingAddress.billingCity || ''} ${tableData[0]?.billingAddress.billingState || ''} ${tableData[0]?.billingAddress.billingZip || ''}`.trim()
+                                                `${tableData[0]?.billingAddress.billingAddressLineOne || ''} ${tableData[0]?.billingAddress.billingAddressLineTwo || ''} ${tableData[0]?.billingAddress.billingAddressLineThree || ''} ${tableData[0]?.billingAddress.billingCity || ''} ${tableData[0]?.billingAddress.billingState || ''} ${tableData[0]?.billingAddress.billingZip || ''}`?.trim()
                                                 : `${tableData[0]?.billingAddress || ''}`}
                                         </Typography>
                                     </Box>

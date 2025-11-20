@@ -8,7 +8,8 @@ import {
     CircularProgress,
     IconButton,
     Card,
-    CardMedia
+    CardMedia,
+    TextField
 } from '@mui/material';
 import { IconUpload, IconX } from '@tabler/icons';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -39,11 +40,13 @@ const CreateCarouselImages = () => {
             setError('Some files were skipped. Please select only image files.');
         }
 
-        // Create preview URLs and store files
-        const newDesktopImages = validFiles.map(file => ({
+        // Create preview URLs with sequence and url fields
+        const newDesktopImages = validFiles.map((file, index) => ({
             file,
             preview: URL.createObjectURL(file),
-            name: file.name
+            name: file.name,
+            sequence: desktopImages.length + index + 1,
+            url: ''  // Initialize empty URL
         }));
 
         setDesktopImages(prev => [...prev, ...newDesktopImages]);
@@ -68,11 +71,13 @@ const CreateCarouselImages = () => {
             setError('Some files were skipped. Please select only image files.');
         }
 
-        // Create preview URLs and store files
-        const newMobileImages = validFiles.map(file => ({
+        // Create preview URLs with sequence and url fields
+        const newMobileImages = validFiles.map((file, index) => ({
             file,
             preview: URL.createObjectURL(file),
-            name: file.name
+            name: file.name,
+            sequence: mobileImages.length + index + 1,
+            url: ''  // Initialize empty URL
         }));
 
         setMobileImages(prev => [...prev, ...newMobileImages]);
@@ -82,6 +87,44 @@ const CreateCarouselImages = () => {
         if (mobileFileInputRef.current) {
             mobileFileInputRef.current.value = '';
         }
+    };
+
+    // Handle sequence change for desktop images
+    const handleDesktopSequenceChange = (index, newSequence) => {
+        const numSequence = parseInt(newSequence) || 0;
+        setDesktopImages(prev => {
+            const newImages = [...prev];
+            newImages[index].sequence = numSequence;
+            return newImages;
+        });
+    };
+
+    // Handle sequence change for mobile images
+    const handleMobileSequenceChange = (index, newSequence) => {
+        const numSequence = parseInt(newSequence) || 0;
+        setMobileImages(prev => {
+            const newImages = [...prev];
+            newImages[index].sequence = numSequence;
+            return newImages;
+        });
+    };
+
+    // Handle URL change for desktop images
+    const handleDesktopUrlChange = (index, newUrl) => {
+        setDesktopImages(prev => {
+            const newImages = [...prev];
+            newImages[index].url = newUrl;
+            return newImages;
+        });
+    };
+
+    // Handle URL change for mobile images
+    const handleMobileUrlChange = (index, newUrl) => {
+        setMobileImages(prev => {
+            const newImages = [...prev];
+            newImages[index].url = newUrl;
+            return newImages;
+        });
     };
 
     // Remove desktop image
@@ -106,6 +149,43 @@ const CreateCarouselImages = () => {
         });
     };
 
+    // Validate sequence numbers and URLs
+    const validateSequences = () => {
+        const desktopSequences = desktopImages.map(img => img.sequence);
+        const mobileSequences = mobileImages.map(img => img.sequence);
+
+        // Check for duplicates in desktop
+        if (new Set(desktopSequences).size !== desktopSequences.length) {
+            setError('Desktop images have duplicate sequence numbers. Please use unique sequence numbers.');
+            return false;
+        }
+
+        // Check for duplicates in mobile
+        if (new Set(mobileSequences).size !== mobileSequences.length) {
+            setError('Mobile images have duplicate sequence numbers. Please use unique sequence numbers.');
+            return false;
+        }
+
+        // Check if any sequence is 0 or negative
+        if (desktopSequences.some(seq => seq <= 0) || mobileSequences.some(seq => seq <= 0)) {
+            setError('All sequence numbers must be greater than 0.');
+            return false;
+        }
+
+        // Check if all URLs are filled
+        if (desktopImages.some(img => !img.url || img.url.trim() === '')) {
+            setError('Please provide URL for all desktop images.');
+            return false;
+        }
+
+        if (mobileImages.some(img => !img.url || img.url.trim() === '')) {
+            setError('Please provide URL for all mobile images.');
+            return false;
+        }
+
+        return true;
+    };
+
     // Handle form submission
     const handleSubmit = async () => {
         // Validation
@@ -124,6 +204,11 @@ const CreateCarouselImages = () => {
             return;
         }
 
+        // Validate sequence numbers and URLs
+        if (!validateSequences()) {
+            return;
+        }
+
         setLoading(true);
         setError('');
         setSuccess('');
@@ -131,14 +216,18 @@ const CreateCarouselImages = () => {
         try {
             const formData = new FormData();
 
-            // Append desktop images
+            // Append desktop images with sequence and URL metadata
             desktopImages.forEach((image, index) => {
                 formData.append('desktopImages', image.file);
+                formData.append(`desktopSequence_${index}`, image.sequence);
+                formData.append(`desktopUrl_${index}`, image.url);
             });
 
-            // Append mobile images
+            // Append mobile images with sequence and URL metadata
             mobileImages.forEach((image, index) => {
                 formData.append('mobileImages', image.file);
+                formData.append(`mobileSequence_${index}`, image.sequence);
+                formData.append(`mobileUrl_${index}`, image.url);
             });
 
             const res = await axiosInstance.post('/home-carousel/upload-carousel-images', formData, {
@@ -238,7 +327,7 @@ const CreateCarouselImages = () => {
 
                             <Grid container spacing={2}>
                                 {desktopImages.map((image, index) => (
-                                    <Grid item xs={6} sm={4} md={3} key={index}>
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
                                         <Card
                                             sx={{
                                                 position: 'relative',
@@ -278,6 +367,31 @@ const CreateCarouselImages = () => {
                                                 >
                                                     {image.name}
                                                 </Typography>
+
+                                                {/* Sequence Input Field */}
+                                                <TextField
+                                                    type="number"
+                                                    size="small"
+                                                    label="Sequence"
+                                                    value={image.sequence}
+                                                    onChange={(e) => handleDesktopSequenceChange(index, e.target.value)}
+                                                    inputProps={{ min: '1' }}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+
+                                                {/* URL Input Field */}
+                                                <TextField
+                                                    type="text"
+                                                    size="small"
+                                                    label="URL"
+                                                    placeholder="Enter redirect URL"
+                                                    value={image.url}
+                                                    onChange={(e) => handleDesktopUrlChange(index, e.target.value)}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                    required
+                                                />
                                             </Box>
                                         </Card>
                                     </Grid>
@@ -326,7 +440,7 @@ const CreateCarouselImages = () => {
 
                             <Grid container spacing={2}>
                                 {mobileImages.map((image, index) => (
-                                    <Grid item xs={6} sm={4} md={3} key={index}>
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
                                         <Card
                                             sx={{
                                                 position: 'relative',
@@ -366,6 +480,31 @@ const CreateCarouselImages = () => {
                                                 >
                                                     {image.name}
                                                 </Typography>
+
+                                                {/* Sequence Input Field */}
+                                                <TextField
+                                                    type="number"
+                                                    size="small"
+                                                    label="Sequence"
+                                                    value={image.sequence}
+                                                    onChange={(e) => handleMobileSequenceChange(index, e.target.value)}
+                                                    inputProps={{ min: '1' }}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+
+                                                {/* URL Input Field */}
+                                                <TextField
+                                                    type="text"
+                                                    size="small"
+                                                    label="URL"
+                                                    placeholder="Enter redirect URL"
+                                                    value={image.url}
+                                                    onChange={(e) => handleMobileUrlChange(index, e.target.value)}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                    required
+                                                />
                                             </Box>
                                         </Card>
                                     </Grid>

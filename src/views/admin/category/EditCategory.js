@@ -16,6 +16,7 @@ const CreateCategory = () => {
         brand: '',
         description: '',
         descriptionColour: '#000000',
+        sequence: 0
     });
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
@@ -55,10 +56,10 @@ const CreateCategory = () => {
             setError('Please select a brand');
             return;
         }
-        if (!formData.description.trim()) {
-            setError('Category description is required');
-            return;
-        }
+        // if (!formData.description.trim()) {
+        //     setError('Category description is required');
+        //     return;
+        // }
 
         setLoading(true);
         setError('');
@@ -137,7 +138,8 @@ const CreateCategory = () => {
                     slug: categoryData.slug || '',
                     brand: categoryData.brand?._id || '',
                     description: categoryData.description || '',
-                    descriptionColour: categoryData.descriptionColour || '#000000'
+                    descriptionColour: categoryData.descriptionColour || '#000000',
+                    sequence: categoryData.sequence
                 });
                 setCategory(categoryData);
             }
@@ -161,12 +163,12 @@ const CreateCategory = () => {
             }
         } else {
             // In create mode, clear all fields
-            setFormData({ 
-                name: '', 
-                slug: '', 
-                brand: '', 
+            setFormData({
+                name: '',
+                slug: '',
+                brand: '',
                 description: '',
-                descriptionColour: '#000000' 
+                descriptionColour: '#000000'
             });
         }
         setError('');
@@ -193,7 +195,7 @@ const CreateCategory = () => {
                 </Grid>
 
                 {/* Category Name */}
-                <Grid size={12}>
+                <Grid size={6}>
                     <CustomFormLabel
                         htmlFor="category-name"
                         sx={{ mt: 0 }}
@@ -201,8 +203,7 @@ const CreateCategory = () => {
                         Category Name
                         <span style={{ color: 'red' }}>*</span>
                     </CustomFormLabel>
-                </Grid>
-                <Grid size={12}>
+
                     <CustomOutlinedInput
                         id="category-name"
                         fullWidth
@@ -212,6 +213,28 @@ const CreateCategory = () => {
                         placeholder="Enter category name"
                     />
                 </Grid>
+                {/* Category sequence */}
+                <Grid size={6}>
+                    <CustomFormLabel
+                        htmlFor="category-sequence"
+                        sx={{ mt: 0 }}
+                    >
+                        Category Sequence
+                        <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+
+
+                    <CustomOutlinedInput
+                        id="category-sequence"
+                        fullWidth
+                        value={formData.sequence}
+                        onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+                        disabled={loading}
+                        placeholder="Enter category Sequence"
+                    />
+                </Grid>
+
+
 
                 {/* Category Description */}
                 <Grid size={12}>

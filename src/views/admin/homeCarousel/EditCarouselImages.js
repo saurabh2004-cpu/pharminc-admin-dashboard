@@ -9,7 +9,8 @@ import {
     IconButton,
     Card,
     CardMedia,
-    Alert
+    Alert,
+    TextField
 } from '@mui/material';
 import { IconUpload, IconX } from '@tabler/icons';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -40,6 +41,8 @@ const EditCarouselImages = () => {
             setFetchLoading(true);
             const res = await axiosInstance.get('/home-carousel/get-carousel');
 
+            console.log("res.data", res.data)
+
             if (res.data.statusCode === 200) {
                 const carousel = res.data.data;
                 setDesktopImages(carousel?.desktopImages || []);
@@ -59,7 +62,57 @@ const EditCarouselImages = () => {
         fetchCarouselData();
     }, []);
 
-    // Handle new desktop image selection
+    // Handle existing desktop image sequence change
+    const handleExistingDesktopSequenceChange = (index, newSequence) => {
+        const numSequence = parseInt(newSequence) || 0;
+        setDesktopImages(prev => {
+            const newImages = [...prev];
+            newImages[index] = {
+                ...newImages[index],
+                sequence: numSequence
+            };
+            return newImages;
+        });
+    };
+
+    // Handle existing desktop image URL change
+    const handleExistingDesktopUrlChange = (index, newUrl) => {
+        setDesktopImages(prev => {
+            const newImages = [...prev];
+            newImages[index] = {
+                ...newImages[index],
+                url: newUrl
+            };
+            return newImages;
+        });
+    };
+
+    // Handle existing mobile image sequence change
+    const handleExistingMobileSequenceChange = (index, newSequence) => {
+        const numSequence = parseInt(newSequence) || 0;
+        setMobileImages(prev => {
+            const newImages = [...prev];
+            newImages[index] = {
+                ...newImages[index],
+                sequence: numSequence
+            };
+            return newImages;
+        });
+    };
+
+    // Handle existing mobile image URL change
+    const handleExistingMobileUrlChange = (index, newUrl) => {
+        setMobileImages(prev => {
+            const newImages = [...prev];
+            newImages[index] = {
+                ...newImages[index],
+                url: newUrl
+            };
+            return newImages;
+        });
+    };
+
+    // Handle new desktop image selection with sequence and URL fields
     const handleNewDesktopImageSelect = (e) => {
         const files = Array.from(e.target.files);
         const validFiles = files.filter(file => file.type.startsWith('image/'));
@@ -68,10 +121,15 @@ const EditCarouselImages = () => {
             setError('Some files were skipped. Please select only image files.');
         }
 
-        const newImages = validFiles.map(file => ({
+        // Calculate next sequence based on existing desktop images
+        const nextSequence = desktopImages.length + newDesktopImages.length + 1;
+
+        const newImages = validFiles.map((file, index) => ({
             file,
             preview: URL.createObjectURL(file),
-            name: file.name
+            name: file.name,
+            sequence: nextSequence + index,
+            url: ''  // Initialize empty URL
         }));
 
         setNewDesktopImages(prev => [...prev, ...newImages]);
@@ -82,7 +140,7 @@ const EditCarouselImages = () => {
         }
     };
 
-    // Handle new mobile image selection
+    // Handle new mobile image selection with sequence and URL fields
     const handleNewMobileImageSelect = (e) => {
         const files = Array.from(e.target.files);
         const validFiles = files.filter(file => file.type.startsWith('image/'));
@@ -91,10 +149,15 @@ const EditCarouselImages = () => {
             setError('Some files were skipped. Please select only image files.');
         }
 
-        const newImages = validFiles.map(file => ({
+        // Calculate next sequence based on existing mobile images
+        const nextSequence = mobileImages.length + newMobileImages.length + 1;
+
+        const newImages = validFiles.map((file, index) => ({
             file,
             preview: URL.createObjectURL(file),
-            name: file.name
+            name: file.name,
+            sequence: nextSequence + index,
+            url: ''  // Initialize empty URL
         }));
 
         setNewMobileImages(prev => [...prev, ...newImages]);
@@ -103,6 +166,44 @@ const EditCarouselImages = () => {
         if (mobileFileInputRef.current) {
             mobileFileInputRef.current.value = '';
         }
+    };
+
+    // Handle new desktop sequence change
+    const handleNewDesktopSequenceChange = (index, newSequence) => {
+        const numSequence = parseInt(newSequence) || 0;
+        setNewDesktopImages(prev => {
+            const newImages = [...prev];
+            newImages[index].sequence = numSequence;
+            return newImages;
+        });
+    };
+
+    // Handle new desktop URL change
+    const handleNewDesktopUrlChange = (index, newUrl) => {
+        setNewDesktopImages(prev => {
+            const newImages = [...prev];
+            newImages[index].url = newUrl;
+            return newImages;
+        });
+    };
+
+    // Handle new mobile sequence change
+    const handleNewMobileSequenceChange = (index, newSequence) => {
+        const numSequence = parseInt(newSequence) || 0;
+        setNewMobileImages(prev => {
+            const newImages = [...prev];
+            newImages[index].sequence = numSequence;
+            return newImages;
+        });
+    };
+
+    // Handle new mobile URL change
+    const handleNewMobileUrlChange = (index, newUrl) => {
+        setNewMobileImages(prev => {
+            const newImages = [...prev];
+            newImages[index].url = newUrl;
+            return newImages;
+        });
     };
 
     // Remove new desktop image
@@ -125,7 +226,7 @@ const EditCarouselImages = () => {
         });
     };
 
-    // Delete single image
+    // Handle delete single image
     const handleDeleteSingleImage = async (imageType, imageUrl) => {
         if (!window.confirm(`Are you sure you want to delete this ${imageType} image? This action cannot be undone.`)) {
             return;
@@ -136,19 +237,27 @@ const EditCarouselImages = () => {
         setSuccess('');
 
         try {
-            const imageName = extractImageName(imageUrl);
+            const imageName = extractFilenameFromUrl(imageUrl);
             console.log("Deleting image:", imageName, imageType);
 
             const res = await axiosInstance.delete(`/home-carousel/delete-single-image/${imageType}/${imageName}`);
 
             if (res.data.statusCode === 200) {
                 setSuccess(`${imageType.charAt(0).toUpperCase() + imageType.slice(1)} image deleted successfully!`);
-                
-                // Update the state to remove the deleted image
+
+                // Update local state - CORRECTED
                 if (imageType === 'desktop') {
-                    setDesktopImages(prev => prev.filter(img => !img.endsWith(imageName)));
+                    setDesktopImages(prev => prev.filter(img => {
+                        const imgUrl = img.image; // img is now an object with image property
+                        const imgFilename = extractFilenameFromUrl(imgUrl);
+                        return imgFilename !== imageName;
+                    }));
                 } else {
-                    setMobileImages(prev => prev.filter(img => !img.endsWith(imageName)));
+                    setMobileImages(prev => prev.filter(img => {
+                        const imgUrl = img.image; // img is now an object with image property
+                        const imgFilename = extractFilenameFromUrl(imgUrl);
+                        return imgFilename !== imageName;
+                    }));
                 }
             } else {
                 setError(res.data.message || `Failed to delete ${imageType} image`);
@@ -161,10 +270,119 @@ const EditCarouselImages = () => {
         }
     };
 
-    // Handle update with new images
+    // Validate sequence numbers and URLs
+    const validateSequences = (desktop, mobile, includeUrlCheck = true) => {
+        const desktopSequences = desktop.map(img => img.sequence);
+        const mobileSequences = mobile.map(img => img.sequence);
+
+        // Check for duplicates in desktop
+        if (new Set(desktopSequences).size !== desktopSequences.length) {
+            setError('Desktop images have duplicate sequence numbers. Please use unique sequence numbers.');
+            return false;
+        }
+
+        // Check for duplicates in mobile
+        if (new Set(mobileSequences).size !== mobileSequences.length) {
+            setError('Mobile images have duplicate sequence numbers. Please use unique sequence numbers.');
+            return false;
+        }
+
+        // Check if any sequence is 0 or negative
+        if (desktopSequences.some(seq => seq <= 0) || mobileSequences.some(seq => seq <= 0)) {
+            setError('All sequence numbers must be greater than 0.');
+            return false;
+        }
+
+        // // Check URLs if required
+        // if (includeUrlCheck) {
+        //     if (desktop.some(img => !img.url || img.url.trim() === '')) {
+        //         setError('Please provide URL for all desktop images.');
+        //         return false;
+        //     }
+
+        //     if (mobile.some(img => !img.url || img.url.trim() === '')) {
+        //         setError('Please provide URL for all mobile images.');
+        //         return false;
+        //     }
+        // }
+
+        return true;
+    };
+
+    // Helper function to extract filename from URL
+    const extractFilenameFromUrl = (url) => {
+        if (!url) return '';
+        // Extract just the filename from the full URL
+        return url.split('/').pop();
+    };
+
+    const handleUpdateMetadata = async () => {
+        if (desktopImages.length === 0 && mobileImages.length === 0) {
+            setError('No existing images to update');
+            return;
+        }
+
+        // Validate sequences for existing images
+        if (!validateSequences(desktopImages, mobileImages, false)) {
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            // Prepare the update data - extract just the filename from URLs
+            const updateData = {
+                desktopImages: desktopImages.map(img => ({
+                    image: extractFilenameFromUrl(img.image), // Extract just the filename
+                    sequence: img.sequence,
+                    url: img.url || '' // Ensure URL is at least an empty string
+                })),
+                mobileImages: mobileImages.map(img => ({
+                    image: extractFilenameFromUrl(img.image), // Extract just the filename
+                    sequence: img.sequence,
+                    url: img.url || '' // Ensure URL is at least an empty string
+                }))
+            };
+
+            console.log('Sending update data:', updateData); // Debug log
+            console.log('Desktop images:', updateData.desktopImages);
+            console.log('Mobile images:', updateData.mobileImages);
+
+            const res = await axiosInstance.put('/home-carousel/update-carousel-metadata', updateData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Update response:', res);
+
+            if (res.data.statusCode === 200) {
+                setSuccess('Carousel metadata updated successfully!');
+                // Refresh the data to show updated sequences/URLs
+                await fetchCarouselData();
+            } else {
+                setError(res.data.message || 'Failed to update metadata');
+            }
+        } catch (error) {
+            console.error('Update metadata error:', error);
+            console.error('Error response:', error.response?.data);
+            setError(error.response?.data?.message || error.message || 'Failed to update metadata');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle update with new images including sequences and URLs
     const handleUpdate = async () => {
         if (newDesktopImages.length === 0 && newMobileImages.length === 0) {
             setError('Please select new images to add');
+            return;
+        }
+
+        // Validate sequences and URLs before updating
+        if (!validateSequences(newDesktopImages, newMobileImages, true)) {
             return;
         }
 
@@ -175,14 +393,18 @@ const EditCarouselImages = () => {
         try {
             const formData = new FormData();
 
-            // Append new desktop images
-            newDesktopImages.forEach((image) => {
+            // Append new desktop images with sequence and URL metadata
+            newDesktopImages.forEach((image, index) => {
                 formData.append('desktopImages', image.file);
+                formData.append(`desktopSequence_${index}`, image.sequence);
+                formData.append(`desktopUrl_${index}`, image.url);
             });
 
-            // Append new mobile images
-            newMobileImages.forEach((image) => {
+            // Append new mobile images with sequence and URL metadata
+            newMobileImages.forEach((image, index) => {
                 formData.append('mobileImages', image.file);
+                formData.append(`mobileSequence_${index}`, image.sequence);
+                formData.append(`mobileUrl_${index}`, image.url);
             });
 
             const res = await axiosInstance.put('/home-carousel/update-carousel-images', formData, {
@@ -213,10 +435,15 @@ const EditCarouselImages = () => {
         }
     };
 
-    // Handle replace all images
+    // Handle replace all images including sequences and URLs
     const handleReplaceAll = async () => {
         if (newDesktopImages.length === 0 || newMobileImages.length === 0) {
             setError('Please select both desktop and mobile images');
+            return;
+        }
+
+        // Validate sequences and URLs before replacing
+        if (!validateSequences(newDesktopImages, newMobileImages, true)) {
             return;
         }
 
@@ -227,12 +454,18 @@ const EditCarouselImages = () => {
         try {
             const formData = new FormData();
 
-            newDesktopImages.forEach((image) => {
+            // Append desktop images with sequence and URL metadata
+            newDesktopImages.forEach((image, index) => {
                 formData.append('desktopImages', image.file);
+                formData.append(`desktopSequence_${index}`, image.sequence);
+                formData.append(`desktopUrl_${index}`, image.url);
             });
 
-            newMobileImages.forEach((image) => {
+            // Append mobile images with sequence and URL metadata
+            newMobileImages.forEach((image, index) => {
                 formData.append('mobileImages', image.file);
+                formData.append(`mobileSequence_${index}`, image.sequence);
+                formData.append(`mobileUrl_${index}`, image.url);
             });
 
             const res = await axiosInstance.post('/home-carousel/upload-carousel-images', formData, {
@@ -307,6 +540,11 @@ const EditCarouselImages = () => {
         };
     }, [newDesktopImages, newMobileImages]);
 
+    // Helper function to get image URL
+    const getImageUrl = (imageData) => {
+        return typeof imageData === 'string' ? imageData : imageData.image;
+    };
+
     if (fetchLoading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -327,57 +565,84 @@ const EditCarouselImages = () => {
                 <Grid item xs={12}>
                     <CustomFormLabel>Current Desktop Images ({desktopImages.length})</CustomFormLabel>
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        Existing desktop carousel images - Click the X icon to delete individual images
+                        Edit sequence and URL for existing images, or delete individual images
                     </Typography>
 
                     {desktopImages.length > 0 ? (
                         <Grid container spacing={2}>
-                            {desktopImages.map((imageUrl, index) => (
-                                <Grid item xs={6} sm={4} md={3} key={index}>
-                                    <Card sx={{ position: 'relative', height: '100%' }}>
-                                        <CardMedia
-                                            component="img"
-                                            height="140"
-                                            image={imageUrl}
-                                            alt={`Desktop ${index + 1}`}
-                                            sx={{
-                                                objectFit: 'cover',
-                                                width: '100%'
-                                            }}
-                                            onError={(e) => {
-                                                console.error('Error loading image:', imageUrl);
-                                                e.target.style.backgroundColor = '#f0f0f0';
-                                                e.target.alt = 'Failed to load image';
-                                            }}
-                                        />
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleDeleteSingleImage('desktop', imageUrl)}
-                                            disabled={loading}
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 4,
-                                                right: 4,
-                                                backgroundColor: 'rgba(255,0,0,0.8)',
-                                                color: 'white',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(255,0,0,1)',
-                                                },
-                                                '&:disabled': {
-                                                    backgroundColor: 'rgba(200,200,200,0.8)',
-                                                }
-                                            }}
-                                        >
-                                            <IconX size="1rem" />
-                                        </IconButton>
-                                        <Box sx={{ p: 1 }}>
-                                            <Typography variant="caption" noWrap>
-                                                Desktop {index + 1}
-                                            </Typography>
-                                        </Box>
-                                    </Card>
-                                </Grid>
-                            ))}
+                            {desktopImages.map((imageData, index) => {
+                                const imageUrl = getImageUrl(imageData);
+                                return (
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
+                                        <Card sx={{ position: 'relative', height: '100%' }}>
+                                            <CardMedia
+                                                component="img"
+                                                height="140"
+                                                image={imageUrl}
+                                                alt={`Desktop ${index + 1}`}
+                                                sx={{
+                                                    objectFit: 'cover',
+                                                    width: '100%'
+                                                }}
+                                                onError={(e) => {
+                                                    console.error('Error loading image:', imageUrl);
+                                                    e.target.style.backgroundColor = '#f0f0f0';
+                                                    e.target.alt = 'Failed to load image';
+                                                }}
+                                            />
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleDeleteSingleImage('desktop', imageUrl)}
+                                                disabled={loading}
+                                                sx={{
+                                                    position: 'absolute',
+                                                    top: 4,
+                                                    right: 4,
+                                                    backgroundColor: 'rgba(255,0,0,0.8)',
+                                                    color: 'white',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(255,0,0,1)',
+                                                    },
+                                                    '&:disabled': {
+                                                        backgroundColor: 'rgba(200,200,200,0.8)',
+                                                    }
+                                                }}
+                                            >
+                                                <IconX size="1rem" />
+                                            </IconButton>
+                                            <Box sx={{ p: 1 }}>
+                                                <Typography variant="caption" noWrap>
+                                                    Desktop {index + 1}
+                                                </Typography>
+
+                                                {/* Sequence Input */}
+                                                <TextField
+                                                    type="number"
+                                                    size="small"
+                                                    label="Sequence"
+                                                    value={imageData.sequence || ''}
+                                                    onChange={(e) => handleExistingDesktopSequenceChange(index, e.target.value)}
+                                                    inputProps={{ min: '1' }}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+
+                                                {/* URL Input */}
+                                                <TextField
+                                                    type="text"
+                                                    size="small"
+                                                    label="URL"
+                                                    placeholder="Enter redirect URL"
+                                                    value={imageData.url || ''}
+                                                    onChange={(e) => handleExistingDesktopUrlChange(index, e.target.value)}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+                                            </Box>
+                                        </Card>
+                                    </Grid>
+                                );
+                            })}
                         </Grid>
                     ) : (
                         <Alert severity="info">No desktop images yet</Alert>
@@ -388,62 +653,103 @@ const EditCarouselImages = () => {
                 <Grid item xs={12}>
                     <CustomFormLabel>Current Mobile Images ({mobileImages.length})</CustomFormLabel>
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        Existing mobile carousel images - Click the X icon to delete individual images
+                        Edit sequence and URL for existing images, or delete individual images
                     </Typography>
 
                     {mobileImages.length > 0 ? (
                         <Grid container spacing={2}>
-                            {mobileImages.map((imageUrl, index) => (
-                                <Grid item xs={6} sm={4} md={3} key={index}>
-                                    <Card sx={{ position: 'relative', height: '100%' }}>
-                                        <CardMedia
-                                            component="img"
-                                            height="140"
-                                            image={imageUrl}
-                                            alt={`Mobile ${index + 1}`}
-                                            sx={{
-                                                objectFit: 'cover',
-                                                width: '100%'
-                                            }}
-                                            onError={(e) => {
-                                                console.error('Error loading image:', imageUrl);
-                                                e.target.style.backgroundColor = '#f0f0f0';
-                                                e.target.alt = 'Failed to load image';
-                                            }}
-                                        />
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleDeleteSingleImage('mobile', imageUrl)}
-                                            disabled={loading}
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 4,
-                                                right: 4,
-                                                backgroundColor: 'rgba(255,0,0,0.8)',
-                                                color: 'white',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(255,0,0,1)',
-                                                },
-                                                '&:disabled': {
-                                                    backgroundColor: 'rgba(200,200,200,0.8)',
-                                                }
-                                            }}
-                                        >
-                                            <IconX size="1rem" />
-                                        </IconButton>
-                                        <Box sx={{ p: 1 }}>
-                                            <Typography variant="caption" noWrap>
-                                                Mobile {index + 1}
-                                            </Typography>
-                                        </Box>
-                                    </Card>
-                                </Grid>
-                            ))}
+                            {mobileImages.map((imageData, index) => {
+                                const imageUrl = getImageUrl(imageData);
+                                return (
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
+                                        <Card sx={{ position: 'relative', height: '100%' }}>
+                                            <CardMedia
+                                                component="img"
+                                                height="140"
+                                                image={imageUrl}
+                                                alt={`Mobile ${index + 1}`}
+                                                sx={{
+                                                    objectFit: 'cover',
+                                                    width: '100%'
+                                                }}
+                                                onError={(e) => {
+                                                    console.error('Error loading image:', imageUrl);
+                                                    e.target.style.backgroundColor = '#f0f0f0';
+                                                    e.target.alt = 'Failed to load image';
+                                                }}
+                                            />
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleDeleteSingleImage('mobile', imageUrl)}
+                                                disabled={loading}
+                                                sx={{
+                                                    position: 'absolute',
+                                                    top: 4,
+                                                    right: 4,
+                                                    backgroundColor: 'rgba(255,0,0,0.8)',
+                                                    color: 'white',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(255,0,0,1)',
+                                                    },
+                                                    '&:disabled': {
+                                                        backgroundColor: 'rgba(200,200,200,0.8)',
+                                                    }
+                                                }}
+                                            >
+                                                <IconX size="1rem" />
+                                            </IconButton>
+                                            <Box sx={{ p: 1 }}>
+                                                <Typography variant="caption" noWrap>
+                                                    Mobile {index + 1}
+                                                </Typography>
+
+                                                {/* Sequence Input */}
+                                                <TextField
+                                                    type="number"
+                                                    size="small"
+                                                    label="Sequence"
+                                                    value={imageData.sequence || ''}
+                                                    onChange={(e) => handleExistingMobileSequenceChange(index, e.target.value)}
+                                                    inputProps={{ min: '1' }}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+
+                                                {/* URL Input */}
+                                                <TextField
+                                                    type="text"
+                                                    size="small"
+                                                    label="URL"
+                                                    placeholder="Enter redirect URL"
+                                                    value={imageData.url || ''}
+                                                    onChange={(e) => handleExistingMobileUrlChange(index, e.target.value)}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+                                            </Box>
+                                        </Card>
+                                    </Grid>
+                                );
+                            })}
                         </Grid>
                     ) : (
                         <Alert severity="info">No mobile images yet</Alert>
                     )}
                 </Grid>
+
+                {/* Update Metadata Button */}
+                {(desktopImages.length > 0 || mobileImages.length > 0) && (
+                    <Grid item xs={12}>
+                        <Button
+                            variant="contained"
+                            onClick={handleUpdateMetadata}
+                            disabled={loading}
+                            sx={{ backgroundColor: '#2E2F7F', minWidth: '200px' }}
+                        >
+                            Update Sequence & URLs
+                        </Button>
+                    </Grid>
+                )}
 
                 {/* Add New Desktop Images */}
                 <Grid item xs={12}>
@@ -477,7 +783,7 @@ const EditCarouselImages = () => {
                             </Typography>
                             <Grid container spacing={2}>
                                 {newDesktopImages.map((image, index) => (
-                                    <Grid item xs={6} sm={4} md={3} key={index}>
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
                                         <Card sx={{ position: 'relative', height: '100%' }}>
                                             <CardMedia
                                                 component="img"
@@ -508,6 +814,31 @@ const EditCarouselImages = () => {
                                                 <Typography variant="caption" noWrap title={image.name}>
                                                     {image.name}
                                                 </Typography>
+
+                                                {/* Sequence Input */}
+                                                <TextField
+                                                    type="number"
+                                                    size="small"
+                                                    label="Sequence"
+                                                    value={image.sequence}
+                                                    onChange={(e) => handleNewDesktopSequenceChange(index, e.target.value)}
+                                                    inputProps={{ min: '1' }}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+
+                                                {/* URL Input */}
+                                                <TextField
+                                                    type="text"
+                                                    size="small"
+                                                    label="URL"
+                                                    placeholder="Enter redirect URL"
+                                                    value={image.url}
+                                                    onChange={(e) => handleNewDesktopUrlChange(index, e.target.value)}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                    required
+                                                />
                                             </Box>
                                         </Card>
                                     </Grid>
@@ -549,7 +880,7 @@ const EditCarouselImages = () => {
                             </Typography>
                             <Grid container spacing={2}>
                                 {newMobileImages.map((image, index) => (
-                                    <Grid item xs={6} sm={4} md={3} key={index}>
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
                                         <Card sx={{ position: 'relative', height: '100%' }}>
                                             <CardMedia
                                                 component="img"
@@ -580,6 +911,31 @@ const EditCarouselImages = () => {
                                                 <Typography variant="caption" noWrap title={image.name}>
                                                     {image.name}
                                                 </Typography>
+
+                                                {/* Sequence Input */}
+                                                <TextField
+                                                    type="number"
+                                                    size="small"
+                                                    label="Sequence"
+                                                    value={image.sequence}
+                                                    onChange={(e) => handleNewMobileSequenceChange(index, e.target.value)}
+                                                    inputProps={{ min: '1' }}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                />
+
+                                                {/* URL Input */}
+                                                <TextField
+                                                    type="text"
+                                                    size="small"
+                                                    label="URL"
+                                                    placeholder="Enter redirect URL"
+                                                    value={image.url}
+                                                    onChange={(e) => handleNewMobileUrlChange(index, e.target.value)}
+                                                    fullWidth
+                                                    sx={{ mt: 1 }}
+                                                    required
+                                                />
                                             </Box>
                                         </Card>
                                     </Grid>
@@ -600,7 +956,7 @@ const EditCarouselImages = () => {
                         {loading ? 'Updating...' : 'Add New Images'}
                     </Button>
 
-                    <Button
+                    {/* <Button
                         variant="contained"
                         color="secondary"
                         onClick={handleReplaceAll}
@@ -608,7 +964,7 @@ const EditCarouselImages = () => {
                         sx={{ mr: 2, minWidth: '150px' }}
                     >
                         Replace All Images
-                    </Button>
+                    </Button> */}
 
                     <Button
                         variant="outlined"
