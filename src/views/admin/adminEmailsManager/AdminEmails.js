@@ -24,7 +24,11 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
-  Backdrop
+  Backdrop,
+  FormControlLabel,
+  Checkbox,
+  Chip,
+  Switch
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import { IconFilter, IconSearch, IconTrash, IconEdit, IconPlus } from '@tabler/icons-react';
@@ -124,7 +128,7 @@ const EnhancedTableToolbar = ({ handleSearch, search, placeholder, onAddNew }) =
         />
       </Box>
       
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,width:400 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: 400 }}>
         <Button
           variant="contained"
           onClick={onAddNew}
@@ -133,7 +137,6 @@ const EnhancedTableToolbar = ({ handleSearch, search, placeholder, onAddNew }) =
         >
           Add New Email
         </Button>
-       
       </Box>
     </Toolbar>
   );
@@ -156,8 +159,8 @@ const AdminEmailsManager = () => {
   // Dialog states
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ email: '' });
-  const [editingEmail, setEditingEmail] = useState({ oldEmail: '', newEmail: '' });
+  const [formData, setFormData] = useState({ email: '', active: true });
+  const [editingEmail, setEditingEmail] = useState({ oldEmail: '', newEmail: '', active: true });
 
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
@@ -177,6 +180,12 @@ const AdminEmailsManager = () => {
       numeric: false,
       disablePadding: false,
       label: 'Email Address',
+    },
+    {
+      id: 'active',
+      numeric: false,
+      disablePadding: false,
+      label: 'Status',
     },
     {
       id: 'updatedAt',
@@ -201,7 +210,9 @@ const AdminEmailsManager = () => {
       setLoading(true);
       const res = await axiosInstance.get('/admin-emails/get-all-admin-emails');
       if (res.data.statusCode === 200) {
-        setEmails(res.data.data.email || []);
+        // Handle new schema format: array of objects with email and active
+        const emailData = res.data.data.email || [];
+        setEmails(emailData);
       }
     } catch (error) {
       setError('Failed to fetch admin emails');
@@ -215,8 +226,8 @@ const AdminEmailsManager = () => {
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    const filteredRows = emails.filter((email) =>
-      email.toLowerCase().includes(searchValue)
+    const filteredRows = emails.filter((item) =>
+      item.email.toLowerCase().includes(searchValue)
     );
     setRows(filteredRows);
     setPage(0);
@@ -256,7 +267,10 @@ const AdminEmailsManager = () => {
       setSuccess('');
 
       const res = await axiosInstance.post('/admin-emails/add-admin-email',
-        { email: formData.email },
+        { 
+          email: formData.email,
+          active: formData.active 
+        },
         {
           headers: { 'Content-Type': 'application/json' },
           transformRequest: [(data) => JSON.stringify(data)]
@@ -265,9 +279,10 @@ const AdminEmailsManager = () => {
 
       if (res.data.statusCode === 201) {
         setEmails(res.data.data.email);
-        setFormData({ email: '' });
+        setFormData({ email: '', active: true });
         setAddDialogOpen(false);
         setSuccess('Email added successfully!');
+        setTimeout(() => setSuccess(''), 3000);
       } else {
         setError(res.data.message || 'Failed to add email');
       }
@@ -279,8 +294,12 @@ const AdminEmailsManager = () => {
     }
   };
 
-  const handleEditEmail = (oldEmail) => {
-    setEditingEmail({ oldEmail, newEmail: oldEmail });
+  const handleEditEmail = (emailObj) => {
+    setEditingEmail({ 
+      oldEmail: emailObj.email, 
+      newEmail: emailObj.email,
+      active: emailObj.active 
+    });
     setEditDialogOpen(true);
   };
 
@@ -303,6 +322,7 @@ const AdminEmailsManager = () => {
 
       const params = new URLSearchParams();
       params.append('newEmail', editingEmail.newEmail);
+      params.append('active', editingEmail.active);
       const encodedOldEmail = encodeURIComponent(editingEmail.oldEmail);
 
       const res = await axiosInstance.put(
@@ -315,6 +335,7 @@ const AdminEmailsManager = () => {
         setEmails(res.data.data.email);
         setEditDialogOpen(false);
         setSuccess('Email updated successfully!');
+        setTimeout(() => setSuccess(''), 3000);
       } else {
         setError(res.data.message || 'Failed to update email');
       }
@@ -326,11 +347,32 @@ const AdminEmailsManager = () => {
     }
   };
 
-  const handleDeleteClick = (event, email) => {
+  const handleToggleStatus = async (emailObj) => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.put(
+        `/admin-emails/update-admin-email/${encodeURIComponent(emailObj.email)}`,
+        new URLSearchParams({ active: !emailObj.active }),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+      );
+
+      if (res.data.statusCode === 200) {
+        setEmails(res.data.data.email);
+        setSuccess(`Email ${!emailObj.active ? 'activated' : 'deactivated'} successfully!`);
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || 'Failed to toggle status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (event, emailObj) => {
     event.stopPropagation();
     setDeleteDialog({
       open: true,
-      email: email,
+      email: emailObj.email,
       isDeleting: false
     });
   };
@@ -343,6 +385,7 @@ const AdminEmailsManager = () => {
       if (res.data.statusCode === 200) {
         setEmails(res.data.data.email);
         setSuccess('Email deleted successfully!');
+        setTimeout(() => setSuccess(''), 3000);
         handleDeleteCancel();
       }
     } catch (error) {
@@ -362,13 +405,13 @@ const AdminEmailsManager = () => {
 
   const handleCloseAddDialog = () => {
     setAddDialogOpen(false);
-    setFormData({ email: '' });
+    setFormData({ email: '', active: true });
     setError('');
   };
 
   const handleCloseEditDialog = () => {
     setEditDialogOpen(false);
-    setEditingEmail({ oldEmail: '', newEmail: '' });
+    setEditingEmail({ oldEmail: '', newEmail: '', active: true });
     setError('');
   };
 
@@ -407,8 +450,8 @@ const AdminEmailsManager = () => {
                 minWidth: 1000,
                 borderCollapse: "collapse",
                 "& td, & th": {
-                  paddingTop: "4px",
-                  paddingBottom: "4px",
+                  paddingTop: "12px",
+                  paddingBottom: "12px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
@@ -426,7 +469,7 @@ const AdminEmailsManager = () => {
               <TableBody>
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((email, index) => (
+                  .map((emailObj, index) => (
                     <TableRow
                       hover
                       tabIndex={-1}
@@ -438,7 +481,7 @@ const AdminEmailsManager = () => {
                             <IconButton
                               size="small"
                               color="primary"
-                              onClick={() => handleEditEmail(email)}
+                              onClick={() => handleEditEmail(emailObj)}
                             >
                               <IconEdit size="1.1rem" />
                             </IconButton>
@@ -447,7 +490,7 @@ const AdminEmailsManager = () => {
                             <IconButton
                               size="small"
                               color="error"
-                              onClick={(e) => handleDeleteClick(e, email)}
+                              onClick={(e) => handleDeleteClick(e, emailObj)}
                             >
                               <IconTrash size="1.1rem" />
                             </IconButton>
@@ -455,7 +498,23 @@ const AdminEmailsManager = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography fontWeight="600">{email}</Typography>
+                        <Typography fontWeight="600">{emailObj.email}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Switch
+                            checked={emailObj.active}
+                            onChange={() => handleToggleStatus(emailObj)}
+                            size="small"
+                            color="success"
+                          />
+                          <Chip
+                            label={emailObj.active ? 'Active' : 'Inactive'}
+                            color={emailObj.active ? 'success' : 'default'}
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Typography>
@@ -467,7 +526,7 @@ const AdminEmailsManager = () => {
                 
                 {rows.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={3} align="center">
+                    <TableCell colSpan={4} align="center">
                       <Typography color="textSecondary" py={3}>
                         No admin emails found.
                       </Typography>
@@ -477,7 +536,7 @@ const AdminEmailsManager = () => {
 
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={3} align="center">
+                    <TableCell colSpan={4} align="center">
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
@@ -501,16 +560,26 @@ const AdminEmailsManager = () => {
       <Dialog open={addDialogOpen} onClose={handleCloseAddDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Add New Admin Email</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
               type="email"
               label="Email Address"
               value={formData.email}
-              onChange={(e) => setFormData({ email: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               placeholder="Enter email address"
               error={!!error}
               helperText={error}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.active}
+                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                  color="success"
+                />
+              }
+              label="Active (Enable this email to receive notifications)"
             />
           </Box>
         </DialogContent>
@@ -531,16 +600,26 @@ const AdminEmailsManager = () => {
       <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Admin Email</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
               type="email"
-              label="New Email Address"
+              label="Email Address"
               value={editingEmail.newEmail}
               onChange={(e) => setEditingEmail(prev => ({ ...prev, newEmail: e.target.value }))}
               placeholder="Enter new email address"
               error={!!error}
               helperText={error}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={editingEmail.active}
+                  onChange={(e) => setEditingEmail(prev => ({ ...prev, active: e.target.checked }))}
+                  color="success"
+                />
+              }
+              label="Active (Enable this email to receive notifications)"
             />
           </Box>
         </DialogContent>

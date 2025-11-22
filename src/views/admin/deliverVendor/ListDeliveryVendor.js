@@ -48,6 +48,9 @@ const ListDeliveryVendor = () => {
 
     const [tableData, setTableData] = React.useState([]);
     const [error, setError] = React.useState(null);
+    // const { isCollapse } = React.useContext(CustomizerContext);
+
+
 
     const fetchDeliveryVendorList = async () => {
         try {
@@ -63,10 +66,6 @@ const ListDeliveryVendor = () => {
             setError(error.message);
         }
     };
-
-    const { isCollapse } = React.useContext(CustomizerContext);
-
-
 
     React.useEffect(() => {
         fetchDeliveryVendorList();

@@ -9,7 +9,8 @@ import {
     IconButton,
     Card,
     CardMedia,
-    TextField
+    TextField,
+    Alert
 } from '@mui/material';
 import { IconUpload, IconX } from '@tabler/icons';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -20,6 +21,7 @@ const CreateCarouselImages = () => {
     const [desktopImages, setDesktopImages] = useState([]);
     const [mobileImages, setMobileImages] = useState([]);
     const [error, setError] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
@@ -27,30 +29,86 @@ const CreateCarouselImages = () => {
     const desktopFileInputRef = useRef(null);
     const mobileFileInputRef = useRef(null);
 
-    // Handle desktop image selection
-    const handleDesktopImageSelect = (e) => {
+    // Function to validate desktop image dimensions and size
+    const validateDesktopImage = (file) => {
+        return new Promise((resolve, reject) => {
+            // Check file size (max 5MB)
+            const fileSizeMB = file.size / (1024 * 1024);
+            if (fileSizeMB > 5) {
+                reject(`File size must be less than 5MB. Current size: ${fileSizeMB.toFixed(2)}MB`);
+                return;
+            }
+
+            // Check image dimensions
+            const img = new Image();
+            img.onload = function() {
+                const width = this.width;
+                const height = this.height;
+
+                // Validate exact dimensions 1920 × 607
+                if (width !== 1920 || height !== 607) {
+                    reject(`Desktop image must be exactly 1920 × 607 pixels. Current: ${width} × ${height}px`);
+                    return;
+                }
+
+                resolve(true);
+            };
+
+            img.onerror = function() {
+                reject('Failed to load image for validation');
+            };
+
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
+    // Handle desktop image selection with validation
+    const handleDesktopImageSelect = async (e) => {
         const files = Array.from(e.target.files);
+        if (files.length === 0) return;
 
-        // Validate file types
-        const validFiles = files.filter(file =>
-            file.type.startsWith('image/')
-        );
+        const validFiles = [];
+        const errors = [];
 
-        if (validFiles.length !== files.length) {
-            setError('Some files were skipped. Please select only image files.');
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // Basic file type validation
+            if (!file.type.startsWith('image/')) {
+                errors.push(`"${file.name}" is not a valid image file`);
+                continue;
+            }
+
+            try {
+                await validateDesktopImage(file);
+                validFiles.push(file);
+            } catch (validationError) {
+                errors.push(`"${file.name}": ${validationError}`);
+            }
         }
 
-        // Create preview URLs with sequence and url fields
-        const newDesktopImages = validFiles.map((file, index) => ({
-            file,
-            preview: URL.createObjectURL(file),
-            name: file.name,
-            sequence: desktopImages.length + index + 1,
-            url: ''  // Initialize empty URL
-        }));
+        if (errors.length > 0) {
+            setValidationErrors(prev => ({ 
+                ...prev, 
+                desktop: errors.join('; ') 
+            }));
+        } else {
+            setValidationErrors(prev => ({ ...prev, desktop: '' }));
+        }
 
-        setDesktopImages(prev => [...prev, ...newDesktopImages]);
-        setError('');
+        if (validFiles.length > 0) {
+            // Create preview URLs with sequence and url fields
+            const newDesktopImages = validFiles.map((file, index) => ({
+                file,
+                preview: URL.createObjectURL(file),
+                name: file.name,
+                sequence: desktopImages.length + index + 1,
+                url: ''  // Initialize empty URL
+            }));
+
+            setDesktopImages(prev => [...prev, ...newDesktopImages]);
+            setError('');
+        }
 
         // Reset file input
         if (desktopFileInputRef.current) {
@@ -58,7 +116,7 @@ const CreateCarouselImages = () => {
         }
     };
 
-    // Handle mobile image selection
+    // Handle mobile image selection (no validation)
     const handleMobileImageSelect = (e) => {
         const files = Array.from(e.target.files);
 
@@ -188,6 +246,12 @@ const CreateCarouselImages = () => {
 
     // Handle form submission
     const handleSubmit = async () => {
+        // Check for validation errors
+        if (validationErrors.desktop) {
+            setError('Please fix desktop image validation errors before submitting');
+            return;
+        }
+
         // Validation
         if (desktopImages.length === 0) {
             setError('Please select at least one desktop image');
@@ -247,6 +311,7 @@ const CreateCarouselImages = () => {
 
                 setDesktopImages([]);
                 setMobileImages([]);
+                setValidationErrors({});
 
                 // Navigate to carousel list after 2 seconds
                 setTimeout(() => {
@@ -275,6 +340,7 @@ const CreateCarouselImages = () => {
         setMobileImages([]);
         setError('');
         setSuccess('');
+        setValidationErrors({});
     };
 
     // Clean up object URLs when component unmounts
@@ -288,6 +354,15 @@ const CreateCarouselImages = () => {
     return (
         <div>
             <Grid container spacing={3} direction="column">
+                {/* Display validation errors */}
+                {validationErrors.desktop && (
+                    <Grid item xs={12}>
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                            Desktop Images: {validationErrors.desktop}
+                        </Alert>
+                    </Grid>
+                )}
+
                 {/* Desktop Images Section */}
                 <Grid item xs={12}>
                     <CustomFormLabel sx={{ mt: 0 }}>
@@ -296,7 +371,7 @@ const CreateCarouselImages = () => {
                     </CustomFormLabel>
 
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        Upload desktop carousel images (Recommended: 1920x600px)
+                        Upload desktop carousel images (Required: 1920 × 607px, Max: 5MB)
                     </Typography>
 
                     <input
@@ -514,6 +589,7 @@ const CreateCarouselImages = () => {
                     )}
                 </Grid>
 
+                {/* Rest of the component remains the same... */}
                 {/* Image Count Summary */}
                 {(desktopImages.length > 0 || mobileImages.length > 0) && (
                     <Grid item xs={12}>

@@ -229,6 +229,8 @@ const CustomersSalesOrders = () => {
         itemName: '',
         isDeleting: false
     });
+    const [deliveryVendors, setDeliveryVendors] = useState([]);
+    const [selectedDeliveryVendor, setSelectedDeliveryVendor] = useState('');
 
     const theme = useTheme();
     const borderColor = theme.palette.divider;
@@ -355,15 +357,36 @@ const CustomersSalesOrders = () => {
                 billingAddress: tableData[0]?.billingAddress || "",
                 shippingAddress: tableData[0]?.shippingAddress || "",
                 trackingNumber: tableData[0]?.trackingNumber || "",
+                deliveryVendor: tableData[0]?.deliveryVendor || "",
                 date: tableData[0]?.date
                     ? new Date(tableData[0].date).toISOString().split("T")[0]
                     : "",
             });
+
+            console.log("first order", tableData[0])
+
+
+            if (tableData[0]?.deliveryVendor) {
+                setSelectedDeliveryVendor(tableData[0].deliveryVendor._id || tableData[0].deliveryVendor);
+            }
         }
     }, [tableData]);
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleDeliveryVendorChange = (event) => {
+        const vendorId = event.target.value;
+        setSelectedDeliveryVendor(vendorId);
+
+        const selectedVendor = deliveryVendors.find(vendor => vendor._id === vendorId);
+        if (selectedVendor) {
+            setFormData(prev => ({
+                ...prev,
+                deliveryVendor: selectedVendor
+            }));
+        }
     };
 
     const handleSubmit = async () => {
@@ -401,7 +424,7 @@ const CustomersSalesOrders = () => {
 
     const fetchSalesOrdersProducts = async () => {
         try {
-            const response = await axiosInstance.get(`/sales-order/get-products-by-sales-document-number/${documentNo}`);
+            const response = await axiosInstance.get(`/sales-order/get-products-by-sales-document-number-dashboard/${documentNo}`);
             console.log("response sales order products ", response.data.data);
 
             if (response.data.statusCode === 200) {
@@ -649,6 +672,7 @@ const CustomersSalesOrders = () => {
             customerName: order.customerName || '',
             salesChannel: order.salesChannel || '',
             trackingNumber: order.trackingNumber || '',
+            deliveryVendor: order.deliveryVendor || '',
             shippingAddress: order.shippingAddress || '',
             billingAddress: order.billingAddress || '',
             customerPO: order.customerPO || '',
@@ -830,6 +854,26 @@ const CustomersSalesOrders = () => {
         console.log("handleUpdateFormChange", field, value);
         setUpdateFormData(prev => ({ ...prev, [field]: value }));
     };
+
+    const fetchDeliveryVendorList = async () => {
+        try {
+            const response = await axiosInstance.get('/delivery-vendor/get-all-delivery-vendors');
+            console.log("response delivery vendor list", response.data);
+
+            if (response.status === 200) {
+                setDeliveryVendors(response.data);
+            }
+
+        } catch (error) {
+            console.error('Error fetching delivery vendors list:', error);
+            setError(error.message);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchDeliveryVendorList();
+    }, []);
+
 
     return (
         <Box sx={{ p: 3 }}>
@@ -1230,6 +1274,17 @@ const CustomersSalesOrders = () => {
                                             {tableData[0]?.trackingNumber || 'N/A'}
                                         </Typography>
                                     </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                            Delivery Vendor:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData[0]?.deliveryVendor?.vendorName ||
+                                                (typeof tableData[0]?.deliveryVendor === 'string' ?
+                                                    deliveryVendors.find(v => v._id === tableData[0]?.deliveryVendor)?.vendorName : 'N/A')}
+                                        </Typography>
+                                    </Box>
                                 </Box>
                             </Paper>
 
@@ -1298,6 +1353,29 @@ const CustomersSalesOrders = () => {
                                     onChange={(e) => handleInputChange("trackingNumber", e.target.value)}
                                     sx={{ minWidth: 270 }}
                                 />
+                            </Box>
+
+                            {/* Delivery Vendor */}
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
+                                    Delivery Vendor:
+                                </Typography>
+                                <TextField
+                                    select
+                                    size="small"
+                                    value={selectedDeliveryVendor}
+                                    onChange={handleDeliveryVendorChange}
+                                    sx={{ minWidth: 270 }}
+                                >
+                                    <MenuItem value="">
+                                        <em>Select Delivery Vendor</em>
+                                    </MenuItem>
+                                    {deliveryVendors.map((vendor) => (
+                                        <MenuItem key={vendor._id} value={vendor._id}>
+                                            {vendor.vendorName}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
                             </Box>
 
                             {/* Billing Address */}
