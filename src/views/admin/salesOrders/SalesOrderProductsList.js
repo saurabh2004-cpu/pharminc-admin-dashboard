@@ -26,10 +26,12 @@ import {
     Grid,
     Divider,
     MenuItem,
+    Collapse,
+    IconButton as MuiIconButton,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconPlus } from '@tabler/icons-react';
+import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconPlus, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
@@ -84,8 +86,13 @@ function EnhancedTableHead(props) {
     return (
         <TableHead>
             <TableRow>
+                {/* Expand/Collapse column */}
+                <TableCell sx={{ ...headCellStyle, ...stickyCellStyle, width: 60 }}>
+                    Expand
+                </TableCell>
+                
                 {/* Actions column */}
-                <TableCell sx={{ ...headCellStyle, ...stickyCellStyle }}>
+                <TableCell sx={{ ...headCellStyle, ...stickyCellStyle, width: 100 }}>
                     Actions
                 </TableCell>
 
@@ -183,6 +190,46 @@ const EnhancedTableToolbar = (props) => {
     );
 };
 
+// Mini table for product group products
+const ProductGroupProductsTable = ({ products, productGroupsData }) => {
+    return (
+        <TableContainer component={Box} sx={{ mt: 1, mb: 2, backgroundColor: '#fafafa', borderRadius: 1 }}>
+            <Table size="small" sx={{ minWidth: 400 }}>
+                <TableHead>
+                    <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>SKU</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Product Name</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }} align="right">Tax %</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Pack Type</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }} align="right">Units Quantity</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {products.map((productItem, index) => (
+                        <TableRow key={productItem._id || index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            <TableCell component="th" scope="row" sx={{ fontSize: '0.75rem' }}>
+                                {productItem.product?.sku || 'N/A'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem' }}>
+                                {productItem.product?.ProductName || 'N/A'}
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>
+                                {productItem.product?.taxPercentages || 0}%
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem' }}>
+                                {productItem.packType || 'N/A'}
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>
+                                {productItem.unitsQuantity || 0}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
+    );
+};
+
 const CustomersSalesOrders = () => {
     const { filteredAndSortedProducts } = useContext(ProductContext);
     const [order, setOrder] = useState('asc');
@@ -199,18 +246,19 @@ const CustomersSalesOrders = () => {
     const navigate = useNavigate();
     const { documentNo } = useParams();
     const [productList, setProductList] = useState([]);
+    const [expandedRows, setExpandedRows] = useState(new Set());
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         customerName: "",
         salesChannel: "",
-        itemSku: "",
         packQuantity: "",
         amount: "",
         billingAddress: {},
         shippingAddress: {},
         trackingNumber: "",
         date: "",
+        deliveryVendor: "",
     });
     const [loading, setLoading] = useState(false);
     const [editingRowId, setEditingRowId] = useState(null);
@@ -231,6 +279,8 @@ const CustomersSalesOrders = () => {
     });
     const [deliveryVendors, setDeliveryVendors] = useState([]);
     const [selectedDeliveryVendor, setSelectedDeliveryVendor] = useState('');
+    const [productGroupsIds, setProductGroupsIds] = useState([]);
+    const [productGroupsData, setProductGroupsData] = useState([]);
 
     const theme = useTheme();
     const borderColor = theme.palette.divider;
@@ -279,20 +329,35 @@ const CustomersSalesOrders = () => {
             disablePadding: false,
             label: 'Discount Percentages',
         },
-
     ];
+
+    // Toggle expanded row
+    const toggleRowExpansion = (rowId) => {
+        const newExpanded = new Set(expandedRows);
+        if (newExpanded.has(rowId)) {
+            newExpanded.delete(rowId);
+        } else {
+            newExpanded.add(rowId);
+        }
+        setExpandedRows(newExpanded);
+    };
+
+    // Check if a product group has products
+    const getProductGroupProducts = (itemSku) => {
+        const productGroup = productGroupsData.find(pg => pg.sku === itemSku);
+        return productGroup?.products || [];
+    };
+
+    // Check if row is a product group
+    const isProductGroup = (row) => {
+        return productGroupsIds.includes(row.itemSku);
+    };
 
     // Calculate tax and total amounts
     const calculateOrderTotals = (products) => {
-
         const orderTotal = products.reduce((sum, product) => {
             const quantity = parseInt(product.packQuantity) * parseInt(product.unitsQuantity);
-
-            console.log(`product-${product.sku} - total quantity - ${quantity}`)
-
             const itemTotal = parseFloat(product.amount) * quantity;
-
-            console.log(`product-${product.sku} - total amount - ${itemTotal}`)
             return sum + (itemTotal || 0);
         }, 0);
 
@@ -328,43 +393,66 @@ const CustomersSalesOrders = () => {
         const selectedPackQuantity = parseInt(e.target.value);
         const selectedPack = packTypes.find(pack => parseInt(pack.quantity) === selectedPackQuantity);
 
-        console.log("Selected pack:", selectedPack);
-        console.log("Available packs:", packTypes);
-
         if (selectedPack) {
             setUpdateFormData(prev => ({
                 ...prev,
-                packQuantity: selectedPackQuantity.toString(), // Keep as string to match your data structure
-                packType: selectedPack.name  // Update both fields
-            }));
-
-            console.log("Updated form data:", {
-                ...updateFormData,
                 packQuantity: selectedPackQuantity.toString(),
                 packType: selectedPack.name
-            });
+            }));
         }
     };
 
     useEffect(() => {
         if (tableData[0]) {
+            const formatAddress = (address) => {
+                if (!address) return "";
+
+                if (typeof address === 'string') return address;
+
+                if (typeof address === 'object') {
+                    if (address.billingAddressLineOne) {
+                        return [
+                            address.billingAddressLineOne,
+                            address.billingAddressLineTwo,
+                            address.billingAddressLineThree,
+                            address.billingCity,
+                            address.billingState,
+                            address.billingZip
+                        ].filter(Boolean).join(", ");
+                    }
+                    else if (address.shippingAddressLineOne) {
+                        return [
+                            address.shippingAddressLineOne,
+                            address.shippingAddressLineTwo,
+                            address.shippingAddressLineThree,
+                            address.shippingCity,
+                            address.shippingState,
+                            address.shippingZip
+                        ].filter(Boolean).join(", ");
+                    }
+                    else {
+                        return Object.values(address).filter(val =>
+                            val && typeof val === 'string'
+                        ).join(", ");
+                    }
+                }
+
+                return "";
+            };
+
             setFormData({
                 customerName: tableData[0]?.customerName || "",
                 salesChannel: tableData[0]?.salesChannel || "",
-                itemSku: tableData[0]?.itemSku || "",
                 packQuantity: tableData[0]?.packQuantity || "",
                 amount: tableData[0]?.amount || "",
-                billingAddress: tableData[0]?.billingAddress || "",
-                shippingAddress: tableData[0]?.shippingAddress || "",
+                billingAddress: formatAddress(tableData[0]?.billingAddress),
+                shippingAddress: formatAddress(tableData[0]?.shippingAddress),
                 trackingNumber: tableData[0]?.trackingNumber || "",
                 deliveryVendor: tableData[0]?.deliveryVendor || "",
                 date: tableData[0]?.date
                     ? new Date(tableData[0].date).toISOString().split("T")[0]
                     : "",
             });
-
-            console.log("first order", tableData[0])
-
 
             if (tableData[0]?.deliveryVendor) {
                 setSelectedDeliveryVendor(tableData[0].deliveryVendor._id || tableData[0].deliveryVendor);
@@ -392,7 +480,6 @@ const CustomersSalesOrders = () => {
     const handleSubmit = async () => {
         if (!formData.customerName?.trim()) return setError("Customer name is required");
         if (!formData.salesChannel?.trim()) return setError("Sales channel is required");
-        if (!formData.itemSku?.trim()) return setError("Item SKU is required");
         if (!formData.packQuantity || formData.packQuantity <= 0)
             return setError("Pack quantity is required");
         if (!formData.amount) return setError("Amount is required");
@@ -406,8 +493,6 @@ const CustomersSalesOrders = () => {
                 formData,
                 { headers: { "Content-Type": "application/json" } }
             );
-
-            console.log("updated sales order response ", res);
 
             if (res.data.statusCode === 200) {
                 setIsEditing(false);
@@ -429,14 +514,16 @@ const CustomersSalesOrders = () => {
 
             if (response.data.statusCode === 200) {
                 const data = response.data.data;
+                const productGroupsSkus = data
+                    .filter(item => item.isProductGroup)
+                    .map(item => item.itemSku);
+
+                setProductGroupsIds(productGroupsSkus);
 
                 const uniqueMap = new Map();
 
                 data.forEach(item => {
                     const existing = uniqueMap.get(item.itemSku);
-
-                    console.log("item updated in edit sales order items ", item)
-                    console.log("existing in update items function ", existing)
 
                     if (!existing || (item.packType && !existing.packType)) {
                         uniqueMap.set(item.itemSku, item);
@@ -457,8 +544,6 @@ const CustomersSalesOrders = () => {
     const fetchProductsAvailablePackTypes = async (itemSku) => {
         try {
             const response = await axiosInstance.get(`/products/get-products-pack-types/${itemSku}`);
-            console.log("response products pack types", response);
-
             if (response.status === 200) {
                 setPackTypes(response.data.data);
             }
@@ -471,8 +556,6 @@ const CustomersSalesOrders = () => {
     const fetchProductBySku = async (itemSku) => {
         try {
             const response = await axiosInstance.get(`/products/get-product-by-sku/${itemSku}`);
-            console.log("response product by sku", response);
-
             if (response.status === 200) {
                 setProductQuantity(response.data.data.stockLevel);
             }
@@ -485,8 +568,6 @@ const CustomersSalesOrders = () => {
     const fetchCustomerAddresses = async (customerName) => {
         try {
             const response = await axiosInstance.get(`/admin/customer-addresses/${customerName}`);
-            console.log("response customer addresses", response.data);
-
             if (response.data.statusCode === 200) {
                 setBillingAddresses(response.data.data.billingAddresses || []);
                 setShippingAddresses(response.data.data.shippingAddresses || []);
@@ -495,6 +576,29 @@ const CustomersSalesOrders = () => {
             console.error('Error fetching customer addresses:', error);
         }
     };
+
+    const fetchProdutGroupsBySku = async () => {
+        try {
+            const response = await axiosInstance.post(`/product-group/get-product-group-by-skus`,
+                {
+                    skus: productGroupsIds
+                },
+                { headers: { "Content-Type": "application/json" } }
+            );
+
+            if (response.data.statusCode === 200) {
+                setProductGroupsData(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching customer addresses:', error);
+        }
+    }
+
+    useEffect(() => {
+        if (productGroupsIds.length > 0) {
+            fetchProdutGroupsBySku();
+        }
+    }, [productGroupsIds]);
 
     React.useEffect(() => {
         fetchSalesOrdersProducts();
@@ -542,12 +646,12 @@ const CustomersSalesOrders = () => {
             if (!currentRow) return;
 
             const previousAmount = currentRow.amount || 0;
-            const previousPackQuantity = parseInt(currentRow.packQuantity) || 1; // Parse as int
+            const previousPackQuantity = parseInt(currentRow.packQuantity) || 1;
             const previousUnitsQuantity = currentRow.unitsQuantity || 1;
 
             const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
 
-            const newPackQuantity = parseInt(updateFormData.packQuantity) || previousPackQuantity; // Parse as int
+            const newPackQuantity = parseInt(updateFormData.packQuantity) || previousPackQuantity;
             const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
             const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
 
@@ -665,7 +769,6 @@ const CustomersSalesOrders = () => {
         fetchProductsAvailablePackTypes(order.itemSku);
         fetchProductBySku(order.itemSku);
 
-        // FIXED: Initialize form data with current values including packType
         setUpdateFormData({
             date: order?.date || null,
             documentNumber: order.documentNumber || '',
@@ -677,16 +780,11 @@ const CustomersSalesOrders = () => {
             billingAddress: order.billingAddress || '',
             customerPO: order.customerPO || '',
             itemSku: order.itemSku || '',
-            packQuantity: order.packQuantity || '',  // Keep original format
+            packQuantity: order.packQuantity || '',
             unitsQuantity: parseInt(order.unitsQuantity) || 0,
             finalAmount: order.finalAmount || 0,
             amount: order.amount || 0,
-            packType: order.packType || '', // Ensure packType is initialized
-        });
-
-        console.log("Initialized update form data:", {
-            packQuantity: order.packQuantity,
-            packType: order.packType
+            packType: order.packType || '',
         });
     };
 
@@ -719,8 +817,6 @@ const CustomersSalesOrders = () => {
     const handleDeleteSalesOrder = async () => {
         try {
             const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${deleteDialog.itemId}`);
-
-            console.log("deleted", res.data);
 
             if (res.data.statusCode === 200) {
                 setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
@@ -777,17 +873,13 @@ const CustomersSalesOrders = () => {
             const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
             const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
 
-            // FIXED: Ensure packType is properly included
             const updatedData = {
                 ...updateFormData,
-                packQuantity: newPackQuantity.toString(), // Ensure it's a string
+                packQuantity: newPackQuantity.toString(),
                 unitsQuantity: newUnitsQuantity,
                 amount: newAmount,
-                packType: updateFormData.packType || currentRow.packType // Ensure packType is included
+                packType: updateFormData.packType || currentRow.packType
             };
-
-            console.log("Sending update data:", updatedData);
-            console.log("Pack type being sent:", updatedData.packType);
 
             const res = await axiosInstance.put(
                 `/sales-order/update-sales-order-item/${rowId}`,
@@ -799,11 +891,7 @@ const CustomersSalesOrders = () => {
                 }
             );
 
-            console.log("Update sales order response:", res);
-            console.log("Response data:", res.data);
-
             if (res.data.statusCode === 200) {
-                // FIXED: Update local state with all fields including packType
                 setRows(prevRows =>
                     prevRows.map(row =>
                         row._id === rowId
@@ -811,14 +899,13 @@ const CustomersSalesOrders = () => {
                                 ...row,
                                 ...updatedData,
                                 amount: newAmount,
-                                packType: updatedData.packType, // Ensure packType is updated
-                                packQuantity: updatedData.packQuantity // Ensure packQuantity is updated
+                                packType: updatedData.packType,
+                                packQuantity: updatedData.packQuantity
                             }
                             : row
                     )
                 );
 
-                // Also update tableData to ensure consistency
                 setTableData(prevData =>
                     prevData.map(item =>
                         item._id === rowId
@@ -834,8 +921,6 @@ const CustomersSalesOrders = () => {
                 );
 
                 handleCancelUpdate(rowId);
-
-                // Force refresh the data from server
                 await fetchSalesOrdersProducts();
 
             } else {
@@ -851,19 +936,15 @@ const CustomersSalesOrders = () => {
     };
 
     const handleUpdateFormChange = (field, value) => {
-        console.log("handleUpdateFormChange", field, value);
         setUpdateFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const fetchDeliveryVendorList = async () => {
         try {
             const response = await axiosInstance.get('/delivery-vendor/get-all-delivery-vendors');
-            console.log("response delivery vendor list", response.data);
-
             if (response.status === 200) {
                 setDeliveryVendors(response.data);
             }
-
         } catch (error) {
             console.error('Error fetching delivery vendors list:', error);
             setError(error.message);
@@ -873,7 +954,6 @@ const CustomersSalesOrders = () => {
     React.useEffect(() => {
         fetchDeliveryVendorList();
     }, []);
-
 
     return (
         <Box sx={{ p: 3 }}>
@@ -929,204 +1009,237 @@ const CustomersSalesOrders = () => {
                                         .map((row, index) => {
                                             const isItemSelected = isSelected(row?.ProductName || row.title);
                                             const isRowEditing = editingRowId === row._id;
+                                            const isProductGroupRow = isProductGroup(row);
+                                            const isExpanded = expandedRows.has(row._id);
+                                            const productGroupProducts = isProductGroupRow ? getProductGroupProducts(row.itemSku) : [];
 
                                             return (
-                                                <TableRow
-                                                    hover
-                                                    role="checkbox"
-                                                    aria-checked={isItemSelected}
-                                                    tabIndex={-1}
-                                                    key={row._id || row.title}
-                                                    selected={isItemSelected}
-                                                >
-                                                    {/* Actions Column */}
-                                                    <TableCell sx={{ ...stickyCellStyle, width: 100 }}>
-                                                        <Box display="flex" gap={0.5}>
-                                                            {isRowEditing ? (
-                                                                <>
-                                                                    <Button
-                                                                        size="small"
-                                                                        variant="contained"
-                                                                        color="primary"
-                                                                        onClick={() => handleSaveUpdate(row._id)}
-                                                                        disabled={loading || !!validationError || (updateFormData.unitsQuantity !== undefined && updateFormData.unitsQuantity < 1)}
-                                                                    >
-                                                                        {loading ? 'Saving...' : 'Save'}
-                                                                    </Button>
-
-                                                                    <Button
-                                                                        size="small"
-                                                                        variant="outlined"
-                                                                        color="secondary"
-                                                                        onClick={() => handleCancelUpdate(row._id)}
-                                                                        disabled={loading}
-                                                                    >
-                                                                        Cancel
-                                                                    </Button>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Tooltip title="Edit">
-                                                                        <IconButton
-                                                                            size="small"
-                                                                            color="primary"
-                                                                            onClick={() => handleEditSalesOrder(row)}
-                                                                        >
-                                                                            <IconEdit size="1rem" />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                    <Tooltip title="Delete">
-                                                                        <IconButton
-                                                                            size="small"
-                                                                            color="error"
-                                                                            onClick={(e) => handleDeleteClick(e, row._id, row.itemSku)}
-                                                                        >
-                                                                            <IconTrash size="1rem" />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                </>
-                                                            )}
-                                                        </Box>
-                                                    </TableCell>
-
-                                                    {/* SKU */}
-                                                    <TableCell sx={{ width: 120 }}>
-                                                        <Typography fontWeight="500" variant="body2">
-                                                            {row.itemSku || "N/A"}
-                                                        </Typography>
-                                                    </TableCell>
-
-                                                    {/* Amount */}
-                                                    <TableCell sx={{ width: 100 }}>
-                                                        {isRowEditing ? (
-                                                            <Typography variant="body2">
-                                                                ${updateFormData.amount ? updateFormData.amount.toFixed(2) : (row.amount || 0).toFixed(2)}
-                                                            </Typography>
-                                                        ) : (
-                                                            <Typography variant="body2">${(row.amount || 0).toFixed(2)}</Typography>
-                                                        )}
-                                                    </TableCell>
-
-                                                    {/* Tax Column */}
-                                                    <TableCell sx={{ width: 100 }}>
-                                                        <Box>
-                                                            <Typography variant="body2">
-                                                                {`${calculateProductTax(row).toFixed(2)} (${row.taxApplied ? `${row.taxPercentages}%` : 'No Tax'})`}
-                                                            </Typography>
-                                                        </Box>
-                                                    </TableCell>
-
-                                                    {/* Pack Type - FIXED */}
-                                                    <TableCell sx={{ width: 150 }}>
-                                                        {isRowEditing ? (
-                                                            <Box>
-                                                                <TextField
-                                                                    select
+                                                <React.Fragment key={row._id || row.title}>
+                                                    <TableRow
+                                                        hover
+                                                        role="checkbox"
+                                                        aria-checked={isItemSelected}
+                                                        tabIndex={-1}
+                                                        selected={isItemSelected}
+                                                        sx={{
+                                                            backgroundColor: isProductGroupRow ? '#f0f8ff' : 'inherit',
+                                                            '&:hover': {
+                                                                backgroundColor: isProductGroupRow ? '#e3f2fd' : 'rgba(0, 0, 0, 0.04)',
+                                                            }
+                                                        }}
+                                                    >
+                                                        {/* Expand/Collapse Column */}
+                                                        <TableCell sx={{ ...stickyCellStyle, width: 60 }}>
+                                                            {isProductGroupRow && (
+                                                                <MuiIconButton
                                                                     size="small"
-                                                                    value={updateFormData.packQuantity || row.packQuantity || ""}
-                                                                    onChange={handlePackTypeChange}
-                                                                    error={!!validationError}
-                                                                    fullWidth
+                                                                    onClick={() => toggleRowExpansion(row._id)}
                                                                 >
-                                                                    {packTypes?.map((pack) => (
-                                                                        <MenuItem key={pack._id} value={parseInt(pack.quantity)}>
-                                                                            {pack.name}
-                                                                        </MenuItem>
-                                                                    ))}
-                                                                </TextField>
-                                                                {updateFormData.packType && (
-                                                                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                                                                        Selected: {updateFormData.packType}
+                                                                    {isExpanded ? <IconChevronUp size="1rem" /> : <IconChevronDown size="1rem" />}
+                                                                </MuiIconButton>
+                                                            )}
+                                                        </TableCell>
+
+                                                        {/* Actions Column */}
+                                                        <TableCell sx={{ ...stickyCellStyle, width: 100 }}>
+                                                            <Box display="flex" gap={0.5}>
+                                                                {isRowEditing ? (
+                                                                    <>
+                                                                        <Button
+                                                                            size="small"
+                                                                            variant="contained"
+                                                                            color="primary"
+                                                                            onClick={() => handleSaveUpdate(row._id)}
+                                                                            disabled={loading || !!validationError || (updateFormData.unitsQuantity !== undefined && updateFormData.unitsQuantity < 1)}
+                                                                        >
+                                                                            {loading ? 'Saving...' : 'Save'}
+                                                                        </Button>
+
+                                                                        <Button
+                                                                            size="small"
+                                                                            variant="outlined"
+                                                                            color="secondary"
+                                                                            onClick={() => handleCancelUpdate(row._id)}
+                                                                            disabled={loading}
+                                                                        >
+                                                                            Cancel
+                                                                        </Button>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Tooltip title="Edit">
+                                                                            <IconButton
+                                                                                size="small"
+                                                                                color="primary"
+                                                                                onClick={() => handleEditSalesOrder(row)}
+                                                                            >
+                                                                                <IconEdit size="1rem" />
+                                                                            </IconButton>
+                                                                        </Tooltip>
+                                                                        <Tooltip title="Delete">
+                                                                            <IconButton
+                                                                                size="small"
+                                                                                color="error"
+                                                                                onClick={(e) => handleDeleteClick(e, row._id, row.itemSku)}
+                                                                            >
+                                                                                <IconTrash size="1rem" />
+                                                                            </IconButton>
+                                                                        </Tooltip>
+                                                                    </>
+                                                                )}
+                                                            </Box>
+                                                        </TableCell>
+
+                                                        {/* SKU */}
+                                                        <TableCell sx={{ width: 120 }}>
+                                                            <Typography fontWeight="500" variant="body2">
+                                                                {row.itemSku || "N/A"}
+                                                                {isProductGroupRow && (
+                                                                    <Typography variant="caption" color="primary" display="block">
+                                                                        Product Kit
                                                                     </Typography>
                                                                 )}
-                                                                {/* Debug info */}
-                                                                {/* <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5, fontSize: '0.6rem' }}>
-                                                                    Debug: Qty: {updateFormData.packQuantity}, Type: {updateFormData.packType}
-                                                                </Typography> */}
-                                                            </Box>
-                                                        ) : (
-                                                            <Typography variant="body2">
-                                                                {row.packType || "N/A"}
-                                                                {/* Debug info */}
-                                                                {/* <Typography variant="caption" color="textSecondary" sx={{ display: 'block', fontSize: '0.6rem' }}>
-                                                                    Current: {row.packType}
-                                                                </Typography> */}
                                                             </Typography>
-                                                        )}
-                                                    </TableCell>
+                                                        </TableCell>
 
-                                                    {/* Units Quantity */}
-                                                    <TableCell sx={{ width: 50 }}>
-                                                        {isRowEditing ? (
+                                                        {/* Amount */}
+                                                        <TableCell sx={{ width: 100 }}>
+                                                            {isRowEditing ? (
+                                                                <Typography variant="body2">
+                                                                    ${updateFormData.amount ? updateFormData.amount.toFixed(2) : (row.amount || 0).toFixed(2)}
+                                                                </Typography>
+                                                            ) : (
+                                                                <Typography variant="body2">${(row.amount || 0).toFixed(2)}</Typography>
+                                                            )}
+                                                        </TableCell>
+
+                                                        {/* Tax Column */}
+                                                        <TableCell sx={{ width: 100 }}>
                                                             <Box>
-                                                                <TextField
-                                                                    type="number"
-                                                                    size="small"
-                                                                    value={updateFormData.unitsQuantity || row.unitsQuantity || ""}
-                                                                    onChange={(e) => {
-                                                                        const value = parseInt(e.target.value);
-                                                                        if (value >= 1 || e.target.value === '') {
-                                                                            handleUpdateFormChange('unitsQuantity', value);
-                                                                        }
-                                                                    }}
-                                                                    inputProps={{ min: 1 }}
-                                                                    error={!!validationError}
-                                                                />
-                                                                {validationError && (
-                                                                    <Typography
-                                                                        variant="caption"
-                                                                        color="error"
-                                                                        sx={{
-                                                                            display: 'block',
-                                                                            mt: 0.5,
-                                                                            fontSize: '0.7rem'
-                                                                        }}
-                                                                    >
-                                                                        {validationError}
-                                                                    </Typography>
-                                                                )}
-                                                                {productQuentity > 0 && (
-                                                                    <Typography
-                                                                        variant="caption"
-                                                                        color="textSecondary"
-                                                                        sx={{
-                                                                            display: 'block',
-                                                                            mt: 0.5,
-                                                                            fontSize: '0.7rem'
-                                                                        }}
-                                                                    >
-                                                                        Available: {productQuentity}
-                                                                    </Typography>
-                                                                )}
+                                                                <Typography variant="body2">
+                                                                    {`${calculateProductTax(row).toFixed(2)} (${row.taxApplied ? `${row.taxPercentages}%` : 'No Tax'})`}
+                                                                </Typography>
                                                             </Box>
-                                                        ) : (
-                                                            <Typography variant="body2">
-                                                                {row.unitsQuantity || "N/A"}
-                                                            </Typography>
-                                                        )}
-                                                    </TableCell>
+                                                        </TableCell>
 
-                                                    <TableCell sx={{ width: 100 }}>
-                                                        <Box>
-                                                            <Typography variant="body2">
-                                                                {row.discountType || ""}
-                                                            </Typography>
-                                                        </Box>
-                                                    </TableCell>
-                                                    <TableCell sx={{ width: 100 }}>
-                                                        <Box>
-                                                            <Typography variant="body2">
-                                                                {row.discountType?.trim() === "Compare Price" ? `$ ${row.discountPercentages}` : row.discountPercentages + "%"}
-                                                            </Typography>
-                                                        </Box>
-                                                    </TableCell>
+                                                        {/* Pack Type - FIXED */}
+                                                        <TableCell sx={{ width: 150 }}>
+                                                            {isRowEditing ? (
+                                                                <Box>
+                                                                    <TextField
+                                                                        select
+                                                                        size="small"
+                                                                        value={updateFormData.packQuantity || row.packQuantity || ""}
+                                                                        onChange={handlePackTypeChange}
+                                                                        error={!!validationError}
+                                                                        fullWidth
+                                                                    >
+                                                                        {packTypes?.map((pack) => (
+                                                                            <MenuItem key={pack._id} value={parseInt(pack.quantity)}>
+                                                                                {pack.name}
+                                                                            </MenuItem>
+                                                                        ))}
+                                                                    </TextField>
+                                                                    {updateFormData.packType && (
+                                                                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                                                                            Selected: {updateFormData.packType}
+                                                                        </Typography>
+                                                                    )}
+                                                                </Box>
+                                                            ) : (
+                                                                <Typography variant="body2">
+                                                                    {row.packType || "N/A"}
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
 
-                                                </TableRow>
+                                                        {/* Units Quantity */}
+                                                        <TableCell sx={{ width: 50 }}>
+                                                            {isRowEditing ? (
+                                                                <Box>
+                                                                    <TextField
+                                                                        type="number"
+                                                                        size="small"
+                                                                        value={updateFormData.unitsQuantity || row.unitsQuantity || ""}
+                                                                        onChange={(e) => {
+                                                                            const value = parseInt(e.target.value);
+                                                                            if (value >= 1 || e.target.value === '') {
+                                                                                handleUpdateFormChange('unitsQuantity', value);
+                                                                            }
+                                                                        }}
+                                                                        inputProps={{ min: 1 }}
+                                                                        error={!!validationError}
+                                                                    />
+                                                                    {validationError && (
+                                                                        <Typography
+                                                                            variant="caption"
+                                                                            color="error"
+                                                                            sx={{
+                                                                                display: 'block',
+                                                                                mt: 0.5,
+                                                                                fontSize: '0.7rem'
+                                                                            }}
+                                                                        >
+                                                                            {validationError}
+                                                                        </Typography>
+                                                                    )}
+                                                                    {productQuentity > 0 && (
+                                                                        <Typography
+                                                                            variant="caption"
+                                                                            color="textSecondary"
+                                                                            sx={{
+                                                                                display: 'block',
+                                                                                mt: 0.5,
+                                                                                fontSize: '0.7rem'
+                                                                            }}
+                                                                        >
+                                                                            Available: {productQuentity}
+                                                                        </Typography>
+                                                                    )}
+                                                                </Box>
+                                                            ) : (
+                                                                <Typography variant="body2">
+                                                                    {row.unitsQuantity || "N/A"}
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
+
+                                                        <TableCell sx={{ width: 100 }}>
+                                                            <Box>
+                                                                <Typography variant="body2">
+                                                                    {row.discountType || ""}
+                                                                </Typography>
+                                                            </Box>
+                                                        </TableCell>
+                                                        <TableCell sx={{ width: 100 }}>
+                                                            <Box>
+                                                                <Typography variant="body2">
+                                                                    {row.discountType?.trim() === "Compare Price" ? `$ ${row.discountPercentages}` : row.discountPercentages + "%"}
+                                                                </Typography>
+                                                            </Box>
+                                                        </TableCell>
+                                                    </TableRow>
+
+                                                    {/* Expanded Row for Product Group Products */}
+                                                    {isProductGroupRow && isExpanded && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={2} sx={{ padding: 0, border: 'none' }} />
+                                                            <TableCell colSpan={6} sx={{ padding: 0, border: 'none' }}>
+                                                                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                                                                    <ProductGroupProductsTable 
+                                                                        products={productGroupProducts} 
+                                                                        productGroupsData={productGroupsData}
+                                                                    />
+                                                                </Collapse>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </React.Fragment>
                                             );
                                         })}
                                     {emptyRows > 0 && (
                                         <TableRow style={{ height: 33 * emptyRows }}>
-                                            <TableCell colSpan={headCells.length + 1} />
+                                            <TableCell colSpan={headCells.length + 2} />
                                         </TableRow>
                                     )}
                                 </TableBody>

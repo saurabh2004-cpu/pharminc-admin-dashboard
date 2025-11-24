@@ -6,6 +6,7 @@ import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { Provider } from 'react-redux';
 import { store } from './store/authStore'
+import AuthWrapper from './wrappers/authWrapper';
 
 async function deferRender() {
   const { worker } = await import("./api/mocks/browser");
@@ -19,7 +20,9 @@ deferRender().then(() => {
     <CustomizerContextProvider>
       <Suspense fallback={<Spinner />}>
         <Provider store={store}>
-          <App />
+          <AuthWrapper>
+            <App />
+          </AuthWrapper>
         </Provider>,
       </Suspense>
     </CustomizerContextProvider>,
