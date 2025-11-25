@@ -74,9 +74,12 @@ const ListSalesOrders = () => {
       disablePadding: false,
       label: 'Customer PO',
     },
-
-
-
+    {
+      id: 'CreditCard',
+      numeric: false,
+      disablePadding: false,
+      label: 'Credit Card',
+    },
     {
       id: 'LastUpdatedDate',
       numeric: false,

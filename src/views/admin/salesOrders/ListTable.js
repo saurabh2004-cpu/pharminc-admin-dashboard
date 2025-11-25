@@ -388,12 +388,12 @@ const ListTable = ({
         link.click();
         link.remove();
         window.URL.revokeObjectURL(url);
-        
+
         showSnackbar(`Sales orders for document ${documentNumber} exported successfully!`);
       }
     } catch (error) {
       console.error('Error exporting sales orders by document number:', error);
-      
+
       // Handle specific error cases
       if (error.response?.status === 404) {
         showSnackbar(`No sales orders found with document number: ${documentNumber}`, 'warning');
@@ -659,6 +659,7 @@ const ListTable = ({
     shipping: { minWidth: '400px' },
     billing: { minWidth: '400px' },
     customerPO: { minWidth: '150px' },
+    creditcard: { minWidth: '250px' },
     itemSku: { minWidth: '150px' },
     packQuantity: { minWidth: '160px' },
     unitsQuantity: { minWidth: '160px' },
@@ -752,20 +753,20 @@ const ListTable = ({
                         <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }}>
                           <Box display="flex" gap={1}>
                             <Tooltip title="Edit">
-                              <IconButton 
-                                size="small" 
-                                color="primary" 
+                              <IconButton
+                                size="small"
+                                color="primary"
                                 onClick={() => handleEditSalesOrder(row.documentNumber)}
                                 disabled={loading}
                               >
                                 <IconEdit size="1.1rem" />
                               </IconButton>
                             </Tooltip>
-                            
+
                             <Tooltip title="Export by Document Number">
-                              <IconButton 
-                                size="small" 
-                                color="secondary" 
+                              <IconButton
+                                size="small"
+                                color="secondary"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleExportByDocumentNumber(row.documentNumber);
@@ -784,9 +785,9 @@ const ListTable = ({
                             </Tooltip>
 
                             <Tooltip title="Delete">
-                              <IconButton 
-                                size="small" 
-                                color="error" 
+                              <IconButton
+                                size="small"
+                                color="error"
                                 onClick={(e) => handleDeleteClick(e, row._id, row?.documentNumber)}
                                 disabled={loading}
                               >
@@ -887,6 +888,34 @@ const ListTable = ({
                             </Box>
                           </Box>
                         </TableCell>
+                        <TableCell sx={columnWidths.creditcard}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.creditCard?.cardNumber || "N/A"}
+                              </Typography>
+
+                              <Typography fontWeight="400">
+                                {row?.creditCard?.fullName || "N/A"}
+                              </Typography>
+
+                              <Typography fontWeight="400">
+                                {row?.creditCard?.expiryMonth && row?.creditCard?.expiryYear
+                                  ? `Expiry: ${row.creditCard.expiryMonth}/${row.creditCard.expiryYear}`
+                                  : "N/A"}
+                              </Typography>
+
+                              <Typography fontWeight="400">
+                                Transaction ID: {row?.creditCard?.transactionId || "N/A"}
+                              </Typography>
+
+                              <Typography fontWeight="400">
+                                Transaction Status: {row?.creditCard?.transactionStatus || "N/A"}
+                              </Typography>
+
+                            </Box>
+                          </Box>
+                        </TableCell>
 
                         <TableCell sx={columnWidths.createdAt}>
                           <Typography>
@@ -932,9 +961,9 @@ const ListTable = ({
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity} 
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
           sx={{ width: '100%' }}
         >
           {snackbar.message}
