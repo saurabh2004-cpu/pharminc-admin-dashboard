@@ -888,7 +888,7 @@ const ListTable = ({
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell sx={columnWidths.creditcard}>
+                        {/* <TableCell sx={columnWidths.creditcard}>
                           <Box display="flex" alignItems="center">
                             <Box >
                               <Typography fontWeight="400">
@@ -915,7 +915,7 @@ const ListTable = ({
 
                             </Box>
                           </Box>
-                        </TableCell>
+                        </TableCell> */}
 
                         <TableCell sx={columnWidths.createdAt}>
                           <Typography>

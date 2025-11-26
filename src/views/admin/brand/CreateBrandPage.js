@@ -22,13 +22,38 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 
+// Image size configurations
+const IMAGE_SIZES = {
+  brandImage: { width: 600, height: 300, label: 'Brand Image (600 × 300 px)' },
+  heroCarousel: { width: 4478, height: 1415, label: 'Hero Carousel Images (4478 × 1415 px)' },
+  categoryImage: { width: 1188, height: 1064, label: 'Category Images (1188 × 1064 px)' },
+  brandLogo: { width: 2332, height: 868, label: 'Brand Logos (2332 × 868 px)' },
+  carouselImage: { width: 694, height: 228, label: 'Carousel Images (694 × 228 px)' }
+};
+
+// Function to validate image dimensions
+const validateImageDimensions = (file, requiredWidth, requiredHeight) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const isValid = img.width === requiredWidth && img.height === requiredHeight;
+      resolve({ isValid, width: img.width, height: img.height });
+    };
+    img.onerror = () => resolve({ isValid: false, width: 0, height: 0 });
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 // File Preview Component for individual items
-const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, required = false }) => (
+const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, required = false, imageSize }) => (
   <Box sx={{ mb: 2 }}>
     <CustomFormLabel>
       {title}
       {required && <span style={{ color: 'red' }}>*</span>}
     </CustomFormLabel>
+    <Typography variant="caption" color="textSecondary" sx={{ mb: 1, display: 'block' }}>
+      Required size: {imageSize}
+    </Typography>
     {preview && (
       <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
         <img
@@ -72,12 +97,15 @@ const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, require
 );
 
 // Bulk File Preview Component (for hero carousel and carousel images)
-const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler }) => (
+const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler, imageSize }) => (
   <Box sx={{ mb: 2 }}>
     <CustomFormLabel>
       {title}
       {title.includes('*') && <span style={{ color: 'red' }}>*</span>}
     </CustomFormLabel>
+    <Typography variant="caption" color="textSecondary" sx={{ mb: 1, display: 'block' }}>
+      Required size: {imageSize}
+    </Typography>
     {previews.length > 0 && (
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
         {previews.map((preview, index) => (
@@ -206,10 +234,21 @@ const CreateBrandPage = () => {
     });
   };
 
-  // File Handlers for bulk uploads
-  const handleBrandImageChange = (e) => {
+  // File Handlers for bulk uploads with size validation
+  const handleBrandImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      const { isValid, width, height } = await validateImageDimensions(
+        file, 
+        IMAGE_SIZES.brandImage.width, 
+        IMAGE_SIZES.brandImage.height
+      );
+      
+      if (!isValid) {
+        setError(`Brand image must be exactly ${IMAGE_SIZES.brandImage.width} × ${IMAGE_SIZES.brandImage.height} px. Current size: ${width} × ${height} px`);
+        return;
+      }
+      
       setBrandImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setBrandImagePreview(reader.result);
@@ -218,9 +257,23 @@ const CreateBrandPage = () => {
     }
   };
 
-  const handleHeroCarouselImagesChange = (e) => {
+  const handleHeroCarouselImagesChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      // Validate all files first
+      for (const file of files) {
+        const { isValid, width, height } = await validateImageDimensions(
+          file, 
+          IMAGE_SIZES.heroCarousel.width, 
+          IMAGE_SIZES.heroCarousel.height
+        );
+        
+        if (!isValid) {
+          setError(`Hero carousel image must be exactly ${IMAGE_SIZES.heroCarousel.width} × ${IMAGE_SIZES.heroCarousel.height} px. Current size: ${width} × ${height} px`);
+          return;
+        }
+      }
+
       setHeroCarouselImages([...heroCarouselImages, ...files]);
 
       const newPreviews = [];
@@ -238,9 +291,23 @@ const CreateBrandPage = () => {
     }
   };
 
-  const handleCarouselImagesChange = (e) => {
+  const handleCarouselImagesChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      // Validate all files first
+      for (const file of files) {
+        const { isValid, width, height } = await validateImageDimensions(
+          file, 
+          IMAGE_SIZES.carouselImage.width, 
+          IMAGE_SIZES.carouselImage.height
+        );
+        
+        if (!isValid) {
+          setError(`Carousel image must be exactly ${IMAGE_SIZES.carouselImage.width} × ${IMAGE_SIZES.carouselImage.height} px. Current size: ${width} × ${height} px`);
+          return;
+        }
+      }
+
       setCarouselImages([...carouselImages, ...files]);
 
       const newPreviews = [];
@@ -258,10 +325,21 @@ const CreateBrandPage = () => {
     }
   };
 
-  // Individual Category Image Handler
-  const handleCategoryImageChange = (index, e) => {
+  // Individual Category Image Handler with size validation
+  const handleCategoryImageChange = async (index, e) => {
     const file = e.target.files[0];
     if (file) {
+      const { isValid, width, height } = await validateImageDimensions(
+        file, 
+        IMAGE_SIZES.categoryImage.width, 
+        IMAGE_SIZES.categoryImage.height
+      );
+      
+      if (!isValid) {
+        setError(`Category image must be exactly ${IMAGE_SIZES.categoryImage.width} × ${IMAGE_SIZES.categoryImage.height} px. Current size: ${width} × ${height} px`);
+        return;
+      }
+
       const newCategories = [...formData.categories];
       newCategories[index].categoryImage = file;
       
@@ -275,10 +353,21 @@ const CreateBrandPage = () => {
     }
   };
 
-  // Individual Brand Logo Handler
-  const handleBrandLogoChange = (index, e) => {
+  // Individual Brand Logo Handler with size validation
+  const handleBrandLogoChange = async (index, e) => {
     const file = e.target.files[0];
     if (file) {
+      const { isValid, width, height } = await validateImageDimensions(
+        file, 
+        IMAGE_SIZES.brandLogo.width, 
+        IMAGE_SIZES.brandLogo.height
+      );
+      
+      if (!isValid) {
+        setError(`Brand logo must be exactly ${IMAGE_SIZES.brandLogo.width} × ${IMAGE_SIZES.brandLogo.height} px. Current size: ${width} × ${height} px`);
+        return;
+      }
+
       const newBrands = [...formData.brands];
       newBrands[index].brandImage = file;
       
@@ -709,7 +798,7 @@ const CreateBrandPage = () => {
         {/* File Uploads */}
         <Grid size={12}>
           <IndividualFilePreview
-            title="Brand Image *"
+            title={IMAGE_SIZES.brandImage.label}
             preview={brandImagePreview}
             onRemove={() => {
               setBrandImage(null);
@@ -717,16 +806,18 @@ const CreateBrandPage = () => {
             }}
             onFileChange={handleBrandImageChange}
             required={true}
+            imageSize={`${IMAGE_SIZES.brandImage.width} × ${IMAGE_SIZES.brandImage.height} px`}
           />
         </Grid>
 
         <Grid size={12}>
           <BulkFilePreviewSection
-            title="Hero Carousel Images "
+            title={IMAGE_SIZES.heroCarousel.label}
             previews={heroCarouselPreviews}
             onRemove={removeHeroCarouselImage}
             acceptMultiple={true}
             fileHandler={handleHeroCarouselImagesChange}
+            imageSize={`${IMAGE_SIZES.heroCarousel.width} × ${IMAGE_SIZES.heroCarousel.height} px`}
           />
         </Grid>
 
@@ -834,11 +925,12 @@ const CreateBrandPage = () => {
                   </Grid>
                   <Grid size={12}>
                     <IndividualFilePreview
-                      title="Category Image "
+                      title={IMAGE_SIZES.categoryImage.label}
                       preview={category.categoryImagePreview}
                       onRemove={() => removeCategoryImage(index)}
                       onFileChange={(e) => handleCategoryImageChange(index, e)}
                       required={true}
+                      imageSize={`${IMAGE_SIZES.categoryImage.width} × ${IMAGE_SIZES.categoryImage.height} px`}
                     />
                   </Grid>
                 </Grid>
@@ -932,11 +1024,12 @@ const CreateBrandPage = () => {
                   </Grid>
                   <Grid size={12}>
                     <IndividualFilePreview
-                      title="Brand Logo "
+                      title={IMAGE_SIZES.brandLogo.label}
                       preview={brandItem.brandImagePreview}
                       onRemove={() => removeBrandLogo(index)}
                       onFileChange={(e) => handleBrandLogoChange(index, e)}
                       required={true}
+                      imageSize={`${IMAGE_SIZES.brandLogo.width} × ${IMAGE_SIZES.brandLogo.height} px`}
                     />
                   </Grid>
                 </Grid>
@@ -1073,11 +1166,12 @@ const CreateBrandPage = () => {
 
         <Grid size={12}>
           <BulkFilePreviewSection
-            title="Carousel Images *"
+            title={IMAGE_SIZES.carouselImage.label}
             previews={carouselImagePreviews}
             onRemove={removeCarouselImage}
             acceptMultiple={true}
             fileHandler={handleCarouselImagesChange}
+            imageSize={`${IMAGE_SIZES.carouselImage.width} × ${IMAGE_SIZES.carouselImage.height} px`}
           />
         </Grid>
 

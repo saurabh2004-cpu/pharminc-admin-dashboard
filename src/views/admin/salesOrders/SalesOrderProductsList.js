@@ -90,7 +90,7 @@ function EnhancedTableHead(props) {
                 <TableCell sx={{ ...headCellStyle, ...stickyCellStyle, width: 60 }}>
                     Expand
                 </TableCell>
-                
+
                 {/* Actions column */}
                 <TableCell sx={{ ...headCellStyle, ...stickyCellStyle, width: 100 }}>
                     Actions
@@ -490,9 +490,20 @@ const CustomersSalesOrders = () => {
         try {
             const res = await axiosInstance.put(
                 `/sales-order/update-sales-order/${documentNo}`,
-                formData,
+                {
+                    customerName: formData.customerName,
+                    salesChannel: formData.salesChannel,
+                    packQuantity: formData.packQuantity,
+                    billingAddress: formData.billingAddress,
+                    shippingAddress: formData.shippingAddress,
+                    trackingNumber: formData.trackingNumber,
+                    date: formData.date,
+                    deliveryVendor: selectedDeliveryVendor,
+                },
                 { headers: { "Content-Type": "application/json" } }
             );
+
+            console.log("response update sales order", res.data.data)
 
             if (res.data.statusCode === 200) {
                 setIsEditing(false);
@@ -1226,8 +1237,8 @@ const CustomersSalesOrders = () => {
                                                             <TableCell colSpan={2} sx={{ padding: 0, border: 'none' }} />
                                                             <TableCell colSpan={6} sx={{ padding: 0, border: 'none' }}>
                                                                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                                                                    <ProductGroupProductsTable 
-                                                                        products={productGroupProducts} 
+                                                                    <ProductGroupProductsTable
+                                                                        products={productGroupProducts}
                                                                         productGroupsData={productGroupsData}
                                                                     />
                                                                 </Collapse>
@@ -1398,6 +1409,68 @@ const CustomersSalesOrders = () => {
                                                     deliveryVendors.find(v => v._id === tableData[0]?.deliveryVendor)?.vendorName : 'N/A')}
                                         </Typography>
                                     </Box>
+                                </Box>
+                            </Paper>
+
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" gutterBottom color="primary">
+                                    Credit Cards Details :
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                            Card Number:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
+                                            {tableData[0]?.creditCard?.cardNumber.slice(-4).padStart(tableData[0]?.creditCard?.cardNumber.length, '*') || 'N/A'}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                            Expires In:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
+                                            {tableData[0]?.creditCard?.expiryMonth} / {tableData[0]?.creditCard?.expiryYear}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                            fullName:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData[0]?.creditCard?.fullName || 'N/A'}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                            Transaction Id:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData[0]?.creditCard?.transactionId || 'N/A'}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                            Transaction Status:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData[0]?.creditCard?.transactionStatus || 'N/A'}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                            Authorisation Code:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData[0]?.creditCard?.authorisationCode || 'N/A'}
+                                        </Typography>
+                                    </Box>
+
                                 </Box>
                             </Paper>
 

@@ -316,6 +316,43 @@ const ListTable = ({
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubCategory, setSelectedSubCategory] = useState('');
   const [selectedSubCategoryTwo, setSelectedSubCategoryTwo] = useState('');
+  const [togglingProductId, setTogglingProductId] = useState(null);
+
+
+
+  const handleToggleProductStatus = async (productId, currentStatus) => {
+    try {
+      setTogglingProductId(productId);
+
+      const response = await axiosInstance.post('/products/change-product-status', {
+        productId: productId
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.data.statusCode === 200) {
+        setTableData((prevData) =>
+          prevData.map((item) =>
+            item._id === productId ? { ...item, inactive: !item.inactive } : item
+          )
+        );
+
+        // Update the rows with the new status
+        setRows((prevRows) =>
+          prevRows.map((item) =>
+            item._id === productId ? { ...item, inactive: !item.inactive } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling product status:', error);
+    } finally {
+      setTogglingProductId(null);
+    }
+  };
+
 
   // Handle CSV export
   const handleExportCSV = async () => {
@@ -1039,13 +1076,38 @@ const ListTable = ({
                             </TableCell>
 
                             <TableCell sx={columnWidths.packBarcodes}>
-                              <Box display="flex" alignItems="center">
-                                <Box>
-                                  <Chip
-                                    label={row.inactive ? 'Inactive' : 'Active'}
-                                    color={row.inactive ? 'error' : 'success'}
-                                  />
-                                </Box>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Tooltip title={row.inactive ? "Click to activate" : "Click to deactivate"}>
+                                  <Box
+                                    onClick={() => handleToggleProductStatus(row._id, row.inactive)}
+                                    sx={{
+                                      cursor: togglingProductId === row._id ? 'wait' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      opacity: togglingProductId === row._id ? 0.6 : 1,
+                                      transition: 'all 0.3s ease',
+                                    }}
+                                  >
+                                    {togglingProductId === row._id ? (
+                                      <CircularProgress size={20} />
+                                    ) : (
+                                      <Chip
+                                        label={row.inactive ? 'Inactive' : 'Active'}
+                                        color={row.inactive ? 'error' : 'success'}
+                                        variant="filled"
+                                        icon={row.inactive ? <IconX size={16} /> : <IconCheck size={16} />}
+                                        sx={{
+                                          cursor: 'pointer',
+                                          '&:hover': {
+                                            opacity: 0.8,
+                                            transform: 'scale(1.05)',
+                                          },
+                                          transition: 'all 0.2s ease',
+                                        }}
+                                      />
+                                    )}
+                                  </Box>
+                                </Tooltip>
                               </Box>
                             </TableCell>
 
