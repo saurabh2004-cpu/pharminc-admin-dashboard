@@ -28,6 +28,7 @@ const CreateAdmin = () => {
     const [error, setError] = React.useState('');
     const [roles, setRoles] = React.useState(["MASTER ADMIN", "SUB ADMIN"]);
     const [loading, setLoading] = React.useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async () => {
         try {
