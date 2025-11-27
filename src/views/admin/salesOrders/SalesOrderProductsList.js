@@ -248,6 +248,9 @@ const CustomersSalesOrders = () => {
     const [productList, setProductList] = useState([]);
     const [expandedRows, setExpandedRows] = useState(new Set());
 
+    const [billingDropdownOpen, setBillingDropdownOpen] = useState(false);
+    const [shippingDropdownOpen, setShippingDropdownOpen] = useState(false);
+
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         customerName: "",
@@ -281,6 +284,7 @@ const CustomersSalesOrders = () => {
     const [selectedDeliveryVendor, setSelectedDeliveryVendor] = useState('');
     const [productGroupsIds, setProductGroupsIds] = useState([]);
     const [productGroupsData, setProductGroupsData] = useState([]);
+
 
     const theme = useTheme();
     const borderColor = theme.palette.divider;
@@ -404,37 +408,35 @@ const CustomersSalesOrders = () => {
 
     useEffect(() => {
         if (tableData[0]) {
-            const formatAddress = (address) => {
+            // Format sales order address for display
+            const formatSalesOrderAddress = (address) => {
                 if (!address) return "";
 
                 if (typeof address === 'string') return address;
 
                 if (typeof address === 'object') {
-                    if (address.billingAddressLineOne) {
+                    // Handle sales order address format
+                    if (address.shippingAddressOne || address.billingAddressOne) {
+                        const addressOne = address.shippingAddressOne || address.billingAddressOne;
+                        const addressTwo = address.shippingAddressTwo || address.billingAddressTwo;
+                        const addressThree = address.shippingAddressThree || address.billingAddressThree;
+                        const city = address.shippingCity || address.billingCity;
+                        const state = address.shippingState || address.billingState;
+                        const zip = address.shippingZip || address.billingZip;
+
                         return [
-                            address.billingAddressLineOne,
-                            address.billingAddressLineTwo,
-                            address.billingAddressLineThree,
-                            address.billingCity,
-                            address.billingState,
-                            address.billingZip
+                            addressOne,
+                            addressTwo,
+                            addressThree,
+                            city,
+                            state,
+                            zip
                         ].filter(Boolean).join(", ");
                     }
-                    else if (address.shippingAddressLineOne) {
-                        return [
-                            address.shippingAddressLineOne,
-                            address.shippingAddressLineTwo,
-                            address.shippingAddressLineThree,
-                            address.shippingCity,
-                            address.shippingState,
-                            address.shippingZip
-                        ].filter(Boolean).join(", ");
-                    }
-                    else {
-                        return Object.values(address).filter(val =>
-                            val && typeof val === 'string'
-                        ).join(", ");
-                    }
+                    // Handle other object formats if any
+                    return Object.values(address).filter(val =>
+                        val && typeof val === 'string'
+                    ).join(", ");
                 }
 
                 return "";
@@ -445,8 +447,8 @@ const CustomersSalesOrders = () => {
                 salesChannel: tableData[0]?.salesChannel || "",
                 packQuantity: tableData[0]?.packQuantity || "",
                 amount: tableData[0]?.amount || "",
-                billingAddress: formatAddress(tableData[0]?.billingAddress),
-                shippingAddress: formatAddress(tableData[0]?.shippingAddress),
+                billingAddress: formatSalesOrderAddress(tableData[0]?.billingAddress),
+                shippingAddress: formatSalesOrderAddress(tableData[0]?.shippingAddress),
                 trackingNumber: tableData[0]?.trackingNumber || "",
                 deliveryVendor: tableData[0]?.deliveryVendor || "",
                 date: tableData[0]?.date
@@ -477,33 +479,42 @@ const CustomersSalesOrders = () => {
         }
     };
 
+    useEffect(() => {
+        // Set current addresses as default selection
+        setSelectedBillingAddress('current');
+        setSelectedShippingAddress('current');
+    }, [tableData]);
+
     const handleSubmit = async () => {
         if (!formData.customerName?.trim()) return setError("Customer name is required");
         if (!formData.salesChannel?.trim()) return setError("Sales channel is required");
-        if (!formData.packQuantity || formData.packQuantity <= 0)
-            return setError("Pack quantity is required");
-        if (!formData.amount) return setError("Amount is required");
 
         setLoading(true);
         setError("");
 
         try {
+            // Determine which addresses to use
+            const billingAddress = selectedBillingAddress === 'current'
+                ? tableData[0]?.billingAddress
+                : formData.billingAddress;
+
+            const shippingAddress = selectedShippingAddress === 'current'
+                ? tableData[0]?.shippingAddress
+                : formData.shippingAddress;
+
             const res = await axiosInstance.put(
                 `/sales-order/update-sales-order/${documentNo}`,
                 {
                     customerName: formData.customerName,
                     salesChannel: formData.salesChannel,
-                    // packQuantity: formData.packQuantity,
-                    billingAddress: formData.billingAddress,
-                    shippingAddress: formData.shippingAddress,
+                    billingAddress: billingAddress,
+                    shippingAddress: shippingAddress,
                     trackingNumber: formData.trackingNumber,
                     date: formData.date,
                     deliveryVendor: selectedDeliveryVendor,
                 },
                 { headers: { "Content-Type": "application/json" } }
             );
-
-            console.log("response update sales order", res.data.data)
 
             if (res.data.statusCode === 200) {
                 setIsEditing(false);
@@ -516,6 +527,31 @@ const CustomersSalesOrders = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Helper function to display sales order addresses
+    const displaySalesOrderAddress = (address) => {
+        if (!address) return "N/A";
+
+        if (typeof address === 'string') return address;
+
+        if (typeof address === 'object') {
+            if (address.shippingAddressOne || address.billingAddressOne) {
+                const addressOne = address.shippingAddressOne || address.billingAddressOne;
+                const addressTwo = address.shippingAddressTwo || address.billingAddressTwo;
+                const addressThree = address.shippingAddressThree || address.billingAddressThree;
+                const city = address.shippingCity || address.billingCity;
+                const state = address.shippingState || address.billingState;
+                const zip = address.shippingZip || address.billingZip;
+
+                return [addressOne, addressTwo, addressThree, city, state, zip]
+                    .filter(Boolean)
+                    .join(", ");
+            }
+            return Object.values(address).filter(val => val && typeof val === 'string').join(", ");
+        }
+
+        return "N/A";
     };
 
     const fetchSalesOrdersProducts = async () => {
@@ -749,12 +785,17 @@ const CustomersSalesOrders = () => {
         const addressId = event.target.value;
         setSelectedBillingAddress(addressId);
 
-        const selectedAddress = billingAddresses.find(addr => addr._id === addressId);
-        if (selectedAddress) {
-            setFormData(prev => ({
-                ...prev,
-                billingAddress: selectedAddress
-            }));
+        if (addressId === 'current') {
+            setBillingDropdownOpen(false);
+        } else {
+            const selectedAddress = billingAddresses.find(addr => addr._id === addressId);
+            if (selectedAddress) {
+                setFormData(prev => ({
+                    ...prev,
+                    billingAddress: selectedAddress
+                }));
+                setBillingDropdownOpen(false);
+            }
         }
     };
 
@@ -762,14 +803,50 @@ const CustomersSalesOrders = () => {
         const addressId = event.target.value;
         setSelectedShippingAddress(addressId);
 
-        const selectedAddress = shippingAddresses.find(addr => addr._id === addressId);
-        if (selectedAddress) {
-            setFormData(prev => ({
-                ...prev,
-                shippingAddress: selectedAddress
-            }));
+        if (addressId === 'current') {
+            setShippingDropdownOpen(false);
+        } else {
+            const selectedAddress = shippingAddresses.find(addr => addr._id === addressId);
+            if (selectedAddress) {
+                setFormData(prev => ({
+                    ...prev,
+                    shippingAddress: selectedAddress
+                }));
+                setShippingDropdownOpen(false);
+            }
         }
     };
+
+    // Format address for display in input field
+const formatAddressForDisplay = (address) => {
+    if (!address) return "No address available";
+    
+    if (typeof address === 'string') return address;
+    
+    if (typeof address === 'object') {
+        if (address.shippingAddressOne || address.billingAddressOne) {
+            const addressOne = address.shippingAddressOne || address.billingAddressOne;
+            const addressTwo = address.shippingAddressTwo || address.billingAddressTwo;
+            const addressThree = address.shippingAddressThree || address.billingAddressThree;
+            const city = address.shippingCity || address.billingCity;
+            const state = address.shippingState || address.billingState;
+            const zip = address.shippingZip || address.billingZip;
+            
+            const formatted = [addressOne, addressTwo, addressThree, city, state, zip]
+                .filter(Boolean)
+                .join(", ");
+            
+            return formatted || "No address available";
+        }
+        // Fallback for other object formats
+        const values = Object.values(address).filter(val => 
+            val && typeof val === 'string' && val.trim() !== ''
+        );
+        return values.join(", ") || "No address available";
+    }
+    
+    return "No address available";
+};
 
     // FIXED: Initialize edit form with proper data
     const handleEditSalesOrder = (order) => {
@@ -1373,9 +1450,7 @@ const CustomersSalesOrders = () => {
                                             Billing Address:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
-                                            {tableData[0]?.billingAddress instanceof Object ?
-                                                `${tableData[0]?.billingAddress.billingAddressLineOne || ''} ${tableData[0]?.billingAddress.billingAddressLineTwo || ''} ${tableData[0]?.billingAddress.billingAddressLineThree || ''} ${tableData[0]?.billingAddress.billingCity || ''} ${tableData[0]?.billingAddress.billingState || ''} ${tableData[0]?.billingAddress.billingZip || ''}`?.trim()
-                                                : `${tableData[0]?.billingAddress || ''}`}
+                                            {displaySalesOrderAddress(tableData[0]?.billingAddress)}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1383,10 +1458,7 @@ const CustomersSalesOrders = () => {
                                             Shipping Address:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
-                                            {tableData[0]?.shippingAddress instanceof Object ?
-                                                `${tableData[0]?.shippingAddress.shippingAddressLineOne || ''} ${tableData[0]?.shippingAddress.shippingAddressLineTwo || ''} ${tableData[0]?.shippingAddress.shippingAddressLineThree || ''} ${tableData[0]?.shippingAddress.shippingCity || ''} ${tableData[0]?.shippingAddress.shippingState || ''} ${tableData[0]?.shippingAddress.shippingZip || ''}`.trim()
-                                                : `${tableData[0]?.shippingAddress || ''}`
-                                            }
+                                            {displaySalesOrderAddress(tableData[0]?.shippingAddress)}
                                         </Typography>
                                     </Box>
 
@@ -1412,7 +1484,7 @@ const CustomersSalesOrders = () => {
                                 </Box>
                             </Paper>
 
-                            <Paper sx={{ p: 3 }}>
+                            {order.creditCard && <Paper sx={{ p: 3 }}>
                                 <Typography variant="h6" gutterBottom color="primary">
                                     Credit Cards Details :
                                 </Typography>
@@ -1472,7 +1544,7 @@ const CustomersSalesOrders = () => {
                                     </Box>
 
                                 </Box>
-                            </Paper>
+                            </Paper>}
 
                             <Paper sx={{ p: 3 }}>
                                 <Typography variant="h6" gutterBottom color="primary">
@@ -1564,50 +1636,97 @@ const CustomersSalesOrders = () => {
                                 </TextField>
                             </Box>
 
-                            {/* Billing Address */}
+
+                            {/* Billing Address - Alternative Approach */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
                                     Billing Address :
                                 </Typography>
-                                <TextField
-                                    select
-                                    size="small"
-                                    value={selectedBillingAddress}
-                                    onChange={handleBillingAddressChange}
-                                    sx={{ minWidth: 270 }}
-                                >
-                                    <MenuItem value="">
-                                        <em>Select Billing Address</em>
-                                    </MenuItem>
-                                    {billingAddresses.map((address) => (
-                                        <MenuItem key={address._id} value={address._id}>
-                                            {`${address.billingAddressOne}, ${address.billingCity}, ${address.billingState}`}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
+                                <Box sx={{ minWidth: 270 }}>
+                                    {!billingDropdownOpen ? (
+                                        <TextField
+                                            size="small"
+                                            value={formatAddressForDisplay(
+                                                selectedBillingAddress === 'current'
+                                                    ? tableData[0]?.billingAddress
+                                                    : billingAddresses.find(addr => addr._id === selectedBillingAddress)
+                                            )}
+                                            onFocus={() => setBillingDropdownOpen(true)}
+                                            sx={{ width: '100%' }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                        />
+                                    ) : (
+                                        <TextField
+                                            select
+                                            size="small"
+                                            value={selectedBillingAddress}
+                                            onChange={handleBillingAddressChange}
+                                            onBlur={() => setBillingDropdownOpen(false)}
+                                            sx={{ width: '100%' }}
+                                            SelectProps={{
+                                                open: true,
+                                                onClose: () => setBillingDropdownOpen(false),
+                                            }}
+                                        >
+                                            <MenuItem value="current">
+                                                Current: {formatAddressForDisplay(tableData[0]?.billingAddress)}
+                                            </MenuItem>
+                                            {billingAddresses.map((address) => (
+                                                <MenuItem key={address._id} value={address._id}>
+                                                    {`${address.billingAddressOne}, ${address.billingCity}, ${address.billingState}`}
+                                                </MenuItem>
+                                            ))}
+                                        </TextField>
+                                    )}
+                                </Box>
                             </Box>
 
-                            {/* Shipping Address */}
+                            {/* Shipping Address - Alternative Approach */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
                                     Shipping Address :
                                 </Typography>
-                                <TextField
-                                    select
-                                    size="small"
-                                    value={selectedShippingAddress}
-                                    onChange={handleShippingAddressChange}
-                                    sx={{ minWidth: 270 }}
-                                >
-                                    <MenuItem value="">
-                                        <em>Select Shipping Address</em>
-                                    </MenuItem>
-                                    {shippingAddresses.map((address) => (
-                                        <MenuItem key={address._id} value={address._id}>
-                                            {`${address.shippingAddressOne}, ${address.shippingCity}, ${address.shippingState}`}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
+                                <Box sx={{ minWidth: 270 }}>
+                                    {!shippingDropdownOpen ? (
+                                        <TextField
+                                            size="small"
+                                            value={formatAddressForDisplay(
+                                                selectedShippingAddress === 'current'
+                                                    ? tableData[0]?.shippingAddress
+                                                    : shippingAddresses.find(addr => addr._id === selectedShippingAddress)
+                                            )}
+                                            onFocus={() => setShippingDropdownOpen(true)}
+                                            sx={{ width: '100%' }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                        />
+                                    ) : (
+                                        <TextField
+                                            select
+                                            size="small"
+                                            value={selectedShippingAddress}
+                                            onChange={handleShippingAddressChange}
+                                            onBlur={() => setShippingDropdownOpen(false)}
+                                            sx={{ width: '100%' }}
+                                            SelectProps={{
+                                                open: true,
+                                                onClose: () => setShippingDropdownOpen(false),
+                                            }}
+                                        >
+                                            <MenuItem value="current">
+                                                Current: {formatAddressForDisplay(tableData[0]?.shippingAddress)}
+                                            </MenuItem>
+                                            {shippingAddresses.map((address) => (
+                                                <MenuItem key={address._id} value={address._id}>
+                                                    {`${address.shippingAddressOne}, ${address.shippingCity}, ${address.shippingState}`}
+                                                </MenuItem>
+                                            ))}
+                                        </TextField>
+                                    )}
+                                </Box>
                             </Box>
 
                             {/* Error */}
