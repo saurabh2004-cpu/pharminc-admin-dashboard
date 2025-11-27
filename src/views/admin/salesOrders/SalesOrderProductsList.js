@@ -493,7 +493,7 @@ const CustomersSalesOrders = () => {
                 {
                     customerName: formData.customerName,
                     salesChannel: formData.salesChannel,
-                    packQuantity: formData.packQuantity,
+                    // packQuantity: formData.packQuantity,
                     billingAddress: formData.billingAddress,
                     shippingAddress: formData.shippingAddress,
                     trackingNumber: formData.trackingNumber,
