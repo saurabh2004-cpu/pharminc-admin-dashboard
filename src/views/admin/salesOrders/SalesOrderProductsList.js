@@ -615,6 +615,9 @@ const CustomersSalesOrders = () => {
     const fetchCustomerAddresses = async (customerName) => {
         try {
             const response = await axiosInstance.get(`/admin/customer-addresses/${customerName}`);
+
+            console.log("response customer addresses", response.data);
+
             if (response.data.statusCode === 200) {
                 setBillingAddresses(response.data.data.billingAddresses || []);
                 setShippingAddresses(response.data.data.shippingAddresses || []);
@@ -818,35 +821,35 @@ const CustomersSalesOrders = () => {
     };
 
     // Format address for display in input field
-const formatAddressForDisplay = (address) => {
-    if (!address) return "No address available";
-    
-    if (typeof address === 'string') return address;
-    
-    if (typeof address === 'object') {
-        if (address.shippingAddressOne || address.billingAddressOne) {
-            const addressOne = address.shippingAddressOne || address.billingAddressOne;
-            const addressTwo = address.shippingAddressTwo || address.billingAddressTwo;
-            const addressThree = address.shippingAddressThree || address.billingAddressThree;
-            const city = address.shippingCity || address.billingCity;
-            const state = address.shippingState || address.billingState;
-            const zip = address.shippingZip || address.billingZip;
-            
-            const formatted = [addressOne, addressTwo, addressThree, city, state, zip]
-                .filter(Boolean)
-                .join(", ");
-            
-            return formatted || "No address available";
+    const formatAddressForDisplay = (address) => {
+        if (!address) return "No address available";
+
+        if (typeof address === 'string') return address;
+
+        if (typeof address === 'object') {
+            if (address.shippingAddressOne || address.billingAddressOne) {
+                const addressOne = address.shippingAddressOne || address.billingAddressOne;
+                const addressTwo = address.shippingAddressTwo || address.billingAddressTwo;
+                const addressThree = address.shippingAddressThree || address.billingAddressThree;
+                const city = address.shippingCity || address.billingCity;
+                const state = address.shippingState || address.billingState;
+                const zip = address.shippingZip || address.billingZip;
+
+                const formatted = [addressOne, addressTwo, addressThree, city, state, zip]
+                    .filter(Boolean)
+                    .join(", ");
+
+                return formatted || "No address available";
+            }
+            // Fallback for other object formats
+            const values = Object.values(address).filter(val =>
+                val && typeof val === 'string' && val.trim() !== ''
+            );
+            return values.join(", ") || "No address available";
         }
-        // Fallback for other object formats
-        const values = Object.values(address).filter(val => 
-            val && typeof val === 'string' && val.trim() !== ''
-        );
-        return values.join(", ") || "No address available";
-    }
-    
-    return "No address available";
-};
+
+        return "No address available";
+    };
 
     // FIXED: Initialize edit form with proper data
     const handleEditSalesOrder = (order) => {
@@ -1334,7 +1337,7 @@ const formatAddressForDisplay = (address) => {
                             </Table>
                         </TableContainer>
                         <TablePagination
-                            rowsPerPageOptions={[5, 10, 25]}
+                            rowsPerPageOptions={[50, 100, 200]}
                             component="div"
                             count={rows.length}
                             rowsPerPage={rowsPerPage}
@@ -1670,7 +1673,7 @@ const formatAddressForDisplay = (address) => {
                                                 onClose: () => setBillingDropdownOpen(false),
                                             }}
                                         >
-                                            <MenuItem value="current">
+                                            <MenuItem value="current" >
                                                 Current: {formatAddressForDisplay(tableData[0]?.billingAddress)}
                                             </MenuItem>
                                             {billingAddresses.map((address) => (

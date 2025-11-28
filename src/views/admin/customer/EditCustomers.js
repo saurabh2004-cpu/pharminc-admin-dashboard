@@ -694,6 +694,22 @@ const EditCustomers = () => {
           />
         </Grid>
 
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="CustomerPhoneNo" sx={{ mt: 0 }}>
+            Contact Phone Number
+            <span style={{ color: 'red' }}>*</span>
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="CustomerPhoneNo"
+            fullWidth
+            type="tel"
+            value={formData.contactPhone}
+            onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Customer Phone Number"
+          />
+        </Grid>
+
         {/* Primary Brand and Default Shipping Rate - Row 4 */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="primaryBrand" sx={{ mt: 0 }}>

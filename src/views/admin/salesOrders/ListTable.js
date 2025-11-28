@@ -625,8 +625,8 @@ const ListTable = ({
       console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+        setTableData((prevData) => prevData.filter((item) => item.documentNumber !== deleteDialog.itemId));
+        setRows((prevRows) => prevRows.filter((item) => item.documentNumber !== deleteDialog.itemId));
         handleDeleteCancel();
         showSnackbar('Sales order deleted successfully', 'success');
       }
@@ -788,7 +788,7 @@ const ListTable = ({
                               <IconButton
                                 size="small"
                                 color="error"
-                                onClick={(e) => handleDeleteClick(e, row._id, row?.documentNumber)}
+                                onClick={(e) => handleDeleteClick(e, row.documentNumber, row?.documentNumber)}
                                 disabled={loading}
                               >
                                 <IconTrash size="1.1rem" />
