@@ -460,7 +460,7 @@ const SalesRepCustomers = () => {
       // const baseUrl = import.meta.env.VITE_FRONTEND_URL;
       const baseUrl = import.meta.env.FRONTEND_URL;
       // window.open(`${baseUrl}/salesRep/${id}`, '_blank');
-      window.open(`http://localhost:3002/salesRep/${id}`, '_blank');
+      window.open(`${baseUrl}/salesRep/${id}`, '_blank');
     } catch (error) {
       console.error('Navigation failed:', error);
     }
