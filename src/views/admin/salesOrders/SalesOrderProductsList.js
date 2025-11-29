@@ -907,7 +907,9 @@ const CustomersSalesOrders = () => {
 
     const handleDeleteSalesOrder = async () => {
         try {
-            const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${deleteDialog.itemId}`);
+            const res = await axiosInstance.delete(`/sales-order/delete-sales-order-by-id/${deleteDialog.itemId}`);
+
+            console.log("resposne of delect sales order", res)
 
             if (res.data.statusCode === 200) {
                 setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

@@ -17,6 +17,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import { Autocomplete, TextField } from '@mui/material';
 
 const EditPricingGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
@@ -35,7 +36,7 @@ const EditPricingGroupsDiscounts = () => {
 
     const handleSubmit = async () => {
         // Form validation
-        if ( !formData.customerId || !formData.percentage || !formData.productSku) {
+        if (!formData.customerId || !formData.percentage || !formData.productSku) {
             setError('Please fill in all required fields');
             return;
         }
@@ -56,7 +57,7 @@ const EditPricingGroupsDiscounts = () => {
             console.log("Pricing group discount update response:", res.data);
 
             if (res.data.statusCode === 200) {
-                setError('Pricing group discount updated successfully!');
+                setError('Item discount updated successfully!');
                 setTimeout(() => {
                     navigate('/dashboard/items-based-discounts/list');
                 }, 2000);
@@ -146,37 +147,58 @@ const EditPricingGroupsDiscounts = () => {
         }
     };
 
-    const fetchAllProducts = async () => {
+    const fetchProducts = async () => {
         try {
-            const response = await axiosInstance.get('/products/get-all-products');
-            console.log("response products", response.data);
+            setLoading(true);
+            const response = await axiosInstance.get('/products/get-all-products-dashboard');
+            console.log("response products", response);
 
             if (response.data.statusCode === 200) {
-                const productsData = response.data.data?.docs || response.data.data || response.data;
+                // Correct: products are inside response.data.data (not .docs)
+                const productsArray = Array.isArray(response.data.data)
+                    ? response.data.data
+                    : [];
 
-                // Filter out duplicates based on _id
-                const getUniqueProducts = (products) => {
-                    if (!Array.isArray(products)) return [];
+                const uniqueProducts = productsArray.filter(
+                    (product, index, self) =>
+                        index === self.findIndex((p) => p.sku === product.sku)
+                );
 
-                    const uniqueProducts = [];
-                    const seenIds = new Set();
-
-                    products.forEach(product => {
-                        if (product._id && !seenIds.has(product._id)) {
-                            seenIds.add(product._id);
-                            uniqueProducts.push(product);
-                        }
-                    });
-
-                    return uniqueProducts;
-                };
-
-                setProductList(getUniqueProducts(productsData));
+                setProductList((prev) => [...prev, ...uniqueProducts]);
             }
-
         } catch (error) {
             console.error('Error fetching products list:', error);
-            setError(error.message);
+            setError('Error fetching products: ' + error.message);
+            setProductList([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    const fetchProductGroups = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get('/product-group/get-all-product-groups');
+            console.log("response product groups", response);
+
+            if (response.data.statusCode === 200) {
+                if (Array.isArray(response.data.data)) {
+                    const transformedGroups = response.data.data.map(group => ({
+                        ...group,
+                        ProductName: group.name || 'Product Group',
+                    }));
+
+                    setProductList((prevProducts) => [...prevProducts, ...transformedGroups]);
+
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching product groups list:', error);
+            setError('Error fetching product groups: ' + error.message);
+            // setProductGroups([]);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -194,7 +216,8 @@ const EditPricingGroupsDiscounts = () => {
                 await Promise.all([
                     fetchPricingGroups(),
                     fetchCustomers(),
-                    fetchAllProducts()
+                    fetchProducts(),
+                    fetchProductGroups()
                 ]);
                 setDataLoaded(true);
             } catch (error) {
@@ -303,7 +326,6 @@ const EditPricingGroupsDiscounts = () => {
                     </Typography>
                 </Grid>
 
-                {/* SKU Selection */}
                 <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="sku-select"
@@ -313,35 +335,41 @@ const EditPricingGroupsDiscounts = () => {
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
-                    <FormControl fullWidth>
-                        <Select
-                            id="sku-select"
-                            value={formData.productSku}
-                            onChange={handleProductSkuChange}
-                            disabled={loading || !Array.isArray(productList) || productList.length === 0}
-                            displayEmpty
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.23)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 0, 0, 0.87)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'primary.main',
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                {!Array.isArray(productList) || productList.length === 0 ? 'Loading Products...' : 'Select a SKU'}
-                            </MenuItem>
-                            {Array.isArray(productList) && productList.map((product) => (
-                                <MenuItem key={product._id} value={product.sku}>
-                                    {product.sku} - {product.ProductName}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                    <Autocomplete
+                        id="sku-select"
+                        options={Array.isArray(productList) ? productList : []}
+                        getOptionLabel={(option) => `${option.sku} - ${option.ProductName}`}
+                        value={productList.find(p => p.sku === formData.productSku) || null}
+                        onChange={(event, newValue) => {
+                            handleProductSkuChange({
+                                target: {
+                                    value: newValue ? newValue.sku : ''
+                                }
+                            });
+                        }}
+                        disabled={loading || !Array.isArray(productList) || productList.length === 0}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                placeholder={!Array.isArray(productList) || productList.length === 0 ? 'Loading Products...' : 'Select a SKU'}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        '& fieldset': {
+                                            borderColor: 'rgba(0, 0, 0, 0.23)',
+                                        },
+                                        '&:hover fieldset': {
+                                            borderColor: 'rgba(0, 0, 0, 0.87)',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: 'primary.main',
+                                        },
+                                    },
+                                }}
+                            />
+                        )}
+                        isOptionEqualToValue={(option, value) => option.sku === value.sku}
+                        noOptionsText={!Array.isArray(productList) || productList.length === 0 ? 'Loading Products...' : 'No products found'}
+                    />
                     {/* Debug info - remove this after fixing */}
                     <Typography variant="caption" color="textSecondary" sx={{ mt: 1 }}>
                         Current selected: {formData.productSku} | Available Products: {productList.length}

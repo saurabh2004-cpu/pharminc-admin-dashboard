@@ -24,9 +24,10 @@ import {
     FormControl,
     MenuItem,
     Card,
-    CardContent
+    CardContent,
+    Chip
 } from '@mui/material';
-import { IconSearch } from '@tabler/icons-react';
+import { IconSearch, IconPackage } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
@@ -42,12 +43,13 @@ const ProductSelectionModal = ({
     const [productSearch, setProductSearch] = useState('');
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [productList, setProductList] = useState([]);
+    const [productGroups, setProductGroups] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [step, setStep] = useState(1); // 1: Product Selection, 2: Form
     const [packTypes, setPackTypes] = useState([]);
 
-    // Form data state - FIXED: Initialize with proper values
+    // Form data state
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         documentNumber: documentNo || '',
@@ -65,7 +67,7 @@ const ProductSelectionModal = ({
         comments: ''
     });
 
-    // FIXED: Better initialization that preserves customer data
+    // Better initialization that preserves customer data
     useEffect(() => {
         if (open && tableData && tableData.length > 0) {
             const firstOrder = tableData[0];
@@ -87,6 +89,23 @@ const ProductSelectionModal = ({
         }
     }, [open, tableData, documentNo]);
 
+    // Calculate product group stock (minimum stock among all products)
+    const calculateProductGroupStock = (productGroup) => {
+        if (!productGroup.products || productGroup.products.length === 0) return 0;
+        
+        const minStock = Math.min(
+            ...productGroup.products.map(productItem => 
+                productItem.product?.stockLevel || 0
+            )
+        );
+        return minStock;
+    };
+
+    // Check if item is a product group
+    const isProductGroup = (item) => {
+        return item.products && Array.isArray(item.products) && item.products.length > 0;
+    };
+
     // Fetch products list
     const fetchProductsList = async () => {
         setLoading(true);
@@ -106,7 +125,12 @@ const ProductSelectionModal = ({
                     products.forEach(product => {
                         if (product._id && !seenIds.has(product._id) && !product.inactive) {
                             seenIds.add(product._id);
-                            uniqueProducts.push(product);
+                            uniqueProducts.push({
+                                ...product,
+                                itemType: 'product',
+                                displayName: `${product.sku} - ${product.ProductName || 'N/A'}`,
+                                calculatedStock: product.stockLevel || 0
+                            });
                         }
                     });
 
@@ -115,32 +139,68 @@ const ProductSelectionModal = ({
 
                 const products = getUniqueProducts(productsData);
                 setProductList(products);
-                setFilteredProducts(products);
             }
         } catch (error) {
             console.error('Error fetching products list:', error);
-            setError('Failed to fetch products list');
+            // setError('Failed to fetch products list');
         } finally {
             setLoading(false);
         }
     };
 
-    // FIXED: Improved pack types fetching with better amount calculation
-    const fetchProductsAvailablePackTypes = async (sku) => {
+    // Fetch product groups
+    const fetchProductGroups = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get('/product-group/get-all-product-groups');
+            console.log("response product groups", response);
+
+            if (response.data.statusCode === 200) {
+                if (Array.isArray(response.data.data)) {
+                    const transformedGroups = response.data.data.map(group => ({
+                        ...group,
+                        ProductName: group.name || 'Product Group',
+                        itemType: 'productGroup',
+                        displayName: `${group.sku} - ${group.name} (Product Group)`,
+                        calculatedStock: calculateProductGroupStock(group),
+                        eachPrice: group.eachPrice || group.price || 0
+                    }));
+
+                    setProductGroups(transformedGroups);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching product groups list:', error);
+            setError('Error fetching product groups: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Combine products and product groups for display
+    useEffect(() => {
+        const combinedList = [...productList, ...productGroups];
+        setFilteredProducts(combinedList);
+    }, [productList, productGroups]);
+
+    // Fetch pack types - handles both products and product groups
+    const fetchProductsAvailablePackTypes = async (sku, isProductGroup = false) => {
         if (!sku) return;
 
         try {
-            const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
-            console.log("Pack types response:", response.data);
+            if (isProductGroup) {
+                // For product groups, use default pack types since they don't have individual pack types
+                const defaultPackTypes = [
+                    { _id: 'default-1', name: 'Each', quantity: 1 },
+                    { _id: 'default-2', name: 'Pack of 2', quantity: 2 },
+                    { _id: 'default-3', name: 'Pack of 5', quantity: 5 },
+                    { _id: 'default-4', name: 'Pack of 10', quantity: 10 }
+                ];
+                setPackTypes(defaultPackTypes);
 
-            if (response.status === 200 && response.data.data) {
-                setPackTypes(response.data.data);
-
-                // Auto-select the first pack type if available
-                if (response.data.data.length > 0) {
-                    const firstPack = response.data.data[0];
-                    
-                    // FIXED: Calculate amount immediately when pack type is set
+                // Auto-select the first pack type
+                if (defaultPackTypes.length > 0) {
+                    const firstPack = defaultPackTypes[0];
                     const newPackQuantity = parseInt(firstPack.quantity);
                     const currentUnitsQuantity = formData.unitsQuantity || 1;
                     const unitPrice = selectedProduct?.eachPrice || 0;
@@ -152,35 +212,59 @@ const ProductSelectionModal = ({
                         packType: firstPack.name,
                         amount: parseFloat(totalAmount.toFixed(2))
                     }));
+                }
+            } else {
+                // For individual products, fetch from API
+                const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
+                console.log("Pack types response:", response.data);
 
-                    console.log("Amount calculated on pack type selection:", {
-                        unitPrice,
-                        packQuantity: newPackQuantity,
-                        unitsQuantity: currentUnitsQuantity,
-                        totalAmount: totalAmount.toFixed(2)
-                    });
+                if (response.status === 200 && response.data.data) {
+                    setPackTypes(response.data.data);
+
+                    // Auto-select the first pack type if available
+                    if (response.data.data.length > 0) {
+                        const firstPack = response.data.data[0];
+                        const newPackQuantity = parseInt(firstPack.quantity);
+                        const currentUnitsQuantity = formData.unitsQuantity || 1;
+                        const unitPrice = selectedProduct?.eachPrice || 0;
+                        const totalAmount = unitPrice * (newPackQuantity * currentUnitsQuantity);
+
+                        setFormData(prev => ({
+                            ...prev,
+                            packQuantity: firstPack.quantity.toString(),
+                            packType: firstPack.name,
+                            amount: parseFloat(totalAmount.toFixed(2))
+                        }));
+                    }
                 }
             }
         } catch (error) {
             console.error('Error fetching products pack types:', error);
-            setPackTypes([]);
+            // Set default pack types if API fails
+            const defaultPackTypes = [
+                { _id: 'default-1', name: 'Each', quantity: 1 }
+            ];
+            setPackTypes(defaultPackTypes);
         }
     };
 
     // Filter products based on search
     useEffect(() => {
         if (productSearch.trim() === '') {
-            setFilteredProducts(productList);
+            const combinedList = [...productList, ...productGroups];
+            setFilteredProducts(combinedList);
         } else {
-            const filtered = productList.filter(product =>
-                product.sku?.toLowerCase().includes(productSearch.toLowerCase()) ||
-                product.ProductName?.toLowerCase().includes(productSearch.toLowerCase())
+            const filtered = [...productList, ...productGroups].filter(item =>
+                item.sku?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                item.ProductName?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                item.name?.toLowerCase()?.includes(productSearch?.toLowerCase()) ||
+                item.displayName?.toLowerCase().includes(productSearch.toLowerCase())
             );
             setFilteredProducts(filtered);
         }
-    }, [productSearch, productList]);
+    }, [productSearch, productList, productGroups]);
 
-    // FIXED: Improved amount calculation function
+    // Improved amount calculation function
     const recalculateAmount = (packQty, unitQty, product = selectedProduct) => {
         if (!product) return 0;
 
@@ -201,11 +285,11 @@ const ProductSelectionModal = ({
         return parseFloat(totalAmount.toFixed(2));
     };
 
-    // FIXED: Improved product selection with immediate amount calculation
+    // Improved product selection with immediate amount calculation
     const handleProductSelect = (product) => {
         console.log("Product selected:", product);
         setSelectedProduct(product);
-        
+
         // Calculate initial amount with default quantities
         const initialPackQuantity = formData.packQuantity || '1';
         const initialUnitsQuantity = formData.unitsQuantity || 1;
@@ -220,10 +304,11 @@ const ProductSelectionModal = ({
         console.log("Initial amount set to:", initialAmount);
 
         // Fetch pack types for the selected product
-        fetchProductsAvailablePackTypes(product.sku);
+        const isGroup = isProductGroup(product);
+        fetchProductsAvailablePackTypes(product.sku, isGroup);
     };
 
-    // FIXED: Improved form input changes with better amount recalculation
+    // Improved form input changes with better amount recalculation
     const handleInputChange = (field, value) => {
         console.log(`Field ${field} changed to:`, value);
 
@@ -236,7 +321,7 @@ const ProductSelectionModal = ({
         if (field === 'packQuantity' || field === 'unitsQuantity') {
             const packQty = field === 'packQuantity' ? value : updatedFormData.packQuantity;
             const unitQty = field === 'unitsQuantity' ? value : updatedFormData.unitsQuantity;
-            
+
             const newAmount = recalculateAmount(packQty, unitQty);
             updatedFormData.amount = newAmount;
 
@@ -255,7 +340,7 @@ const ProductSelectionModal = ({
         setFormData(updatedFormData);
     };
 
-    // FIXED: Improved pack type change handler
+    // Improved pack type change handler
     const handlePackTypeChange = (e) => {
         const selectedPackQuantity = e.target.value;
         const selectedPack = packTypes.find(pack => pack.quantity.toString() === selectedPackQuantity.toString());
@@ -276,7 +361,7 @@ const ProductSelectionModal = ({
         }
     };
 
-    // FIXED: Improved form submission with better validation
+    // Improved form submission with better validation
     const handleSubmit = async () => {
         console.log("Submitting form data:", formData);
         console.log("Selected product:", selectedProduct);
@@ -314,8 +399,12 @@ const ProductSelectionModal = ({
 
         // Check if we have enough stock
         const totalItems = parseInt(formData.packQuantity) * parseInt(formData.unitsQuantity);
-        if (selectedProduct && selectedProduct.stockLevel < totalItems) {
-            setError(`Insufficient stock. Required: ${totalItems}, Available: ${selectedProduct.stockLevel}`);
+        const availableStock = isProductGroup(selectedProduct) 
+            ? calculateProductGroupStock(selectedProduct)
+            : selectedProduct.stockLevel;
+
+        if (selectedProduct && availableStock < totalItems) {
+            setError(`Insufficient stock. Required: ${totalItems}, Available: ${availableStock}`);
             return;
         }
 
@@ -338,7 +427,8 @@ const ProductSelectionModal = ({
                 packType: formData.packType,
                 unitsQuantity: parseInt(formData.unitsQuantity),
                 amount: parseFloat(formData.amount),
-                comments: formData.comments || ''
+                comments: formData.comments || '',
+                isProductGroup: isProductGroup(selectedProduct)
             };
 
             console.log("Sending payload to API:", payload);
@@ -377,13 +467,13 @@ const ProductSelectionModal = ({
     useEffect(() => {
         if (open) {
             fetchProductsList();
+            fetchProductGroups();
             setError('');
             setStep(1);
-            // Don't reset selectedProduct here to allow multiple additions
         }
     }, [open]);
 
-    // FIXED: Improved modal close handler
+    // Improved modal close handler
     const handleClose = () => {
         setStep(1);
         setSelectedProduct(null);
@@ -409,16 +499,16 @@ const ProductSelectionModal = ({
             setError('Please select a product');
             return;
         }
-        
-        // FIXED: Ensure amount is calculated before proceeding
+
+        // Ensure amount is calculated before proceeding
         if (formData.amount === 0) {
             const calculatedAmount = recalculateAmount(
-                formData.packQuantity || '1', 
+                formData.packQuantity || '1',
                 formData.unitsQuantity || 1
             );
             setFormData(prev => ({ ...prev, amount: calculatedAmount }));
         }
-        
+
         setError('');
         setStep(2);
     };
@@ -445,7 +535,7 @@ const ProductSelectionModal = ({
                         {step === 1 ? 'Select Product' : 'Add Product to Sales Order'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {step === 1 ? 'Choose a product to add to sales order' : `Add product to order #${documentNo}`}
+                        {step === 1 ? 'Choose a product or product group to add to sales order' : `Add product to order #${documentNo}`}
                     </Typography>
                     {step === 2 && formData.customerName && (
                         <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 0.5 }}>
@@ -494,52 +584,78 @@ const ProductSelectionModal = ({
                                             <TableCell>Product Name</TableCell>
                                             <TableCell align="right">Price</TableCell>
                                             <TableCell align="right">Stock Level</TableCell>
+                                            <TableCell width="100px">Type</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {filteredProducts.map((product) => (
-                                            <TableRow
-                                                key={product._id}
-                                                hover
-                                                selected={selectedProduct?._id === product._id}
-                                                onClick={() => handleProductSelect(product)}
-                                                sx={{ cursor: 'pointer' }}
-                                            >
-                                                <TableCell>
-                                                    <Radio
-                                                        checked={selectedProduct?._id === product._id}
-                                                        onChange={() => handleProductSelect(product)}
-                                                        size="small"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2" fontWeight={500}>
-                                                        {product.sku || 'N/A'}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">
-                                                        {product.ProductName || 'N/A'}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell align="right">
-                                                    <Typography variant="body2">
-                                                        ${(product.eachPrice || 0).toFixed(2)}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell align="right">
-                                                    <Typography
-                                                        variant="body2"
-                                                        color={product.stockLevel > 0 ? 'success.main' : 'error.main'}
-                                                    >
-                                                        {product.stockLevel || 0}
-                                                    </Typography>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {filteredProducts.map((product) => {
+                                            const isGroup = isProductGroup(product);
+                                            const stockLevel = isGroup 
+                                                ? calculateProductGroupStock(product)
+                                                : product.stockLevel;
+
+                                            return (
+                                                <TableRow
+                                                    key={product._id}
+                                                    hover
+                                                    selected={selectedProduct?._id === product._id}
+                                                    onClick={() => handleProductSelect(product)}
+                                                    sx={{ cursor: 'pointer' }}
+                                                >
+                                                    <TableCell>
+                                                        <Radio
+                                                            checked={selectedProduct?._id === product._id}
+                                                            onChange={() => handleProductSelect(product)}
+                                                            size="small"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2" fontWeight={500}>
+                                                            {product.sku || 'N/A'}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2">
+                                                            {product.ProductName || 'N/A'}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell align="right">
+                                                        <Typography variant="body2">
+                                                            ${(product.eachPrice || 0).toFixed(2)}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell align="right">
+                                                        <Typography
+                                                            variant="body2"
+                                                            color={stockLevel > 0 ? 'success.main' : 'error.main'}
+                                                        >
+                                                            {stockLevel}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {isGroup ? (
+                                                            <Chip 
+                                                                label="Group" 
+                                                                size="small" 
+                                                                color="primary" 
+                                                                variant="outlined"
+                                                                icon={<IconPackage size={14} />}
+                                                            />
+                                                        ) : (
+                                                            <Chip 
+                                                                label="Product" 
+                                                                size="small" 
+                                                                color="default" 
+                                                                variant="outlined"
+                                                            />
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
                                         {filteredProducts.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={5} align="center">
+                                                <TableCell colSpan={6} align="center">
                                                     <Typography variant="body2" color="text.secondary">
                                                         {loading ? 'Loading...' : 'No products found'}
                                                     </Typography>
@@ -558,10 +674,18 @@ const ProductSelectionModal = ({
                         {selectedProduct && (
                             <Card variant="outlined" sx={{ mb: 3 }}>
                                 <CardContent>
-                                    <Typography variant="h6" gutterBottom color="primary">
-                                        Selected Product
-                                    </Typography>
-                                    <Grid container spacing={2}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                                        <Typography variant="h6" color="primary">
+                                            Selected {isProductGroup(selectedProduct) ? 'Product Group' : 'Product'}
+                                        </Typography>
+                                        <Chip 
+                                            label={isProductGroup(selectedProduct) ? "Product Group" : "Individual Product"} 
+                                            color={isProductGroup(selectedProduct) ? "primary" : "default"}
+                                            variant="outlined"
+                                            size="small"
+                                        />
+                                    </Box>
+                                    <Grid container spacing={2} sx={{ mt: 1 }}>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body2">
                                                 <strong>Product Name:</strong> {selectedProduct.ProductName}
@@ -579,9 +703,33 @@ const ProductSelectionModal = ({
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body2">
-                                                <strong>Available Stock:</strong> {selectedProduct.stockLevel}
+                                                <strong>Available Stock:</strong> {
+                                                    isProductGroup(selectedProduct) 
+                                                        ? calculateProductGroupStock(selectedProduct)
+                                                        : selectedProduct.stockLevel
+                                                }
                                             </Typography>
                                         </Grid>
+                                        {isProductGroup(selectedProduct) && selectedProduct.products && (
+                                            <Grid item xs={12}>
+                                                <Typography variant="body2">
+                                                    <strong>Products in Group:</strong> {selectedProduct.products.length}
+                                                </Typography>
+                                                <Box sx={{ mt: 1, pl: 2 }}>
+                                                    {selectedProduct.products.slice(0, 3).map((productItem, index) => (
+                                                        <Typography key={index} variant="caption" display="block">
+                                                            • {productItem.product?.sku} - {productItem.product?.ProductName} 
+                                                            (Stock: {productItem.product?.stockLevel || 0})
+                                                        </Typography>
+                                                    ))}
+                                                    {selectedProduct.products.length > 3 && (
+                                                        <Typography variant="caption" color="textSecondary">
+                                                            ... and {selectedProduct.products.length - 3} more products
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Grid>
+                                        )}
                                     </Grid>
                                 </CardContent>
                             </Card>
@@ -659,7 +807,11 @@ const ProductSelectionModal = ({
                                     onChange={(e) => handleInputChange('unitsQuantity', e.target.value)}
                                     inputProps={{
                                         min: 1,
-                                        max: selectedProduct ? selectedProduct.stockLevel : undefined
+                                        max: selectedProduct 
+                                            ? (isProductGroup(selectedProduct) 
+                                                ? calculateProductGroupStock(selectedProduct)
+                                                : selectedProduct.stockLevel)
+                                            : undefined
                                     }}
                                     disabled={loading}
                                 />
