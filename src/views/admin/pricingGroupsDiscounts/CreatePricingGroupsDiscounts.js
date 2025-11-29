@@ -22,7 +22,6 @@ import { Autocomplete, TextField } from '@mui/material';
 
 const CreatePricingGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
-        // pricingGroupId: '',
         customerId: '',
         percentage: '',
         productSku: ''
@@ -207,7 +206,7 @@ const CreatePricingGroupsDiscounts = () => {
                         index === self.findIndex((p) => p.sku === product.sku)
                 );
 
-                setProducts(uniqueProducts);
+                setProducts((prev) => [...prev, ...uniqueProducts]);
             }
         } catch (error) {
             console.error('Error fetching products list:', error);
@@ -218,13 +217,39 @@ const CreatePricingGroupsDiscounts = () => {
         }
     };
 
+    const fetchProductGroups = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get('/product-group/get-all-product-groups');
+            console.log("response product groups", response);
+
+            if (response.data.statusCode === 200) {
+                if (Array.isArray(response.data.data)) {
+                    const transformedGroups = response.data.data.map(group => ({
+                        ...group,
+                        ProductName: group.name || 'Product Group',
+                    }));
+
+                    setProducts((prevProducts) => [...prevProducts, ...transformedGroups]);
+
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching product groups list:', error);
+            setError('Error fetching product groups: ' + error.message);
+            // setProductGroups([]);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     useEffect(() => {
         const fetchData = async () => {
             await Promise.all([
                 fetchPricingGroups(),
                 fetchCustomers(),
-                fetchProducts()
+                fetchProducts(),
+                fetchProductGroups()
             ]);
         };
         fetchData();
@@ -296,7 +321,7 @@ const CreatePricingGroupsDiscounts = () => {
                     <FormControl fullWidth>
                         <Autocomplete
                             id="product-sku-select"
-                            value={products.find(product => product.sku === formData.productSku) || null}
+                            value={products.find(item => item.sku === formData.productSku) || null}
                             onChange={(event, newValue) => {
                                 handleProductSkuChange({
                                     target: {
@@ -305,7 +330,15 @@ const CreatePricingGroupsDiscounts = () => {
                                 });
                             }}
                             options={Array.isArray(products) ? products : []}
-                            getOptionLabel={(option) => `${option.sku}${option.ProductName ? ' - ' + option.ProductName : ''}`}
+                            getOptionLabel={(option) => {
+                                // Handle both product and product group structures
+                                if (option.ProductName) {
+                                    return `${option.sku} - ${option.ProductName}`;
+                                } else if (option.name) {
+                                    return `${option.sku} - ${option.name}${option.type === 'productGroup' ? ' (Product Group)' : ''}`;
+                                }
+                                return option.sku;
+                            }}
                             isOptionEqualToValue={(option, value) => option.sku === value.sku}
                             disabled={loading || !Array.isArray(products) || products.length === 0}
                             noOptionsText={!Array.isArray(products) || products.length === 0 ? 'Loading products...' : 'No products found'}

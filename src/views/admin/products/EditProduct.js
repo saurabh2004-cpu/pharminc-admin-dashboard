@@ -775,7 +775,7 @@ const EditProduct = () => {
             }}
             disabled={loading}
             placeholder="Enter Compare Price (leave empty to remove)"
-            type="number"
+            type="text"
           />
         </Grid>
 
