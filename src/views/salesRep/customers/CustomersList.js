@@ -458,8 +458,7 @@ const SalesRepCustomers = () => {
 
     try {
       // const baseUrl = import.meta.env.VITE_FRONTEND_URL;
-      const baseUrl = import.meta.env.FRONTEND_URL;
-      // window.open(`${baseUrl}/salesRep/${id}`, '_blank');
+      const baseUrl = import.meta.env.VITE_FRONTEND_URL;
       window.open(`${baseUrl}/salesRep/${id}`, '_blank');
     } catch (error) {
       console.error('Navigation failed:', error);
