@@ -277,6 +277,7 @@ const CustomersSalesOrders = () => {
     const [deleteDialog, setDeleteDialog] = useState({
         open: false,
         itemId: null,
+        documentNumber: '',
         itemName: '',
         isDeleting: false
     });
@@ -893,24 +894,30 @@ const CustomersSalesOrders = () => {
         setDeleteDialog({
             open: false,
             itemId: null,
+            documentNumber: null,
             itemName: '',
             isDeleting: false
         });
     };
 
-    const handleDeleteClick = (event, id, name) => {
+    const handleDeleteClick = (event, id, name, row) => {
+
         event.stopPropagation();
         setDeleteDialog({
             open: true,
             itemId: id,
+            documentNumber: row.documentNumber,
             itemName: name,
             isDeleting: false
         });
     };
 
     const handleDeleteSalesOrder = async () => {
+
+        console.log("document number", deleteDialog.documentNumber)
+
         try {
-            const res = await axiosInstance.delete(`/sales-order/delete-sales-order-by-id/${deleteDialog.itemId}`);
+            const res = await axiosInstance.delete(`/sales-order/delete-sales-order-by-id/${deleteDialog.itemId}/${deleteDialog.documentNumber}`);
 
             console.log("resposne of delect sales order", res)
 
@@ -918,6 +925,7 @@ const CustomersSalesOrders = () => {
                 setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
                 setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
                 handleDeleteCancel();
+                await fetchSalesOrdersProducts();
             }
         } catch (error) {
             console.error('Error deleting category:', error);
@@ -1176,7 +1184,7 @@ const CustomersSalesOrders = () => {
                                                                             <IconButton
                                                                                 size="small"
                                                                                 color="error"
-                                                                                onClick={(e) => handleDeleteClick(e, row._id, row.itemSku)}
+                                                                                onClick={(e) => handleDeleteClick(e, row._id, row.itemSku, row)}
                                                                             >
                                                                                 <IconTrash size="1rem" />
                                                                             </IconButton>
@@ -1205,7 +1213,7 @@ const CustomersSalesOrders = () => {
                                                                     ${updateFormData.amount ? updateFormData.amount.toFixed(2) : (row.amount || 0).toFixed(2)}
                                                                 </Typography>
                                                             ) : (
-                                                                <Typography variant="body2">${(row.amount*row.unitsQuantity*row.packQuantity || 0).toFixed(2)}</Typography>
+                                                                <Typography variant="body2">${(row.amount * row.unitsQuantity * row.packQuantity || 0).toFixed(2)}</Typography>
                                                             )}
                                                         </TableCell>
 
@@ -1431,6 +1439,15 @@ const CustomersSalesOrders = () => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
                                             ${tableData[0]?.taxAmount?.toFixed(2)}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
+                                            Shipping Rate:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
+                                            ${tableData[0]?.shippingRate?.toFixed(2)}
                                         </Typography>
                                     </Box>
 
