@@ -940,7 +940,10 @@ const CustomersSalesOrders = () => {
     };
 
     // FIXED: Updated handleSaveUpdate to properly include packType
-    const handleSaveUpdate = async (rowId) => {
+    const handleSaveUpdate = async (rowId, documentNumber) => {
+
+        console.log("handle update and save", documentNumber)
+
         try {
             if (!updateFormData.unitsQuantity || updateFormData.unitsQuantity < 1) {
                 setError('Units quantity must be at least 1');
@@ -975,7 +978,8 @@ const CustomersSalesOrders = () => {
 
             const newPackQuantity = parseInt(updateFormData.packQuantity) || previousPackQuantity;
             const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
-            const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
+            // const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
+            const newAmount = unitPrice
 
             const updatedData = {
                 ...updateFormData,
@@ -986,7 +990,7 @@ const CustomersSalesOrders = () => {
             };
 
             const res = await axiosInstance.put(
-                `/sales-order/update-sales-order-item/${rowId}`,
+                `/sales-order/update-sales-order-item/${rowId}/${documentNumber}`,
                 updatedData,
                 {
                     headers: {
@@ -1153,7 +1157,7 @@ const CustomersSalesOrders = () => {
                                                                             size="small"
                                                                             variant="contained"
                                                                             color="primary"
-                                                                            onClick={() => handleSaveUpdate(row._id)}
+                                                                            onClick={() => handleSaveUpdate(row._id, row.documentNumber)}
                                                                             disabled={loading || !!validationError || (updateFormData.unitsQuantity !== undefined && updateFormData.unitsQuantity < 1)}
                                                                         >
                                                                             {loading ? 'Saving...' : 'Save'}
