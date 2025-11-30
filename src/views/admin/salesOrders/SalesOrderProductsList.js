@@ -359,6 +359,9 @@ const CustomersSalesOrders = () => {
 
     // Calculate tax and total amounts
     const calculateOrderTotals = (products) => {
+
+        console.log("products", products);
+
         const orderTotal = products.reduce((sum, product) => {
             const quantity = parseInt(product.packQuantity) * parseInt(product.unitsQuantity);
             const itemTotal = parseFloat(product.amount) * quantity;
@@ -1202,7 +1205,7 @@ const CustomersSalesOrders = () => {
                                                                     ${updateFormData.amount ? updateFormData.amount.toFixed(2) : (row.amount || 0).toFixed(2)}
                                                                 </Typography>
                                                             ) : (
-                                                                <Typography variant="body2">${(row.amount || 0).toFixed(2)}</Typography>
+                                                                <Typography variant="body2">${(row.amount*row.unitsQuantity*row.packQuantity || 0).toFixed(2)}</Typography>
                                                             )}
                                                         </TableCell>
 
@@ -1418,7 +1421,7 @@ const CustomersSalesOrders = () => {
                                             Order Total :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            ${calculateOrderTotals(rows).orderTotal.toFixed(2)}
+                                            ${tableData[0]?.subTotal?.toFixed(2)}
                                         </Typography>
                                     </Box>
 
@@ -1427,7 +1430,7 @@ const CustomersSalesOrders = () => {
                                             Tax Amount:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
-                                            ${calculateOrderTotals(rows).taxAmount.toFixed(2)}
+                                            ${tableData[0]?.taxAmount?.toFixed(2)}
                                         </Typography>
                                     </Box>
 
@@ -1436,7 +1439,7 @@ const CustomersSalesOrders = () => {
                                             Final Amount:
                                         </Typography>
                                         <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                            ${calculateOrderTotals(rows).finalAmount.toFixed(2)}
+                                            ${tableData[0]?.totalAmount?.toFixed(2)}
                                         </Typography>
                                     </Box>
                                 </Box>

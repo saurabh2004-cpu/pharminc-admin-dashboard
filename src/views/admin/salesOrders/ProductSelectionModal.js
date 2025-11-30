@@ -54,6 +54,7 @@ const ProductSelectionModal = ({
         date: new Date().toISOString().split('T')[0],
         documentNumber: documentNo || '',
         customerName: '',
+        customerNumber: '',
         salesChannel: '',
         trackingNumber: '',
         shippingAddress: '',
@@ -77,6 +78,7 @@ const ProductSelectionModal = ({
                 ...prev,
                 documentNumber: documentNo || firstOrder.documentNumber || '',
                 customerName: firstOrder.customerName || '',
+                customerNumber: firstOrder.customerNumber || '',
                 salesChannel: firstOrder.salesChannel || '',
                 shippingAddress: firstOrder.shippingAddress || '',
                 billingAddress: firstOrder.billingAddress || '',
@@ -92,9 +94,9 @@ const ProductSelectionModal = ({
     // Calculate product group stock (minimum stock among all products)
     const calculateProductGroupStock = (productGroup) => {
         if (!productGroup.products || productGroup.products.length === 0) return 0;
-        
+
         const minStock = Math.min(
-            ...productGroup.products.map(productItem => 
+            ...productGroup.products.map(productItem =>
                 productItem.product?.stockLevel || 0
             )
         );
@@ -142,7 +144,7 @@ const ProductSelectionModal = ({
             }
         } catch (error) {
             console.error('Error fetching products list:', error);
-            // setError('Failed to fetch products list');
+            setError('Failed to fetch products list');
         } finally {
             setLoading(false);
         }
@@ -204,7 +206,8 @@ const ProductSelectionModal = ({
                     const newPackQuantity = parseInt(firstPack.quantity);
                     const currentUnitsQuantity = formData.unitsQuantity || 1;
                     const unitPrice = selectedProduct?.eachPrice || 0;
-                    const totalAmount = unitPrice * (newPackQuantity * currentUnitsQuantity);
+                    // const totalAmount = unitPrice * (newPackQuantity * currentUnitsQuantity);
+                    const totalAmount = unitPrice;
 
                     setFormData(prev => ({
                         ...prev,
@@ -227,7 +230,8 @@ const ProductSelectionModal = ({
                         const newPackQuantity = parseInt(firstPack.quantity);
                         const currentUnitsQuantity = formData.unitsQuantity || 1;
                         const unitPrice = selectedProduct?.eachPrice || 0;
-                        const totalAmount = unitPrice * (newPackQuantity * currentUnitsQuantity);
+                        // const totalAmount = unitPrice * (newPackQuantity * currentUnitsQuantity);
+                        const totalAmount = unitPrice;
 
                         setFormData(prev => ({
                             ...prev,
@@ -272,7 +276,7 @@ const ProductSelectionModal = ({
         const unitsQuantity = parseInt(unitQty) || 1;
         const totalQuantity = packQuantity * unitsQuantity;
         const unitPrice = product.eachPrice || 0;
-        const totalAmount = unitPrice * totalQuantity;
+        const totalAmount = unitPrice;
 
         console.log("Recalculating amount:", {
             unitPrice,
@@ -399,7 +403,7 @@ const ProductSelectionModal = ({
 
         // Check if we have enough stock
         const totalItems = parseInt(formData.packQuantity) * parseInt(formData.unitsQuantity);
-        const availableStock = isProductGroup(selectedProduct) 
+        const availableStock = isProductGroup(selectedProduct)
             ? calculateProductGroupStock(selectedProduct)
             : selectedProduct.stockLevel;
 
@@ -428,7 +432,8 @@ const ProductSelectionModal = ({
                 unitsQuantity: parseInt(formData.unitsQuantity),
                 amount: parseFloat(formData.amount),
                 comments: formData.comments || '',
-                isProductGroup: isProductGroup(selectedProduct)
+                isProductGroup: isProductGroup(selectedProduct),
+                customerNumber: formData.customerNumber
             };
 
             console.log("Sending payload to API:", payload);
@@ -590,7 +595,7 @@ const ProductSelectionModal = ({
                                     <TableBody>
                                         {filteredProducts.map((product) => {
                                             const isGroup = isProductGroup(product);
-                                            const stockLevel = isGroup 
+                                            const stockLevel = isGroup
                                                 ? calculateProductGroupStock(product)
                                                 : product.stockLevel;
 
@@ -634,18 +639,18 @@ const ProductSelectionModal = ({
                                                     </TableCell>
                                                     <TableCell>
                                                         {isGroup ? (
-                                                            <Chip 
-                                                                label="Group" 
-                                                                size="small" 
-                                                                color="primary" 
+                                                            <Chip
+                                                                label="Group"
+                                                                size="small"
+                                                                color="primary"
                                                                 variant="outlined"
                                                                 icon={<IconPackage size={14} />}
                                                             />
                                                         ) : (
-                                                            <Chip 
-                                                                label="Product" 
-                                                                size="small" 
-                                                                color="default" 
+                                                            <Chip
+                                                                label="Product"
+                                                                size="small"
+                                                                color="default"
                                                                 variant="outlined"
                                                             />
                                                         )}
@@ -678,8 +683,8 @@ const ProductSelectionModal = ({
                                         <Typography variant="h6" color="primary">
                                             Selected {isProductGroup(selectedProduct) ? 'Product Group' : 'Product'}
                                         </Typography>
-                                        <Chip 
-                                            label={isProductGroup(selectedProduct) ? "Product Group" : "Individual Product"} 
+                                        <Chip
+                                            label={isProductGroup(selectedProduct) ? "Product Group" : "Individual Product"}
                                             color={isProductGroup(selectedProduct) ? "primary" : "default"}
                                             variant="outlined"
                                             size="small"
@@ -704,7 +709,7 @@ const ProductSelectionModal = ({
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body2">
                                                 <strong>Available Stock:</strong> {
-                                                    isProductGroup(selectedProduct) 
+                                                    isProductGroup(selectedProduct)
                                                         ? calculateProductGroupStock(selectedProduct)
                                                         : selectedProduct.stockLevel
                                                 }
@@ -718,7 +723,7 @@ const ProductSelectionModal = ({
                                                 <Box sx={{ mt: 1, pl: 2 }}>
                                                     {selectedProduct.products.slice(0, 3).map((productItem, index) => (
                                                         <Typography key={index} variant="caption" display="block">
-                                                            • {productItem.product?.sku} - {productItem.product?.ProductName} 
+                                                            • {productItem.product?.sku} - {productItem.product?.ProductName}
                                                             (Stock: {productItem.product?.stockLevel || 0})
                                                         </Typography>
                                                     ))}
@@ -807,8 +812,8 @@ const ProductSelectionModal = ({
                                     onChange={(e) => handleInputChange('unitsQuantity', e.target.value)}
                                     inputProps={{
                                         min: 1,
-                                        max: selectedProduct 
-                                            ? (isProductGroup(selectedProduct) 
+                                        max: selectedProduct
+                                            ? (isProductGroup(selectedProduct)
                                                 ? calculateProductGroupStock(selectedProduct)
                                                 : selectedProduct.stockLevel)
                                             : undefined
