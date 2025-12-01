@@ -9,7 +9,8 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  CircularProgress
+  CircularProgress,
+  Snackbar
 } from '@mui/material';
 import { Link } from 'react-router';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
@@ -23,18 +24,50 @@ const AuthLogin = ({ subtitle }) => {
   const [formData, setFormData] = useState({ email: '' });
   const [otp, setOtp] = useState('');
   const [showOtpPopup, setShowOtpPopup] = useState(false);
-  const [alertMsg, setAlertMsg] = useState(null);
-  const [alertType, setAlertType] = useState('success');
   const [loading, setLoading] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  
+  // Notification state
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success' // 'success' | 'error' | 'warning' | 'info'
+  });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Show notification helper
+  const showNotification = (message, severity = 'success') => {
+    setNotification({
+      open: true,
+      message,
+      severity
+    });
+  };
+
+  // Close notification
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, open: false }));
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Validate email
+    if (!formData.email || !formData.email.trim()) {
+      showNotification('Please enter your email address', 'error');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      showNotification('Please enter a valid email address', 'error');
+      return;
+    }
+
     setLoading(true);
-    setAlertMsg(null);
 
     try {
       const res = await axiosInstance.post('/admin/send-email-opt', formData, {
@@ -43,34 +76,63 @@ const AuthLogin = ({ subtitle }) => {
         }
       });
 
-      console.log("response", res)
+      console.log("response", res);
 
       if (res.data.statusCode === 200) {
         dispatch(login(res.data.user));
         setShowOtpPopup(true);
-        setAlertMsg('OTP sent successfully!');
-        setAlertType('success');
+        showNotification('OTP sent successfully! Check your email.', 'success');
+      } else if (res.data.statusCode === 404) {
+        showNotification('Admin account not found. Please check your email.', 'error');
+      } else if (res.data.statusCode === 400) {
+        showNotification('Your account is inactive. Please contact support.', 'error');
       } else {
-        setAlertMsg(res.data.message || 'Failed to send OTP');
-        setAlertType('error');
+        showNotification(res.data.message || 'Failed to send OTP', 'error');
       }
     } catch (error) {
-      setAlertMsg(error.response?.data?.message || 'Something went wrong');
-      setAlertType('error');
+      console.error('Login error:', error);
+      
+      // Handle different error scenarios
+      if (error.response) {
+        const statusCode = error.response.data?.statusCode;
+        const message = error.response.data?.message;
+        
+        if (statusCode === 404) {
+          showNotification('Admin account not found. Please check your email.', 'error');
+        } else if (statusCode === 400) {
+          showNotification('Your account is inactive. Please contact support.', 'error');
+        } else {
+          showNotification(message || 'Failed to send OTP. Please try again.', 'error');
+        }
+      } else if (error.request) {
+        showNotification('Network error. Please check your connection.', 'error');
+      } else {
+        showNotification('Something went wrong. Please try again.', 'error');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const verifyOtp = async () => {
+    // Validate OTP
+    if (!otp || !otp.trim()) {
+      showNotification('Please enter the OTP', 'error');
+      return;
+    }
+
+    if (otp.length !== 6) {
+      showNotification('OTP must be 6 digits', 'error');
+      return;
+    }
+
     setOtpLoading(true);
-    setAlertMsg(null);
 
     try {
       const res = await axiosInstance.post('/admin/verify-otp',
         {
           email: formData.email,
-          otp
+          otp: otp.trim()
         },
         {
           headers: {
@@ -78,23 +140,51 @@ const AuthLogin = ({ subtitle }) => {
           }
         });
 
-      if (res.data.statusCode === 200) {
-        setAlertMsg('Logged in successfully!');
-        setAlertType('success');
+      console.log("Verify OTP response:", res);
 
+      if (res.data.statusCode === 200) {
+        showNotification('Login successful! Redirecting...', 'success');
+        setShowOtpPopup(false);
+        
         setTimeout(() => {
           navigate('/');
-        }, 1000);
+        }, 1500);
+      } else if (res.data.statusCode === 400) {
+        showNotification('Invalid OTP. Please check and try again.', 'error');
+      } else if (res.data.statusCode === 404) {
+        showNotification('Admin account not found.', 'error');
       } else {
-        setAlertMsg(res.data.message || 'Invalid OTP');
-        setAlertType('error');
+        showNotification(res.data.message || 'OTP verification failed', 'error');
       }
     } catch (err) {
-      setAlertMsg(err.response?.data?.message || 'OTP verification failed');
-      setAlertType('error');
+      console.error('OTP verification error:', err);
+      
+      // Handle different error scenarios
+      if (err.response) {
+        const statusCode = err.response.data?.statusCode;
+        const message = err.response.data?.message;
+        
+        if (statusCode === 400) {
+          showNotification('Invalid OTP. Please check and try again.', 'error');
+        } else if (statusCode === 404) {
+          showNotification('Admin account not found.', 'error');
+        } else {
+          showNotification(message || 'OTP verification failed. Please try again.', 'error');
+        }
+      } else if (err.request) {
+        showNotification('Network error. Please check your connection.', 'error');
+      } else {
+        showNotification('Something went wrong. Please try again.', 'error');
+      }
     } finally {
       setOtpLoading(false);
     }
+  };
+
+  // Handle resend OTP
+  const handleResendOtp = async () => {
+    setOtp(''); // Clear OTP input
+    await handleLogin({ preventDefault: () => {} }); // Resend OTP
   };
 
   return (
@@ -108,14 +198,14 @@ const AuthLogin = ({ subtitle }) => {
             fullWidth
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            disabled={loading}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleLogin(e);
+              }
+            }}
           />
         </Box>
-
-        {alertMsg && (
-          <Alert severity={alertType} sx={{ mt: 2 }}>
-            {alertMsg}
-          </Alert>
-        )}
 
         <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
           <Typography
@@ -155,7 +245,12 @@ const AuthLogin = ({ subtitle }) => {
       {subtitle}
 
       {/* OTP POPUP */}
-      <Dialog open={showOtpPopup} onClose={() => setShowOtpPopup(false)}>
+      <Dialog 
+        open={showOtpPopup} 
+        onClose={() => !otpLoading && setShowOtpPopup(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Enter OTP</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
@@ -164,9 +259,25 @@ const AuthLogin = ({ subtitle }) => {
 
           <TextField
             fullWidth
-            label="Enter OTP"
+            label="Enter 6-digit OTP"
             value={otp}
-            onChange={(e) => setOtp(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+              if (value.length <= 6) {
+                setOtp(value);
+              }
+            }}
+            disabled={otpLoading}
+            inputProps={{
+              maxLength: 6,
+              inputMode: 'numeric',
+              pattern: '[0-9]*'
+            }}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && otp.length === 6) {
+                verifyOtp();
+              }
+            }}
           />
 
           <Button
@@ -175,12 +286,40 @@ const AuthLogin = ({ subtitle }) => {
             color="primary"
             sx={{ mt: 2 }}
             onClick={verifyOtp}
-            disabled={otpLoading}
+            disabled={otpLoading || otp.length !== 6}
           >
             {otpLoading ? <CircularProgress size={22} color="inherit" /> : 'Verify OTP'}
           </Button>
+
+          <Button
+            fullWidth
+            variant="text"
+            color="primary"
+            sx={{ mt: 1 }}
+            onClick={handleResendOtp}
+            disabled={loading}
+          >
+            Resend OTP
+          </Button>
         </DialogContent>
       </Dialog>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseNotification} 
+          severity={notification.severity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };

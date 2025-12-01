@@ -699,19 +699,18 @@ const CustomersSalesOrders = () => {
             const currentRow = rows.find(row => row._id === editingRowId);
             if (!currentRow) return;
 
-            const previousAmount = currentRow.amount || 0;
-            const previousPackQuantity = parseInt(currentRow.packQuantity) || 1;
-            const previousUnitsQuantity = currentRow.unitsQuantity || 1;
+            // Get the per-unit price from the current row
+            const perUnitPrice = parseFloat(currentRow.amount);
 
-            const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
+            const newPackQuantity = parseInt(updateFormData.packQuantity) || 1;
+            const newUnitsQuantity = parseInt(updateFormData.unitsQuantity) || 1;
 
-            const newPackQuantity = parseInt(updateFormData.packQuantity) || previousPackQuantity;
-            const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
-            const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
+            // Calculate new total amount = per-unit price * pack quantity * units quantity
+            const newTotalAmount = perUnitPrice * newPackQuantity * newUnitsQuantity;
 
             setUpdateFormData(prev => ({
                 ...prev,
-                amount: newAmount
+                calculatedTotalAmount: newTotalAmount // Store calculated total for display
             }));
         }
     }, [updateFormData.packQuantity, updateFormData.unitsQuantity, editingRowId, rows]);
@@ -939,11 +938,7 @@ const CustomersSalesOrders = () => {
         backgroundColor: '#f0f8ff',
     };
 
-    // FIXED: Updated handleSaveUpdate to properly include packType
     const handleSaveUpdate = async (rowId, documentNumber) => {
-
-        console.log("handle update and save", documentNumber)
-
         try {
             if (!updateFormData.unitsQuantity || updateFormData.unitsQuantity < 1) {
                 setError('Units quantity must be at least 1');
@@ -970,23 +965,12 @@ const CustomersSalesOrders = () => {
                 return;
             }
 
-            const previousAmount = currentRow.amount || 0;
-            const previousPackQuantity = parseInt(currentRow.packQuantity) || 1;
-            const previousUnitsQuantity = currentRow.unitsQuantity || 1;
-
-            const unitPrice = previousAmount / (previousPackQuantity * previousUnitsQuantity);
-
-            const newPackQuantity = parseInt(updateFormData.packQuantity) || previousPackQuantity;
-            const newUnitsQuantity = updateFormData.unitsQuantity || previousUnitsQuantity;
-            // const newAmount = unitPrice * (newPackQuantity * newUnitsQuantity);
-            const newAmount = unitPrice
-
             const updatedData = {
                 ...updateFormData,
-                packQuantity: newPackQuantity.toString(),
-                unitsQuantity: newUnitsQuantity,
-                amount: newAmount,
+                packQuantity: updateFormData.packQuantity.toString(),
+                unitsQuantity: updateFormData.unitsQuantity,
                 packType: updateFormData.packType || currentRow.packType
+                // Remove amount calculation - backend handles it
             };
 
             const res = await axiosInstance.put(
@@ -1000,37 +984,8 @@ const CustomersSalesOrders = () => {
             );
 
             if (res.data.statusCode === 200) {
-                setRows(prevRows =>
-                    prevRows.map(row =>
-                        row._id === rowId
-                            ? {
-                                ...row,
-                                ...updatedData,
-                                amount: newAmount,
-                                packType: updatedData.packType,
-                                packQuantity: updatedData.packQuantity
-                            }
-                            : row
-                    )
-                );
-
-                setTableData(prevData =>
-                    prevData.map(item =>
-                        item._id === rowId
-                            ? {
-                                ...item,
-                                ...updatedData,
-                                amount: newAmount,
-                                packType: updatedData.packType,
-                                packQuantity: updatedData.packQuantity
-                            }
-                            : item
-                    )
-                );
-
                 handleCancelUpdate(rowId);
-                await fetchSalesOrdersProducts();
-
+                await fetchSalesOrdersProducts(); // Refresh data from server
             } else {
                 setError(res.data.message || 'Update failed');
             }
@@ -1214,7 +1169,7 @@ const CustomersSalesOrders = () => {
                                                         <TableCell sx={{ width: 100 }}>
                                                             {isRowEditing ? (
                                                                 <Typography variant="body2">
-                                                                    ${updateFormData.amount ? updateFormData.amount.toFixed(2) : (row.amount || 0).toFixed(2)}
+                                                                    ${(updateFormData.calculatedTotalAmount || (row.amount * row.unitsQuantity * row.packQuantity)).toFixed(2)}
                                                                 </Typography>
                                                             ) : (
                                                                 <Typography variant="body2">${(row.amount * row.unitsQuantity * row.packQuantity || 0).toFixed(2)}</Typography>
@@ -1224,9 +1179,27 @@ const CustomersSalesOrders = () => {
                                                         {/* Tax Column */}
                                                         <TableCell sx={{ width: 100 }}>
                                                             <Box>
-                                                                <Typography variant="body2">
-                                                                    {`${calculateProductTax(row).toFixed(2)} (${row.taxApplied ? `${row.taxPercentages}%` : 'No Tax'})`}
-                                                                </Typography>
+                                                                {isRowEditing ? (
+                                                                    <Typography variant="body2">
+                                                                        {(() => {
+                                                                            const totalAmount = updateFormData.calculatedTotalAmount || (row.amount * row.unitsQuantity * row.packQuantity);
+                                                                            const tax = row.taxApplied && row.taxPercentages > 0
+                                                                                ? (totalAmount * row.taxPercentages) / 100
+                                                                                : 0;
+                                                                            return `${tax.toFixed(2)} (${row.taxApplied ? `${row.taxPercentages}%` : 'No Tax'})`;
+                                                                        })()}
+                                                                    </Typography>
+                                                                ) : (
+                                                                    <Typography variant="body2">
+                                                                        {(() => {
+                                                                            const totalAmount = row.amount * row.unitsQuantity * row.packQuantity;
+                                                                            const tax = row.taxApplied && row.taxPercentages > 0
+                                                                                ? (totalAmount * row.taxPercentages) / 100
+                                                                                : 0;
+                                                                            return `${tax.toFixed(2)} (${row.taxApplied ? `${row.taxPercentages}%` : 'No Tax'})`;
+                                                                        })()}
+                                                                    </Typography>
+                                                                )}
                                                             </Box>
                                                         </TableCell>
 
@@ -1699,9 +1672,9 @@ const CustomersSalesOrders = () => {
                                                 onClose: () => setBillingDropdownOpen(false),
                                             }}
                                         >
-                                            <MenuItem value="current" >
+                                            {/* <MenuItem value="current" >
                                                 Current: {formatAddressForDisplay(tableData[0]?.billingAddress)}
-                                            </MenuItem>
+                                            </MenuItem> */}
                                             {billingAddresses.map((address) => (
                                                 <MenuItem key={address._id} value={address._id}>
                                                     {`${address.billingAddressOne}, ${address.billingCity}, ${address.billingState}`}
@@ -1745,9 +1718,9 @@ const CustomersSalesOrders = () => {
                                                 onClose: () => setShippingDropdownOpen(false),
                                             }}
                                         >
-                                            <MenuItem value="current">
+                                            {/* <MenuItem value="current">
                                                 Current: {formatAddressForDisplay(tableData[0]?.shippingAddress)}
-                                            </MenuItem>
+                                            </MenuItem> */}
                                             {shippingAddresses.map((address) => (
                                                 <MenuItem key={address._id} value={address._id}>
                                                     {`${address.shippingAddressOne}, ${address.shippingCity}, ${address.shippingState}`}

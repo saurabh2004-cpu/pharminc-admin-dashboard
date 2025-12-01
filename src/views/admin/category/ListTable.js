@@ -205,12 +205,28 @@ const ListTable = ({
 
 
   useEffect(() => {
-    if (isBrandsList) {
-      setRows(sourceData);
-    } else {
-      setRows(filteredAndSortedProducts);
+    let data = isBrandsList ? sourceData : filteredAndSortedProducts;
+
+    // If there's an active search, filter the data
+    if (search) {
+      const searchValue = search.toLowerCase();
+
+      if (isBrandsList) {
+        data = data.filter((row) => {
+          return (
+            row.name.toLowerCase().includes(searchValue) ||
+            row?.brand?.name.toLowerCase().includes(searchValue)
+          );
+        });
+      } else {
+        data = data.filter((row) => {
+          return row.title.toLowerCase().includes(searchValue);
+        });
+      }
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList]);
+
+    setRows(data);
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();

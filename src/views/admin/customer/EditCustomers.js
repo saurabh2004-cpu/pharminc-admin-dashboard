@@ -614,7 +614,7 @@ const EditCustomers = () => {
             value={formData.customerId}
             onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
             placeholder="Enter Customer ID"
-            disabled={loading}
+            disabled
           />
         </Grid>
         <Grid size={6}>
