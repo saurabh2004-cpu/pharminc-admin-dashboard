@@ -48,6 +48,7 @@ const ProductSelectionModal = ({
     const [error, setError] = useState('');
     const [step, setStep] = useState(1); // 1: Product Selection, 2: Form
     const [packTypes, setPackTypes] = useState([]);
+    const [totalAmount, setTotalAmount] = useState(0);
 
     // Form data state
     const [formData, setFormData] = useState({
@@ -209,6 +210,10 @@ const ProductSelectionModal = ({
                     // const totalAmount = unitPrice * (newPackQuantity * currentUnitsQuantity);
                     const totalAmount = unitPrice;
 
+                    setTotalAmount(unitPrice * (newPackQuantity * currentUnitsQuantity));
+
+                    console.log("total;Amount", unitPrice * (newPackQuantity * currentUnitsQuantity))
+
                     setFormData(prev => ({
                         ...prev,
                         packQuantity: firstPack.quantity.toString(),
@@ -286,6 +291,8 @@ const ProductSelectionModal = ({
             totalAmount: totalAmount.toFixed(2)
         });
 
+        setTotalAmount(totalAmount * (packQuantity * unitsQuantity));
+
         return parseFloat(totalAmount.toFixed(2));
     };
 
@@ -328,6 +335,7 @@ const ProductSelectionModal = ({
 
             const newAmount = recalculateAmount(packQty, unitQty);
             updatedFormData.amount = newAmount;
+            setTotalAmount(newAmount * (packQty * unitQty));
 
             console.log("Amount updated to:", newAmount);
         }
@@ -360,6 +368,8 @@ const ProductSelectionModal = ({
                 packType: selectedPack.name,
                 amount: newAmount
             }));
+
+            setTotalAmount(newAmount * (selectedPack.quantity * formData.unitsQuantity));
 
             console.log("Amount after pack type change:", newAmount);
         }
@@ -770,7 +780,7 @@ const ProductSelectionModal = ({
                             </Grid>
 
                             {/* Product Details */}
-                            <Grid item xs={12} sm={6}>
+                            {!isProductGroup(selectedProduct) && <Grid item xs={12} sm={6}>
                                 <CustomFormLabel htmlFor="pack-type">
                                     Pack Type *
                                 </CustomFormLabel>
@@ -798,7 +808,7 @@ const ProductSelectionModal = ({
                                         Selected: {formData.packType}
                                     </Typography>
                                 )}
-                            </Grid>
+                            </Grid>}
 
                             <Grid item xs={12} sm={6}>
                                 <CustomFormLabel htmlFor="units-quantity">
@@ -846,7 +856,7 @@ const ProductSelectionModal = ({
                                 <CustomOutlinedInput
                                     id="total-amount"
                                     fullWidth
-                                    value={formData.amount.toFixed(2)}
+                                    value={totalAmount.toFixed(2)}
                                     disabled
                                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
                                 />
