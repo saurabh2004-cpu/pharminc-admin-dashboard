@@ -217,14 +217,14 @@ const AuthLogin = ({ subtitle }) => {
             Log In As Sales Rep
           </Typography>
 
-          <Typography
+          {/* <Typography
             component={Link}
             to="/auth/register"
             fontWeight="500"
             sx={{ textDecoration: 'none', color: 'primary.main' }}
           >
             Register
-          </Typography>
+          </Typography> */}
         </Stack>
       </Stack>
 

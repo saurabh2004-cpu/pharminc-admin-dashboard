@@ -288,7 +288,7 @@ const Router = [
     children: [
       { path: '/auth/404', element: <Error /> },
       { path: '/auth/login', element: <Login2 /> },
-      { path: '/auth/register', element: <Register2 /> },
+      // { path: '/auth/register', element: <Register2 /> },
       { path: '/reset-password', element: <Reset /> },
 
       { path: '/salas-rep/login', element: <SalesRepLogin2 /> },

@@ -132,6 +132,7 @@ const EnhancedTableToolbar = (props) => {
     onDateFilterChange,
     onApplyDateFilter,
     onClearDateFilter,
+    onCloseDateFilter, // Add this
     loading
   } = props;
 
@@ -204,14 +205,16 @@ const EnhancedTableToolbar = (props) => {
               >
                 {loading ? 'Applying...' : 'Apply'}
               </Button>
-              <IconButton
-                size="small"
-                onClick={onClearDateFilter}
-                disabled={loading}
-                color="error"
-              >
-                <IconX size="1.1rem" />
-              </IconButton>
+              {/* Change this button to just close the filter inputs */}
+              <Tooltip title="Close date filter">
+                <IconButton
+                  size="small"
+                  onClick={onCloseDateFilter} // Use the new handler
+                  disabled={loading}
+                >
+                  <IconX size="1.1rem" />
+                </IconButton>
+              </Tooltip>
             </Box>
           )}
 
@@ -225,6 +228,19 @@ const EnhancedTableToolbar = (props) => {
                   color={dateFilterActive ? "primary" : "default"}
                 >
                   <IconCalendar size="1.2rem" />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {/* Add Clear Filter button when date filter is active and inputs are hidden */}
+            {dateFilterActive && !showDateFilter && (
+              <Tooltip title="Clear Date Filter">
+                <IconButton
+                  size="small"
+                  onClick={onClearDateFilter}
+                  color="error"
+                >
+                  <IconX size="1.1rem" />
                 </IconButton>
               </Tooltip>
             )}
@@ -261,7 +277,6 @@ const EnhancedTableToolbar = (props) => {
     </Toolbar>
   );
 };
-
 const ListTable = ({
   showCheckBox,
   headCells,
@@ -502,10 +517,10 @@ const ListTable = ({
       const response = await axiosInstance.get('/sales-order/get-all-sales-orders');
       if (response.data.statusCode === 200) {
         setTableData(response.data.data.salesOrders);
-        setRows(response.data.data.salesOrders);
+        setRows(response.data.data.salesOrders); // Make sure to update rows too
         setDateFilterActive(false);
         setDateFilter({ from: '', to: '' });
-        setShowDateFilter(false); // Hide the filter inputs
+        setShowDateFilter(false); // This will hide the inputs
       }
     } catch (error) {
       console.error('Error clearing date filter:', error);
@@ -618,6 +633,8 @@ const ListTable = ({
     });
   };
 
+
+
   const handleDeleteSalesOrder = async () => {
     try {
       setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
@@ -676,6 +693,10 @@ const ListTable = ({
     backgroundColor: '#f0f8ff',
   };
 
+  const handleCloseDateFilter = () => {
+    setShowDateFilter(false);
+  };
+
   return (
     <Box>
       <Box>
@@ -687,12 +708,12 @@ const ListTable = ({
           onExportCSV={handleExportAllCSV}
           onOpenDateFilter={handleOpenDateFilter}
           dateFilterActive={dateFilterActive}
-          // New props for inline date filter
           showDateFilter={showDateFilter}
           dateFilter={dateFilter}
           onDateFilterChange={handleDateFilterChange}
           onApplyDateFilter={handleApplyDateFilter}
           onClearDateFilter={handleClearDateFilter}
+          onCloseDateFilter={handleCloseDateFilter} // Use the new handler
           loading={loading}
         />
 

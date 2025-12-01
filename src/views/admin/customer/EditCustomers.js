@@ -732,7 +732,7 @@ const EditCustomers = () => {
           <CustomOutlinedInput
             id="defaultShippingRate"
             fullWidth
-            type="number"
+            type="text"
             value={formData.defaultShippingRate}
             onChange={(e) => setFormData({ ...formData, defaultShippingRate: parseFloat(e.target.value) || 0 })}
             disabled={loading}

@@ -241,7 +241,7 @@ const EditAdmin = () => {
       </Box>
 
       {/* Password Field */}
-      <Box sx={{ mb: 3 }}>
+      {/* <Box sx={{ mb: 3 }}>
         <CustomFormLabel htmlFor="password" sx={{ mt: 0 }}>
           Password
           <span style={{ color: 'gray', fontSize: '0.8rem', marginLeft: '5px' }}>
@@ -256,7 +256,7 @@ const EditAdmin = () => {
           onChange={(e) => handleInputChange('password', e.target.value)}
           placeholder="Enter new password (optional)"
         />
-      </Box>
+      </Box> */}
 
       {/* Messages */}
       {error && (
