@@ -788,7 +788,7 @@ const EditCustomers = () => {
             placeholder="Enter Net Terms (e.g., Net 30)"
           />
         </Grid>
-        <Grid size={6}>
+        {/* <Grid size={6}>
           <CustomFormLabel htmlFor="password" sx={{ mt: 0 }}>
             Password
             <span style={{ color: 'red' }}>*</span>
@@ -802,7 +802,7 @@ const EditCustomers = () => {
             disabled={loading}
             placeholder="Enter Password"
           />
-        </Grid>
+        </Grid> */}
 
         {/* Shipping Addresses Section */}
         <Grid size={12}>
