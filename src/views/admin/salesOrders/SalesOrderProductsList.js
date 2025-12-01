@@ -606,12 +606,66 @@ const CustomersSalesOrders = () => {
 
     const fetchProductBySku = async (itemSku) => {
         try {
-            const response = await axiosInstance.get(`/products/get-product-by-sku/${itemSku}`);
-            if (response.status === 200) {
-                setProductQuantity(response.data.data.stockLevel);
+            console.log("product group data", productGroupsData);
+
+            // Check if it's a product group
+            const productGroup = productGroupsData.find(pg => pg.sku === itemSku);
+
+            if (productGroup) {
+                console.log("Found product group:", productGroup.name);
+
+                // For product groups, find the lowest stock level among all products
+                let lowestStock = Infinity;
+
+                if (productGroup.products && productGroup.products.length > 0) {
+                    for (const groupProduct of productGroup.products) {
+                        const product = groupProduct.product;
+                        if (product && product.stockLevel !== undefined) {
+                            console.log(`Product ${product.sku} stock: ${product.stockLevel}`);
+                            lowestStock = Math.min(lowestStock, product.stockLevel);
+                        }
+                    }
+
+                    // If found valid stock levels, use the lowest one
+                    if (lowestStock !== Infinity) {
+                        setProductQuantity(lowestStock);
+                        console.log(`Lowest stock in product group: ${lowestStock}`);
+                    } else {
+                        // If no stock levels found, set to 0 or a default value
+                        setProductQuantity(0);
+                        console.log("No stock levels found in product group");
+                    }
+                } else {
+                    setProductQuantity(0);
+                    console.log("No products found in product group");
+                }
+            } else {
+                // It's a regular product, fetch it normally
+                const response = await axiosInstance.get(`/products/get-product-by-sku/${itemSku}`);
+
+                if (response.status === 200) {
+                    const productData = response.data.data;
+                    setProductQuantity(productData.stockLevel || 0);
+                    console.log(`Regular product ${itemSku} stock: ${productData.stockLevel}`);
+                } else {
+                    setProductQuantity(0);
+                    console.log(`Product ${itemSku} not found or error`);
+                }
             }
         } catch (error) {
             console.error('Error fetching product by sku:', error);
+
+            // Try to find the product in the already loaded product group data
+            const productGroup = productGroupsData.find(pg => pg.sku === itemSku);
+            if (productGroup?.products?.length > 0) {
+                // Use the first product's stock as fallback
+                const firstProductStock = productGroup.products[0]?.product?.stockLevel || 0;
+                setProductQuantity(firstProductStock);
+                console.log(`Fallback - Using first product stock: ${firstProductStock}`);
+            } else {
+                setProductQuantity(0);
+            }
+
             setError(error.message);
         }
     };
@@ -1207,20 +1261,30 @@ const CustomersSalesOrders = () => {
                                                         <TableCell sx={{ width: 150 }}>
                                                             {isRowEditing ? (
                                                                 <Box>
-                                                                    <TextField
-                                                                        select
-                                                                        size="small"
-                                                                        value={updateFormData.packQuantity || row.packQuantity || ""}
-                                                                        onChange={handlePackTypeChange}
-                                                                        error={!!validationError}
-                                                                        fullWidth
-                                                                    >
-                                                                        {packTypes?.map((pack) => (
-                                                                            <MenuItem key={pack._id} value={parseInt(pack.quantity)}>
-                                                                                {pack.name}
-                                                                            </MenuItem>
-                                                                        ))}
-                                                                    </TextField>
+                                                                    {packTypes && packTypes.length > 0 ? (
+                                                                        <TextField
+                                                                            select
+                                                                            size="small"
+                                                                            value={updateFormData.packQuantity || row.packQuantity || ""}
+                                                                            onChange={handlePackTypeChange}
+                                                                            error={!!validationError}
+                                                                            fullWidth
+                                                                        >
+                                                                            {packTypes.map((pack) => (
+                                                                                <MenuItem key={pack._id} value={parseInt(pack.quantity)}>
+                                                                                    {pack.name}
+                                                                                </MenuItem>
+                                                                            ))}
+                                                                        </TextField>
+                                                                    ) : (
+                                                                        <TextField
+                                                                            size="small"
+                                                                            value={updateFormData.packType || row.packType || ""}
+                                                                            onChange={(e) => handleUpdateFormChange('packType', e.target.value)}
+                                                                            error={!!validationError}
+                                                                            fullWidth
+                                                                        />
+                                                                    )}
                                                                     {updateFormData.packType && (
                                                                         <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
                                                                             Selected: {updateFormData.packType}
