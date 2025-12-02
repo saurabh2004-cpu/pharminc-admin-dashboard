@@ -353,6 +353,9 @@ const ListMetaData = () => {
   };
 
   const handleEditMetaData = (id) => {
+
+    console.log("id page", id);
+
     navigate(`/dashboard/meta-data/Edit/${id}`);
   };
 
@@ -444,7 +447,7 @@ const ListMetaData = () => {
                                 <IconButton
                                   size="small"
                                   color="primary"
-                                  onClick={() => handleEditMetaData(row.page)}
+                                  onClick={() => handleEditMetaData(row._id)}
                                 >
                                   <IconEdit size="1.1rem" />
                                 </IconButton>
