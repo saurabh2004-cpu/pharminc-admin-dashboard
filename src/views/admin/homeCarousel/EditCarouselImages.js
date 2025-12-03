@@ -15,6 +15,7 @@ import {
 import { IconUpload, IconX } from '@tabler/icons';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import axiosInstance from '../../../axios/axiosInstance';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditCarouselImages = () => {
     const [desktopImages, setDesktopImages] = useState([]);
@@ -554,13 +555,20 @@ const EditCarouselImages = () => {
         );
     }
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Upload Carousel Images',
+        },
+    ];
+
     return (
         <div>
-            <Typography variant="h4" gutterBottom>
-                Manage Carousel Images
-            </Typography>
-
-            <Grid container spacing={3} direction="column">
+            <Breadcrumb title="Update Home Page Carousel" items={BCrumb} />
+            <Grid container spacing={3} direction="column" marginTop={3}>
                 {/* Current Desktop Images */}
                 <Grid item xs={12}>
                     <CustomFormLabel>Current Desktop Images ({desktopImages.length})</CustomFormLabel>
@@ -755,7 +763,7 @@ const EditCarouselImages = () => {
                 <Grid item xs={12}>
                     <CustomFormLabel>Add New Desktop Images</CustomFormLabel>
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        Select new desktop images to add to the carousel
+                        Select new desktop images to add to the carousel (Required: 1920 × 607px, Max: 5MB)
                     </Typography>
 
                     <input
@@ -852,7 +860,7 @@ const EditCarouselImages = () => {
                 <Grid item xs={12}>
                     <CustomFormLabel>Add New Mobile Images</CustomFormLabel>
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        Select new mobile images to add to the carousel
+                        Select new mobile images to add to the carousel (Required: 768x400px, Max: 5MB)
                     </Typography>
 
                     <input

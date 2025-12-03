@@ -10,6 +10,7 @@ import { useNavigate, useParams } from 'react-router';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Autocomplete } from '@mui/material'
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditSalesOrder = () => {
   const [formData, setFormData] = React.useState({
@@ -129,7 +130,7 @@ const EditSalesOrder = () => {
 
   const fetchProductsAvailablePackTypes = async (sku) => {
     if (!sku) return;
-    
+
     try {
       const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
       console.log("response products pack types", response);
@@ -185,7 +186,7 @@ const EditSalesOrder = () => {
 
       if (response.data.statusCode === 200) {
         const salesOrderData = response.data.data.salesOrder || response.data.data;
-        
+
         // Set form data with proper date handling and correct field mapping
         setFormData({
           date: salesOrderData.date ? new Date(salesOrderData.date) : null,
@@ -299,8 +300,19 @@ const EditSalesOrder = () => {
     if (fileInput) fileInput.value = '';
   };
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit Sales Order',
+    },
+  ];
+
   return (
     <div>
+      <Breadcrumb title="Edit Sales Order" items={BCrumb} />
       <Grid container spacing={2}>
         {/* Date - Full Width */}
         <Grid size={12}>

@@ -8,6 +8,8 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { IconUpload, IconFileImport, IconX, IconPhoto } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
+
 
 const EditProduct = () => {
   const [formData, setFormData] = React.useState({
@@ -62,6 +64,21 @@ const EditProduct = () => {
   const [badges, setBadges] = useState([]);
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
   const [taxOptions, setTaxOptions] = useState([true, false]);
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+
+
+  const handleDeleteExistingImage = (imageUrl, imageIndex) => {
+    // Add to deletion list
+    setImagesToDelete(prev => [...prev, imageUrl]);
+
+    // Remove from existing images display
+    setExistingImages(prev => prev.filter((_, idx) => idx !== imageIndex));
+
+    // Also remove from replacement images if it was being replaced
+    if (replacementImages[imageIndex]) {
+      handleRemoveReplacement(imageIndex);
+    }
+  };
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
@@ -210,7 +227,7 @@ const EditProduct = () => {
       } else {
         formDataToSend.append('comparePrice', formData.comparePrice);
       }
-      
+
       formDataToSend.append('taxable', formData.taxable);
 
       console.log("Sequence value being sent:", formData.sequence);
@@ -230,6 +247,12 @@ const EditProduct = () => {
       imageFiles.forEach((file) => {
         formDataToSend.append('images', file);
       });
+
+      imagesToDelete.forEach((imageUrl) => {
+        formDataToSend.append('imagesToDelete', imageUrl);
+      });
+
+      console.log("Images to delete:", imagesToDelete);
 
       const res = await axiosInstance.put(`/products/update-product/${id}`, formDataToSend, {
         headers: {
@@ -505,8 +528,19 @@ const EditProduct = () => {
     fetchBadges();
   }, []);
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit Product',
+    },
+  ];
+
   return (
     <div>
+      <Breadcrumb title="Edit Product" items={BCrumb} />
       <Grid container spacing={2}>
 
         {/* Thumbnail Image Upload */}
@@ -571,7 +605,7 @@ const EditProduct = () => {
         {existingImages.length > 1 && (
           <Grid size={12}>
             <CustomFormLabel sx={{ mt: 2 }}>
-              Current Product Images (Click to Replace)
+              Current Product Images (Click to Replace or Delete)
             </CustomFormLabel>
             <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               {existingImages.slice(1).map((imageUrl, index) => {
@@ -626,6 +660,28 @@ const EditProduct = () => {
                         {replacement ? 'New Image Selected' : 'Click to Replace'}
                       </Box>
                     </Box>
+
+                    {/* Delete Button - Top Right */}
+                    <Button
+                      size="small"
+                      onClick={() => handleDeleteExistingImage(imageUrl, imageIndex)}
+                      sx={{
+                        position: 'absolute',
+                        top: -10,
+                        right: -10,
+                        minWidth: 'auto',
+                        padding: '4px',
+                        backgroundColor: 'error.main',
+                        color: 'white',
+                        zIndex: 10,
+                        '&:hover': { backgroundColor: 'error.dark' }
+                      }}
+                      title="Delete this image"
+                    >
+                      <IconX size="1rem" />
+                    </Button>
+
+                    {/* Remove Replacement Button - Top Left (only shows if replacing) */}
                     {replacement && (
                       <Button
                         size="small"
@@ -633,13 +689,15 @@ const EditProduct = () => {
                         sx={{
                           position: 'absolute',
                           top: -10,
-                          right: -10,
+                          left: -10,
                           minWidth: 'auto',
                           padding: '4px',
-                          backgroundColor: 'error.main',
+                          backgroundColor: 'warning.main',
                           color: 'white',
-                          '&:hover': { backgroundColor: 'error.dark' }
+                          zIndex: 10,
+                          '&:hover': { backgroundColor: 'warning.dark' }
                         }}
+                        title="Cancel replacement"
                       >
                         <IconX size="1rem" />
                       </Button>
@@ -648,13 +706,22 @@ const EditProduct = () => {
                 );
               })}
             </Box>
+
+            {/* Show deletion warning */}
+            {imagesToDelete.length > 0 && (
+              <Box sx={{ mt: 2, p: 2, backgroundColor: '#fff3cd', borderRadius: 1, border: '1px solid #ffc107' }}>
+                <Typography variant="body2" color="warning.dark">
+                  ⚠️ {imagesToDelete.length} image{imagesToDelete.length > 1 ? 's' : ''} will be permanently deleted when you save.
+                </Typography>
+              </Box>
+            )}
           </Grid>
         )}
 
         {/* Multiple Product Images Upload */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="images-upload" sx={{ mt: 2 }}>
-            {existingImages.length > 0 ? 'Add More Images (Max 10)' : 'Product Images (Max 10)'}
+            {existingImages.length > 0 ? 'Add More Images ' : 'Product Images '}
           </CustomFormLabel>
           <input
             id="images-upload"

@@ -7,6 +7,7 @@ import { IconFileImport, IconUpload } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateBrand = () => {
     const [formData, setFormData] = React.useState({
@@ -125,9 +126,22 @@ const CreateBrand = () => {
         }
     };
 
+
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Brand',
+        },
+    ];
+
+
     return (
         <div>
-            <Grid container>
+            <Breadcrumb title="Create Brand" items={BCrumb}  />
+            <Grid containe marginTop={4}>
                 {/* 1 */}
                 <Grid size={12}>
                     <CustomFormLabel
@@ -148,7 +162,7 @@ const CreateBrand = () => {
                     />
                 </Grid>
 
-              
+
 
                 {/* 2 */}
                 <Grid size={12}>

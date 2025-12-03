@@ -21,6 +21,7 @@ import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditSalesRep = () => {
   const [formData, setFormData] = React.useState({
@@ -80,15 +81,15 @@ const EditSalesRep = () => {
       const res = await axiosInstance.get(`/sales-rep/get-sales-rep/${id}`);
 
       console.log("fetch sales rep by id ", res);
-      
+
       // Access the data from response.data.data
       const salesRepData = res.data.data;
-      
+
       // Extract customer IDs from the populated customers array
-      const customerIds = salesRepData.customers?.map(customer => 
+      const customerIds = salesRepData.customers?.map(customer =>
         typeof customer === 'object' ? customer._id : customer
       ) || [];
-      
+
       setFormData({
         email: salesRepData.email || '',
         name: salesRepData.name || '',
@@ -286,15 +287,20 @@ const EditSalesRep = () => {
     );
   }
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create Sales Rep',
+    },
+  ];
+
   return (
     <div>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Edit Sales Representative
-        </Typography>
-        <Typography variant="body1" color="textSecondary">
-          Update the sales representative details below
-        </Typography>
+        <Breadcrumb title="Edit Sales Rep" items={BCrumb} />
       </Box>
 
       <Grid container spacing={2}>
@@ -361,8 +367,8 @@ const EditSalesRep = () => {
             </Select>
           </FormControl>
           <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
-            {formData.role === 'Master-Sales-Rep' 
-              ? 'Master Sales Representatives have additional privileges' 
+            {formData.role === 'Master-Sales-Rep'
+              ? 'Master Sales Representatives have additional privileges'
               : 'Standard Sales Representative role'}
           </Typography>
         </Grid>

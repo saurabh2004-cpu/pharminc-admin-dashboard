@@ -29,6 +29,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -383,8 +384,19 @@ const ListMetaData = () => {
     );
   }
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Meta Data List',
+    },
+  ];
+
   return (
     <Box>
+      <Breadcrumb title="Meta Data List" items={BCrumb} />
       <Box>
         <EnhancedTableToolbar
           numSelected={selected.length}

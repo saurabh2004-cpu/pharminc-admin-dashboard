@@ -17,6 +17,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateAdmin = () => {
     const [formData, setFormData] = React.useState({
@@ -58,9 +59,20 @@ const CreateAdmin = () => {
         }
     };
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Admin',
+        },
+    ];
+
     return (
         <div>
-            <Grid container>
+            <Breadcrumb title="Create Admin" items={BCrumb} />
+            <Grid container marginTop={3}>
                 {/* 1 */}
 
                 <Grid size={12}>

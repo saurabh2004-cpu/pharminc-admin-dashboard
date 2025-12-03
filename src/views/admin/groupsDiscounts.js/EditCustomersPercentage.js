@@ -9,6 +9,7 @@ import CustomFormLabel from '../../../components/forms/theme-elements/CustomForm
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditCustomersPercentage = () => {
     const [formData, setFormData] = React.useState({
@@ -128,9 +129,21 @@ const EditCustomersPercentage = () => {
         }
     };
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Pricing Group ',
+        },
+    ];
+
+
     return (
         <div>
-            <Grid container spacing={3}>
+            <Breadcrumb title="Edit Pricing Group Customer Percentage" items={BCrumb} />
+            <Grid container spacing={3} marginTop={4}>
                 {/* Customer Information Display in Input Fields */}
                 <Grid size={12}>
                     <CustomFormLabel sx={{ mt: 2 }}>

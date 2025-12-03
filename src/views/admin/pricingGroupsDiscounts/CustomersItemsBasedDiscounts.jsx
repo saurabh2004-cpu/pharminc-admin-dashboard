@@ -33,6 +33,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import axios from 'axios';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -417,10 +418,20 @@ const CustomersItemsBasedDiscounts = () => {
     backgroundColor: '#f0f8ff', // keeps background clean while scrolling
   };
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Customers Items Discounts',
+    },
+  ];
 
 
   return (
     <Box>
+      <Breadcrumb title="Customers Items Discounts" items={BCrumb} />
       <Box>
         <EnhancedTableToolbar
           numSelected={selected.length}

@@ -21,6 +21,7 @@ import { IconFileImport, IconUpload, IconPlus, IconTrash, IconX } from '@tabler/
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 // Image size configurations
 const IMAGE_SIZES = {
@@ -239,16 +240,16 @@ const CreateBrandPage = () => {
     const file = e.target.files[0];
     if (file) {
       const { isValid, width, height } = await validateImageDimensions(
-        file, 
-        IMAGE_SIZES.brandImage.width, 
+        file,
+        IMAGE_SIZES.brandImage.width,
         IMAGE_SIZES.brandImage.height
       );
-      
+
       if (!isValid) {
         setError(`Brand image must be exactly ${IMAGE_SIZES.brandImage.width} × ${IMAGE_SIZES.brandImage.height} px. Current size: ${width} × ${height} px`);
         return;
       }
-      
+
       setBrandImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setBrandImagePreview(reader.result);
@@ -263,11 +264,11 @@ const CreateBrandPage = () => {
       // Validate all files first
       for (const file of files) {
         const { isValid, width, height } = await validateImageDimensions(
-          file, 
-          IMAGE_SIZES.heroCarousel.width, 
+          file,
+          IMAGE_SIZES.heroCarousel.width,
           IMAGE_SIZES.heroCarousel.height
         );
-        
+
         if (!isValid) {
           setError(`Hero carousel image must be exactly ${IMAGE_SIZES.heroCarousel.width} × ${IMAGE_SIZES.heroCarousel.height} px. Current size: ${width} × ${height} px`);
           return;
@@ -297,11 +298,11 @@ const CreateBrandPage = () => {
       // Validate all files first
       for (const file of files) {
         const { isValid, width, height } = await validateImageDimensions(
-          file, 
-          IMAGE_SIZES.carouselImage.width, 
+          file,
+          IMAGE_SIZES.carouselImage.width,
           IMAGE_SIZES.carouselImage.height
         );
-        
+
         if (!isValid) {
           setError(`Carousel image must be exactly ${IMAGE_SIZES.carouselImage.width} × ${IMAGE_SIZES.carouselImage.height} px. Current size: ${width} × ${height} px`);
           return;
@@ -330,11 +331,11 @@ const CreateBrandPage = () => {
     const file = e.target.files[0];
     if (file) {
       const { isValid, width, height } = await validateImageDimensions(
-        file, 
-        IMAGE_SIZES.categoryImage.width, 
+        file,
+        IMAGE_SIZES.categoryImage.width,
         IMAGE_SIZES.categoryImage.height
       );
-      
+
       if (!isValid) {
         setError(`Category image must be exactly ${IMAGE_SIZES.categoryImage.width} × ${IMAGE_SIZES.categoryImage.height} px. Current size: ${width} × ${height} px`);
         return;
@@ -342,7 +343,7 @@ const CreateBrandPage = () => {
 
       const newCategories = [...formData.categories];
       newCategories[index].categoryImage = file;
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         newCategories[index].categoryImagePreview = reader.result;
@@ -358,11 +359,11 @@ const CreateBrandPage = () => {
     const file = e.target.files[0];
     if (file) {
       const { isValid, width, height } = await validateImageDimensions(
-        file, 
-        IMAGE_SIZES.brandLogo.width, 
+        file,
+        IMAGE_SIZES.brandLogo.width,
         IMAGE_SIZES.brandLogo.height
       );
-      
+
       if (!isValid) {
         setError(`Brand logo must be exactly ${IMAGE_SIZES.brandLogo.width} × ${IMAGE_SIZES.brandLogo.height} px. Current size: ${width} × ${height} px`);
         return;
@@ -370,7 +371,7 @@ const CreateBrandPage = () => {
 
       const newBrands = [...formData.brands];
       newBrands[index].brandImage = file;
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         newBrands[index].brandImagePreview = reader.result;
@@ -717,9 +718,20 @@ const CreateBrandPage = () => {
     }
   };
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create Brand Page',
+    },
+  ];
+
   return (
     <div>
-      <Grid container spacing={2}>
+      <Breadcrumb title="Create Brand Page" items={BCrumb} />
+      <Grid container spacing={2} marginTop={4}>
         {/* Brand Selection */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="brand-select">

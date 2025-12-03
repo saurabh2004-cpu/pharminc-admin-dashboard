@@ -30,6 +30,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash, IconSearch, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateProductGroup = () => {
     const [formData, setFormData] = useState({
@@ -198,13 +199,13 @@ const CreateProductGroup = () => {
                 if (product && product.typesOfPacks && product.typesOfPacks.length > 0) {
                     newPackTypes[id] = product.typesOfPacks[0]._id;
                     newUnitsQuantities[id] = 1;
-                    
+
                     const stockCheck = checkStockLevel(id, product.typesOfPacks[0]._id, 1);
                     newStockWarnings[id] = stockCheck;
                 }
             }
         });
-        
+
         setProductPackTypes(newPackTypes);
         setProductUnitsQuantities(newUnitsQuantities);
         setStockWarnings(newStockWarnings);
@@ -234,7 +235,7 @@ const CreateProductGroup = () => {
         delete newPackTypes[productId];
         delete newUnitsQuantities[productId];
         delete newStockWarnings[productId];
-        
+
         setProductPackTypes(newPackTypes);
         setProductUnitsQuantities(newUnitsQuantities);
         setStockWarnings(newStockWarnings);
@@ -748,8 +749,20 @@ const CreateProductGroup = () => {
         selectedProductIds.includes(product._id)
     );
 
+
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Product Kit',
+        },
+    ];
+
     return (
         <div>
+            <Breadcrumb title="Create Product Kit" items={BCrumb} />
             <Grid container spacing={2}>
                 {/* Product Group Name and Slug */}
                 <Grid size={6}>
@@ -1285,10 +1298,10 @@ const CreateProductGroup = () => {
                         <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
                             Selected Products ({selectedProductsDetails.length})
                         </Typography>
-                        
+
                         {hasStockIssues() && (
-                            <Alert 
-                                severity="warning" 
+                            <Alert
+                                severity="warning"
                                 sx={{ mb: 2 }}
                                 icon={<IconAlertCircle />}
                             >
@@ -1325,8 +1338,8 @@ const CreateProductGroup = () => {
                                                                     Price: ${product.eachPrice} | Available Stock: {product.stockLevel || 0}
                                                                 </Typography>
                                                                 {hasStockIssue && (
-                                                                    <Alert 
-                                                                        severity="error" 
+                                                                    <Alert
+                                                                        severity="error"
                                                                         sx={{ mt: 1 }}
                                                                         icon={<IconAlertCircle size={18} />}
                                                                     >

@@ -30,6 +30,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -342,8 +343,19 @@ const CustomersCartItems = () => {
   // Calculate grand total
   const grandTotal = rows.reduce((sum, row) => sum + row.totalPrice, 0);
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Abandoned Cart Items',
+    },
+  ];
+
   return (
     <Box>
+      <Breadcrumb title="Cart Items List" items={BCrumb} />
       <Box>
         <EnhancedTableToolbar
           numSelected={selected.length}

@@ -30,6 +30,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -472,8 +473,19 @@ const ListProductGroup = () => {
     ...columnWidths.actions
   };
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create Product Kit',
+    },
+  ];
+
   return (
     <Box>
+      <Breadcrumb title="Create Product Kit" items={BCrumb} />
       <Box>
         <EnhancedTableToolbar
           numSelected={selected.length}

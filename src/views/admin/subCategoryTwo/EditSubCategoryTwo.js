@@ -6,6 +6,7 @@ import CustomOutlinedInput from '../../../components/forms/theme-elements/Custom
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditSubCategoryTwo = () => {
   const [formData, setFormData] = React.useState({
@@ -188,9 +189,23 @@ const EditSubCategoryTwo = () => {
     }
   }, [subCategoryList, formData.subCategory, selectedSubCategory]);
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit SubCategory Two',
+    },
+  ];
+
   return (
     <div>
-      <Grid container spacing={2}>
+
+      <Breadcrumb title="Edit SubCategory Two" items={BCrumb} />
+
+
+      <Grid container spacing={2} marginTop={4}>
         {/* Subcategory Name */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="subcategory-two-name" sx={{ mt: 0 }}>
@@ -381,12 +396,12 @@ const EditSubCategoryTwo = () => {
             variant="outlined"
             color="secondary"
             onClick={() => {
-              setFormData({ 
-                name: '', 
-                slug: '', 
-                subCategory: '', 
-                description: '', 
-                descriptionColour: '#000000' 
+              setFormData({
+                name: '',
+                slug: '',
+                subCategory: '',
+                description: '',
+                descriptionColour: '#000000'
               });
               setSelectedSubCategory(null);
               setError('');
@@ -405,13 +420,13 @@ const EditSubCategoryTwo = () => {
 // Helper function to determine contrasting text color
 function getContrastColor(hexColor) {
   if (!hexColor || hexColor.length < 7) return '#000000';
-  
+
   const r = parseInt(hexColor.substr(1, 2), 16);
   const g = parseInt(hexColor.substr(3, 2), 16);
   const b = parseInt(hexColor.substr(5, 2), 16);
-  
+
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
+
   return luminance > 0.5 ? '#000000' : '#FFFFFF';
 }
 

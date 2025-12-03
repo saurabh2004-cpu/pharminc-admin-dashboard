@@ -8,6 +8,7 @@ import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { use } from 'react';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreatePricingGroups = () => {
     const [formData, setFormData] = React.useState({
@@ -17,7 +18,7 @@ const CreatePricingGroups = () => {
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const navigate = useNavigate();
-    const {id} = useParams();
+    const { id } = useParams();
 
     const handleNameChange = (e) => {
         const name = e.target.value;
@@ -30,7 +31,7 @@ const CreatePricingGroups = () => {
         });
     };
 
-   
+
 
     const handleSubmit = async () => {
         // Validation
@@ -73,7 +74,7 @@ const CreatePricingGroups = () => {
         }
     };
 
-    const fetchPricingGroup = async()=>{
+    const fetchPricingGroup = async () => {
         try {
             const res = await axiosInstance.get(`/pricing-groups/get-pricing-group/${id}`);
             if (res.data.statusCode === 200) {
@@ -92,9 +93,21 @@ const CreatePricingGroups = () => {
         fetchPricingGroup();
     }, [id]);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Pricing Group',
+        },
+    ];
+
+
     return (
         <div>
-            <Grid container spacing={2}>
+            <Breadcrumb title="Edit Pricing Group" items={BCrumb} />
+            <Grid container spacing={2} marginTop={3}>
                 {/* Category Name */}
                 <Grid size={12}>
                     <CustomFormLabel

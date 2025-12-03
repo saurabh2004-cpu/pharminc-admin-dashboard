@@ -12,6 +12,7 @@ import { Autocomplete } from '@mui/material'
 import { CircularProgress, Backdrop } from '@mui/material';
 import { set } from 'lodash';
 import { Card, CardContent, Radio } from "@mui/material";
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 
 const CreateSalesOrders = () => {
@@ -323,9 +324,20 @@ const CreateSalesOrders = () => {
     fetchProductsList();
   }, [])
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create Sales Order',
+    },
+  ];
+
 
   return (
     <div>
+      <Breadcrumb title="Create Sales Order" items={BCrumb} />
       <Grid container spacing={2}>
         {/* Date - Full Width */}
         <Grid size={12}>

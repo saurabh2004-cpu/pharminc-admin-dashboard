@@ -28,13 +28,14 @@ import { IconFilter, IconSearch, IconTrash, IconEdit, IconArrowLeft } from '@tab
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
   // Handle nested product object
-  const aValue = orderBy.startsWith('product.') 
+  const aValue = orderBy.startsWith('product.')
     ? a.product?.[orderBy.split('.')[1]]
     : a[orderBy];
-  const bValue = orderBy.startsWith('product.') 
+  const bValue = orderBy.startsWith('product.')
     ? b.product?.[orderBy.split('.')[1]]
     : b[orderBy];
 
@@ -497,9 +498,19 @@ const ListProductGroupProducts = () => {
       </Box>
     );
   }
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Product Kits Products List',
+    },
+  ];
 
   return (
     <Box>
+      <Breadcrumb title="Product Kits Products List" items={BCrumb} />
       <Box>
         <EnhancedTableToolbar
           numSelected={selected.length}
@@ -611,9 +622,9 @@ const ListProductGroupProducts = () => {
 
                         {/* Pack Type */}
                         <TableCell sx={columnWidths.packType}>
-                          <Chip 
-                            label={row.packType || 'N/A'} 
-                            size="small" 
+                          <Chip
+                            label={row.packType || 'N/A'}
+                            size="small"
                             color="primary"
                             variant="outlined"
                           />

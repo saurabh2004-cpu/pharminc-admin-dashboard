@@ -20,6 +20,7 @@ import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
@@ -221,9 +222,20 @@ const CreateGroupsDiscounts = () => {
         fetchData();
     }, []);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Groups Discounts',
+        },
+    ];
+
     return (
         <div>
-            <Grid container>
+            <Breadcrumb title="Create Groups Discounts" items={BCrumb} />
+            <Grid container marginTop={4}>
                 {/* Pricing Group Selection */}
                 <Grid size={12}>
                     <CustomFormLabel

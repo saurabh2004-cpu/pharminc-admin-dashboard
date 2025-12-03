@@ -9,6 +9,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
 import { set } from 'lodash';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditSubCategory = () => {
   const [formData, setFormData] = React.useState({
@@ -82,12 +83,12 @@ const EditSubCategory = () => {
   };
 
   const handleClear = () => {
-    setFormData({ 
-      name: '', 
-      slug: '', 
-      category: '', 
-      description: '', 
-      descriptionColour: '#000000' 
+    setFormData({
+      name: '',
+      slug: '',
+      category: '',
+      description: '',
+      descriptionColour: '#000000'
     });
     setError('');
   };
@@ -169,9 +170,22 @@ const EditSubCategory = () => {
     );
   }
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit SubCategory',
+    },
+  ];
+
   return (
     <div>
-      <Grid container spacing={2}>
+
+      <Breadcrumb title="Edit SubCategory" items={BCrumb} />
+
+      <Grid container spacing={2} marginTop={4}>
         {/* SubCategory Name */}
         <Grid size={12}>
           <CustomFormLabel

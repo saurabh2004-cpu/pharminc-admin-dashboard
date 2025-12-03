@@ -7,6 +7,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { IconFileImport, IconUpload } from '@tabler/icons';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateSubCategory = () => {
   const [formData, setFormData] = React.useState({
@@ -196,9 +197,23 @@ const CreateSubCategory = () => {
     fetchCategoryList();
   }, []);
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create SubCategory',
+    },
+  ];
+
+
   return (
     <div>
-      <Grid container spacing={2}>
+
+      <Breadcrumb title="Create SubCategory" items={BCrumb} />
+
+      <Grid container spacing={2} marginTop={4}>
         {/* Subcategory Name */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="subcategory-name" sx={{ mt: 0 }}>
@@ -398,12 +413,12 @@ const CreateSubCategory = () => {
             variant="outlined"
             color="secondary"
             onClick={() => {
-              setFormData({ 
-                name: '', 
-                slug: '', 
-                category: '', 
-                description: '', 
-                descriptionColour: '#000000' 
+              setFormData({
+                name: '',
+                slug: '',
+                category: '',
+                description: '',
+                descriptionColour: '#000000'
               });
               setSelectedCategory(null);
               setError('');

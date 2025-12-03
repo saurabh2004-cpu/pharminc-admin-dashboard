@@ -36,6 +36,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -163,7 +164,7 @@ const EnhancedTableToolbar = (props) => {
                             }
                         }}
                     />
-                    
+
                     <FormControl size="small" sx={{ minWidth: 150 }}>
                         <InputLabel>Role Filter</InputLabel>
                         <Select
@@ -270,7 +271,7 @@ const ListAdmins = () => {
                 const email = row?.email?.toLowerCase() || '';
                 const role = row?.role?.toLowerCase() || '';
                 const status = row?.status?.toLowerCase() || '';
-                
+
                 return (
                     username.includes(searchLower) ||
                     email.includes(searchLower) ||
@@ -395,11 +396,11 @@ const ListAdmins = () => {
 
         try {
             const response = await axiosInstance.delete(`/admin/delete-admin/${deleteDialog.adminId}`);
-            
+
             if (response.data.statusCode === 200) {
                 // Remove the deleted admin from the local state
                 setTableData(prev => prev.filter(admin => admin._id !== deleteDialog.adminId));
-                
+
                 // Show success message (you can add a toast notification here)
                 console.log('Admin deleted successfully');
             }
@@ -445,8 +446,22 @@ const ListAdmins = () => {
         backgroundColor: '#f0f8ff',
     };
 
+
+
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Admins List',
+        },
+    ];
+
+
     return (
         <Box>
+            <Breadcrumb title="Admins List" items={BCrumb} />
             <Box>
                 <EnhancedTableToolbar
                     numSelected={selected.length}
@@ -458,7 +473,7 @@ const ListAdmins = () => {
                     statusFilter={statusFilter}
                     handleStatusFilter={handleStatusFilter}
                 />
-                
+
                 {/* Active Filters Display */}
                 {(roleFilter !== 'ALL' || statusFilter !== 'ALL' || search) && (
                     <Box sx={{ mx: 2, mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -614,8 +629,8 @@ const ListAdmins = () => {
                                     <TableRow>
                                         <TableCell colSpan={headCells.length + 1} align="center" sx={{ py: 3 }}>
                                             <Typography variant="h6" color="textSecondary">
-                                                {search || roleFilter !== 'ALL' || statusFilter !== 'ALL' 
-                                                    ? 'No admins found matching your filters' 
+                                                {search || roleFilter !== 'ALL' || statusFilter !== 'ALL'
+                                                    ? 'No admins found matching your filters'
                                                     : 'No admins found'}
                                             </Typography>
                                         </TableCell>

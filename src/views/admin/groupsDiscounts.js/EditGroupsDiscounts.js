@@ -328,9 +328,21 @@ const EditGroupsDiscounts = () => {
         fetchData();
     }, []);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Groups Discounts',
+        },
+    ];
+
+
     return (
         <div>
-            <Grid container>
+            <Breadcrumb title="Edit Groups Discounts" items={BCrumb} />
+            <Grid container marginTop={4}>
                 {/* Pricing Group Selection */}
                 <Grid size={12}>
                     <CustomFormLabel

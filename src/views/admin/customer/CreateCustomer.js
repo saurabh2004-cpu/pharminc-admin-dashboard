@@ -14,7 +14,8 @@ import {
   Card,
   CardContent,
   IconButton,
-  Divider
+  Divider,
+  FormControlLabel
 } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
@@ -24,6 +25,8 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { IconUpload, IconFileImport, IconPlus, IconTrash, IconEdit, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import { set } from 'lodash';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateCustomer = () => {
   const [formData, setFormData] = React.useState({
@@ -58,8 +61,9 @@ const CreateCustomer = () => {
       billingZip: '',
       isDefault: true
     }],
+    isBillingSameAsShipping: false,
     password: '',
-    inactive: false,
+    inactive: null,
     markupDiscount: null,
   });
   const [error, setError] = React.useState('');
@@ -69,6 +73,8 @@ const CreateCustomer = () => {
   const [selectedFile, setSelectedFile] = React.useState(null);
   const [pricingGroups, setPricingGroups] = React.useState([]);
   const [customerId, setCustomerId] = useState('');
+  const [brandList, setBrandList] = useState([]);
+  const [checked, setChecked] = useState(false);
 
   // Add new shipping address
   const addShippingAddress = () => {
@@ -281,6 +287,7 @@ const CreateCustomer = () => {
             billingZip: '',
             isDefault: true
           }],
+          isBillingSameAsShipping: false,
           password: '',
           inactive: false
         });
@@ -357,9 +364,114 @@ const CreateCustomer = () => {
     if (fileInput) fileInput.value = '';
   };
 
+  const fetchBrandsList = async () => {
+    try {
+      const response = await axiosInstance.get('/brand/get-brands-list');
+      console.log("response brands", response);
+
+      if (response.data.statusCode === 200) {
+        setBrandList(response.data.data);
+      }
+
+    } catch (error) {
+      console.error('Error fetching brands list:', error);
+      setError(error.message);
+    }
+  };
+
+  const fetchLatestCustomerId = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/get-latest-customer-id');
+
+      if (response.data.statusCode === 200) {
+        setCustomerId(response.data.data.customerId);
+      }
+
+    } catch (error) {
+      console.error('Error fetching latest customer id:', error);
+      setError(error.message);
+    }
+  }
+
+  function incrementCustomerId(customerId) {
+    const prefix = customerId.match(/[A-Za-z]+/)[0];
+    const numberPart = customerId.match(/\d+/)[0];
+
+    const newNumber = (parseInt(numberPart, 10) + 1).toString().padStart(numberPart.length, '0');
+
+    return prefix + newNumber;
+  }
+
+  useEffect(() => {
+    if (customerId) {
+      setFormData({
+        ...formData,
+        customerId: incrementCustomerId(customerId)
+      })
+    }
+  }, [customerId])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await Promise.all([
+        fetchBrandsList(),
+        fetchLatestCustomerId()
+      ]);
+    };
+    fetchData();
+  }, []);
+
+  const handleBillingSameAsShippingChange = (e) => {
+    setChecked(e.target.checked);
+
+    if (e.target.checked) {
+      const transformedAddresses = formData.shippingAddresses.map(addr => ({
+        billingAddressOne: addr.shippingAddressOne,
+        billingAddressTwo: addr.shippingAddressTwo,
+        billingAddressThree: addr.shippingAddressThree,
+        billingCity: addr.shippingCity,
+        billingState: addr.shippingState,
+        billingZip: addr.shippingZip,
+        isDefault: addr.isDefault
+      }));
+
+      setFormData({
+        ...formData,
+        isBillingSameAsShipping: true,
+        billingAddresses: transformedAddresses
+      });
+    } else {
+      // Reset to default empty billing address
+      setFormData({
+        ...formData,
+        isBillingSameAsShipping: false,
+        billingAddresses: [{
+          billingAddressOne: '',
+          billingAddressTwo: '',
+          billingAddressThree: '',
+          billingCity: '',
+          billingState: '',
+          billingZip: '',
+          isDefault: true
+        }]
+      });
+    }
+  };
+
+
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create Customer',
+    },
+  ];
 
   return (
     <div>
+      <Breadcrumb title="Create Customer" items={BCrumb} />
       <Grid container spacing={2}>
 
         {/* Customer ID and Customer Name - Row 1 */}
@@ -375,7 +487,7 @@ const CreateCustomer = () => {
             value={formData.customerId}
             onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
             placeholder="Enter Customer ID"
-            disabled={loading}
+            disabled
           />
         </Grid>
         <Grid size={6}>
@@ -455,20 +567,46 @@ const CreateCustomer = () => {
           />
         </Grid>
 
-        {/* Primary Brand and Default Shipping Rate - Row 4 */}
+
+
+        {/* Order Approval and Category - Row 5 */}
         <Grid size={6}>
-          <CustomFormLabel htmlFor="primaryBrand" sx={{ mt: 0 }}>
+          <CustomFormLabel htmlFor="orderApproval" sx={{ mt: 0 }}>
             Primary Brand
           </CustomFormLabel>
-          <CustomOutlinedInput
-            id="primaryBrand"
-            fullWidth
-            value={formData.primaryBrand}
-            onChange={(e) => setFormData({ ...formData, primaryBrand: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Primary Brand"
-          />
+          <FormControl fullWidth>
+            <Select
+              value={formData.primaryBrand}
+              onChange={(e) => setFormData({ ...formData, primaryBrand: e.target.value })}
+              disabled={loading}
+              displayEmpty
+            >
+              <MenuItem value="">Select Primary Brand</MenuItem>
+              {brandList.map((brand) => (
+                <MenuItem key={brand.id} value={brand.name}>
+                  {brand.name}
+                </MenuItem>
+              ))}
+
+            </Select>
+          </FormControl>
         </Grid>
+
+        {/* <Grid size={6}>
+          <CustomFormLabel htmlFor="category" sx={{ mt: 0 }}>
+            Category
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="category"
+            fullWidth
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Category"
+          />
+        </Grid> */}
+
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="defaultShippingRate" sx={{ mt: 0 }}>
             Default Shipping Rate
@@ -485,26 +623,21 @@ const CreateCustomer = () => {
           />
         </Grid>
 
-        {/* Order Approval and Category - Row 5 */}
         <Grid size={6}>
-          <CustomFormLabel htmlFor="orderApproval" sx={{ mt: 0 }}>
+          <CustomFormLabel htmlFor="category" sx={{ mt: 0 }}>
             Order Approval
           </CustomFormLabel>
-          <FormControl fullWidth>
-            <Select
-              value={formData.orderApproval}
-              onChange={(e) => setFormData({ ...formData, orderApproval: e.target.value })}
-              disabled={loading}
-              displayEmpty
-            >
-              <MenuItem value="">Select Order Approval Type</MenuItem>
-              <MenuItem value="Pending">Pending</MenuItem>
-              <MenuItem value="not_required">not_required</MenuItem>
-              <MenuItem value="Rejected">Rejected</MenuItem>
-            </Select>
-          </FormControl>
+          <CustomOutlinedInput
+            id="category"
+            fullWidth
+            value={formData.orderApproval}
+            onChange={(e) => setFormData({ ...formData, orderApproval: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Category"
+          />
         </Grid>
-        <Grid size={6}>
+
+        {/* <Grid size={6}>
           <CustomFormLabel htmlFor="category" sx={{ mt: 0 }}>
             Category
           </CustomFormLabel>
@@ -516,7 +649,7 @@ const CreateCustomer = () => {
             disabled={loading}
             placeholder="Enter Category"
           />
-        </Grid>
+        </Grid> */}
 
         {/* Net Terms and Password */}
         <Grid size={6}>
@@ -533,6 +666,7 @@ const CreateCustomer = () => {
             placeholder="Enter Net Terms (e.g., Net 30)"
           />
         </Grid>
+
         <Grid size={6}>
           <CustomFormLabel htmlFor="password" sx={{ mt: 0 }}>
             Password
@@ -546,6 +680,43 @@ const CreateCustomer = () => {
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             disabled={loading}
             placeholder="Enter Password"
+          />
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="orderApproval" sx={{ mt: 0 }}>
+            Customer Account Status
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              value={formData.inactive}
+              onChange={(e) => setFormData({ ...formData, inactive: e.target.value })}
+              disabled={loading}
+              displayEmpty
+            >
+              <MenuItem value="">Select Customer Account Status</MenuItem>
+              <MenuItem key='Approved' value={false}>
+                Approved
+              </MenuItem>
+              <MenuItem key='Un-Approved' value={true}>
+                Un Approved
+              </MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="category" sx={{ mt: 0 }}>
+            Category
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="category"
+            fullWidth
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            disabled={loading}
+            placeholder="Enter Category"
           />
         </Grid>
 
@@ -649,18 +820,34 @@ const CreateCustomer = () => {
                       sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
                     />
                   </Grid>
+
+
+                  {/* Order Approval and Category - Row 5 */}
                   <Grid size={6}>
-                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>State *</CustomFormLabel>
-                    <CustomOutlinedInput
-                      fullWidth
-                      size="small"
-                      value={address.shippingState}
-                      onChange={(e) => updateShippingAddress(index, 'shippingState', e.target.value)}
-                      disabled={loading}
-                      placeholder="State"
-                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
-                    />
+                    <CustomFormLabel htmlFor="shippingState" sx={{ mb: 0.5, fontSize: '0.8rem' }}>
+                      State *
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                      <Select
+                        value={address.shippingState}
+                        onChange={(e) => updateShippingAddress(index, 'shippingState', e.target.value)}
+                        disabled={loading}
+                        displayEmpty
+                      >
+                        <MenuItem value="">Select State</MenuItem>
+                        <MenuItem value="New South Wales">New South Wales</MenuItem>
+                        <MenuItem value="Victoria">Victoria</MenuItem>
+                        <MenuItem value="Queensland">Queensland</MenuItem>
+                        <MenuItem value="Western Australia">Western Australia</MenuItem>
+                        <MenuItem value="South Australia">South Australia</MenuItem>
+                        <MenuItem value="Tasmania">Tasmania</MenuItem>
+                        <MenuItem value="Australian Capital Territory">Australian Capital Territory</MenuItem>
+                        <MenuItem value="Northern Territory">Northern Territory</MenuItem>
+                      </Select>
+                    </FormControl>
                   </Grid>
+
+
                   <Grid size={6}>
                     <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>ZIP Code *</CustomFormLabel>
                     <CustomOutlinedInput
@@ -673,11 +860,33 @@ const CreateCustomer = () => {
                       sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
                     />
                   </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>Country *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value='Australia'
+                      disabled
+                      placeholder="Country"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
                 </Grid>
               </CardContent>
             </Card>
           ))}
         </Grid>
+
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={checked}
+              onChange={(e) => handleBillingSameAsShippingChange(e)}
+            />
+          }
+          label="Billing Addreess same as Shipping Address"
+        />
 
         {/* Billing Addresses Section */}
         <Grid size={12}>
@@ -779,18 +988,32 @@ const CreateCustomer = () => {
                       sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
                     />
                   </Grid>
+
+
                   <Grid size={6}>
-                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>State *</CustomFormLabel>
-                    <CustomOutlinedInput
-                      fullWidth
-                      size="small"
-                      value={address.billingState}
-                      onChange={(e) => updateBillingAddress(index, 'billingState', e.target.value)}
-                      disabled={loading}
-                      placeholder="State"
-                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
-                    />
+                    <CustomFormLabel htmlFor="billingState" sx={{ mb: 0.5, fontSize: '0.8rem' }}>
+                      State *
+                    </CustomFormLabel>
+                    <FormControl fullWidth>
+                      <Select
+                        value={address.billingState}
+                        onChange={(e) => updateBillingAddress(index, 'billingState', e.target.value)}
+                        disabled={loading}
+                        displayEmpty
+                      >
+                        <MenuItem value="">Select State</MenuItem>
+                        <MenuItem value="New South Wales">New South Wales</MenuItem>
+                        <MenuItem value="Victoria">Victoria</MenuItem>
+                        <MenuItem value="Queensland">Queensland</MenuItem>
+                        <MenuItem value="Western Australia">Western Australia</MenuItem>
+                        <MenuItem value="South Australia">South Australia</MenuItem>
+                        <MenuItem value="Tasmania">Tasmania</MenuItem>
+                        <MenuItem value="Australian Capital Territory">Australian Capital Territory</MenuItem>
+                        <MenuItem value="Northern Territory">Northern Territory</MenuItem>
+                      </Select>
+                    </FormControl>
                   </Grid>
+
                   <Grid size={6}>
                     <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>ZIP Code</CustomFormLabel>
                     <CustomOutlinedInput
@@ -800,6 +1023,18 @@ const CreateCustomer = () => {
                       onChange={(e) => updateBillingAddress(index, 'billingZip', e.target.value)}
                       disabled={loading}
                       placeholder="ZIP"
+                      sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
+                    />
+                  </Grid>
+
+                  <Grid size={6}>
+                    <CustomFormLabel sx={{ mb: 0.5, fontSize: '0.8rem' }}>Country *</CustomFormLabel>
+                    <CustomOutlinedInput
+                      fullWidth
+                      size="small"
+                      value='Australia'
+                      disabled
+                      placeholder="Country"
                       sx={{ '& .MuiOutlinedInput-input': { py: 1 } }}
                     />
                   </Grid>
@@ -827,7 +1062,7 @@ const CreateCustomer = () => {
         </Grid>
 
         {/* Inactive Checkbox */}
-        <Grid size={12} sx={{ mt: 2 }}>
+        {/* <Grid size={12} sx={{ mt: 2 }}>
           <FormControl>
             <Box display="flex" alignItems="center">
               <Checkbox
@@ -838,7 +1073,7 @@ const CreateCustomer = () => {
               <Typography>Mark as Inactive</Typography>
             </Box>
           </FormControl>
-        </Grid>
+        </Grid> */}
 
         {/* Error Message */}
         {error && (

@@ -18,6 +18,7 @@ import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditPricingGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
@@ -237,8 +238,19 @@ const EditPricingGroupsDiscounts = () => {
         }
     }, [id, dataLoaded]);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Items Discounts',
+        },
+    ];
+
     return (
         <div>
+            <Breadcrumb title="Edit Items Discounts" items={BCrumb} />
             <Grid container>
                 {/* Pricing Group Selection */}
                 {/* <Grid size={12}>

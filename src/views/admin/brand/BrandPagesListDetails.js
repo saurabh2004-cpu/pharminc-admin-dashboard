@@ -28,6 +28,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
   if (orderBy === 'brand') {
@@ -400,8 +401,20 @@ const BrandPagesListDetails = () => {
     backgroundColor: 'white',
   };
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Brand Pages List',
+    },
+  ];
+
   return (
     <Box>
+      <Breadcrumb title="Edit Brand Page" items={BCrumb} />
+
       <Box>
         <EnhancedTableToolbar
           numSelected={selected.length}

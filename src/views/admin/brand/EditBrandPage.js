@@ -21,6 +21,7 @@ import { IconFileImport, IconUpload, IconPlus, IconTrash, IconX } from '@tabler/
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 // Image size configurations
 const IMAGE_SIZES = {
@@ -933,13 +934,22 @@ const EditBrandPage = () => {
     }
   };
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit Brand Page',
+    },
+  ];
+
   return (
     <div>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Edit Brand Page
-      </Typography>
+      <Breadcrumb title="Edit Brand Page" items={BCrumb} />
 
-      <Grid container spacing={2}>
+
+      <Grid container spacing={2} marginTop={4}>
         {/* Brand Selection */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="brand-select">

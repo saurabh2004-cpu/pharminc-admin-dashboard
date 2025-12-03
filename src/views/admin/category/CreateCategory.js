@@ -8,6 +8,7 @@ import { IconBuildingArch, IconFileImport, IconMail, IconMessage2, IconPhone, Ic
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateCategory = () => {
     const [formData, setFormData] = React.useState({
@@ -189,12 +190,12 @@ const CreateCategory = () => {
     };
 
     const handleClearForm = () => {
-        setFormData({ 
-            name: '', 
+        setFormData({
+            name: '',
             description: '',
-            slug: '', 
+            slug: '',
             brand: '',
-            descriptionColour: '#000000' 
+            descriptionColour: '#000000'
         });
         setError('');
     };
@@ -203,9 +204,21 @@ const CreateCategory = () => {
         fetchBrandsList();
     }, []);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Category',
+        },
+    ];
+
     return (
         <div>
-            <Grid container spacing={2}>
+            <Breadcrumb title="Create Category" items={BCrumb} />
+
+            <Grid container spacing={2} marginTop={4}>
                 {/* Category Name */}
                 <Grid size={12}>
                     <CustomFormLabel

@@ -1,19 +1,20 @@
 import React, { useEffect } from 'react';
-import { 
-  Grid,
-  Button, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions,
-  Typography,
-  Box
+import {
+    Grid,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Typography,
+    Box
 } from '@mui/material';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditBadge = () => {
     const [formData, setFormData] = React.useState({
@@ -26,7 +27,7 @@ const EditBadge = () => {
     const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
     const [selectedFile, setSelectedFile] = React.useState(null);
     const navigate = useNavigate();
-    const {id} = useParams();
+    const { id } = useParams();
 
     const handleNameChange = (e) => {
         const name = e.target.value;
@@ -65,7 +66,7 @@ const EditBadge = () => {
         }
     };
 
-    const fetchBadge =async() => {
+    const fetchBadge = async () => {
         try {
             const res = await axiosInstance.get(`/badge/get-badge/${id}`);
 
@@ -96,9 +97,22 @@ const EditBadge = () => {
         if (fileInput) fileInput.value = '';
     };
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Badge',
+        },
+    ];
+
     return (
         <div>
-            <Grid container>
+
+            <Breadcrumb title="Edit Badge" items={BCrumb} />
+
+            <Grid container marginTop={4}>
                 {/* 1 */}
                 <Grid size={12}>
                     <CustomFormLabel
@@ -176,7 +190,7 @@ const EditBadge = () => {
                 </Grid>
             </Grid>
 
-            
+
         </div>
     );
 };

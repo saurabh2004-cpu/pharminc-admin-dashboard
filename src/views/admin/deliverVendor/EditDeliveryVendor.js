@@ -7,6 +7,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditDeliveryVendor = () => {
   const [formData, setFormData] = React.useState({
@@ -85,9 +86,18 @@ const EditDeliveryVendor = () => {
     fetchDeliveryVendor();
   }, [id]);
 
-
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit Deliver Vendor',
+    },
+  ];
   return (
     <div>
+      <Breadcrumb title="Edit Deliver Vendor" items={BCrumb} />
       <Grid container spacing={2}>
 
         {/* Vendor Name */}

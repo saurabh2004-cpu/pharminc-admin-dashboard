@@ -19,6 +19,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreatePricingGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
@@ -255,10 +256,21 @@ const CreatePricingGroupsDiscounts = () => {
         fetchData();
     }, []);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Item Discounts',
+        },
+    ];
+
     return (
         <div>
+            <Breadcrumb title="Create Item Discounts" items={BCrumb} />
             <Grid container>
-                <Grid size={12}>
+                <Grid size={12} marginTop={4}>
                     <CustomFormLabel
                         htmlFor="customer-select"
                         sx={{ mt: 2 }}

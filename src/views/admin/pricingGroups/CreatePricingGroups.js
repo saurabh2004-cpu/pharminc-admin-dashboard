@@ -7,6 +7,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreatePricingGroups = () => {
     const [formData, setFormData] = React.useState({
@@ -72,10 +73,22 @@ const CreatePricingGroups = () => {
         }
     };
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Pricing Group',
+        },
+    ];
+
 
     return (
         <div>
-            <Grid container spacing={2}>
+            <Breadcrumb title="Create Pricing Group" items={BCrumb} />
+
+            <Grid container spacing={2} marginTop={3}>
                 {/* Category Name */}
                 <Grid size={12}>
                     <CustomFormLabel
@@ -138,7 +151,7 @@ const CreatePricingGroups = () => {
                         color="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        sx={{ minWidth: '120px',backgroundColor: '#2E2F7F' }}
+                        sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
                     >
                         {loading ? 'Creating...' : 'Create Pricing Group'}
                     </Button>

@@ -10,6 +10,7 @@ import { IconUpload, IconFileImport, IconPhoto, IconX } from '@tabler/icons-reac
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateProduct = () => {
   const [formData, setFormData] = React.useState({
@@ -493,8 +494,19 @@ const CreateProduct = () => {
     fetchBrandsList();
   }, []);
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create Product',
+    },
+  ];
+
   return (
     <div>
+      <Breadcrumb title="Create Product" items={BCrumb} />
       <Grid container spacing={2}>
         {/* SKU and Product Name - Two per row */}
 

@@ -3,10 +3,11 @@ import { Grid, Dialog, DialogTitle, DialogContent, Typography, Box, DialogAction
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-import {  IconFileImport,  IconUpload, } from '@tabler/icons';
+import { IconFileImport, IconUpload, } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreatePackTypes = () => {
     const [formData, setFormData] = React.useState({
@@ -125,10 +126,21 @@ const CreatePackTypes = () => {
         }
     };
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Pack Types',
+        },
+    ];
+
 
 
     return (
         <div>
+            <Breadcrumb title="Create Pack Types" items={BCrumb} />
             <Grid container spacing={2}>
 
                 {/* Pack Name */}

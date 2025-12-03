@@ -13,6 +13,7 @@ import CustomFormLabel from '../../../components/forms/theme-elements/CustomForm
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditAdmin = () => {
   const [formData, setFormData] = useState({
@@ -119,11 +120,19 @@ const EditAdmin = () => {
     );
   }
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit Admin',
+    },
+  ];
+
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Edit Admin
-      </Typography>
+      <Breadcrumb title="Edit Admin" items={BCrumb} />
 
       {/* Username Field */}
       <Box sx={{ mb: 3 }}>
@@ -220,8 +229,8 @@ const EditAdmin = () => {
               Select status
             </MenuItem>
             {statuses.map((status) => (
-              <MenuItem 
-                key={status} 
+              <MenuItem
+                key={status}
                 value={status}
                 sx={{
                   color: status === 'ACTIVE' ? 'success.main' : 'error.main',
@@ -234,8 +243,8 @@ const EditAdmin = () => {
           </Select>
         </FormControl>
         <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
-          {formData.status === 'ACTIVE' 
-            ? 'Admin will be able to log in and access the system' 
+          {formData.status === 'ACTIVE'
+            ? 'Admin will be able to log in and access the system'
             : 'Admin will not be able to log in to the system'}
         </Typography>
       </Box>

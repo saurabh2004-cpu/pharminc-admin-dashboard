@@ -17,6 +17,7 @@ import CustomOutlinedInput from '../../../components/forms/theme-elements/Custom
 import { IconUpload, IconFileImport } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateMetaData = () => {
     const [formData, setFormData] = React.useState({
@@ -28,7 +29,7 @@ const CreateMetaData = () => {
     const [error, setError] = React.useState('');
     const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
     const [selectedFile, setSelectedFile] = React.useState(null);
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
     const [loading, setLoading] = React.useState(false);
     const [pages, setPages] = React.useState([
         'home',
@@ -39,7 +40,7 @@ const CreateMetaData = () => {
         'cart',
         'checkout',
         'contact-us',
-        'login', 
+        'login',
         'my-account-review',
         'point-accessories',
         'product-details',
@@ -158,8 +159,19 @@ const CreateMetaData = () => {
         // For now, pages are hardcoded above
     }, []);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Create Meta Data',
+        },
+    ];
+
     return (
         <div>
+            <Breadcrumb title="Create Meta Data" items={BCrumb} />
             <Grid container>
                 {/* Page Selection */}
                 <Grid size={12}>

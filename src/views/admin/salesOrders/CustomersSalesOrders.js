@@ -32,6 +32,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import axios from 'axios';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -451,8 +452,20 @@ const CustomersSalesOrders = () => {
     };
 
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Sales Orders Items List',
+        },
+    ];
+
+
     return (
         <Box>
+            <Breadcrumb title="Sales Orders Items List" items={BCrumb} />
             <Box>
                 <EnhancedTableToolbar
                     numSelected={selected.length}

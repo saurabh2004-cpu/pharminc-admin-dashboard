@@ -36,6 +36,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 import ApproveConfirmationDialog from './ApproveConfirmationDialog';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -258,14 +259,14 @@ const formatAddress = (address) => {
 const AddressesDisplay = ({ addresses, type }) => {
     const [selectedTab, setSelectedTab] = React.useState(0);
 
-    if (!addresses || !Array.isArray(addresses) || addresses.length === 0) {
+    if (!addresses || !Array.isArray(addresses) || addresses?.length === 0) {
         return <Typography variant="body2">No {type} addresses</Typography>;
     }
 
     return (
         <Box sx={{ maxWidth: 350 }}>
             {/* Tabs for navigation */}
-            {addresses.length > 1 && (
+            {addresses?.length > 1 && (
                 <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
                     <Box sx={{ display: 'flex', overflowX: 'auto' }}>
                         {addresses.map((_, index) => (
@@ -704,11 +705,22 @@ const PendingApprovalCustomers = ({
         fetchCustomers();
     }, [])
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Pending Customers List',
+        },
+    ];
+
     return (
         <Box>
+            <Breadcrumb title="Pending Customers List" items={BCrumb} />
             <Box>
                 <EnhancedTableToolbar
-                    numSelected={selected.length}
+                    numSelected={selected?.length}
                     search={search}
                     handleSearch={handleSearch}
                     placeholder={isBrandsList ? "Search Brand" : "Search Customer"}
@@ -734,7 +746,7 @@ const PendingApprovalCustomers = ({
                             size={dense ? "small" : "medium"}
                         >
                             <EnhancedTableHead
-                                numSelected={selected.length}
+                                numSelected={selected?.length}
                                 order={order}
                                 orderBy={orderBy}
                                 onSelectAllClick={handleSelectAllClick}
@@ -926,7 +938,7 @@ const PendingApprovalCustomers = ({
                                         })}
                                     {emptyRows > 0 && (
                                         <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                                            <TableCell colSpan={headCells.length + (showCheckBox ? 1 : 0)} />
+                                            <TableCell colSpan={headCells?.length + (showCheckBox ? 1 : 0)} />
                                         </TableRow>
                                     )}
                                 </TableBody>}
@@ -935,7 +947,7 @@ const PendingApprovalCustomers = ({
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
                         component="div"
-                        count={rows.length}
+                        count={rows?.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}

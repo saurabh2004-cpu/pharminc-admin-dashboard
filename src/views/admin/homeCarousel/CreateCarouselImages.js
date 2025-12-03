@@ -16,6 +16,7 @@ import { IconUpload, IconX } from '@tabler/icons';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateCarouselImages = () => {
     const [desktopImages, setDesktopImages] = useState([]);
@@ -41,7 +42,7 @@ const CreateCarouselImages = () => {
 
             // Check image dimensions
             const img = new Image();
-            img.onload = function() {
+            img.onload = function () {
                 const width = this.width;
                 const height = this.height;
 
@@ -54,7 +55,7 @@ const CreateCarouselImages = () => {
                 resolve(true);
             };
 
-            img.onerror = function() {
+            img.onerror = function () {
                 reject('Failed to load image for validation');
             };
 
@@ -72,7 +73,7 @@ const CreateCarouselImages = () => {
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            
+
             // Basic file type validation
             if (!file.type.startsWith('image/')) {
                 errors.push(`"${file.name}" is not a valid image file`);
@@ -88,9 +89,9 @@ const CreateCarouselImages = () => {
         }
 
         if (errors.length > 0) {
-            setValidationErrors(prev => ({ 
-                ...prev, 
-                desktop: errors.join('; ') 
+            setValidationErrors(prev => ({
+                ...prev,
+                desktop: errors.join('; ')
             }));
         } else {
             setValidationErrors(prev => ({ ...prev, desktop: '' }));
@@ -351,9 +352,21 @@ const CreateCarouselImages = () => {
         };
     }, [desktopImages, mobileImages]);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Upload Carousel Images',
+        },
+    ];
+
+
     return (
         <div>
-            <Grid container spacing={3} direction="column">
+            <Breadcrumb title="Home Page Carousel" items={BCrumb} />
+            <Grid container spacing={3} direction="column" marginTop={3}>
                 {/* Display validation errors */}
                 {validationErrors.desktop && (
                     <Grid item xs={12}>

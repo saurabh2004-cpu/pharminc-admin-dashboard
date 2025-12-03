@@ -31,6 +31,7 @@ import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -76,8 +77,11 @@ function EnhancedTableHead(props) {
         zIndex: 4,
     };
 
+
+
     return (
         <TableHead>
+
             <TableRow>
                 {showCheckBox && <TableCell padding="checkbox">
                     <CustomCheckbox
@@ -419,8 +423,21 @@ const CustomersByPricingGroups = () => {
         backgroundColor: '#f0f8ff',
     };
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Pricing Groups Customers List',
+        },
+    ];
+
+
     return (
         <Box>
+            <Breadcrumb title="Pricing Groups Customers List" items={BCrumb} />
+
             <Box>
                 <EnhancedTableToolbar
                     numSelected={selected.length}

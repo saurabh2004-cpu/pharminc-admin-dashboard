@@ -5,6 +5,7 @@ import CustomFormLabel from '../.../../../../components/forms/theme-elements/Cus
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditBrand = () => {
     const [formData, setFormData] = React.useState({
@@ -39,7 +40,7 @@ const EditBrand = () => {
                     name: brandData.name,
                     slug: brandData.slug,
                 });
-               
+
             }
         } catch (error) {
             setError(error.message || 'An error occurred');
@@ -47,7 +48,7 @@ const EditBrand = () => {
         }
     };
 
-   
+
     const handleSubmit = async () => {
         try {
             const submitFormData = new FormData();
@@ -73,9 +74,20 @@ const EditBrand = () => {
         fetchBrand();
     }, [id]);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Brand',
+        },
+    ];
+
     return (
         <div>
-            <Grid container>
+            <Breadcrumb title="Edit Brand Page" items={BCrumb} />
+            <Grid container marginTop={4}>
                 {/* 1 */}
                 <Grid size={12}>
                     <CustomFormLabel

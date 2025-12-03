@@ -6,6 +6,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateSubCategoryTwo = () => {
   const [formData, setFormData] = React.useState({
@@ -150,6 +151,16 @@ const CreateSubCategoryTwo = () => {
     }
   };
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create SubCategory Two',
+    },
+  ];
+
 
 
   React.useEffect(() => {
@@ -158,7 +169,10 @@ const CreateSubCategoryTwo = () => {
 
   return (
     <div>
-      <Grid container spacing={2}>
+
+      <Breadcrumb title="Create SubCategory Two" items={BCrumb} />
+
+      <Grid container spacing={2} marginTop={4}>
         {/* Subcategory Name */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="subcategory-two-name" sx={{ mt: 0 }}>
@@ -358,12 +372,12 @@ const CreateSubCategoryTwo = () => {
             variant="outlined"
             color="secondary"
             onClick={() => {
-              setFormData({ 
-                name: '', 
-                slug: '', 
-                subCategory: '', 
-                description: '', 
-                descriptionColour: '#000000' 
+              setFormData({
+                name: '',
+                slug: '',
+                subCategory: '',
+                description: '',
+                descriptionColour: '#000000'
               });
               setSelectedSubCategory(null);
               setError('');

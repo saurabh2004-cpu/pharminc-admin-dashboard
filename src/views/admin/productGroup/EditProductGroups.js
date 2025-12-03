@@ -30,6 +30,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash, IconSearch, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditProductGroups = () => {
   const [formData, setFormData] = useState({
@@ -748,8 +749,20 @@ const EditProductGroups = () => {
     selectedProductIds.includes(product._id)
   );
 
+
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit Product Kit',
+    },
+  ];
+
   return (
     <div>
+      <Breadcrumb title="Edit Product Kit" items={BCrumb} />
       <Grid container spacing={2}>
         {/* Product Group Name and Slug */}
         <Grid size={6}>

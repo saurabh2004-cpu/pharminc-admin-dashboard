@@ -8,6 +8,7 @@ import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { use } from 'react';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditTax = () => {
   const [formData, setFormData] = React.useState({
@@ -85,9 +86,21 @@ const EditTax = () => {
     fetchTax();
   }, [id]);
 
+
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Edit Tax',
+    },
+  ];
+
   return (
     <div>
-      <Grid container spacing={2}>
+      <Breadcrumb title="Edit Tax" items={BCrumb} />
+      <Grid container spacing={2} marginTop={3}>
         {/* Category Name */}
         <Grid size={12}>
           <CustomFormLabel

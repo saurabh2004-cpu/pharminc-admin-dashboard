@@ -7,6 +7,7 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditPackTypes = () => {
     const [formData, setFormData] = React.useState({
@@ -86,8 +87,20 @@ const EditPackTypes = () => {
         fetchPackType();
     }, [id])
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Pack Types',
+        },
+    ];
+
+
     return (
         <div>
+            <Breadcrumb title="Edit Pack Types" items={BCrumb} />
             <Grid container spacing={2}>
 
                 {/* Pack Name */}

@@ -37,6 +37,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import ProductSelectionModal from './ProductSelectionModal';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -239,6 +240,7 @@ const CustomersSalesOrders = () => {
     const [dense, setDense] = useState(false);
     const [rowsPerPage, setRowsPerPage] = useState(50);
     const [tableData, setTableData] = React.useState([]);
+    const [netTerms, setNetTerms] = useState('');
     const [error, setError] = useState('');
     const [rows, setRows] = useState([]);
     const [search, setSearch] = useState('');
@@ -702,6 +704,27 @@ const CustomersSalesOrders = () => {
         }
     }
 
+    const fetchNetTermsByCustomerIdAndDocumentNumber = async (customerId) => {
+        try {
+            const response = await axiosInstance.get(`/user/get-user-by-customer-id/${customerId}`);
+
+            console.log("get user by id ", response.data);
+
+            if (response.data.statusCode === 200) {
+                setNetTerms(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching net terms by customer id:', error);
+        }
+    };
+
+
+    useEffect(() => {
+        if (tableData[0]?.customerNumber) {
+            fetchNetTermsByCustomerIdAndDocumentNumber(tableData[0].customerNumber);
+        }
+    }, [tableData]);
+
     useEffect(() => {
         if (productGroupsIds.length > 0) {
             fetchProdutGroupsBySku();
@@ -1072,10 +1095,22 @@ const CustomersSalesOrders = () => {
         fetchDeliveryVendorList();
     }, []);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Sales Orders Items List',
+        },
+    ];
+
+
     return (
         <Box sx={{ p: 3 }}>
+            <Breadcrumb title="Sales Orders Items List" items={BCrumb} />
             {/* Header */}
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Box marginTop={2} sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="h4" component="h1">
                     Order #{documentNo}
                 </Typography>
@@ -1453,6 +1488,14 @@ const CustomersSalesOrders = () => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                             {tableData[0]?.salesChannel || 'N/A'}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
+                                            NetTerms :
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {netTerms || 'N/A'}
                                         </Typography>
                                     </Box>
 

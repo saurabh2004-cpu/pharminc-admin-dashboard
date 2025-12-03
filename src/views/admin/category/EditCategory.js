@@ -8,6 +8,7 @@ import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const CreateCategory = () => {
     const [formData, setFormData] = React.useState({
@@ -184,15 +185,22 @@ const CreateCategory = () => {
         }
     }, [id, isEditMode]);
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Category',
+        },
+    ];
+
     return (
         <div>
-            <Grid container spacing={2}>
+            <Breadcrumb title="Edit Category" items={BCrumb} />
+
+            <Grid container spacing={2} marginTop={4}>
                 {/* Page Title */}
-                <Grid size={12}>
-                    <Typography variant="h4" sx={{ mb: 2, fontWeight: 600 }}>
-                        {isEditMode ? 'Edit Category' : 'Create New Category'}
-                    </Typography>
-                </Grid>
 
                 {/* Category Name */}
                 <Grid size={6}>

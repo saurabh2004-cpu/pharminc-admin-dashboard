@@ -34,6 +34,7 @@ import { visuallyHidden } from '@mui/utils';
 import { IconFilter, IconSearch, IconTrash, IconEdit, IconPlus } from '@tabler/icons-react';
 import axiosInstance from '../../../axios/axiosInstance';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) return -1;
@@ -127,7 +128,7 @@ const EnhancedTableToolbar = ({ handleSearch, search, placeholder, onAddNew }) =
           sx={{ width: 300 }}
         />
       </Box>
-      
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: 400 }}>
         <Button
           variant="contained"
@@ -147,7 +148,7 @@ const AdminEmailsManager = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // Table states
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('email');
@@ -267,9 +268,9 @@ const AdminEmailsManager = () => {
       setSuccess('');
 
       const res = await axiosInstance.post('/admin-emails/add-admin-email',
-        { 
+        {
           email: formData.email,
-          active: formData.active 
+          active: formData.active
         },
         {
           headers: { 'Content-Type': 'application/json' },
@@ -295,10 +296,10 @@ const AdminEmailsManager = () => {
   };
 
   const handleEditEmail = (emailObj) => {
-    setEditingEmail({ 
-      oldEmail: emailObj.email, 
+    setEditingEmail({
+      oldEmail: emailObj.email,
       newEmail: emailObj.email,
-      active: emailObj.active 
+      active: emailObj.active
     });
     setEditDialogOpen(true);
   };
@@ -418,8 +419,19 @@ const AdminEmailsManager = () => {
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Manage Admin Emails',
+    },
+  ];
+
   return (
     <Box>
+      <Breadcrumb title="Manage Admin Emails" items={BCrumb} />
       {/* Messages */}
       {(error || success) && (
         <Box sx={{ mb: 2 }}>
@@ -523,7 +535,7 @@ const AdminEmailsManager = () => {
                       </TableCell>
                     </TableRow>
                   ))}
-                
+
                 {rows.length === 0 && !loading && (
                   <TableRow>
                     <TableCell colSpan={4} align="center">

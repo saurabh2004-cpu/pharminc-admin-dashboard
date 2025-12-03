@@ -13,11 +13,12 @@ import CustomFormLabel from '../../../components/forms/theme-elements/CustomForm
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate, useParams } from 'react-router';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditMetaData = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    
+
     const [formData, setFormData] = React.useState({
         page: '',
         title: '',
@@ -36,7 +37,7 @@ const EditMetaData = () => {
         'cart',
         'checkout',
         'contact-us',
-        'login', 
+        'login',
         'my-account-review',
         'point-accessories',
         'product-details',
@@ -55,7 +56,7 @@ const EditMetaData = () => {
             try {
                 setFetchingData(true);
                 const res = await axiosInstance.get(`/meta-data/get-meta-data/${id}`);
-                
+
                 if (res.data.statusCode === 200 && res.data.data) {
                     const { page, title, description, keywords } = res.data.data;
                     setFormData({
@@ -93,7 +94,7 @@ const EditMetaData = () => {
         try {
             setLoading(true);
             setError('');
-            
+
             const updateData = {
                 title: formData.title,
                 description: formData.description,
@@ -139,12 +140,23 @@ const EditMetaData = () => {
         );
     }
 
+    const BCrumb = [
+        {
+            to: '/',
+            title: 'Home',
+        },
+        {
+            title: 'Edit Meta Data',
+        },
+    ];
+
+
     return (
         <div>
-            <Typography variant="h4" sx={{ mb: 3 }}>
-                Update Meta Data
-            </Typography>
+            <Breadcrumb title="Edit Meta Data" items={BCrumb} />
             
+            
+
             <Grid container>
                 {/* Page Selection (Read-only/Disabled) */}
                 <Grid size={12}>

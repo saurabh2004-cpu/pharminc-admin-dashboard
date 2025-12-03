@@ -24,6 +24,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 import { Autocomplete, TextField } from '@mui/material';
+import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 
 const CreateSalesRep = () => {
@@ -250,9 +251,21 @@ const CreateSalesRep = () => {
   useEffect(() => {
     fetchCustomers();
   }, []);
+  const BCrumb = [
+    {
+      to: '/',
+      title: 'Home',
+    },
+    {
+      title: 'Create Sales Rep',
+    },
+  ];
+
 
   return (
     <div>
+      <Breadcrumb title="Create Sales Rep" items={BCrumb} />
+
       <Grid container spacing={2}>
         {/* Email */}
         <Grid size={12}>
