@@ -379,6 +379,28 @@ const Menuitems = [
       },
     ]
   },
+  {
+    id: uniqueId(),
+    title: 'NetTerms List ',
+    icon: IconNotebook,
+    href: '/dashboard/net-terms-list',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Net Terms List',
+        icon: IconPoint,
+        href: '/dashboard/net-terms-list/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Net Terms List',
+        icon: IconPoint,
+        href: '/dashboard/net-terms-list',
+      },
+    ]
+  },
+
+  
   // {
   //   id: uniqueId(),
   //   title: 'Bulk Discounts ',

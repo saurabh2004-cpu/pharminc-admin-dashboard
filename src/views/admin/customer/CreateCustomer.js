@@ -75,6 +75,7 @@ const CreateCustomer = () => {
   const [customerId, setCustomerId] = useState('');
   const [brandList, setBrandList] = useState([]);
   const [checked, setChecked] = useState(false);
+  const [netTermsList, setNetTermsList] = useState([]);
 
   // Add new shipping address
   const addShippingAddress = () => {
@@ -411,11 +412,29 @@ const CreateCustomer = () => {
     }
   }, [customerId])
 
+  // Fetch product groups
+  const fetchNetTermsData = async () => {
+    try {
+      const response = await axiosInstance.get('/net-terms-list/get-all-net-terms-simple');
+      console.log("response product groups", response);
+
+      if (response.data.statusCode === 200) {
+        setNetTermsList(response.data.data);
+      } else {
+        setNetTermsList([]);
+      }
+    } catch (error) {
+      console.error('Error fetching product groups:', error);
+      setNetTermsList([]);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       await Promise.all([
         fetchBrandsList(),
-        fetchLatestCustomerId()
+        fetchLatestCustomerId(),
+        fetchNetTermsData()
       ]);
     };
     fetchData();
@@ -457,6 +476,10 @@ const CreateCustomer = () => {
       });
     }
   };
+
+
+
+
 
 
   const BCrumb = [
@@ -651,20 +674,26 @@ const CreateCustomer = () => {
           />
         </Grid> */}
 
-        {/* Net Terms and Password */}
         <Grid size={6}>
-          <CustomFormLabel htmlFor="netTerms" sx={{ mt: 0 }}>
-            Net Terms
-            <span style={{ color: 'red' }}>*</span>
+          <CustomFormLabel htmlFor="orderApproval" sx={{ mt: 0 }}>
+            Select Net Terms
           </CustomFormLabel>
-          <CustomOutlinedInput
-            id="netTerms"
-            fullWidth
-            value={formData.netTerms}
-            onChange={(e) => setFormData({ ...formData, netTerms: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Net Terms (e.g., Net 30)"
-          />
+          <FormControl fullWidth>
+            <Select
+              value={formData.netTerms}
+              onChange={(e) => setFormData({ ...formData, netTerms: e.target.value })}
+              disabled={loading}
+              displayEmpty
+            >
+              <MenuItem value="">Select Net Terms</MenuItem>
+              {netTermsList.map((netTerm) => (
+                <MenuItem key={netTerm.id} value={netTerm.daysCount}>
+                  {netTerm.netTermName}
+                </MenuItem>
+              ))}
+
+            </Select>
+          </FormControl>
         </Grid>
 
         <Grid size={6}>

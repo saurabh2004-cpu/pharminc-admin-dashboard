@@ -708,7 +708,7 @@ const CustomersSalesOrders = () => {
         try {
             const response = await axiosInstance.get(`/user/get-user-by-customer-id/${customerId}`);
 
-            console.log("get user by id ", response.data);
+            console.log("get user by id ", response);
 
             if (response.data.statusCode === 200) {
                 setNetTerms(response.data.data);

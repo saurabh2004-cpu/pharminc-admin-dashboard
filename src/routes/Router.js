@@ -124,7 +124,9 @@ const AdminEmails = Loadable(lazy(() => import('../views/admin/adminEmailsManage
 const CreateCarouselImages = Loadable(lazy(() => import('../views/admin/homeCarousel/CreateCarouselImages')));
 const EditCarouselImages = Loadable(lazy(() => import('../views/admin/homeCarousel/EditCarouselImages')));
 
-
+const CreateNetTermnsList = Loadable(lazy(() => import('../views/admin/netTernsList/CreateNetTermnsList')));
+const EditNetTermsList = Loadable(lazy(() => import('../views/admin/netTernsList/EditNetTermsList')));
+const ListNetTermsData = Loadable(lazy(() => import('../views/admin/netTernsList/ListNetTermsData')));
 
 const Router = [
 
@@ -257,6 +259,9 @@ const Router = [
       { path: '/dashboard/home-page-carousel/Create', element: <CreateCarouselImages /> },
       { path: '/dashboard/home-page-carousel/Edit', element: <EditCarouselImages /> },
 
+      { path: '/dashboard/net-terms-list/create', element: <CreateNetTermnsList /> },
+      { path: '/dashboard/net-terms-list/edit/:id', element: <EditNetTermsList /> },
+      { path: '/dashboard/net-terms-list', element: <ListNetTermsData /> },
 
 
     ],

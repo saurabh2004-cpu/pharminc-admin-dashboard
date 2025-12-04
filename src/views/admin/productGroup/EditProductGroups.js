@@ -78,6 +78,22 @@ const EditProductGroups = () => {
   const [categoryFour, setCategoryFour] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [taxOptions, setTaxOptions] = useState([true, false]);
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+
+
+
+  const handleRemoveExistingImage = (imageUrl, imageIndex) => {
+    // Add to deletion list
+    setImagesToDelete(prev => [...prev, imageUrl]);
+
+    // Remove from previews
+    const newPreviews = [...imagePreviews];
+    newPreviews.splice(imageIndex, 1);
+    setImagePreviews(newPreviews);
+
+    console.log("Image added to deletion list:", imageUrl);
+  };
+
 
   // Filter products for search
   const filteredProducts = useMemo(() => {
@@ -317,7 +333,7 @@ const EditProductGroups = () => {
 
     setImageFiles(files);
     const previews = files.map(file => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    setImagePreviews((prevs) => [...prevs, ...previews]);
     setError('');
   };
 
@@ -421,6 +437,10 @@ const EditProductGroups = () => {
     // Append new images if any were selected
     imageFiles.forEach((file) => {
       formDataToSend.append('images', file);
+    });
+
+    imagesToDelete.forEach((imageUrl) => {
+      formDataToSend.append('imagesToDelete', imageUrl);
     });
 
     try {
@@ -644,10 +664,11 @@ const EditProductGroups = () => {
         // IMPORTANT: Set existing images previews using the actual S3 URLs from the response
         if (productGroup.imageUrls && Array.isArray(productGroup.imageUrls)) {
           // Use the imageUrls array which contains full S3 URLs
-          setImagePreviews(productGroup.imageUrls);
+          setImagePreviews(productGroup.imageUrls.slice(1));
         } else if (productGroup.images && Array.isArray(productGroup.images)) {
+
           // Fallback: construct URLs if imageUrls is not available
-          const imageUrls = productGroup.images.map(image =>
+          const imageUrls = productGroup.images.slice(1).map(image =>
             `https://${process.env.CLAUDE_FRONT_URL}/product-group-images/${image}`
           );
           setImagePreviews(imageUrls);
@@ -914,6 +935,7 @@ const EditProductGroups = () => {
           </Box>
 
           {/* Show current images previews */}
+          {/* Current Images Display with Delete Option */}
           {imagePreviews.length > 0 && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
@@ -939,7 +961,7 @@ const EditProductGroups = () => {
                     />
                     <Button
                       size="small"
-                      onClick={() => handleRemoveImage(index)}
+                      onClick={() => handleRemoveExistingImage(preview, index)}
                       sx={{
                         position: 'absolute',
                         top: -10,
@@ -959,6 +981,15 @@ const EditProductGroups = () => {
                   </Box>
                 ))}
               </Box>
+
+              {/* Show deletion warning */}
+              {imagesToDelete.length > 0 && (
+                <Box sx={{ mt: 2, p: 2, backgroundColor: '#fff3cd', borderRadius: 1, border: '1px solid #ffc107' }}>
+                  <Typography variant="body2" color="warning.dark">
+                    ⚠️ {imagesToDelete.length} image{imagesToDelete.length > 1 ? 's' : ''} will be permanently deleted when you save.
+                  </Typography>
+                </Box>
+              )}
             </Box>
           )}
         </Grid>

@@ -78,6 +78,7 @@ const EditCustomers = () => {
   const [salesRepLoading, setSalesRepLoading] = useState(false);
   const [brandList, setBrandList] = useState([]);
   const [billingSameAsShipping, setBillingSameAsShipping] = React.useState(false);
+  const [netTermsList, setNetTermsList] = useState([]);
 
 
 
@@ -556,13 +557,40 @@ const EditCustomers = () => {
     }
   };
 
+  // Fetch product groups
+  const fetchNetTermsData = async () => {
+    try {
+      const response = await axiosInstance.get('/net-terms-list/get-all-net-terms-simple');
+      console.log("response product groups", response);
+
+      if (response.data.statusCode === 200) {
+        setNetTermsList(response.data.data);
+        setFormData(prev => ({
+          ...prev,
+          netTerms: response.data.data
+        }));
+      } else {
+        setNetTermsList([]);
+      }
+    } catch (error) {
+      console.error('Error fetching product groups:', error);
+      setNetTermsList([]);
+    }
+  };
+
   useEffect(() => {
     fetPricingGroupsByCustomerId();
   }, [customerId]);
 
   useEffect(() => {
-    fetchCustomer();
-    fetchSalesReps();
+    const fetch = async () => {
+      await Promise.all([
+        fetchCustomer(),
+        fetchSalesReps(),
+        fetchNetTermsData()
+      ])
+    }
+    fetch();
   }, [id]);
 
   const BCrumb = [
@@ -577,7 +605,7 @@ const EditCustomers = () => {
 
   return (
     <div>
-      
+
       {/* Status Header Section */}
       <Box sx={{ mb: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e0e0e0' }}>
         <Grid container alignItems="center" justifyContent="space-between">
@@ -868,19 +896,28 @@ const EditCustomers = () => {
 
         {/* Net Terms and Password */}
         <Grid size={6}>
-          <CustomFormLabel htmlFor="netTerms" sx={{ mt: 0 }}>
-            Net Terms
-            <span style={{ color: 'red' }}>*</span>
+          <CustomFormLabel htmlFor="orderApproval" sx={{ mt: 0 }}>
+            Select Net Terms
           </CustomFormLabel>
-          <CustomOutlinedInput
-            id="netTerms"
-            fullWidth
-            value={formData.netTerms}
-            onChange={(e) => setFormData({ ...formData, netTerms: e.target.value })}
-            disabled={loading}
-            placeholder="Enter Net Terms (e.g., Net 30)"
-          />
+          <FormControl fullWidth>
+            <Select
+              value={formData.netTerms}
+              onChange={(e) => setFormData({ ...formData, netTerms: e.target.value })}
+              disabled={loading}
+              displayEmpty
+            >
+              <MenuItem value="">Select Net Terms</MenuItem>
+              {netTermsList.map((netTerm) => (
+                <MenuItem key={netTerm.id} value={netTerm.daysCount}>
+                  {netTerm.netTermName}
+                </MenuItem>
+              ))}
+
+            </Select>
+          </FormControl>
         </Grid>
+
+
         {/* <Grid size={6}>
           <CustomFormLabel htmlFor="password" sx={{ mt: 0 }}>
             Password
