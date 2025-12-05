@@ -256,6 +256,7 @@ const CustomersSalesOrders = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         customerName: "",
+        customerNumber: "",
         salesChannel: "",
         packQuantity: "",
         amount: "",
@@ -450,6 +451,7 @@ const CustomersSalesOrders = () => {
 
             setFormData({
                 customerName: tableData[0]?.customerName || "",
+                customerNumber: tableData[0]?.customerNumber || "",
                 salesChannel: tableData[0]?.salesChannel || "",
                 packQuantity: tableData[0]?.packQuantity || "",
                 amount: tableData[0]?.amount || "",
@@ -736,10 +738,10 @@ const CustomersSalesOrders = () => {
     }, [documentNo]);
 
     useEffect(() => {
-        if (formData.customerName) {
-            fetchCustomerAddresses(formData.customerName);
+        if (formData.customerNumber) {
+            fetchCustomerAddresses(formData.customerNumber);
         }
-    }, [formData.customerName]);
+    }, [formData.customerNumber]);
 
     useEffect(() => {
         if (formData.billingAddress && formData.billingAddress._id) {
@@ -1466,6 +1468,14 @@ const CustomersSalesOrders = () => {
                                             {tableData[0]?.customerName || 'N/A'}
                                         </Typography>
                                     </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 120 }}>
+                                            Customer Id :
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500, maxWidth: 200 }}>
+                                            {tableData[0]?.customerNumber || 'N/A'}
+                                        </Typography>
+                                    </Box>
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
@@ -1694,6 +1704,7 @@ const CustomersSalesOrders = () => {
                                     sx={{ minWidth: 270 }}
                                 />
                             </Box>
+                           
 
                             {/* Sales Channel */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

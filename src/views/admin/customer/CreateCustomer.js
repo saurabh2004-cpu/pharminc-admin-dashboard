@@ -687,7 +687,7 @@ const CreateCustomer = () => {
             >
               <MenuItem value="">Select Net Terms</MenuItem>
               {netTermsList.map((netTerm) => (
-                <MenuItem key={netTerm.id} value={netTerm.daysCount}>
+                <MenuItem key={netTerm._id} value={netTerm._id}>
                   {netTerm.netTermName}
                 </MenuItem>
               ))}

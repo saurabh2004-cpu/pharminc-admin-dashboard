@@ -79,10 +79,10 @@ const CreateCategory = () => {
             setError('Please select a brand');
             return;
         }
-        if (!formData.description.trim()) {
-            setError('Category description is required');
-            return;
-        }
+        // if (!formData.description.trim()) {
+        //     setError('Category description is required');
+        //     return;
+        // }
 
         setLoading(true);
         setError('');

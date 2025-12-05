@@ -695,6 +695,8 @@ const ListTable = ({
 
   const handleCloseDateFilter = () => {
     setShowDateFilter(false);
+    setDateFilter({ from: '', to: '' });
+    setDateFilterActive(false);
   };
 
   return (

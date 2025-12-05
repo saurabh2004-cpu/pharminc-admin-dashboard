@@ -549,7 +549,7 @@ const ListTable = ({
           row.CustomerPhoneNo?.toString().toLowerCase().includes(searchValue) ||
           row.category?.toLowerCase().includes(searchValue) ||
           row.primaryBrand?.toLowerCase().includes(searchValue) ||
-          row.netTerms?.toString().toLowerCase().includes(searchValue) ||
+          // row.netTerms?.toString().toLowerCase().includes(searchValue) ||
           row.orderApproval?.toLowerCase().includes(searchValue) ||
           row.defaultShippingRate?.toString().toLowerCase().includes(searchValue) ||
           shippingAddressesText.includes(searchValue) ||
@@ -903,10 +903,15 @@ const ListTable = ({
                               </TableCell>
 
                               <TableCell sx={columnWidths.pageTitle}>
-                                <Typography fontWeight="400">
-                                  {isNaN(row.netTerms) ? 'N/A' : row.netTerms}
-                                </Typography>
+                                {row.netTerms?.netTermName && row.netTerms?.daysCount ? (
+                                  <Typography fontWeight="400">
+                                    {`${row.netTerms.netTermName} - ${row.netTerms.daysCount}`}
+                                  </Typography>
+                                ) : (
+                                  <Typography fontWeight="400">N/A</Typography>
+                                )}
                               </TableCell>
+
 
                               <TableCell sx={columnWidths.eachBarcodes}>
                                 <Typography fontWeight="400">
@@ -992,7 +997,7 @@ const ListTable = ({
         salesReps={salesReps}
         onAssign={handleAssignToSalesRep}
       />
-    </Box>
+    </Box >
   );
 };
 
