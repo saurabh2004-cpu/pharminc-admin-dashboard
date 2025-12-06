@@ -409,6 +409,8 @@ const CreateCustomer = () => {
         ...formData,
         customerId: incrementCustomerId(customerId)
       })
+    } else {
+      setCustomerId('CUS00000');
     }
   }, [customerId])
 
