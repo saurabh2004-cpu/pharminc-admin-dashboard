@@ -1505,7 +1505,7 @@ const CustomersSalesOrders = () => {
                                             NetTerms :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            {netTerms || 'N/A'}
+                                            {`${netTerms.netTermName}- (${netTerms.daysCount})` || 'N/A'}
                                         </Typography>
                                     </Box>
 
@@ -1704,7 +1704,7 @@ const CustomersSalesOrders = () => {
                                     sx={{ minWidth: 270 }}
                                 />
                             </Box>
-                           
+
 
                             {/* Sales Channel */}
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
