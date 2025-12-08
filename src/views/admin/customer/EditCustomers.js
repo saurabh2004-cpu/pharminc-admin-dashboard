@@ -235,8 +235,7 @@ const EditCustomers = () => {
       const newStatus = !formData.inactive;
 
       const res = await axiosInstance.put(`/admin/update-user-details/${id}`, {
-        ...formData,
-        inactive: newStatus
+        status: newStatus
       }, {
         headers: {
           'Content-Type': 'application/json'
@@ -463,6 +462,9 @@ const EditCustomers = () => {
       if (res.data.statusCode === 200) {
         const customerData = res.data.data;
 
+        // Set customerId from the response
+        setCustomerId(customerData._id);
+
         // Check if addresses exist in the response
         const shippingAddresses = customerData.shippingAddresses && customerData.shippingAddresses.length > 0
           ? customerData.shippingAddresses.map((addr, index) => ({
@@ -499,7 +501,6 @@ const EditCustomers = () => {
           shippingAddresses,
           billingAddresses
         });
-        setCustomerId(customerData._id);
       }
     } catch (error) {
       setError(error.message || 'An error occurred');
@@ -509,19 +510,38 @@ const EditCustomers = () => {
 
   const fetPricingGroupsByCustomerId = async () => {
     try {
+      if (!customerId) return;
+
+      console.log("Fetching pricing groups for customerId:", customerId);
+
       const res = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discounts-by-customer-id/${customerId}`);
 
-      console.log("pricing groups by Customer id ", res)
+      console.log("pricing groups by Customer id response:", res.data);
 
-      if (res.data.statusCode === 200) {
+      if (res.data.statusCode === 200 && res.data.data) {
         setPricingGroups(res.data.data);
-        // Transform the data for the table
-        const discounts = res.data.data.map(item => ({
-          _id: item._id,
-          pricingGroup: item.pricingGroup._id,
-          pricingGroupName: item.pricingGroup.name,
-          percentage: item.customers.find(c => c.user._id === customerId)?.percentage || ''
-        }));
+
+        // Transform the data correctly
+        const discounts = [];
+
+        res.data.data.forEach(item => {
+          // Find the customer in the customers array
+          const customerDiscount = item.customers.find(c =>
+            c.user && c.user._id === customerId
+          );
+
+          if (customerDiscount) {
+            discounts.push({
+              _id: item._id,
+              pricingGroup: item.pricingGroup._id,
+              pricingGroupName: item.pricingGroup.name,
+              percentage: customerDiscount.percentage
+            });
+          }
+        });
+
+        console.log("Transformed discounts:", discounts);
+
         setPricingGroupDiscounts(discounts);
 
         // Also set in formData
@@ -529,9 +549,13 @@ const EditCustomers = () => {
           ...prev,
           markupDiscount: discounts
         }));
+      } else {
+        console.log("No pricing groups data found");
+        setPricingGroupDiscounts([]);
       }
     } catch (error) {
       console.error('Error fetching pricing groups:', error);
+      setPricingGroupDiscounts([]);
     }
   }
 
@@ -579,7 +603,9 @@ const EditCustomers = () => {
   };
 
   useEffect(() => {
-    fetPricingGroupsByCustomerId();
+    if (customerId) {
+      fetPricingGroupsByCustomerId();
+    }
   }, [customerId]);
 
   useEffect(() => {
