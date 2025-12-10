@@ -289,7 +289,7 @@ const CreateSubCategory = () => {
                 maxLength: 7,
               }}
             />
-            {formData.description && (
+            {/* {formData.description && (
               <Box
                 sx={{
                   minWidth: '100px',
@@ -309,7 +309,7 @@ const CreateSubCategory = () => {
                   Preview
                 </Typography>
               </Box>
-            )}
+            )} */}
           </Box>
         </Grid>
 

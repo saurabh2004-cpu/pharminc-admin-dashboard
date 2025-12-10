@@ -116,6 +116,9 @@ const CreateProduct = () => {
 
   const handleSubmit = async () => {
 
+    // console.log("formdata on submit", parseFloat(formData.comparePrice), parseFloat(formData.eachPrice));
+    // return
+
     if (!formData.sku.trim()) {
       setError('Please enter a SKU');
       return;
@@ -127,6 +130,12 @@ const CreateProduct = () => {
     if (!formData.eachPrice) {
       setError('Please enter a price');
       return;
+    }
+
+    if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
+      setError('Compare price must be greater than each price');
+      console.log("compare price is less that eachPrice")
+      return
     }
 
     setLoading(true);
@@ -156,6 +165,7 @@ const CreateProduct = () => {
     if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
     if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
+    if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
     formDataToSend.append('taxable', formData.taxable);
 
     // Append thumbnail image

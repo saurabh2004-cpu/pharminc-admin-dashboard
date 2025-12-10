@@ -185,6 +185,13 @@ const EditProduct = () => {
       return;
     }
 
+
+    if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
+      setError('Compare price must be greater than each price');
+      console.log("compare price is less that eachPrice")
+      return
+    }
+
     setLoading(true);
     setError('');
 
