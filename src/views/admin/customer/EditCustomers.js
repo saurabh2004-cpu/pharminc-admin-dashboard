@@ -234,7 +234,7 @@ const EditCustomers = () => {
     try {
       const newStatus = !formData.inactive;
 
-      const res = await axiosInstance.put(`/admin/update-user-details/${id}`, {
+      const res = await axiosInstance.put(`/admin/update-user-status/${id}`, {
         status: newStatus
       }, {
         headers: {

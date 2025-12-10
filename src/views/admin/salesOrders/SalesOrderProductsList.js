@@ -1795,7 +1795,10 @@ const CustomersSalesOrders = () => {
                                             </MenuItem> */}
                                             {billingAddresses.map((address) => (
                                                 <MenuItem key={address._id} value={address._id}>
-                                                    {`${address.billingAddressOne}, ${address.billingCity}, ${address.billingState}`}
+                                                    <Typography>
+                                                        {`${address.billingAddressOne}, ${address?.billingAddressTwo}, ${address?.billingAddressThree}, ${address?.billingCity}, ${address?.billingState}, ${address?.billingZip}, ${address?.phone}`}
+                                                    </Typography>
+                                                    
                                                 </MenuItem>
                                             ))}
                                         </TextField>
@@ -1841,7 +1844,7 @@ const CustomersSalesOrders = () => {
                                             </MenuItem> */}
                                             {shippingAddresses.map((address) => (
                                                 <MenuItem key={address._id} value={address._id}>
-                                                    {`${address.shippingAddressOne}, ${address.shippingCity}, ${address.shippingState}`}
+                                                    {`${address.shippingAddressOne}, ${address?.shippingAddressTwo}, ${address?.shippingAddressThree}, ${address?.shippingCity}, ${address?.shippingState}, ${address?.shippingZip}, ${address.phone}`}
                                                 </MenuItem>
                                             ))}
                                         </TextField>
