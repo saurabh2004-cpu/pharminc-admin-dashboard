@@ -1505,7 +1505,7 @@ const CustomersSalesOrders = () => {
                                             NetTerms :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            {`${netTerms.netTermName}- (${netTerms.daysCount})` || 'N/A'}
+                                            {`${netTerms?.netTermName}- (${netTerms?.daysCount})` || 'N/A'}
                                         </Typography>
                                     </Box>
 
@@ -1798,7 +1798,7 @@ const CustomersSalesOrders = () => {
                                                     <Typography>
                                                         {`${address.billingAddressOne}, ${address?.billingAddressTwo}, ${address?.billingAddressThree}, ${address?.billingCity}, ${address?.billingState}, ${address?.billingZip}, ${address?.phone}`}
                                                     </Typography>
-                                                    
+
                                                 </MenuItem>
                                             ))}
                                         </TextField>
