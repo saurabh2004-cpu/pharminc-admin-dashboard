@@ -378,6 +378,12 @@ const EditProductGroups = () => {
       return;
     }
 
+    if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
+      setError('Compare price must be greater than each price');
+      console.log("compare price is less that eachPrice")
+      return
+    }
+
     const missingPackTypes = selectedProductIds.filter(id => !productPackTypes[id]);
     if (missingPackTypes.length > 0) {
       setError('Please select pack types for all selected products');

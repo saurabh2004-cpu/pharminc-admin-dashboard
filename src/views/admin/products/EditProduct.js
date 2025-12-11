@@ -180,10 +180,10 @@ const EditProduct = () => {
       setError('Please enter a price');
       return;
     }
-    if (!formData.pricingGroup) {
-      setError('Please enter a pricing group');
-      return;
-    }
+    // if (!formData.pricingGroup) {
+    //   setError('Please enter a pricing group');
+    //   return;
+    // }
 
 
     if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {

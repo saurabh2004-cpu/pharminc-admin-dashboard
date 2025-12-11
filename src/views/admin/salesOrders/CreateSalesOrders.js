@@ -1,23 +1,42 @@
-import React, { useEffect } from 'react';
-import { Grid, MenuItem, Select, FormControl, Dialog, DialogTitle, DialogContent, Typography, Box, DialogActions, TextField } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import {
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Typography,
+  Box,
+  DialogActions,
+  TextField,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Card,
+  CardContent,
+  Radio,
+  FormControl
+} from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-import { IconFileImport, IconUpload, } from '@tabler/icons';
+import { IconFileImport, IconUpload, IconPlus, IconTrash } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Autocomplete } from '@mui/material'
 import { CircularProgress, Backdrop } from '@mui/material';
-import { set } from 'lodash';
-import { Card, CardContent, Radio } from "@mui/material";
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const CreateSalesOrders = () => {
   const [formData, setFormData] = React.useState({
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     documentNumber: '',
     customerName: '',
     salesChannel: '',
@@ -25,44 +44,198 @@ const CreateSalesOrders = () => {
     shippingAddress: {},
     billingAddress: {},
     customerPO: '',
-    itemSku: '',
-    packQuantity: 1,
-    packType: '',
-    unitsQuantity: 1,
-    finalAmount: null,
-    amount: 0
+    comments: '',
+    customerNumber: '',
+    shippingRate: 0
   });
 
-
+  const [orderItems, setOrderItems] = React.useState([
+    {
+      itemSku: '',
+      packQuantity: 1,
+      packType: '',
+      unitsQuantity: 1,
+      amount: 0,
+      subTotal: 0,
+      taxAmount: 0,
+      isProductGroup: false,
+      productName: ''
+    }
+  ]);
 
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const navigate = useNavigate();
-  const [productsList, setProductsList] = React.useState([]);
-  const [packTypes, setPackTypes] = React.useState([]);
+  const [allProducts, setAllProducts] = React.useState([]); // Individual products
+  const [allProductGroups, setAllProductGroups] = React.useState([]); // Product groups
+  const [packTypes, setPackTypes] = React.useState({}); // Store pack types by SKU
   const [csvDialogOpen, setCsvDialogOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState(null);
   const [customers, setCustomers] = React.useState([]);
-  const [billingAddress, setBillingAddress] = React.useState('');
-  const [shippingAddress, setShippingAddress] = React.useState('');
-  const [selectedShippingAddress, setSelectedShippingAddress] = React.useState(null);
-  const [selectedBillingAddress, setSelectedBillingAddress] = React.useState(null);
-  const [selectedProduct, setSelectedProduct] = React.useState(null);
+  const [selectedCustomer, setSelectedCustomer] = React.useState(null);
 
-  useEffect(() => {
-    console.log("selectedProduct", selectedProduct);
-    const totalItems = formData?.packQuantity * formData.unitsQuantity;
-    let totalAmount = selectedProduct?.eachPrice * totalItems;
-    console.log("before tax totalAmount", totalAmount);
-    totalAmount = totalAmount - (totalAmount * selectedProduct?.taxPercentages) / 100;
-    console.log("after tax totalAmount", totalAmount);
+  // Calculate totals
+  const calculateTotals = () => {
+    let subTotal = 0;
+    let taxAmount = 0;
+    let shippingRate = parseFloat(formData.shippingRate) || 0;
 
-    setFormData(prev => ({
-      ...prev,
-      amount: totalAmount
-    }))
-  }, [formData.packQuantity, formData.unitsQuantity, selectedProduct]);
+    orderItems.forEach(item => {
+      subTotal += parseFloat(item.subTotal) || 0;
+      taxAmount += parseFloat(item.taxAmount) || 0;
+    });
 
+    const totalAmount = subTotal + taxAmount + shippingRate;
+
+    return { subTotal, taxAmount, totalAmount, shippingRate };
+  };
+
+  const totals = calculateTotals();
+
+  // Check if selected product is a product group
+  const checkIsProductGroup = (product) => {
+    if (!product) return false;
+    // Product groups have a 'products' array
+    if (Array.isArray(product.products) && product.products.length > 0) {
+      return true;
+    }
+    // Product groups have 'price' field while individual products have 'eachPrice'
+    if (product.price !== undefined && product.eachPrice !== undefined) {
+      return true; // Both fields exist, likely a product group
+    }
+    return false;
+  };
+
+  // Handle adding a new item row
+  const handleAddItem = () => {
+    setOrderItems([
+      ...orderItems,
+      {
+        itemSku: '',
+        packQuantity: 1,
+        packType: '',
+        unitsQuantity: 1,
+        amount: 0,
+        subTotal: 0,
+        taxAmount: 0,
+        isProductGroup: false,
+        productName: ''
+      }
+    ]);
+  };
+
+  // Handle removing an item row
+  const handleRemoveItem = (index) => {
+    if (orderItems.length > 1) {
+      const newItems = [...orderItems];
+      newItems.splice(index, 1);
+      setOrderItems(newItems);
+    }
+  };
+
+  // Handle product selection change for a specific item
+  const handleProductChange = (index, newValue) => {
+    const newItems = [...orderItems];
+
+    if (newValue) {
+      const isGroup = checkIsProductGroup(newValue);
+      const unitPrice = isGroup ? (newValue.eachPrice || 0) : (newValue.eachPrice || 0);
+
+      // Get default pack type
+      let defaultPack = { name: 'Each', quantity: '1' };
+      if (newValue.typesOfPacks && newValue.typesOfPacks.length > 0) {
+        defaultPack = newValue.typesOfPacks[0];
+      }
+
+      newItems[index] = {
+        ...newItems[index],
+        itemSku: newValue.sku,
+        productName: newValue.ProductName || newValue.name,
+        isProductGroup: isGroup,
+        packType: defaultPack.name,
+        packQuantity: parseFloat(defaultPack.quantity) || 1,
+        amount: unitPrice
+      };
+
+      // Recalculate for this item
+      const packQty = parseFloat(newItems[index].packQuantity) || 0;
+      const unitsQty = parseFloat(newItems[index].unitsQuantity) || 0;
+      const totalQuantity = packQty * unitsQty;
+      const subTotal = unitPrice * totalQuantity;
+
+      const isTaxable = newValue.taxable || false;
+      const taxPercentage = parseFloat(newValue.taxPercentages) || 0;
+      let taxAmount = 0;
+
+      if (isTaxable && taxPercentage > 0) {
+        taxAmount = (subTotal * taxPercentage) / 100;
+      }
+
+      newItems[index].subTotal = subTotal;
+      newItems[index].taxAmount = taxAmount;
+
+      // Fetch pack types for this product
+      fetchProductsAvailablePackTypes(newValue.sku);
+    } else {
+      newItems[index] = {
+        ...newItems[index],
+        itemSku: '',
+        productName: '',
+        isProductGroup: false,
+        packType: '',
+        packQuantity: 1,
+        amount: 0,
+        subTotal: 0,
+        taxAmount: 0
+      };
+    }
+
+    setOrderItems(newItems);
+  };
+
+  // Handle quantity change for a specific item
+  const handleQuantityChange = (index, field, value) => {
+    const newItems = [...orderItems];
+    newItems[index][field] = parseFloat(value) || 0;
+
+    // Recalculate for this item
+    const packQty = parseFloat(newItems[index].packQuantity) || 0;
+    const unitsQty = parseFloat(newItems[index].unitsQuantity) || 0;
+    const totalQuantity = packQty * unitsQty;
+    const unitPrice = parseFloat(newItems[index].amount) || 0;
+    const subTotal = unitPrice * totalQuantity;
+
+    // Find the product to get tax info
+    const productsList = [...allProducts, ...allProductGroups];
+    const product = productsList.find(p => p.sku === newItems[index].itemSku);
+    const isTaxable = product?.taxable || false;
+    const taxPercentage = parseFloat(product?.taxPercentages) || 0;
+    let taxAmount = 0;
+
+    if (isTaxable && taxPercentage > 0) {
+      taxAmount = (subTotal * taxPercentage) / 100;
+    }
+
+    newItems[index].subTotal = subTotal;
+    newItems[index].taxAmount = taxAmount;
+
+    setOrderItems(newItems);
+  };
+
+  // Handle pack type change for a specific item
+  const handlePackTypeChange = (index, newValue) => {
+    const newItems = [...orderItems];
+
+    if (newValue) {
+      newItems[index].packType = newValue.name;
+      newItems[index].packQuantity = parseFloat(newValue.quantity) || 1;
+
+      // Recalculate after pack quantity change
+      handleQuantityChange(index, 'packQuantity', newValue.quantity);
+    }
+
+    setOrderItems(newItems);
+  };
 
   const handleSubmit = async () => {
     // Validation
@@ -76,120 +249,212 @@ const CreateSalesOrders = () => {
       return;
     }
 
-    if (!formData.itemSku.trim()) {
-      setError('Item SKU is required');
+    if (!formData.documentNumber.trim()) {
+      setError('Document number is required');
       return;
     }
 
-    if (!formData.packQuantity || formData.packQuantity <= 0) {
-      setError('Pack quantity is required');
+    if (!formData.shippingAddress || Object.keys(formData.shippingAddress).length === 0) {
+      setError('Shipping address is required');
       return;
     }
 
-    if (!formData.amount) {
-      setError('Amount is required');
+    if (!formData.billingAddress || Object.keys(formData.billingAddress).length === 0) {
+      setError('Billing address is required');
       return;
     }
 
+    // Validate order items
+    for (let i = 0; i < orderItems.length; i++) {
+      const item = orderItems[i];
+      if (!item.itemSku.trim()) {
+        setError(`Item SKU is required for item ${i + 1}`);
+        return;
+      }
+      if (!item.packQuantity || item.packQuantity <= 0) {
+        setError(`Pack quantity is required for item ${i + 1}`);
+        return;
+      }
+      if (!item.unitsQuantity || item.unitsQuantity <= 0) {
+        setError(`Units quantity is required for item ${i + 1}`);
+        return;
+      }
+      if (!item.amount || item.amount <= 0) {
+        setError(`Amount is required for item ${i + 1}`);
+        return;
+      }
+    }
 
     setLoading(true);
     setError('');
 
     try {
-      const res = await axiosInstance.post('/sales-order/create-sales-order', formData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // Prepare data for bulk order creation
+      // We'll create multiple sales orders with the same document number
+      const ordersData = {
+        date: formData.date,
+        documentNumber: formData.documentNumber,
+        customerName: formData.customerName,
+        salesChannel: formData.salesChannel,
+        trackingNumber: formData.trackingNumber,
+        shippingAddress: formData.shippingAddress,
+        billingAddress: formData.billingAddress,
+        customerPO: formData.customerPO,
+        comments: formData.comments,
+        customer: selectedCustomer,
+        items: orderItems
+      }
 
-      console.log("Create sales order response:", res);
+      console.log("Creating multiple sales orders:", ordersData);
 
-      if (res.data.statusCode === 200) {
-        // Reset form on success
-        setFormData({
-          date: '',
-          documentNumber: '',
-          customerName: '',
-          salesChannel: '',
-          trackingNumber: '',
-          shippingAddress: '',
-          billingAddress: '',
-          customerPO: '',
-          itemSku: '',
-          packQuantity: 0,
-          unitsQuantity: 0,
-          finalAmount: 0,
-          amount: 0
+      // Create orders sequentially with the same document number
+      try {
+        const res = await axiosInstance.post('/sales-order/create-bulk-sales-order-admin', ordersData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
-        navigate('/dashboard/sales-orders/list');
 
-      } else if (res.data.statusCode === 400) {
-        console.log("Create sales order error:", res.data.message);
-        setError(res.data.message);
+        console.log("Create bulk sales orders response:", res);
+
+        if (res.data.statusCode === 200) {
+          createdOrders.push(res.data.data);
+        }
+      } catch (orderError) {
+        console.error('Error creating sales order:', orderError);
       }
 
 
+      // Reset form on success
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        documentNumber: '',
+        customerName: '',
+        salesChannel: '',
+        trackingNumber: '',
+        shippingAddress: {},
+        billingAddress: {},
+        customerPO: '',
+        comments: '',
+        customerNumber: '',
+        shippingRate: 0
+      });
+
+      setOrderItems([{
+        itemSku: '',
+        packQuantity: 1,
+        packType: '',
+        unitsQuantity: 1,
+        amount: 0,
+        subTotal: 0,
+        taxAmount: 0,
+        isProductGroup: false,
+        productName: ''
+      }]);
+
+      setSelectedCustomer(null);
+
+      alert(`Successfully created ${createdOrders.length} sales orders with document number ${formData.documentNumber}`);
+      navigate('/dashboard/sales-orders/list');
+
     } catch (error) {
-      console.error('Create sales order error:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to create sales order');
+      console.error('Create sales orders error:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to create sales orders');
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch individual products
   const fetchProductsList = async () => {
     try {
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
-      console.log("response products", response.data);
+      console.log("Individual products response:", response.data);
 
       if (response.data.statusCode === 200) {
         const productsData = response.data.data?.docs || response.data.data || response.data;
 
-        // Filter out duplicates based on _id
-        const getUniqueProducts = (products) => {
-          if (!Array.isArray(products)) return [];
+        // Filter to get only individual products
+        const individualProducts = Array.isArray(productsData)
+          ? productsData.filter(product => !product.products || product.products.length === 0)
+          : [];
 
-          const uniqueProducts = [];
-          const seenIds = new Set();
-
-          products.forEach(product => {
-            if (product._id && !seenIds.has(product._id)) {
-              seenIds.add(product._id);
-              uniqueProducts.push(product);
-            }
-          });
-
-          return uniqueProducts;
-        };
-
-        setProductsList(getUniqueProducts(productsData));
+        setAllProducts(individualProducts);
       }
 
     } catch (error) {
-      console.error('Error fetching products list:', error);
+      console.error('Error fetching individual products:', error);
       setError(error.message);
     }
   };
 
-  const fetchProductsAvailablePackTypes = async () => {
+  // Fetch product groups
+  const fetchProductGroups = async () => {
     try {
-      const response = await axiosInstance.get(`/products/get-products-pack-types/${formData.itemSku}`);
-      console.log("response products pack types", response);
+      setError('');
+      const response = await axiosInstance.get('/product-group/get-all-product-groups');
+      console.log("Product groups response:", response);
 
-      if (response.status === 200) {
-        setPackTypes(response.data.data);
+      let productGroupsData = [];
+
+      if (response.data?.statusCode === 200) {
+        productGroupsData = response.data.data;
+      } else if (response.data?.data?.statusCode === 200) {
+        productGroupsData = response.data.data.data;
+      }
+
+      if (Array.isArray(productGroupsData)) {
+        setAllProductGroups(productGroupsData);
+      }
+
+    } catch (error) {
+      console.error('Error fetching product groups:', error);
+      setError(error.response?.data?.message || error.message || 'Error fetching product groups');
+    }
+  };
+
+  const fetchLatestDocumentNumber = async () => {
+    try {
+      const response = await axiosInstance.get('/sales-order/get-latest-document-number');
+      console.log("Latest document number response:", response);
+
+      if (response.data.statusCode === 200) {
+        setFormData(prev => ({
+          ...prev,
+          documentNumber: response.data.data.documentNumber.replace(/(\D*)(\d+)/, (_, p, n) => p + String(+n + 1).padStart(n.length, '0'))
+        }))
+      }
+
+    } catch (error) {
+      console.error('Error fetching latest document number:', error);
+    }
+  }
+
+  // Fetch pack types for selected product
+  const fetchProductsAvailablePackTypes = async (sku) => {
+    if (!sku) return;
+
+    try {
+      const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
+      console.log("Pack types response for", sku, ":", response);
+
+      if (response.status === 200 && Array.isArray(response.data.data)) {
+        setPackTypes(prev => ({
+          ...prev,
+          [sku]: response.data.data
+        }));
       }
 
     } catch (error) {
       console.error('Error fetching products pack types:', error);
-      setError(error.message);
     }
   };
 
+  // Fetch customers list
   const fetchCustomersList = async () => {
     try {
-      const response = await axiosInstance.get('/admin/get-all-users'); // or whatever your customer endpoint is
-      console.log("response customers", response.data);
+      const response = await axiosInstance.get('/admin/get-all-users');
+      console.log("Customers response:", response.data);
 
       if (response.data.statusCode === 200) {
         const customersData = response.data.data?.docs || response.data.data || response.data;
@@ -220,33 +485,40 @@ const CreateSalesOrders = () => {
     }
   };
 
-  const fetchCustomerAddresses = async () => {
-    try {
-      const response = await axiosInstance.get(`/admin/customer-addresses/${formData.customerName}`);
-      console.log("response customer addresses", response.data);
+  // Handle customer selection
+  const handleCustomerChange = (newValue) => {
+    setSelectedCustomer(newValue);
+    if (newValue) {
+      const billingAddress = newValue.billingAddresses?.find(addr => addr.isDefaultBillingAddress == true);
+      const shippingAddress = newValue.shippingAddresses?.find(addr => addr.isDefaultShippingAddress == true);
+      const shippingRate = parseFloat(newValue.defaultShippingRate) || 0;
 
-      if (response.data.statusCode === 200) {
-        if (response.data.data.billingAddresses.length > 0) {
-          setBillingAddress(response.data.data.billingAddresses);
-        }
-
-        if (response.data.data.shippingAddresses) {
-          setShippingAddress(response.data.data.shippingAddresses);
-        }
-      }
-
-    } catch (error) {
-      console.error('Error fetching customer addresses:', error);
-      // setError(error.message);
+      setFormData(prev => ({
+        ...prev,
+        customerName: newValue.customerName,
+        customerNumber: newValue.customerId,
+        shippingRate: shippingRate,
+        billingAddress: billingAddress || {},
+        shippingAddress: shippingAddress || {}
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        customerName: '',
+        customerNumber: '',
+        shippingRate: 0,
+        billingAddress: {},
+        shippingAddress: {}
+      }));
     }
-  }
+  };
 
-  useEffect(() => {
-    fetchCustomerAddresses();
-  }, [formData.customerName]);
-
+  // Initial data fetching
   React.useEffect(() => {
     fetchCustomersList();
+    fetchProductsList();
+    fetchProductGroups();
+    fetchLatestDocumentNumber();
   }, []);
 
   const handleFileChange = (e) => {
@@ -270,10 +542,8 @@ const CreateSalesOrders = () => {
     try {
       setLoading(true);
       const formDataForUpload = new FormData();
-      // Correct field name for sales orders
       formDataForUpload.append('salesOrders', selectedFile);
 
-      // Correct API endpoint for sales orders import
       const res = await axiosInstance.post('/sales-order/import-sales-orders', formDataForUpload, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -286,7 +556,6 @@ const CreateSalesOrders = () => {
         setCsvDialogOpen(false);
         setSelectedFile(null);
         setError('CSV imported successfully!');
-        // Reset file input
         const fileInput = document.getElementById('csv-file-input');
         if (fileInput) fileInput.value = '';
 
@@ -306,23 +575,9 @@ const CreateSalesOrders = () => {
     setCsvDialogOpen(false);
     setSelectedFile(null);
     setError('');
-    // Reset file input
     const fileInput = document.getElementById('csv-file-input');
     if (fileInput) fileInput.value = '';
   };
-
-
-
-
-  useEffect(() => {
-    if (formData.itemSku) {
-      fetchProductsAvailablePackTypes();
-    }
-  }, [formData.itemSku]);
-
-  React.useEffect(() => {
-    fetchProductsList();
-  }, [])
 
   const BCrumb = [
     {
@@ -334,12 +589,15 @@ const CreateSalesOrders = () => {
     },
   ];
 
+  // Get combined products list for autocomplete
+  const getProductsList = () => [...allProducts, ...allProductGroups];
 
   return (
     <div>
       <Breadcrumb title="Create Sales Order" items={BCrumb} />
+
       <Grid container spacing={2}>
-        {/* Date - Full Width */}
+        {/* Date */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="date" sx={{ mt: 0 }}>
             Date
@@ -348,7 +606,7 @@ const CreateSalesOrders = () => {
             <DatePicker
               value={formData.date ? new Date(formData.date) : null}
               onChange={(newValue) => {
-                setFormData({ ...formData, date: newValue });
+                setFormData({ ...formData, date: newValue ? newValue.toISOString().split('T')[0] : '' });
               }}
               slotProps={{
                 textField: {
@@ -361,51 +619,25 @@ const CreateSalesOrders = () => {
           </LocalizationProvider>
         </Grid>
 
-        {/* Document Number and Customer Name - Two per row */}
-        {/* <Grid size={6}>
-          <CustomFormLabel htmlFor="document-number" sx={{ mt: 2 }}>
-            Document Number
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="document-number"
-            fullWidth
-            value={formData.documentNumber}
-            onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
-            placeholder="Enter document number"
-          />
-        </Grid> */}
-
+        {/* Customer Name */}
         <Grid size={6}>
-          <CustomFormLabel htmlFor="item-sku" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="customer-name" sx={{ mt: 2 }}>
             Select Customer Name
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
-              id="item-sku-autocomplete"
+              id="customer-autocomplete"
               options={customers}
               getOptionLabel={(customer) =>
-                customer ? ` ${customer.customerName}` : ""
+                customer ? `${customer.customerName} (${customer.customerId || ''})` : ""
               }
-              value={
-                customers.find((c) => c.customerName === formData.customerName) || null
-              }
-              onChange={(event, newValue) => {
-                setFormData({
-                  ...formData,
-                  customerName: newValue ? newValue.customerName : "",
-                });
-
-              }}
+              value={selectedCustomer || null}
+              onChange={(event, newValue) => handleCustomerChange(newValue)}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={
-                    productsList.length === 0
-                      ? "Loading Customers..."
-                      : "Search or select a Customer"
-                  }
+                  placeholder={customers.length === 0 ? "Loading Customers..." : "Search or select a Customer"}
                   size="small"
                 />
               )}
@@ -413,6 +645,7 @@ const CreateSalesOrders = () => {
           </FormControl>
         </Grid>
 
+        {/* Document Number */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="doc-no" sx={{ mt: 2 }}>
             Document Number
@@ -422,15 +655,16 @@ const CreateSalesOrders = () => {
             id="doc-no"
             fullWidth
             value={formData.documentNumber}
-            onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
+            disabled
             placeholder="Enter Document Number"
           />
         </Grid>
 
-        {/* Sales Channel and Tracking Number - Two per row */}
+        {/* Sales Channel and Tracking Number */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="sales-channel" sx={{ mt: 2 }}>
             Sales Channel
+            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
             id="sales-channel"
@@ -443,7 +677,6 @@ const CreateSalesOrders = () => {
         <Grid size={6}>
           <CustomFormLabel htmlFor="tracking-number" sx={{ mt: 2 }}>
             Tracking Number
-            <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <CustomOutlinedInput
             id="tracking-number"
@@ -454,167 +687,7 @@ const CreateSalesOrders = () => {
           />
         </Grid>
 
-        {/* Shipping Address - Full Width
-        <Grid size={12}>
-          <CustomFormLabel htmlFor="shipping-address" sx={{ mt: 2 }}>
-            Shipping Address
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="shipping-address"
-            fullWidth
-            value={formData.shippingAddress}
-            onChange={(e) => setFormData({ ...formData, shippingAddress: e.target.value })}
-            placeholder="Enter shipping address"
-          />
-        </Grid>
-
-        {/* Billing Address - Full Width */}
-        {/* <Grid size={12}>
-          <CustomFormLabel htmlFor="billing-address" sx={{ mt: 2 }}>
-            Billing Address
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="billing-address"
-            fullWidth
-            value={formData.billingAddress}
-            onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
-            placeholder="Enter billing address"
-          />
-        </Grid> */ }
-
-        {/* Shipping Address Selection */}
-        <Grid item xs={12} size={12}>
-          {shippingAddress.length > 0 && <CustomFormLabel>Choose Shipping Address</CustomFormLabel>}
-          {shippingAddress.length > 0 && <Grid container spacing={2}>
-            {shippingAddress?.map((addr, index) => {
-              return (
-                <Grid item xs={6} key={index}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      border: selectedShippingAddress === index ? "2px solid #2E2F7F" : "1px solid #ccc",
-                      borderRadius: "8px",
-                      cursor: "pointer"
-                    }}
-                    onClick={() => {
-                      setSelectedShippingAddress(index);
-                      setFormData({
-                        ...formData,
-                        shippingAddress: {
-                          shippingAddressOne: addr.shippingAddressOne,
-                          shippingAddressTwo: addr.shippingAddressTwo || '',
-                          shippingAddressThree: addr.shippingAddressThree || '',
-                          shippingCity: addr.shippingCity,
-                          shippingState: addr.shippingState,
-                          shippingZip: addr.shippingZip
-                        }
-                      });
-                    }}
-                  >
-                    <CardContent>
-                      <Radio
-                        checked={selectedShippingAddress === index}
-                        onChange={() => {
-                          setSelectedShippingAddress(index);
-                          setFormData({
-                            ...formData,
-                            shippingAddress: {
-                              shippingAddressOne: addr.shippingAddressOne,
-                              shippingAddressTwo: addr.shippingAddressTwo || '',
-                              shippingAddressThree: addr.shippingAddressThree || '',
-                              shippingCity: addr.shippingCity,
-                              shippingState: addr.shippingState,
-                              shippingZip: addr.shippingZip
-                            }
-                          });
-                        }}
-                      />
-                      <Typography variant="subtitle1" fontWeight="bold">{addr.shippingAddressOne}</Typography>
-                      {addr.shippingAddressTwo && (
-                        <Typography variant="body2">{addr.shippingAddressTwo}</Typography>
-                      )}
-                      {addr.shippingAddressThree && (
-                        <Typography variant="body2">{addr.shippingAddressThree}</Typography>
-                      )}
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        {addr.shippingCity}, {addr.shippingState} {addr.shippingZip}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>}
-        </Grid>
-
-        {/* Billing Address Selection */}
-        <Grid item xs={12} size={12} sx={{ mt: 2 }}>
-          {billingAddress.length > 0 && <CustomFormLabel>Choose Billing Address</CustomFormLabel>}
-          {billingAddress.length > 0 && <Grid container spacing={2}>
-            {billingAddress?.map((addr, index) => {
-              return (
-                <Grid item xs={6} key={index}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      border: selectedBillingAddress === index ? "2px solid #2E2F7F" : "1px solid #ccc",
-                      borderRadius: "8px",
-                      cursor: "pointer"
-                    }}
-                    onClick={() => {
-                      setSelectedBillingAddress(index);
-                      setFormData({
-                        ...formData,
-                        billingAddress: {
-                          billingAddressOne: addr.billingAddressOne,
-                          billingAddressTwo: addr.billingAddressTwo || '',
-                          billingAddressThree: addr.billingAddressThree || '',
-                          billingCity: addr.billingCity,
-                          billingState: addr.billingState,
-                          billingZip: addr.billingZip
-                        }
-                      });
-                    }}
-                  >
-                    <CardContent>
-                      <Radio
-                        checked={selectedBillingAddress === index}
-                        onChange={() => {
-                          setSelectedBillingAddress(index);
-                          setFormData({
-                            ...formData,
-                            billingAddress: {
-                              billingAddressOne: addr.billingAddressOne,
-                              billingAddressTwo: addr.billingAddressTwo || '',
-                              billingAddressThree: addr.billingAddressThree || '',
-                              billingCity: addr.billingCity,
-                              billingState: addr.billingState,
-                              billingZip: addr.billingZip
-                            }
-                          });
-                        }}
-                      />
-                      <Typography variant="subtitle1" fontWeight="bold">{addr.billingAddressOne}</Typography>
-                      {addr.billingAddressTwo && (
-                        <Typography variant="body2">{addr.billingAddressTwo}</Typography>
-                      )}
-                      {addr.billingAddressThree && (
-                        <Typography variant="body2">{addr.billingAddressThree}</Typography>
-                      )}
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        {addr.billingCity}, {addr.billingState} {addr.billingZip}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>}
-        </Grid>
-
-
-        {/* Customer PO and Item SKU - Two per row */}
+        {/* Customer PO */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="customer-po" sx={{ mt: 2 }}>
             Customer PO
@@ -627,122 +700,220 @@ const CreateSalesOrders = () => {
             placeholder="Enter customer PO"
           />
         </Grid>
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="item-sku" sx={{ mt: 2 }}>
-            Item SKU
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-          <FormControl fullWidth>
-            <Autocomplete
-              id="item-sku-autocomplete"
-              options={productsList}
-              getOptionLabel={(product) =>
-                product ? `${product.ProductName} (SKU: ${product.sku})` : ""
-              }
-              value={
-                productsList.find((p) => p.sku === formData.itemSku) || null
-              }
-              onChange={(event, newValue) => {
-                setFormData({
-                  ...formData,
-                  itemSku: newValue ? newValue.sku : "",
-                });
-                setSelectedProduct(newValue);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder={
-                    productsList.length === 0
-                      ? "Loading products..."
-                      : "Search or select a product"
-                  }
-                  size="small"
-                />
-              )}
-            />
-          </FormControl>
+
+        {/* Order Items Table */}
+        <Grid size={12} sx={{ mt: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ color: '#2E2F7F' }}>
+              Order Items
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<IconPlus size="1.1rem" />}
+              onClick={handleAddItem}
+              sx={{ borderColor: '#2E2F7F', color: '#2E2F7F' }}
+            >
+              Add Item
+            </Button>
+          </Box>
+
+          <TableContainer component={Paper} sx={{ mb: 3 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Product/Group</TableCell>
+                  <TableCell>Pack Type</TableCell>
+                  <TableCell>Pack Qty</TableCell>
+                  <TableCell>Units/Pack</TableCell>
+                  <TableCell>Unit Price</TableCell>
+                  <TableCell>Subtotal</TableCell>
+                  <TableCell>Tax</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {orderItems.map((item, index) => {
+                  const productsList = getProductsList();
+                  const selectedProduct = productsList.find(p => p.sku === item.itemSku);
+                  const availablePackTypes = packTypes[item.itemSku] || [];
+
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        <Autocomplete
+                          size="small"
+                          sx={{ width: 250 }}
+                          options={productsList}
+                          getOptionLabel={(option) =>
+                            option ? `${option.ProductName || option.name} (SKU: ${option.sku})` : ""
+                          }
+                          value={selectedProduct || null}
+                          onChange={(event, newValue) => handleProductChange(index, newValue)}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Search product..."
+                            />
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Autocomplete
+                          size="small"
+                          sx={{ width: 150 }}
+                          options={availablePackTypes}
+                          getOptionLabel={(option) => option.name || ''}
+                          value={availablePackTypes.find(pack => pack.name === item.packType) || null}
+                          onChange={(event, newValue) => handlePackTypeChange(index, newValue)}
+                          disabled={availablePackTypes.length === 0}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Pack type"
+                            />
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={item.packQuantity}
+                          // onChange={(e) => handleQuantityChange(index, 'packQuantity', e.target.value)}
+                          disabled
+                          inputProps={{ min: 1, step: 1 }}
+                          sx={{ width: 100 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={item.unitsQuantity}
+                          onChange={(e) => handleQuantityChange(index, 'unitsQuantity', e.target.value)}
+                          inputProps={{ min: 1, step: 1 }}
+                          sx={{ width: 100 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={item.amount.toFixed(2)}
+                          InputProps={{ readOnly: true }}
+                          sx={{ width: 100 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={item.subTotal.toFixed(2)}
+                          InputProps={{ readOnly: true }}
+                          sx={{ width: 100 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={item.taxAmount.toFixed(2)}
+                          InputProps={{ readOnly: true }}
+                          sx={{ width: 80 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {item.isProductGroup ? 'Group' : 'Product'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRemoveItem(index)}
+                          disabled={orderItems.length === 1}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Grid>
 
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="pack-quantity" sx={{ mt: 2 }}>
-            Pack Quantity
-            <span style={{ color: 'red' }}>*</span>
-          </CustomFormLabel>
-          <FormControl fullWidth>
-            <Autocomplete
-              id="pack-quantity-select"
-              value={packTypes.find(pack => pack.name === formData.packType) || null}
-              onChange={(event, newValue) => {
-                setFormData({
-                  ...formData,
-                  packQuantity: newValue ? newValue.quantity : '',
-                  packType: newValue ? newValue.name : ''
-                });
-              }}
-              options={packTypes}
-              getOptionLabel={(option) => option.name || ''}
-              isOptionEqualToValue={(option, value) => option._id === value._id}
-              disabled={loading || packTypes.length === 0}
-              noOptionsText={packTypes.length === 0 ? 'Loading pack types...' : 'No pack types found'}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder={packTypes.length === 0 ? 'Loading pack types...' : 'Search and select a pack type'}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
-                    },
-                  }}
-                />
-              )}
-            />
-          </FormControl>
+        {/* Totals Summary */}
+        <Grid size={12} sx={{ mt: 2 }}>
+          <Card sx={{ backgroundColor: '#f5f5f5' }}>
+            <CardContent>
+              <Grid container spacing={2}>
+                <Grid size={4}>
+                  <Typography variant="subtitle1" fontWeight="bold">Subtotal</Typography>
+                  <Typography variant="h6">${totals.subTotal.toFixed(2)}</Typography>
+                </Grid>
+                <Grid size={4}>
+                  <Typography variant="subtitle1" fontWeight="bold">Tax Amount</Typography>
+                  <Typography variant="h6">${totals.taxAmount.toFixed(2)}</Typography>
+                </Grid>
+                <Grid size={4}>
+                  <Typography variant="subtitle1" fontWeight="bold">Shipping Rate</Typography>
+                  <Typography variant="h6">${totals.shippingRate.toFixed(2)}</Typography>
+                </Grid>
+                <Grid size={12} sx={{ mt: 2, pt: 2, borderTop: '1px solid #ddd' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="h5" fontWeight="bold">Total Amount</Typography>
+                    <Typography variant="h4" fontWeight="bold" color="#2E2F7F">
+                      ${totals.totalAmount.toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
         </Grid>
 
-
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="units-quantity" sx={{ mt: 2 }}>
-            Units Quantity
-            <span style={{ color: 'red' }}>*</span>
+        {/* Shipping Rate */}
+        {/* <Grid size={6} sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="shipping-rate">
+            Shipping Rate
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="units-quantity"
+            id="shipping-rate"
             fullWidth
-            value={formData.unitsQuantity}
-            onChange={(e) => setFormData({ ...formData, unitsQuantity: e.target.value })}
-            placeholder="Enter units quantity"
+            value={formData.shippingRate}
+            onChange={(e) => setFormData({ ...formData, shippingRate: parseFloat(e.target.value) || 0 })}
+            type="number"
+            placeholder="Enter shipping rate"
           />
-        </Grid>
+        </Grid> */}
 
-        {/* Amount - Full Width (since it's the only one in this row) */}
-        <Grid size={6}>
-          <CustomFormLabel htmlFor="amount" sx={{ mt: 2 }}>
-            Amount
-            <span style={{ color: 'red' }}>*</span>
+        {/* Comments */}
+        <Grid size={12} sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="comments">
+            Comments
           </CustomFormLabel>
-          <CustomOutlinedInput
-            id="amount"
+          <TextField
+            id="comments"
             fullWidth
-            value={formData.amount}
-            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-            placeholder="Enter Amount "
+            multiline
+            rows={3}
+            value={formData.comments || ''}
+            onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+            placeholder="Enter any comments or notes..."
+            variant="outlined"
           />
         </Grid>
 
         {/* Error Message */}
         {error && (
           <Grid size={12} mt={2}>
-            <div
-              style={{
+            <Box
+              sx={{
                 color: 'red',
                 padding: '10px',
                 backgroundColor: '#ffebee',
@@ -751,7 +922,7 @@ const CreateSalesOrders = () => {
               }}
             >
               {error}
-            </div>
+            </Box>
           </Grid>
         )}
 
@@ -761,9 +932,14 @@ const CreateSalesOrders = () => {
             variant="contained"
             color="primary"
             onClick={handleSubmit}
-            sx={{ minWidth: '120px', backgroundColor: '#2E2F7F' }}
+            disabled={loading}
+            sx={{
+              minWidth: '120px',
+              backgroundColor: '#2E2F7F',
+              '&:hover': { backgroundColor: '#1E1F6F' }
+            }}
           >
-            {loading ? 'Creating...' : 'Create Sales Order'}
+            {loading ? 'Creating Orders...' : `Create ${orderItems.length} Order(s)`}
           </Button>
 
           <Button
@@ -784,7 +960,6 @@ const CreateSalesOrders = () => {
         maxWidth="sm"
         fullWidth
       >
-        {/* Loading Backdrop */}
         <Backdrop
           sx={{
             color: '#fff',

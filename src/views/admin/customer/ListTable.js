@@ -45,6 +45,7 @@ import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 import { IconUserPlus } from '@tabler/icons-react';
+import { set } from 'lodash';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -292,6 +293,18 @@ const EnhancedTableToolbar = (props) => {
     }
   };
 
+
+  const handleSendResetEmail = async () => {
+    try {
+      const response = await axiosInstance.post('/admin/send-reset-email-to-all-customers', {});
+
+      setSnackbarMessage('Sending Reset password emails ');
+
+    } catch (error) {
+      console.error('Error sending reset password emails:', error);
+    }
+  }
+
   const getFilterLabel = () => {
     switch (approvalFilter) {
       case 'unapproved':
@@ -351,6 +364,11 @@ const EnhancedTableToolbar = (props) => {
               <Button size="small" variant="outlined" >Export</Button>
             </IconButton>
           </Tooltip>
+          {/* <Tooltip title="Send Reset Password Email">
+            <IconButton onClick={handleSendResetEmail}>
+              <Button size="small" variant="outlined" >Send Email</Button>
+            </IconButton>
+          </Tooltip> */}
         </>
       )}
     </Toolbar>
