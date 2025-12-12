@@ -36,6 +36,7 @@ import { CircularProgress, Backdrop } from '@mui/material';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Chip from '@mui/material/Chip';
+import { set } from 'lodash';
 
 const CreateSalesOrders = () => {
   const [formData, setFormData] = React.useState({
@@ -133,7 +134,7 @@ const CreateSalesOrders = () => {
     } else if (totalQuantity > availableStock) {
       return 'insufficient';
     }
-    
+
     return null; // No warning
   };
 
@@ -153,16 +154,16 @@ const CreateSalesOrders = () => {
   // Get stock warning message
   const getStockWarningMessage = (item) => {
     if (!item.stockWarning) return null;
-    
+
     const totalQuantity = calculateTotalQuantity(item);
     const availableStock = item.availableStock || 0;
-    
+
     if (item.stockWarning === 'out-of-stock') {
       return `Out of stock! Available: ${availableStock}`;
     } else if (item.stockWarning === 'insufficient') {
       return `Insufficient stock! Required: ${totalQuantity}, Available: ${availableStock}`;
     }
-    
+
     return null;
   };
 
@@ -339,10 +340,10 @@ const CreateSalesOrders = () => {
     // Check for stock warnings
     if (hasStockWarnings()) {
       const hasOutOfStock = orderItems.some(item => item.stockWarning === 'out-of-stock');
-      const warningMessage = hasOutOfStock 
+      const warningMessage = hasOutOfStock
         ? 'Some items are out of stock. Please remove or replace them before proceeding.'
         : 'Some items have insufficient stock. Please adjust quantities before proceeding.';
-      
+
       setError(warningMessage);
       return;
     }
@@ -400,7 +401,7 @@ const CreateSalesOrders = () => {
       }
 
       console.log("Creating multiple sales orders:", ordersData);
-      
+
       const res = await axiosInstance.post('/sales-order/create-bulk-sales-order-admin', ordersData, {
         headers: {
           'Content-Type': 'application/json'
@@ -451,9 +452,9 @@ const CreateSalesOrders = () => {
       console.error('Create sales orders error:', error);
       if (error.response?.status === 400) {
         // Handle stock validation errors from backend
-        if (error.response?.data?.message?.includes('stock') || 
-            error.response?.data?.message?.includes('Stock') ||
-            error.response?.data?.message?.includes('insufficient')) {
+        if (error.response?.data?.message?.includes('stock') ||
+          error.response?.data?.message?.includes('Stock') ||
+          error.response?.data?.message?.includes('insufficient')) {
           setError(`Stock validation failed: ${error.response.data.message}. Please adjust quantities.`);
         } else {
           setError(error.response?.data?.message || 'Failed to create sales orders');
@@ -517,7 +518,7 @@ const CreateSalesOrders = () => {
           }
           return group;
         });
-        
+
         setAllProductGroups(groupsWithStockInfo);
       }
 
@@ -532,10 +533,15 @@ const CreateSalesOrders = () => {
       const response = await axiosInstance.get('/sales-order/get-latest-document-number');
       console.log("Latest document number response:", response);
 
-      if (response.data.statusCode === 200) {
+      if (response.data.statusCode === 200 && response.data.data.documentNumber) {
         setFormData(prev => ({
           ...prev,
           documentNumber: response.data.data.documentNumber.replace(/(\D*)(\d+)/, (_, p, n) => p + String(+n + 1).padStart(n.length, '0'))
+        }))
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          documentNumber: 'SO000001'
         }))
       }
 
@@ -639,13 +645,13 @@ const CreateSalesOrders = () => {
   const renderProductOption = (props, option) => {
     const isOutOfStock = (option.stockLevel || 0) <= 0;
     const stockLevel = option.stockLevel || 0;
-    
+
     return (
       <li {...props} style={{ opacity: isOutOfStock ? 0.6 : 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <Box>
             <Typography variant="body1">
-              {option.ProductName || option.name} 
+              {option.ProductName || option.name}
               <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
                 (SKU: {option.sku})
               </Typography>
@@ -656,10 +662,10 @@ const CreateSalesOrders = () => {
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {isOutOfStock ? (
-              <Chip 
-                label="Out of Stock" 
-                size="small" 
-                color="error" 
+              <Chip
+                label="Out of Stock"
+                size="small"
+                color="error"
                 variant="outlined"
                 sx={{ ml: 1 }}
               />
@@ -871,13 +877,13 @@ const CreateSalesOrders = () => {
           </Box>
 
           {hasStockWarnings() && (
-            <Alert 
-              severity="warning" 
+            <Alert
+              severity="warning"
               sx={{ mb: 2 }}
               action={
-                <Button 
-                  color="warning" 
-                  size="small" 
+                <Button
+                  color="warning"
+                  size="small"
                   onClick={() => {
                     // Auto-fix quantities to match available stock
                     const fixedItems = orderItems.map(item => {
@@ -885,11 +891,11 @@ const CreateSalesOrders = () => {
                         // Reduce units quantity to match available stock
                         const maxUnits = Math.floor(item.availableStock / item.packQuantity);
                         const newUnitsQuantity = Math.min(item.unitsQuantity, maxUnits);
-                        
+
                         if (newUnitsQuantity < item.unitsQuantity) {
                           const newSubTotal = item.amount * item.packQuantity * newUnitsQuantity;
                           const taxAmount = item.taxPercentage ? (newSubTotal * item.taxPercentage) / 100 : 0;
-                          
+
                           return {
                             ...item,
                             unitsQuantity: newUnitsQuantity,
@@ -901,7 +907,7 @@ const CreateSalesOrders = () => {
                       }
                       return item;
                     });
-                    
+
                     setOrderItems(fixedItems);
                   }}
                 >
@@ -940,11 +946,11 @@ const CreateSalesOrders = () => {
                   const isOutOfStock = item.availableStock <= 0;
 
                   return (
-                    <TableRow 
+                    <TableRow
                       key={index}
-                      sx={{ 
-                        backgroundColor: item.stockWarning === 'out-of-stock' ? '#ffebee' : 
-                                       item.stockWarning === 'insufficient' ? '#fff3e0' : 'inherit'
+                      sx={{
+                        backgroundColor: item.stockWarning === 'out-of-stock' ? '#ffebee' :
+                          item.stockWarning === 'insufficient' ? '#fff3e0' : 'inherit'
                       }}
                     >
                       <TableCell>{index + 1}</TableCell>
@@ -970,16 +976,16 @@ const CreateSalesOrders = () => {
                           />
                           {item.stockWarning && (
                             <Tooltip title={stockWarningMessage}>
-                              <IconAlertCircle 
-                                size={18} 
-                                color="error" 
-                                style={{ 
-                                  position: 'absolute', 
-                                  right: 8, 
-                                  top: '50%', 
+                              <IconAlertCircle
+                                size={18}
+                                color="error"
+                                style={{
+                                  position: 'absolute',
+                                  right: 8,
+                                  top: '50%',
                                   transform: 'translateY(-50%)',
                                   zIndex: 1
-                                }} 
+                                }}
                               />
                             </Tooltip>
                           )}
@@ -1019,15 +1025,15 @@ const CreateSalesOrders = () => {
                             type="number"
                             value={item.unitsQuantity}
                             onChange={(e) => handleQuantityChange(index, 'unitsQuantity', e.target.value)}
-                            inputProps={{ 
-                              min: 1, 
+                            inputProps={{
+                              min: 1,
                               step: 1,
                               max: isOutOfStock ? 0 : Math.floor(item.availableStock / item.packQuantity)
                             }}
                             sx={{ width: 100 }}
                             error={!!item.stockWarning}
-                            helperText={item.availableStock > 0 ? 
-                              `Max: ${Math.floor(item.availableStock / item.packQuantity)} units` : 
+                            helperText={item.availableStock > 0 ?
+                              `Max: ${Math.floor(item.availableStock / item.packQuantity)} units` :
                               'Out of stock'}
                             disabled={isOutOfStock}
                           />
@@ -1063,15 +1069,15 @@ const CreateSalesOrders = () => {
                       <TableCell>
                         {item.itemSku ? (
                           <Box>
-                            <Typography 
-                              variant="caption" 
+                            <Typography
+                              variant="caption"
                               display="block"
-                              color={item.stockWarning === 'out-of-stock' ? 'error' : 
-                                    item.stockWarning === 'insufficient' ? 'warning' : 'success'}
+                              color={item.stockWarning === 'out-of-stock' ? 'error' :
+                                item.stockWarning === 'insufficient' ? 'warning' : 'success'}
                               fontWeight={item.stockWarning ? 'bold' : 'normal'}
                             >
                               {item.stockWarning === 'out-of-stock' ? 'Out of Stock' :
-                               item.stockWarning === 'insufficient' ? 'Low Stock' : 'In Stock'}
+                                item.stockWarning === 'insufficient' ? 'Low Stock' : 'In Stock'}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" display="block">
                               Required: {totalQuantity}
@@ -1158,9 +1164,9 @@ const CreateSalesOrders = () => {
         {/* Error Message */}
         {error && (
           <Grid size={12} mt={2}>
-            <Alert 
-              severity={error.includes('successfully') ? 'success' : 
-                       error.includes('stock') || error.includes('Stock') ? 'warning' : 'error'}
+            <Alert
+              severity={error.includes('successfully') ? 'success' :
+                error.includes('stock') || error.includes('Stock') ? 'warning' : 'error'}
               sx={{ mb: 2 }}
               onClose={() => setError('')}
             >
@@ -1179,17 +1185,17 @@ const CreateSalesOrders = () => {
             sx={{
               minWidth: '120px',
               backgroundColor: hasStockWarnings() ? '#ff9800' : '#2E2F7F',
-              '&:hover': { 
-                backgroundColor: hasStockWarnings() ? '#f57c00' : '#1E1F6F' 
+              '&:hover': {
+                backgroundColor: hasStockWarnings() ? '#f57c00' : '#1E1F6F'
               },
               '&.Mui-disabled': {
                 backgroundColor: hasStockWarnings() ? '#ffe0b2' : '#e0e0e0'
               }
             }}
           >
-            {loading ? 'Creating Orders...' : 
-             hasStockWarnings() ? 'Fix Stock Issues First' : 
-             `Create ${orderItems.length} Order(s)`}
+            {loading ? 'Creating Orders...' :
+              hasStockWarnings() ? 'Fix Stock Issues First' :
+                `Create ${orderItems.length} Order(s)`}
           </Button>
 
           <Button
