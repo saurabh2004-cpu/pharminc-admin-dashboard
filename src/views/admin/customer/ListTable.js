@@ -903,9 +903,9 @@ const ListTable = ({
                               </TableCell>
 
                               <TableCell sx={columnWidths.category}>
-                                <Typography fontWeight="400">
-                                  {row.CustomerPhoneNo || 'N/A'}
-                                </Typography>
+                                {row.CustomerPhoneNo && <Typography fontWeight="400">
+                                  +61 {row.CustomerPhoneNo || 'N/A'}
+                                </Typography>}
                               </TableCell>
 
                               <TableCell sx={columnWidths.subCategory}>

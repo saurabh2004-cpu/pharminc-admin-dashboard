@@ -1,0 +1,1 @@
+import{j as t}from"./index-BupyKW9M.js";import{s as m,T as a}from"./Typography-C2AkXX-9.js";const i=m(o=>t.jsx(a,{variant:"subtitle1",fontWeight:600,...o,component:"label",htmlFor:o.htmlFor}))(()=>({marginBottom:"5px",marginTop:"25px",display:"block"}));export{i as C};

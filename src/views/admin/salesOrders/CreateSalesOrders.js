@@ -19,12 +19,14 @@ import {
   Card,
   CardContent,
   Radio,
-  FormControl
+  FormControl,
+  Alert,
+  Tooltip
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-import { IconFileImport, IconUpload, IconPlus, IconTrash } from '@tabler/icons';
+import { IconFileImport, IconUpload, IconPlus, IconTrash, IconAlertCircle } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
@@ -33,6 +35,7 @@ import { Autocomplete } from '@mui/material'
 import { CircularProgress, Backdrop } from '@mui/material';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import DeleteIcon from '@mui/icons-material/Delete';
+import Chip from '@mui/material/Chip';
 
 const CreateSalesOrders = () => {
   const [formData, setFormData] = React.useState({
@@ -59,7 +62,9 @@ const CreateSalesOrders = () => {
       subTotal: 0,
       taxAmount: 0,
       isProductGroup: false,
-      productName: ''
+      productName: '',
+      availableStock: 0,
+      stockWarning: null // 'insufficient' or 'out-of-stock'
     }
   ]);
 
@@ -73,6 +78,7 @@ const CreateSalesOrders = () => {
   const [selectedFile, setSelectedFile] = React.useState(null);
   const [customers, setCustomers] = React.useState([]);
   const [selectedCustomer, setSelectedCustomer] = React.useState(null);
+  const [stockWarnings, setStockWarnings] = React.useState({}); // Store stock warnings by SKU
 
   // Calculate totals
   const calculateTotals = () => {
@@ -106,6 +112,60 @@ const CreateSalesOrders = () => {
     return false;
   };
 
+  // Calculate total quantity for an item
+  const calculateTotalQuantity = (item) => {
+    const packQty = parseInt(item.packQuantity) || 0;
+    const unitsQty = parseInt(item.unitsQuantity) || 0;
+    return packQty * unitsQty;
+  };
+
+  // Check stock level for an item
+  const checkStockLevel = (item) => {
+    if (!item.itemSku || !item.availableStock) {
+      return null; // No product selected or no stock info
+    }
+
+    const totalQuantity = calculateTotalQuantity(item);
+    const availableStock = item.availableStock || 0;
+
+    if (availableStock <= 0) {
+      return 'out-of-stock';
+    } else if (totalQuantity > availableStock) {
+      return 'insufficient';
+    }
+    
+    return null; // No warning
+  };
+
+  // Update stock warning for an item
+  const updateStockWarning = (item, index) => {
+    const warning = checkStockLevel(item);
+    const newItems = [...orderItems];
+    newItems[index].stockWarning = warning;
+    setOrderItems(newItems);
+  };
+
+  // Check if any item has stock warning
+  const hasStockWarnings = () => {
+    return orderItems.some(item => item.stockWarning !== null);
+  };
+
+  // Get stock warning message
+  const getStockWarningMessage = (item) => {
+    if (!item.stockWarning) return null;
+    
+    const totalQuantity = calculateTotalQuantity(item);
+    const availableStock = item.availableStock || 0;
+    
+    if (item.stockWarning === 'out-of-stock') {
+      return `Out of stock! Available: ${availableStock}`;
+    } else if (item.stockWarning === 'insufficient') {
+      return `Insufficient stock! Required: ${totalQuantity}, Available: ${availableStock}`;
+    }
+    
+    return null;
+  };
+
   // Handle adding a new item row
   const handleAddItem = () => {
     setOrderItems([
@@ -119,7 +179,9 @@ const CreateSalesOrders = () => {
         subTotal: 0,
         taxAmount: 0,
         isProductGroup: false,
-        productName: ''
+        productName: '',
+        availableStock: 0,
+        stockWarning: null
       }
     ]);
   };
@@ -140,6 +202,7 @@ const CreateSalesOrders = () => {
     if (newValue) {
       const isGroup = checkIsProductGroup(newValue);
       const unitPrice = isGroup ? (newValue.eachPrice || 0) : (newValue.eachPrice || 0);
+      const availableStock = newValue.stockLevel || 0;
 
       // Get default pack type
       let defaultPack = { name: 'Each', quantity: '1' };
@@ -154,7 +217,8 @@ const CreateSalesOrders = () => {
         isProductGroup: isGroup,
         packType: defaultPack.name,
         packQuantity: parseFloat(defaultPack.quantity) || 1,
-        amount: unitPrice
+        amount: unitPrice,
+        availableStock: availableStock
       };
 
       // Recalculate for this item
@@ -174,6 +238,9 @@ const CreateSalesOrders = () => {
       newItems[index].subTotal = subTotal;
       newItems[index].taxAmount = taxAmount;
 
+      // Check stock level
+      updateStockWarning(newItems[index], index);
+
       // Fetch pack types for this product
       fetchProductsAvailablePackTypes(newValue.sku);
     } else {
@@ -186,7 +253,9 @@ const CreateSalesOrders = () => {
         packQuantity: 1,
         amount: 0,
         subTotal: 0,
-        taxAmount: 0
+        taxAmount: 0,
+        availableStock: 0,
+        stockWarning: null
       };
     }
 
@@ -218,6 +287,9 @@ const CreateSalesOrders = () => {
 
     newItems[index].subTotal = subTotal;
     newItems[index].taxAmount = taxAmount;
+
+    // Update stock warning
+    updateStockWarning(newItems[index], index);
 
     setOrderItems(newItems);
   };
@@ -264,6 +336,17 @@ const CreateSalesOrders = () => {
       return;
     }
 
+    // Check for stock warnings
+    if (hasStockWarnings()) {
+      const hasOutOfStock = orderItems.some(item => item.stockWarning === 'out-of-stock');
+      const warningMessage = hasOutOfStock 
+        ? 'Some items are out of stock. Please remove or replace them before proceeding.'
+        : 'Some items have insufficient stock. Please adjust quantities before proceeding.';
+      
+      setError(warningMessage);
+      return;
+    }
+
     // Validate order items
     for (let i = 0; i < orderItems.length; i++) {
       const item = orderItems[i];
@@ -290,7 +373,6 @@ const CreateSalesOrders = () => {
 
     try {
       // Prepare data for bulk order creation
-      // We'll create multiple sales orders with the same document number
       const ordersData = {
         date: formData.date,
         documentNumber: formData.documentNumber,
@@ -302,70 +384,89 @@ const CreateSalesOrders = () => {
         customerPO: formData.customerPO,
         comments: formData.comments,
         customer: selectedCustomer,
-        items: orderItems
+        items: orderItems.map(item => ({
+          itemSku: item.itemSku,
+          packQuantity: item.packQuantity,
+          packType: item.packType,
+          unitsQuantity: item.unitsQuantity,
+          amount: item.amount,
+          subTotal: item.subTotal,
+          taxAmount: item.taxAmount,
+          isProductGroup: item.isProductGroup,
+          productName: item.productName,
+          taxable: item.taxable || false,
+          taxPercentages: item.taxPercentage || 0
+        }))
       }
 
       console.log("Creating multiple sales orders:", ordersData);
-
-      // Create orders sequentially with the same document number
-      try {
-        const res = await axiosInstance.post('/sales-order/create-bulk-sales-order-admin', ordersData, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log("Create bulk sales orders response:", res);
-
-        if (res.data.statusCode === 200) {
-          createdOrders.push(res.data.data);
+      
+      const res = await axiosInstance.post('/sales-order/create-bulk-sales-order-admin', ordersData, {
+        headers: {
+          'Content-Type': 'application/json'
         }
-      } catch (orderError) {
-        console.error('Error creating sales order:', orderError);
-      }
-
-
-      // Reset form on success
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        documentNumber: '',
-        customerName: '',
-        salesChannel: '',
-        trackingNumber: '',
-        shippingAddress: {},
-        billingAddress: {},
-        customerPO: '',
-        comments: '',
-        customerNumber: '',
-        shippingRate: 0
       });
 
-      setOrderItems([{
-        itemSku: '',
-        packQuantity: 1,
-        packType: '',
-        unitsQuantity: 1,
-        amount: 0,
-        subTotal: 0,
-        taxAmount: 0,
-        isProductGroup: false,
-        productName: ''
-      }]);
+      console.log("Create bulk sales orders response:", res);
 
-      setSelectedCustomer(null);
+      if (res.data.statusCode === 200) {
+        // Reset form on success
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          documentNumber: '',
+          customerName: '',
+          salesChannel: '',
+          trackingNumber: '',
+          shippingAddress: {},
+          billingAddress: {},
+          customerPO: '',
+          comments: '',
+          customerNumber: '',
+          shippingRate: 0
+        });
 
-      alert(`Successfully created ${createdOrders.length} sales orders with document number ${formData.documentNumber}`);
-      navigate('/dashboard/sales-orders/list');
+        setOrderItems([{
+          itemSku: '',
+          packQuantity: 1,
+          packType: '',
+          unitsQuantity: 1,
+          amount: 0,
+          subTotal: 0,
+          taxAmount: 0,
+          isProductGroup: false,
+          productName: '',
+          availableStock: 0,
+          stockWarning: null
+        }]);
+
+        setSelectedCustomer(null);
+
+        alert(`Successfully created ${orderItems.length} sales orders with document number ${formData.documentNumber}`);
+        navigate('/dashboard/sales-orders/list');
+      } else {
+        setError(res.data.message || 'Failed to create sales orders');
+      }
 
     } catch (error) {
       console.error('Create sales orders error:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to create sales orders');
+      if (error.response?.status === 400) {
+        // Handle stock validation errors from backend
+        if (error.response?.data?.message?.includes('stock') || 
+            error.response?.data?.message?.includes('Stock') ||
+            error.response?.data?.message?.includes('insufficient')) {
+          setError(`Stock validation failed: ${error.response.data.message}. Please adjust quantities.`);
+        } else {
+          setError(error.response?.data?.message || 'Failed to create sales orders');
+        }
+      } else {
+        setError(error.message || 'Failed to create sales orders');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch individual products
+  // Fetch individual products with stock info
   const fetchProductsList = async () => {
     try {
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
@@ -404,7 +505,20 @@ const CreateSalesOrders = () => {
       }
 
       if (Array.isArray(productGroupsData)) {
-        setAllProductGroups(productGroupsData);
+        // For product groups, we need to check stock of individual products within the group
+        const groupsWithStockInfo = productGroupsData.map(group => {
+          if (group.products && group.products.length > 0) {
+            // Find the minimum stock level among products in the group
+            const minStockLevel = Math.min(...group.products.map(p => p.product?.stockLevel || 0));
+            return {
+              ...group,
+              stockLevel: minStockLevel // Use minimum stock level for the group
+            };
+          }
+          return group;
+        });
+        
+        setAllProductGroups(groupsWithStockInfo);
       }
 
     } catch (error) {
@@ -520,6 +634,45 @@ const CreateSalesOrders = () => {
     fetchProductGroups();
     fetchLatestDocumentNumber();
   }, []);
+
+  // Custom option renderer for Autocomplete with stock info
+  const renderProductOption = (props, option) => {
+    const isOutOfStock = (option.stockLevel || 0) <= 0;
+    const stockLevel = option.stockLevel || 0;
+    
+    return (
+      <li {...props} style={{ opacity: isOutOfStock ? 0.6 : 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <Box>
+            <Typography variant="body1">
+              {option.ProductName || option.name} 
+              <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
+                (SKU: {option.sku})
+              </Typography>
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Price: ${option.eachPrice || option.price || 0}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {isOutOfStock ? (
+              <Chip 
+                label="Out of Stock" 
+                size="small" 
+                color="error" 
+                variant="outlined"
+                sx={{ ml: 1 }}
+              />
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                Stock: {stockLevel}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      </li>
+    );
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -717,6 +870,49 @@ const CreateSalesOrders = () => {
             </Button>
           </Box>
 
+          {hasStockWarnings() && (
+            <Alert 
+              severity="warning" 
+              sx={{ mb: 2 }}
+              action={
+                <Button 
+                  color="warning" 
+                  size="small" 
+                  onClick={() => {
+                    // Auto-fix quantities to match available stock
+                    const fixedItems = orderItems.map(item => {
+                      if (item.stockWarning === 'insufficient' && item.availableStock > 0) {
+                        // Reduce units quantity to match available stock
+                        const maxUnits = Math.floor(item.availableStock / item.packQuantity);
+                        const newUnitsQuantity = Math.min(item.unitsQuantity, maxUnits);
+                        
+                        if (newUnitsQuantity < item.unitsQuantity) {
+                          const newSubTotal = item.amount * item.packQuantity * newUnitsQuantity;
+                          const taxAmount = item.taxPercentage ? (newSubTotal * item.taxPercentage) / 100 : 0;
+                          
+                          return {
+                            ...item,
+                            unitsQuantity: newUnitsQuantity,
+                            subTotal: newSubTotal,
+                            taxAmount: taxAmount,
+                            stockWarning: null
+                          };
+                        }
+                      }
+                      return item;
+                    });
+                    
+                    setOrderItems(fixedItems);
+                  }}
+                >
+                  Auto-fix Quantities
+                </Button>
+              }
+            >
+              Some items have stock issues. Please adjust quantities or remove items before proceeding.
+            </Alert>
+          )}
+
           <TableContainer component={Paper} sx={{ mb: 3 }}>
             <Table>
               <TableHead>
@@ -729,6 +925,7 @@ const CreateSalesOrders = () => {
                   <TableCell>Unit Price</TableCell>
                   <TableCell>Subtotal</TableCell>
                   <TableCell>Tax</TableCell>
+                  <TableCell>Stock Status</TableCell>
                   <TableCell>Type</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
@@ -738,27 +935,55 @@ const CreateSalesOrders = () => {
                   const productsList = getProductsList();
                   const selectedProduct = productsList.find(p => p.sku === item.itemSku);
                   const availablePackTypes = packTypes[item.itemSku] || [];
+                  const stockWarningMessage = getStockWarningMessage(item);
+                  const totalQuantity = calculateTotalQuantity(item);
+                  const isOutOfStock = item.availableStock <= 0;
 
                   return (
-                    <TableRow key={index}>
+                    <TableRow 
+                      key={index}
+                      sx={{ 
+                        backgroundColor: item.stockWarning === 'out-of-stock' ? '#ffebee' : 
+                                       item.stockWarning === 'insufficient' ? '#fff3e0' : 'inherit'
+                      }}
+                    >
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>
-                        <Autocomplete
-                          size="small"
-                          sx={{ width: 250 }}
-                          options={productsList}
-                          getOptionLabel={(option) =>
-                            option ? `${option.ProductName || option.name} (SKU: ${option.sku})` : ""
-                          }
-                          value={selectedProduct || null}
-                          onChange={(event, newValue) => handleProductChange(index, newValue)}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              placeholder="Search product..."
-                            />
+                        <Box sx={{ position: 'relative' }}>
+                          <Autocomplete
+                            size="small"
+                            sx={{ width: 250 }}
+                            options={productsList}
+                            getOptionLabel={(option) =>
+                              option ? `${option.ProductName || option.name} (SKU: ${option.sku})` : ""
+                            }
+                            value={selectedProduct || null}
+                            onChange={(event, newValue) => handleProductChange(index, newValue)}
+                            renderOption={renderProductOption}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                placeholder="Search product..."
+                                error={!!item.stockWarning}
+                              />
+                            )}
+                          />
+                          {item.stockWarning && (
+                            <Tooltip title={stockWarningMessage}>
+                              <IconAlertCircle 
+                                size={18} 
+                                color="error" 
+                                style={{ 
+                                  position: 'absolute', 
+                                  right: 8, 
+                                  top: '50%', 
+                                  transform: 'translateY(-50%)',
+                                  zIndex: 1
+                                }} 
+                              />
+                            </Tooltip>
                           )}
-                        />
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Autocomplete
@@ -768,7 +993,7 @@ const CreateSalesOrders = () => {
                           getOptionLabel={(option) => option.name || ''}
                           value={availablePackTypes.find(pack => pack.name === item.packType) || null}
                           onChange={(event, newValue) => handlePackTypeChange(index, newValue)}
-                          disabled={availablePackTypes.length === 0}
+                          disabled={availablePackTypes.length === 0 || isOutOfStock}
                           renderInput={(params) => (
                             <TextField
                               {...params}
@@ -782,21 +1007,31 @@ const CreateSalesOrders = () => {
                           size="small"
                           type="number"
                           value={item.packQuantity}
-                          // onChange={(e) => handleQuantityChange(index, 'packQuantity', e.target.value)}
                           disabled
                           inputProps={{ min: 1, step: 1 }}
                           sx={{ width: 100 }}
                         />
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          size="small"
-                          type="number"
-                          value={item.unitsQuantity}
-                          onChange={(e) => handleQuantityChange(index, 'unitsQuantity', e.target.value)}
-                          inputProps={{ min: 1, step: 1 }}
-                          sx={{ width: 100 }}
-                        />
+                        <Box sx={{ position: 'relative' }}>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={item.unitsQuantity}
+                            onChange={(e) => handleQuantityChange(index, 'unitsQuantity', e.target.value)}
+                            inputProps={{ 
+                              min: 1, 
+                              step: 1,
+                              max: isOutOfStock ? 0 : Math.floor(item.availableStock / item.packQuantity)
+                            }}
+                            sx={{ width: 100 }}
+                            error={!!item.stockWarning}
+                            helperText={item.availableStock > 0 ? 
+                              `Max: ${Math.floor(item.availableStock / item.packQuantity)} units` : 
+                              'Out of stock'}
+                            disabled={isOutOfStock}
+                          />
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <TextField
@@ -824,6 +1059,32 @@ const CreateSalesOrders = () => {
                           InputProps={{ readOnly: true }}
                           sx={{ width: 80 }}
                         />
+                      </TableCell>
+                      <TableCell>
+                        {item.itemSku ? (
+                          <Box>
+                            <Typography 
+                              variant="caption" 
+                              display="block"
+                              color={item.stockWarning === 'out-of-stock' ? 'error' : 
+                                    item.stockWarning === 'insufficient' ? 'warning' : 'success'}
+                              fontWeight={item.stockWarning ? 'bold' : 'normal'}
+                            >
+                              {item.stockWarning === 'out-of-stock' ? 'Out of Stock' :
+                               item.stockWarning === 'insufficient' ? 'Low Stock' : 'In Stock'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              Required: {totalQuantity}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              Available: {item.availableStock}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            Select product
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
@@ -877,21 +1138,6 @@ const CreateSalesOrders = () => {
           </Card>
         </Grid>
 
-        {/* Shipping Rate */}
-        {/* <Grid size={6} sx={{ mt: 2 }}>
-          <CustomFormLabel htmlFor="shipping-rate">
-            Shipping Rate
-          </CustomFormLabel>
-          <CustomOutlinedInput
-            id="shipping-rate"
-            fullWidth
-            value={formData.shippingRate}
-            onChange={(e) => setFormData({ ...formData, shippingRate: parseFloat(e.target.value) || 0 })}
-            type="number"
-            placeholder="Enter shipping rate"
-          />
-        </Grid> */}
-
         {/* Comments */}
         <Grid size={12} sx={{ mt: 2 }}>
           <CustomFormLabel htmlFor="comments">
@@ -912,17 +1158,14 @@ const CreateSalesOrders = () => {
         {/* Error Message */}
         {error && (
           <Grid size={12} mt={2}>
-            <Box
-              sx={{
-                color: 'red',
-                padding: '10px',
-                backgroundColor: '#ffebee',
-                borderRadius: '4px',
-                border: '1px solid #ffcdd2'
-              }}
+            <Alert 
+              severity={error.includes('successfully') ? 'success' : 
+                       error.includes('stock') || error.includes('Stock') ? 'warning' : 'error'}
+              sx={{ mb: 2 }}
+              onClose={() => setError('')}
             >
               {error}
-            </Box>
+            </Alert>
           </Grid>
         )}
 
@@ -932,14 +1175,21 @@ const CreateSalesOrders = () => {
             variant="contained"
             color="primary"
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || hasStockWarnings()}
             sx={{
               minWidth: '120px',
-              backgroundColor: '#2E2F7F',
-              '&:hover': { backgroundColor: '#1E1F6F' }
+              backgroundColor: hasStockWarnings() ? '#ff9800' : '#2E2F7F',
+              '&:hover': { 
+                backgroundColor: hasStockWarnings() ? '#f57c00' : '#1E1F6F' 
+              },
+              '&.Mui-disabled': {
+                backgroundColor: hasStockWarnings() ? '#ffe0b2' : '#e0e0e0'
+              }
             }}
           >
-            {loading ? 'Creating Orders...' : `Create ${orderItems.length} Order(s)`}
+            {loading ? 'Creating Orders...' : 
+             hasStockWarnings() ? 'Fix Stock Issues First' : 
+             `Create ${orderItems.length} Order(s)`}
           </Button>
 
           <Button

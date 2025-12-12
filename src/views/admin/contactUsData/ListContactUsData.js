@@ -512,10 +512,12 @@ const ListContactUsData = () => {
                                                             {row?.Email || 'N/A'}
                                                         </Typography>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography>
-                                                            {row?.PhoneNumber || 'N/A'}
-                                                        </Typography>
+                                                    <TableCell sx={{ minWidth: '200px' }}>
+                                                        {row?.PhoneNumber &&
+                                                            <Typography>
+                                                                +61 {row?.PhoneNumber || 'N/A'}
+                                                            </Typography>
+                                                        }
                                                     </TableCell>
                                                     <TableCell>
                                                         <Typography

@@ -1504,9 +1504,9 @@ const CustomersSalesOrders = () => {
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
                                             NetTerms :
                                         </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                        {netTerms?.netTermName && netTerms?.daysCount && <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                             {`${netTerms?.netTermName}- (${netTerms?.daysCount})` || 'N/A'}
-                                        </Typography>
+                                        </Typography>}
                                     </Box>
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
