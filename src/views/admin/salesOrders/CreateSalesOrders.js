@@ -41,7 +41,7 @@ import { set } from 'lodash';
 const CreateSalesOrders = () => {
   const [formData, setFormData] = React.useState({
     date: new Date().toISOString().split('T')[0],
-    documentNumber: '',
+    documentNumber: 'SO000001',
     customerName: '',
     salesChannel: '',
     trackingNumber: '',
