@@ -198,6 +198,16 @@ const CreateSalesOrders = () => {
 
   // Handle product selection change for a specific item
   const handleProductChange = (index, newValue) => {
+
+    console.log("order items before check", orderItems)
+
+    if (Array.isArray(orderItems) && orderItems?.some(item => item.itemSku === newValue.sku)) {
+      alert('Product already added');
+      return;
+    }
+
+    console.log("order items after check", orderItems)
+
     const newItems = [...orderItems];
 
     if (newValue) {

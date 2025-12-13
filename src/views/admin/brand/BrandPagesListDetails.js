@@ -222,8 +222,14 @@ const BrandPagesListDetails = () => {
       disablePadding: false,
     },
     {
-      id: 'heroCarouselImages',
-      label: 'Hero Carousel',
+      id: 'heroDesktopCarouselImages',
+      label: 'Hero Desktop Carousel',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'heromobileCarouselImages',
+      label: 'Hero Mobile Carousel',
       numeric: false,
       disablePadding: false,
     },
@@ -546,7 +552,7 @@ const BrandPagesListDetails = () => {
                           sx={{ cursor: 'pointer', minWidth: 120 }}
                         >
                           <Box display="flex" gap={1} flexWrap="wrap">
-                            {row?.heroCarouselImages?.slice(0, 2).map((img, idx) => (
+                            {row?.heroCarouselImages.desktopImages?.slice(0, 2).map((img, idx) => (
                               <Avatar
                                 key={idx}
                                 src={img}
@@ -562,7 +568,35 @@ const BrandPagesListDetails = () => {
                                 color="primary"
                               />
                             )}
-                            {!row?.heroCarouselImages?.length && (
+                            {!row?.heroCarouselImages.desktopImages?.length && (
+                              <Typography color="text.secondary" fontSize="0.875rem">
+                                No images
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell
+                          onClick={() => handleEditBrandPage(row._id)}
+                          sx={{ cursor: 'pointer', minWidth: 120 }}
+                        >
+                          <Box display="flex" gap={1} flexWrap="wrap">
+                            {row?.heroCarouselImages.mobileImages?.slice(0, 2).map((img, idx) => (
+                              <Avatar
+                                key={idx}
+                                src={img}
+                                alt={`Hero ${idx + 1}`}
+                                variant="rounded"
+                                sx={{ width: 50, height: 50 }}
+                              />
+                            ))}
+                            {row?.heroCarouselImages?.length > 2 && (
+                              <Chip
+                                label={`+${row.heroCarouselImages.length - 2}`}
+                                size="small"
+                                color="primary"
+                              />
+                            )}
+                            {!row?.heroCarouselImages.mobileImages?.length && (
                               <Typography color="text.secondary" fontSize="0.875rem">
                                 No images
                               </Typography>

@@ -23,10 +23,11 @@ import { useNavigate, useParams } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
-// Image size configurations
+// Image size configurations - UPDATED WITH MOBILE HERO CAROUSEL
 const IMAGE_SIZES = {
   brandImage: { width: 600, height: 300, label: 'Brand Image (600 × 300 px)' },
-  heroCarousel: { width: 4478, height: 1415, label: 'Hero Carousel Images (4478 × 1415 px)' },
+  desktopHeroCarousel: { width: 4478, height: 1415, label: 'Desktop Hero Carousel Images (4478 × 1415 px)' },
+  mobileHeroCarousel: { label: 'Mobile Hero Carousel Images (768 × 400 px)' },
   categoryImage: { width: 1188, height: 1064, label: 'Category Images (1188 × 1064 px)' },
   brandLogo: { width: 2332, height: 868, label: 'Brand Logos (2332 × 868 px)' },
   carouselImage: { width: 694, height: 228, label: 'Carousel Images (694 × 228 px)' }
@@ -154,8 +155,8 @@ const IndividualFilePreview = ({ title, preview, onRemove, onFileChange, require
   </Box>
 );
 
-// Bulk File Preview Component (for hero carousel and carousel images)
-const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler, existingImages = [], onRemoveExisting = null, error = false, imageSize }) => (
+// Bulk File Preview Component - UPDATED FOR DESKTOP/MOBILE SEPARATION
+const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = true, fileHandler, existingImages = [], onRemoveExisting = null, error = false, imageSize, type = 'desktop' }) => (
   <Box sx={{ mb: 2 }}>
     <CustomFormLabel>
       {title}
@@ -169,14 +170,14 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
     {existingImages.length > 0 && (
       <Box sx={{ mb: 2 }}>
         <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 'bold' }}>
-          Current images:
+          Current {type === 'desktop' ? 'Desktop' : 'Mobile'} images:
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
           {existingImages.map((img, index) => (
-            <Box key={`existing-${index}`} sx={{ position: 'relative' }}>
+            <Box key={`existing-${type}-${index}`} sx={{ position: 'relative' }}>
               <img
                 src={img}
-                alt={`Existing ${index + 1}`}
+                alt={`Existing ${type} ${index + 1}`}
                 style={{
                   width: '120px',
                   height: '120px',
@@ -212,14 +213,14 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
     {previews.length > 0 && (
       <Box sx={{ mb: 2 }}>
         <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'green', fontWeight: 'bold' }}>
-          New images to add:
+          New {type === 'desktop' ? 'Desktop' : 'Mobile'} images to add:
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
           {previews.map((preview, index) => (
             <Box key={index} sx={{ position: 'relative' }}>
               <img
                 src={preview}
-                alt={`Preview ${index + 1}`}
+                alt={`Preview ${type} ${index + 1}`}
                 style={{
                   width: '120px',
                   height: '120px',
@@ -267,7 +268,7 @@ const BulkFilePreviewSection = ({ title, previews, onRemove, acceptMultiple = tr
       error={error}
     />
     <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-      {acceptMultiple ? 'You can select multiple images at once - they will be added to existing images' : 'Select one image'}
+      {acceptMultiple ? `You can select multiple ${type} images at once - they will be added to existing images` : 'Select one image'}
     </Typography>
     {error && (
       <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
@@ -312,25 +313,33 @@ const EditBrandPage = () => {
   const [brands, setBrands] = useState([]);
   const { id } = useParams();
 
-  // File states for bulk uploads
+  // File states for bulk uploads - UPDATED TO SEPARATE DESKTOP AND MOBILE
   const [brandImage, setBrandImage] = useState(null);
   const [brandImagePreview, setBrandImagePreview] = useState('');
-  const [heroCarouselImages, setHeroCarouselImages] = useState([]);
-  const [heroCarouselPreviews, setHeroCarouselPreviews] = useState([]);
+  const [desktopHeroCarouselImages, setDesktopHeroCarouselImages] = useState([]);
+  const [desktopHeroCarouselPreviews, setDesktopHeroCarouselPreviews] = useState([]);
+  const [mobileHeroCarouselImages, setMobileHeroCarouselImages] = useState([]);
+  const [mobileHeroCarouselPreviews, setMobileHeroCarouselPreviews] = useState([]);
   const [carouselImages, setCarouselImages] = useState([]);
   const [carouselImagePreviews, setCarouselImagePreviews] = useState([]);
 
-  // Existing images state
+  // Existing images state - UPDATED TO SEPARATE DESKTOP AND MOBILE
   const [existingBrandImage, setExistingBrandImage] = useState('');
-  const [existingHeroCarouselImages, setExistingHeroCarouselImages] = useState([]);
+  const [existingDesktopHeroCarouselImages, setExistingDesktopHeroCarouselImages] = useState([]);
+  const [existingMobileHeroCarouselImages, setExistingMobileHeroCarouselImages] = useState([]);
   const [existingCarouselImages, setExistingCarouselImages] = useState([]);
 
-  // Removed existing images state
+  // Removed existing images state - UPDATED TO SEPARATE DESKTOP AND MOBILE
   const [removedExistingImages, setRemovedExistingImages] = useState({
     brandImage: false,
-    heroCarousel: [],
+    desktopHeroCarousel: [],
+    mobileHeroCarousel: [],
     carousel: []
   });
+
+  // Store original image filenames for categories and brands
+  const [originalCategoryImages, setOriginalCategoryImages] = useState([]);
+  const [originalBrandImages, setOriginalBrandImages] = useState([]);
 
   const fetchBrandPageById = async () => {
     try {
@@ -340,30 +349,41 @@ const EditBrandPage = () => {
       if (response.data.statusCode === 200) {
         const data = response.data.data;
 
-        // Set existing images
+        // Set existing images - UPDATED FOR DESKTOP/MOBILE SEPARATION
         setExistingBrandImage(data.brandImages || '');
-        setExistingHeroCarouselImages(data.heroCarouselImages || []);
+        setExistingDesktopHeroCarouselImages(data.heroCarouselImages?.desktopImages || []);
+        setExistingMobileHeroCarouselImages(data.heroCarouselImages?.mobileImages || []);
         setExistingCarouselImages(data.carouselImages || []);
 
         // Initialize removed images arrays
         setRemovedExistingImages({
           brandImage: false,
-          heroCarousel: Array(data.heroCarouselImages?.length || 0).fill(false),
+          desktopHeroCarousel: Array(data.heroCarouselImages?.desktopImages?.length || 0).fill(false),
+          mobileHeroCarousel: Array(data.heroCarouselImages?.mobileImages?.length || 0).fill(false),
           carousel: Array(data.carouselImages?.length || 0).fill(false)
         });
 
+        // Store original filenames
+        const categoryOriginalImages = data.categories?.map(cat => cat.categoryImage) || [];
+        const brandOriginalImages = data.brands?.map(brand => brand.brandImage) || [];
+        
+        setOriginalCategoryImages(categoryOriginalImages);
+        setOriginalBrandImages(brandOriginalImages);
+
         // Transform categories and brands for the form
-        const transformedCategories = data.categories?.map(cat => ({
+        const transformedCategories = data.categories?.map((cat, index) => ({
           categoryTitle: cat.categoryTitle || '',
           categoryUrl: cat.categoryUrl || '',
           categoryImage: null,
-          categoryImagePreview: cat.categoryImage || ''
+          categoryImagePreview: cat.categoryImage || '',
+          originalImage: cat.categoryImage || '' // Store original filename
         })) || [{ categoryTitle: '', categoryUrl: '', categoryImage: null, categoryImagePreview: '' }];
 
-        const transformedBrands = data.brands?.map(brand => ({
+        const transformedBrands = data.brands?.map((brand, index) => ({
           brandUrl: brand.brandUrl || '',
           brandImage: null,
-          brandImagePreview: brand.brandImage || ''
+          brandImagePreview: brand.brandImage || '',
+          originalImage: brand.brandImage || '' // Store original filename
         })) || [{ brandUrl: '', brandImage: null, brandImagePreview: '' }];
 
         setFormData({
@@ -421,7 +441,7 @@ const EditBrandPage = () => {
     fetchBrandsList();
   }, []);
 
-  // File Handlers for bulk uploads with size validation
+  // File Handlers for bulk uploads with size validation - UPDATED FOR DESKTOP/MOBILE SEPARATION
   const handleBrandImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -446,25 +466,26 @@ const EditBrandPage = () => {
     }
   };
 
-  const handleHeroCarouselImagesChange = async (e) => {
+  // Desktop Hero Carousel Images Handler
+  const handleDesktopHeroCarouselImagesChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
       // Validate all files first
       for (const file of files) {
         const { isValid, width, height } = await validateImageDimensions(
           file,
-          IMAGE_SIZES.heroCarousel.width,
-          IMAGE_SIZES.heroCarousel.height
+          IMAGE_SIZES.desktopHeroCarousel.width,
+          IMAGE_SIZES.desktopHeroCarousel.height
         );
 
         if (!isValid) {
-          setError(`Hero carousel image must be exactly ${IMAGE_SIZES.heroCarousel.width} × ${IMAGE_SIZES.heroCarousel.height} px. Current size: ${width} × ${height} px`);
+          setError(`Desktop hero carousel image must be exactly ${IMAGE_SIZES.desktopHeroCarousel.width} × ${IMAGE_SIZES.desktopHeroCarousel.height} px. Current size: ${width} × ${height} px`);
           return;
         }
       }
 
       // Add new files to existing array (don't replace)
-      setHeroCarouselImages([...heroCarouselImages, ...files]);
+      setDesktopHeroCarouselImages([...desktopHeroCarouselImages, ...files]);
 
       const newPreviews = [];
       files.forEach(file => {
@@ -472,14 +493,52 @@ const EditBrandPage = () => {
         reader.onloadend = () => {
           newPreviews.push(reader.result);
           if (newPreviews.length === files.length) {
-            setHeroCarouselPreviews([...heroCarouselPreviews, ...newPreviews]);
+            setDesktopHeroCarouselPreviews([...desktopHeroCarouselPreviews, ...newPreviews]);
           }
         };
         reader.readAsDataURL(file);
       });
       setError('');
       // Clear validation error for hero carousel
-      setValidationErrors(prev => ({ ...prev, heroCarouselImages: false }));
+      setValidationErrors(prev => ({ ...prev, desktopHeroCarouselImages: false }));
+    }
+  };
+
+  // Mobile Hero Carousel Images Handler
+  const handleMobileHeroCarouselImagesChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // Commented out size validation for mobile images
+      // for (const file of files) {
+      //   const { isValid, width, height } = await validateImageDimensions(
+      //     file,
+      //     IMAGE_SIZES.mobileHeroCarousel.width,
+      //     IMAGE_SIZES.mobileHeroCarousel.height
+      //   );
+
+      //   if (!isValid) {
+      //     setError(`Mobile hero carousel image must be exactly ${IMAGE_SIZES.mobileHeroCarousel.width} × ${IMAGE_SIZES.mobileHeroCarousel.height} px. Current size: ${width} × ${height} px`);
+      //     return;
+      //   }
+      // }
+
+      // Add new files to existing array (don't replace)
+      setMobileHeroCarouselImages([...mobileHeroCarouselImages, ...files]);
+
+      const newPreviews = [];
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push(reader.result);
+          if (newPreviews.length === files.length) {
+            setMobileHeroCarouselPreviews([...mobileHeroCarouselPreviews, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      setError('');
+      // Clear validation error for hero carousel
+      setValidationErrors(prev => ({ ...prev, mobileHeroCarouselImages: false }));
     }
   };
 
@@ -586,10 +645,15 @@ const EditBrandPage = () => {
     }
   };
 
-  // Remove file handlers for bulk uploads
-  const removeHeroCarouselImage = (index) => {
-    setHeroCarouselImages(heroCarouselImages.filter((_, i) => i !== index));
-    setHeroCarouselPreviews(heroCarouselPreviews.filter((_, i) => i !== index));
+  // Remove file handlers for bulk uploads - UPDATED FOR DESKTOP/MOBILE SEPARATION
+  const removeDesktopHeroCarouselImage = (index) => {
+    setDesktopHeroCarouselImages(desktopHeroCarouselImages.filter((_, i) => i !== index));
+    setDesktopHeroCarouselPreviews(desktopHeroCarouselPreviews.filter((_, i) => i !== index));
+  };
+
+  const removeMobileHeroCarouselImage = (index) => {
+    setMobileHeroCarouselImages(mobileHeroCarouselImages.filter((_, i) => i !== index));
+    setMobileHeroCarouselPreviews(mobileHeroCarouselPreviews.filter((_, i) => i !== index));
   };
 
   const removeCarouselImage = (index) => {
@@ -613,7 +677,7 @@ const EditBrandPage = () => {
     setFormData({ ...formData, brands: newBrands });
   };
 
-  // Remove existing images handlers
+  // Remove existing images handlers - UPDATED FOR DESKTOP/MOBILE SEPARATION
   const removeExistingBrandImage = () => {
     setRemovedExistingImages(prev => ({
       ...prev,
@@ -622,13 +686,37 @@ const EditBrandPage = () => {
     setExistingBrandImage('');
   };
 
-  const removeExistingHeroCarouselImage = (index) => {
+  // For category images
+  const removeExistingCategoryImage = (categoryIndex) => {
+    const newCategories = [...formData.categories];
+    newCategories[categoryIndex].categoryImagePreview = ''; // Clear the preview
+    setFormData({ ...formData, categories: newCategories });
+  };
+
+  // For brand logos
+  const removeExistingBrandLogo = (brandIndex) => {
+    const newBrands = [...formData.brands];
+    newBrands[brandIndex].brandImagePreview = ''; // Clear the preview
+    setFormData({ ...formData, brands: newBrands });
+  };
+
+  // For desktop hero carousel
+  const removeExistingDesktopHeroCarouselImage = (index) => {
     setRemovedExistingImages(prev => ({
       ...prev,
-      heroCarousel: prev.heroCarousel.map((item, i) => i === index ? true : item)
+      desktopHeroCarousel: prev.desktopHeroCarousel.map((item, i) => i === index ? true : item)
     }));
   };
 
+  // For mobile hero carousel
+  const removeExistingMobileHeroCarouselImage = (index) => {
+    setRemovedExistingImages(prev => ({
+      ...prev,
+      mobileHeroCarousel: prev.mobileHeroCarousel.map((item, i) => i === index ? true : item)
+    }));
+  };
+
+  // For carousel images
   const removeExistingCarouselImage = (index) => {
     setRemovedExistingImages(prev => ({
       ...prev,
@@ -636,26 +724,19 @@ const EditBrandPage = () => {
     }));
   };
 
-  const removeExistingCategoryImage = (categoryIndex) => {
-    const newCategories = [...formData.categories];
-    newCategories[categoryIndex].categoryImagePreview = '';
-    setFormData({ ...formData, categories: newCategories });
-  };
-
-  const removeExistingBrandLogo = (brandIndex) => {
-    const newBrands = [...formData.brands];
-    newBrands[brandIndex].brandImagePreview = '';
-    setFormData({ ...formData, brands: newBrands });
-  };
-
   // Helper function to filter existing images based on removal status
   const getFilteredExistingImages = (images, removedIndices) => {
     return images.filter((_, index) => !removedIndices[index]);
   };
 
-  const filteredExistingHeroCarouselImages = getFilteredExistingImages(
-    existingHeroCarouselImages,
-    removedExistingImages.heroCarousel
+  const filteredExistingDesktopHeroCarouselImages = getFilteredExistingImages(
+    existingDesktopHeroCarouselImages,
+    removedExistingImages.desktopHeroCarousel
+  );
+
+  const filteredExistingMobileHeroCarouselImages = getFilteredExistingImages(
+    existingMobileHeroCarouselImages,
+    removedExistingImages.mobileHeroCarousel
   );
 
   const filteredExistingCarouselImages = getFilteredExistingImages(
@@ -758,7 +839,7 @@ const EditBrandPage = () => {
     }
   };
 
-  // Validation function
+  // Validation function - UPDATED FOR DESKTOP/MOBILE SEPARATION
   const validateForm = () => {
     const errors = {};
 
@@ -783,13 +864,18 @@ const EditBrandPage = () => {
     }
 
     // Brand image validation
-    if (!existingBrandImage && !brandImage) {
+    if (!existingBrandImage && !brandImage && !removedExistingImages.brandImage) {
       errors.brandImage = true;
     }
 
-    // Hero carousel images validation
-    if (filteredExistingHeroCarouselImages.length === 0 && heroCarouselImages.length === 0) {
-      errors.heroCarouselImages = true;
+    // Desktop Hero carousel images validation
+    if (filteredExistingDesktopHeroCarouselImages.length === 0 && desktopHeroCarouselImages.length === 0) {
+      errors.desktopHeroCarouselImages = true;
+    }
+
+    // Mobile Hero carousel images validation
+    if (filteredExistingMobileHeroCarouselImages.length === 0 && mobileHeroCarouselImages.length === 0) {
+      errors.mobileHeroCarouselImages = true;
     }
 
     // Carousel images validation
@@ -802,7 +888,7 @@ const EditBrandPage = () => {
       if (!category.categoryTitle.trim()) {
         errors[`categoryTitle_${index}`] = true;
       }
-      // Category image validation
+      // Category image validation - only if no existing image and no new image
       if (!category.categoryImagePreview && !category.categoryImage) {
         errors[`categoryImage_${index}`] = true;
       }
@@ -837,6 +923,7 @@ const EditBrandPage = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // Update the handleSubmit function
   const handleSubmit = async () => {
     // Validate form before submission
     if (!validateForm()) {
@@ -857,14 +944,19 @@ const EditBrandPage = () => {
         }
       });
 
-      // Append arrays as JSON (without image files)
-      const categoriesForJson = formData.categories.map(cat => ({
+      // Prepare categories data - include existing image info
+      const categoriesForJson = formData.categories.map((cat, index) => ({
         categoryTitle: cat.categoryTitle,
-        categoryUrl: cat.categoryUrl
+        categoryUrl: cat.categoryUrl,
+        // Include existing image filename from original array
+        existingImage: cat.originalImage || ''
       }));
 
-      const brandsForJson = formData.brands.map(brand => ({
-        brandUrl: brand.brandUrl
+      // Prepare brands data - include existing image info
+      const brandsForJson = formData.brands.map((brand, index) => ({
+        brandUrl: brand.brandUrl,
+        // Include existing image filename from original array
+        existingImage: brand.originalImage || ''
       }));
 
       submitFormData.append('categories', JSON.stringify(categoriesForJson));
@@ -874,42 +966,110 @@ const EditBrandPage = () => {
 
       // Append removed existing images info
       submitFormData.append('removedBrandImage', removedExistingImages.brandImage.toString());
-      submitFormData.append('removedHeroCarouselIndices', JSON.stringify(
-        removedExistingImages.heroCarousel
-          .map((removed, index) => removed ? index : -1)
-          .filter(index => index !== -1)
-      ));
-      submitFormData.append('removedCarouselIndices', JSON.stringify(
-        removedExistingImages.carousel
-          .map((removed, index) => removed ? index : -1)
-          .filter(index => index !== -1)
-      ));
 
-      // Append files only if they are selected (for update)
+      // Get indices of removed desktop hero carousel images
+      const removedDesktopHeroIndices = removedExistingImages.desktopHeroCarousel
+        .map((removed, index) => removed ? index : -1)
+        .filter(index => index !== -1);
+      submitFormData.append('removedDesktopHeroIndices', JSON.stringify(removedDesktopHeroIndices));
+
+      // Get indices of removed mobile hero carousel images
+      const removedMobileHeroIndices = removedExistingImages.mobileHeroCarousel
+        .map((removed, index) => removed ? index : -1)
+        .filter(index => index !== -1);
+      submitFormData.append('removedMobileHeroIndices', JSON.stringify(removedMobileHeroIndices));
+
+      // Get indices of removed carousel images
+      const removedCarouselIndices = removedExistingImages.carousel
+        .map((removed, index) => removed ? index : -1)
+        .filter(index => index !== -1);
+      submitFormData.append('removedCarouselIndices', JSON.stringify(removedCarouselIndices));
+
+      // Determine which categories have removed images
+      const removedCategoryIndices = formData.categories
+        .map((cat, index) => {
+          // Category image is removed if:
+          // 1. It had an original image
+          // 2. No new image was selected
+          // 3. The image preview is now empty
+          const hadOriginalImage = cat.originalImage && cat.originalImage.trim() !== '';
+          const noNewImage = !cat.categoryImage;
+          const imageRemoved = hadOriginalImage && 
+                               noNewImage && 
+                               (!cat.categoryImagePreview || cat.categoryImagePreview === '');
+
+          return imageRemoved ? index : -1;
+        })
+        .filter(index => index !== -1);
+      submitFormData.append('removedCategoryIndices', JSON.stringify(removedCategoryIndices));
+
+      // Determine which categories have replaced images (new image selected for existing category)
+      const replacedCategoryIndices = formData.categories
+        .map((cat, index) => {
+          const hasOriginalImage = cat.originalImage && cat.originalImage.trim() !== '';
+          const hasNewImage = cat.categoryImage !== null;
+
+          // Image is replaced if there's both an original image and a new image selected
+          return (hasOriginalImage && hasNewImage) ? index : -1;
+        })
+        .filter(index => index !== -1);
+      submitFormData.append('replacedCategoryIndices', JSON.stringify(replacedCategoryIndices));
+
+      // Determine which brands have removed images
+      const removedBrandLogoIndices = formData.brands
+        .map((brand, index) => {
+          const hadOriginalImage = brand.originalImage && brand.originalImage.trim() !== '';
+          const noNewImage = !brand.brandImage;
+          const imageRemoved = hadOriginalImage && 
+                               noNewImage && 
+                               (!brand.brandImagePreview || brand.brandImagePreview === '');
+
+          return imageRemoved ? index : -1;
+        })
+        .filter(index => index !== -1);
+      submitFormData.append('removedBrandLogoIndices', JSON.stringify(removedBrandLogoIndices));
+
+      // Determine which brands have replaced images
+      const replacedBrandLogoIndices = formData.brands
+        .map((brand, index) => {
+          const hasOriginalImage = brand.originalImage && brand.originalImage.trim() !== '';
+          const hasNewImage = brand.brandImage !== null;
+
+          return (hasOriginalImage && hasNewImage) ? index : -1;
+        })
+        .filter(index => index !== -1);
+      submitFormData.append('replacedBrandLogoIndices', JSON.stringify(replacedBrandLogoIndices));
+
+      // Append files
       if (brandImage) {
         submitFormData.append('brandImages', brandImage);
       }
 
-      // Append new hero carousel images (these will be ADDED to existing ones)
-      heroCarouselImages.forEach(image => {
-        submitFormData.append('heroCarouselImages', image);
+      // Append desktop hero carousel images
+      desktopHeroCarouselImages.forEach(image => {
+        submitFormData.append('desktopHeroCarouselImages', image);
       });
 
-      // Append individual category images only if they are selected
+      // Append mobile hero carousel images
+      mobileHeroCarouselImages.forEach(image => {
+        submitFormData.append('mobileHeroCarouselImages', image);
+      });
+
+      // Append category images - only for indices that have new images
       formData.categories.forEach((category, index) => {
         if (category.categoryImage) {
           submitFormData.append('categoryImages', category.categoryImage);
         }
       });
 
-      // Append individual brand logos only if they are selected
+      // Append brand logos - only for indices that have new images
       formData.brands.forEach((brandItem, index) => {
         if (brandItem.brandImage) {
           submitFormData.append('brandLogos', brandItem.brandImage);
         }
       });
 
-      // Append new carousel images (these will be ADDED to existing ones)
+      // Append carousel images
       carouselImages.forEach(image => {
         submitFormData.append('carouselImages', image);
       });
@@ -947,7 +1107,6 @@ const EditBrandPage = () => {
   return (
     <div>
       <Breadcrumb title="Edit Brand Page" items={BCrumb} />
-
 
       <Grid container spacing={2} marginTop={4}>
         {/* Brand Selection */}
@@ -1059,17 +1218,35 @@ const EditBrandPage = () => {
           />
         </Grid>
 
+        {/* Desktop Hero Carousel Images */}
         <Grid size={12}>
           <BulkFilePreviewSection
-            title={IMAGE_SIZES.heroCarousel.label}
-            previews={heroCarouselPreviews}
-            onRemove={removeHeroCarouselImage}
+            title={IMAGE_SIZES.desktopHeroCarousel.label}
+            previews={desktopHeroCarouselPreviews}
+            onRemove={removeDesktopHeroCarouselImage}
             acceptMultiple={true}
-            fileHandler={handleHeroCarouselImagesChange}
-            existingImages={filteredExistingHeroCarouselImages}
-            onRemoveExisting={removeExistingHeroCarouselImage}
-            error={validationErrors.heroCarouselImages}
-            imageSize={`${IMAGE_SIZES.heroCarousel.width} × ${IMAGE_SIZES.heroCarousel.height} px`}
+            fileHandler={handleDesktopHeroCarouselImagesChange}
+            existingImages={filteredExistingDesktopHeroCarouselImages}
+            onRemoveExisting={removeExistingDesktopHeroCarouselImage}
+            error={validationErrors.desktopHeroCarouselImages}
+            imageSize={`${IMAGE_SIZES.desktopHeroCarousel.width} × ${IMAGE_SIZES.desktopHeroCarousel.height} px`}
+            type="desktop"
+          />
+        </Grid>
+
+        {/* Mobile Hero Carousel Images */}
+        <Grid size={12}>
+          <BulkFilePreviewSection
+            title={IMAGE_SIZES.mobileHeroCarousel.label}
+            previews={mobileHeroCarouselPreviews}
+            onRemove={removeMobileHeroCarouselImage}
+            acceptMultiple={true}
+            fileHandler={handleMobileHeroCarouselImagesChange}
+            existingImages={filteredExistingMobileHeroCarouselImages}
+            onRemoveExisting={removeExistingMobileHeroCarouselImage}
+            error={validationErrors.mobileHeroCarouselImages}
+            imageSize={`${IMAGE_SIZES.mobileHeroCarousel.label}`}
+            type="mobile"
           />
         </Grid>
 

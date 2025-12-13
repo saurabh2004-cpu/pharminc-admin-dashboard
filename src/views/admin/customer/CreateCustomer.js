@@ -207,7 +207,7 @@ const CreateCustomer = () => {
 
   const handleSubmit = async () => {
     // Validation
-    if (!formData.customerId.trim()) {
+    if (!formData?.customerId.trim()) {
       setError('Please enter a customer ID');
       return;
     }
@@ -221,6 +221,11 @@ const CreateCustomer = () => {
     }
     if (!formData.CustomerPhoneNo) {
       setError('Please enter a customer phone number');
+      return;
+    }
+
+    if (!formData.netTerms) {
+      setError('Please select a net terms');
       return;
     }
 
@@ -385,7 +390,7 @@ const CreateCustomer = () => {
       const response = await axiosInstance.get('/admin/get-latest-customer-id');
 
       if (response.data.statusCode === 200) {
-        setCustomerId(response.data.data.customerId);
+        setCustomerId(response.data.data?.customerId);
       }
 
     } catch (error) {
@@ -687,7 +692,10 @@ const CreateCustomer = () => {
               disabled={loading}
               displayEmpty
             >
-              <MenuItem value="">Select Net Terms</MenuItem>
+              <MenuItem value="">
+                Select Net Terms
+                <span style={{ color: 'red' }}>*</span>
+              </MenuItem>
               {netTermsList.map((netTerm) => (
                 <MenuItem key={netTerm._id} value={netTerm._id}>
                   {netTerm.netTermName}

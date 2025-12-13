@@ -23,10 +23,11 @@ import { useNavigate } from 'react-router';
 import { CircularProgress, Backdrop } from '@mui/material';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
-// Image size configurations
+// Image size configurations - ADDED MOBILE HERO CAROUSEL
 const IMAGE_SIZES = {
   brandImage: { width: 600, height: 300, label: 'Brand Image (600 × 300 px)' },
-  heroCarousel: { width: 4478, height: 1415, label: 'Hero Carousel Images (4478 × 1415 px)' },
+  desktopHeroCarousel: { width: 4478, height: 1415, label: 'Desktop Hero Carousel Images (4478 × 1415 px)' },
+  mobileHeroCarousel: { label: 'Mobile Hero Carousel Images (768 × 400 px)' },
   categoryImage: { width: 1188, height: 1064, label: 'Category Images (1188 × 1064 px)' },
   brandLogo: { width: 2332, height: 868, label: 'Brand Logos (2332 × 868 px)' },
   carouselImage: { width: 694, height: 228, label: 'Carousel Images (694 × 228 px)' }
@@ -201,11 +202,13 @@ const CreateBrandPage = () => {
   const [loading, setLoading] = useState(false);
   const [brands, setBrands] = useState([]);
 
-  // File states for bulk uploads
+  // File states for bulk uploads - UPDATED TO SEPARATE DESKTOP AND MOBILE
   const [brandImage, setBrandImage] = useState(null);
   const [brandImagePreview, setBrandImagePreview] = useState('');
-  const [heroCarouselImages, setHeroCarouselImages] = useState([]);
-  const [heroCarouselPreviews, setHeroCarouselPreviews] = useState([]);
+  const [desktopHeroCarouselImages, setDesktopHeroCarouselImages] = useState([]);
+  const [desktopHeroCarouselPreviews, setDesktopHeroCarouselPreviews] = useState([]);
+  const [mobileHeroCarouselImages, setMobileHeroCarouselImages] = useState([]);
+  const [mobileHeroCarouselPreviews, setMobileHeroCarouselPreviews] = useState([]);
   const [carouselImages, setCarouselImages] = useState([]);
   const [carouselImagePreviews, setCarouselImagePreviews] = useState([]);
 
@@ -235,7 +238,7 @@ const CreateBrandPage = () => {
     });
   };
 
-  // File Handlers for bulk uploads with size validation
+  // File Handlers for bulk uploads with size validation - UPDATED FOR DESKTOP/MOBILE SEPARATION
   const handleBrandImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -258,24 +261,25 @@ const CreateBrandPage = () => {
     }
   };
 
-  const handleHeroCarouselImagesChange = async (e) => {
+  // Desktop Hero Carousel Images Handler
+  const handleDesktopHeroCarouselImagesChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
       // Validate all files first
       for (const file of files) {
         const { isValid, width, height } = await validateImageDimensions(
           file,
-          IMAGE_SIZES.heroCarousel.width,
-          IMAGE_SIZES.heroCarousel.height
+          IMAGE_SIZES.desktopHeroCarousel.width,
+          IMAGE_SIZES.desktopHeroCarousel.height
         );
 
         if (!isValid) {
-          setError(`Hero carousel image must be exactly ${IMAGE_SIZES.heroCarousel.width} × ${IMAGE_SIZES.heroCarousel.height} px. Current size: ${width} × ${height} px`);
+          setError(`Desktop hero carousel image must be exactly ${IMAGE_SIZES.desktopHeroCarousel.width} × ${IMAGE_SIZES.desktopHeroCarousel.height} px. Current size: ${width} × ${height} px`);
           return;
         }
       }
 
-      setHeroCarouselImages([...heroCarouselImages, ...files]);
+      setDesktopHeroCarouselImages([...desktopHeroCarouselImages, ...files]);
 
       const newPreviews = [];
       files.forEach(file => {
@@ -283,7 +287,42 @@ const CreateBrandPage = () => {
         reader.onloadend = () => {
           newPreviews.push(reader.result);
           if (newPreviews.length === files.length) {
-            setHeroCarouselPreviews([...heroCarouselPreviews, ...newPreviews]);
+            setDesktopHeroCarouselPreviews([...desktopHeroCarouselPreviews, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      setError('');
+    }
+  };
+
+  // Mobile Hero Carousel Images Handler
+  const handleMobileHeroCarouselImagesChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // Validate all files first
+      // for (const file of files) {
+      //   const { isValid, width, height } = await validateImageDimensions(
+      //     file,
+      //     IMAGE_SIZES.mobileHeroCarousel.width,
+      //     IMAGE_SIZES.mobileHeroCarousel.height
+      //   );
+
+      //   if (!isValid) {
+      //     setError(`Mobile hero carousel image must be exactly ${IMAGE_SIZES.mobileHeroCarousel.width} × ${IMAGE_SIZES.mobileHeroCarousel.height} px. Current size: ${width} × ${height} px`);
+      //     return;
+      //   }
+      // }
+
+      setMobileHeroCarouselImages([...mobileHeroCarouselImages, ...files]);
+
+      const newPreviews = [];
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push(reader.result);
+          if (newPreviews.length === files.length) {
+            setMobileHeroCarouselPreviews([...mobileHeroCarouselPreviews, ...newPreviews]);
           }
         };
         reader.readAsDataURL(file);
@@ -382,10 +421,15 @@ const CreateBrandPage = () => {
     }
   };
 
-  // Remove file handlers for bulk uploads
-  const removeHeroCarouselImage = (index) => {
-    setHeroCarouselImages(heroCarouselImages.filter((_, i) => i !== index));
-    setHeroCarouselPreviews(heroCarouselPreviews.filter((_, i) => i !== index));
+  // Remove file handlers for bulk uploads - UPDATED FOR DESKTOP/MOBILE SEPARATION
+  const removeDesktopHeroCarouselImage = (index) => {
+    setDesktopHeroCarouselImages(desktopHeroCarouselImages.filter((_, i) => i !== index));
+    setDesktopHeroCarouselPreviews(desktopHeroCarouselPreviews.filter((_, i) => i !== index));
+  };
+
+  const removeMobileHeroCarouselImage = (index) => {
+    setMobileHeroCarouselImages(mobileHeroCarouselImages.filter((_, i) => i !== index));
+    setMobileHeroCarouselPreviews(mobileHeroCarouselPreviews.filter((_, i) => i !== index));
   };
 
   const removeCarouselImage = (index) => {
@@ -544,8 +588,12 @@ const CreateBrandPage = () => {
         setError('Please select a brand image');
         return;
       }
-      if (heroCarouselImages.length === 0) {
-        setError('Please select at least one hero carousel image');
+      if (desktopHeroCarouselImages.length === 0) {
+        setError('Please select at least one desktop hero carousel image');
+        return;
+      }
+      if (mobileHeroCarouselImages.length === 0) {
+        setError('Please select at least one mobile hero carousel image');
         return;
       }
       if (carouselImages.length === 0) {
@@ -641,8 +689,14 @@ const CreateBrandPage = () => {
         submitFormData.append('brandImages', brandImage);
       }
 
-      heroCarouselImages.forEach(image => {
-        submitFormData.append('heroCarouselImages', image);
+      // Append desktop hero carousel images
+      desktopHeroCarouselImages.forEach(image => {
+        submitFormData.append('desktopHeroCarouselImages', image);
+      });
+
+      // Append mobile hero carousel images
+      mobileHeroCarouselImages.forEach(image => {
+        submitFormData.append('mobileHeroCarouselImages', image);
       });
 
       // Append individual category images
@@ -659,6 +713,7 @@ const CreateBrandPage = () => {
         }
       });
 
+      // Append carousel images
       carouselImages.forEach(image => {
         submitFormData.append('carouselImages', image);
       });
@@ -703,8 +758,10 @@ const CreateBrandPage = () => {
         // Clear all file states
         setBrandImage(null);
         setBrandImagePreview('');
-        setHeroCarouselImages([]);
-        setHeroCarouselPreviews([]);
+        setDesktopHeroCarouselImages([]);
+        setDesktopHeroCarouselPreviews([]);
+        setMobileHeroCarouselImages([]);
+        setMobileHeroCarouselPreviews([]);
         setCarouselImages([]);
         setCarouselImagePreviews([]);
 
@@ -822,14 +879,27 @@ const CreateBrandPage = () => {
           />
         </Grid>
 
+        {/* Desktop Hero Carousel Images */}
         <Grid size={12}>
           <BulkFilePreviewSection
-            title={IMAGE_SIZES.heroCarousel.label}
-            previews={heroCarouselPreviews}
-            onRemove={removeHeroCarouselImage}
+            title={IMAGE_SIZES.desktopHeroCarousel.label + ' *'}
+            previews={desktopHeroCarouselPreviews}
+            onRemove={removeDesktopHeroCarouselImage}
             acceptMultiple={true}
-            fileHandler={handleHeroCarouselImagesChange}
-            imageSize={`${IMAGE_SIZES.heroCarousel.width} × ${IMAGE_SIZES.heroCarousel.height} px`}
+            fileHandler={handleDesktopHeroCarouselImagesChange}
+            imageSize={`${IMAGE_SIZES.desktopHeroCarousel.width} × ${IMAGE_SIZES.desktopHeroCarousel.height} px`}
+          />
+        </Grid>
+
+        {/* Mobile Hero Carousel Images */}
+        <Grid size={12}>
+          <BulkFilePreviewSection
+            title={IMAGE_SIZES.mobileHeroCarousel.label + ' *'}
+            previews={mobileHeroCarouselPreviews}
+            onRemove={removeMobileHeroCarouselImage}
+            acceptMultiple={true}
+            fileHandler={handleMobileHeroCarouselImagesChange}
+            imageSize={`${IMAGE_SIZES.mobileHeroCarousel.width} × ${IMAGE_SIZES.mobileHeroCarousel.height} px`}
           />
         </Grid>
 
