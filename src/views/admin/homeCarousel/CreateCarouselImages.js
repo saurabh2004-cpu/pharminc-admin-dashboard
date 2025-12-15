@@ -232,15 +232,15 @@ const CreateCarouselImages = () => {
         }
 
         // Check if all URLs are filled
-        if (desktopImages.some(img => !img.url || img.url.trim() === '')) {
-            setError('Please provide URL for all desktop images.');
-            return false;
-        }
+        // if (desktopImages.some(img => !img.url || img.url.trim() === '')) {
+        //     setError('Please provide URL for all desktop images.');
+        //     return false;
+        // }
 
-        if (mobileImages.some(img => !img.url || img.url.trim() === '')) {
-            setError('Please provide URL for all mobile images.');
-            return false;
-        }
+        // if (mobileImages.some(img => !img.url || img.url.trim() === '')) {
+        //     setError('Please provide URL for all mobile images.');
+        //     return false;
+        // }
 
         return true;
     };
@@ -497,7 +497,7 @@ const CreateCarouselImages = () => {
                     </CustomFormLabel>
 
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        Upload mobile carousel images (Recommended: 768x400px)
+                        Upload mobile carousel images (Recommended: 400x768px)
                     </Typography>
 
                     <input
