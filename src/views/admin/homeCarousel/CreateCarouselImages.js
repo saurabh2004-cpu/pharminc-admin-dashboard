@@ -231,6 +231,7 @@ const CreateCarouselImages = () => {
             return false;
         }
 
+        // new
         // Check if all URLs are filled
         // if (desktopImages.some(img => !img.url || img.url.trim() === '')) {
         //     setError('Please provide URL for all desktop images.');
