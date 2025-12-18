@@ -47,7 +47,11 @@ const EditMetaData = () => {
         'search',
         'sign-up',
         'thank-you',
-        'wishlist'
+        'wishlist',
+        'our-story',
+        'privacy-policy',
+        'terms-and-conditions',
+        'sales-rep-login'
     ]);
 
     // Fetch existing metadata by ID
@@ -154,8 +158,8 @@ const EditMetaData = () => {
     return (
         <div>
             <Breadcrumb title="Edit Meta Data" items={BCrumb} />
-            
-            
+
+
 
             <Grid container>
                 {/* Page Selection (Read-only/Disabled) */}

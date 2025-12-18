@@ -50,7 +50,11 @@ const CreateMetaData = () => {
         'search',
         'sign-up',
         'thank-you',
-        'wishlist'
+        'wishlist',
+        'our-story',
+        'privacy-policy',
+        'terms-and-conditions',
+        'sales-rep-login'
     ]);
 
     const handleSubmit = async () => {
