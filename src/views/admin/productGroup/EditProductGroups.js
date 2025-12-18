@@ -416,15 +416,17 @@ const EditProductGroups = () => {
     formDataToSend.append('sku', formData.sku);
     formDataToSend.append('eachPrice', formData.eachPrice);
     formDataToSend.append('price', formData.price.toString());
-    formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
     formDataToSend.append('taxable', formData.taxable.toString());
 
-    // Append all other fields
+    // **FIX: Append optional ObjectId fields - send 'null' string for empty values**
+    formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne || 'null');
+    formDataToSend.append('pricingGroup', formData.pricingGroup || 'null');
+    formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo || 'null');
+    formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree || 'null');
+    formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour || 'null');
+
+    // Append other optional fields
     if (formData.primaryUnitsType) formDataToSend.append('primaryUnitsType', formData.primaryUnitsType);
-    if (formData.pricingGroup) formDataToSend.append('pricingGroup', formData.pricingGroup);
-    if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
-    if (formData.commerceCategoriesThree) formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree);
-    if (formData.commerceCategoriesFour) formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour);
     if (formData.storeDescription) formDataToSend.append('storeDescription', formData.storeDescription);
     if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
@@ -445,6 +447,7 @@ const EditProductGroups = () => {
       formDataToSend.append('images', file);
     });
 
+    // Append images to delete
     imagesToDelete.forEach((imageUrl) => {
       formDataToSend.append('imagesToDelete', imageUrl);
     });

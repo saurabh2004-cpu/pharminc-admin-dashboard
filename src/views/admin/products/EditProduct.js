@@ -180,11 +180,6 @@ const EditProduct = () => {
       setError('Please enter a price');
       return;
     }
-    // if (!formData.pricingGroup) {
-    //   setError('Please enter a pricing group');
-    //   return;
-    // }
-
 
     if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
       setError('Compare price must be greater than each price');
@@ -204,7 +199,9 @@ const EditProduct = () => {
       formDataToSend.append('ProductName', formData.ProductName);
       formDataToSend.append('eachPrice', formData.eachPrice);
       formDataToSend.append('stockLevel', formData.stockLevel);
-      formDataToSend.append('pricingGroup', formData.pricingGroup);
+
+      // **FIX: Send null for empty optional ObjectId fields**
+      formDataToSend.append('pricingGroup', formData.pricingGroup || 'null');
 
       // FIXED: Always append sequence field, even when empty
       if (formData.sequence === null || formData.sequence === '' || formData.sequence === undefined) {
@@ -218,16 +215,17 @@ const EditProduct = () => {
         formDataToSend.append('typesOfPacks', pack);
       });
 
-      // Append optional fields
-      if (formData.commerceCategoriesOne) formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
-      if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
-      if (formData.commerceCategoriesThree) formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree);
-      if (formData.commerceCategoriesFour) formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour);
+      // **FIX: Append optional fields - send 'null' string for empty values**
+      formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne || 'null');
+      formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo || 'null');
+      formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree || 'null');
+      formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour || 'null');
+      formDataToSend.append('badge', formData.badge || 'null');
+
       if (formData.storeDescription) formDataToSend.append('storeDescription', formData.storeDescription);
       if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
       if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
       if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
-      if (formData.badge) formDataToSend.append('badge', formData.badge);
 
       if (formData.comparePrice === null || formData.comparePrice === '' || formData.comparePrice === undefined) {
         formDataToSend.append('comparePrice', '');

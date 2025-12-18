@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
 
   //for the local setup
   // baseURL: import.meta.env.VITE_BASE_BACKEND_URL,
-  
+
   headers: {
     'Content-Type': 'multipart/form-data'
   },
