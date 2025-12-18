@@ -11,7 +11,7 @@ import Navigation from 'src/layouts/full/vertical/header/Navigation';
 import Logo from 'src/layouts/full/shared/logo/Logo';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-import { ProductProvider } from 'src/context/EcommerceContext/index'
+// import { ProductProvider } from 'src/context/EcommerceContext/index'
 
 const Header = () => {
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down('lg'));
@@ -37,7 +37,7 @@ const Header = () => {
   }));
 
   return (
-    <ProductProvider>
+    // <ProductProvider>
       <AppBarStyled position="sticky" color="default" elevation={8}>
         <ToolbarStyled
           sx={{
@@ -94,7 +94,7 @@ const Header = () => {
           </Stack>
         </ToolbarStyled>
       </AppBarStyled>
-    </ProductProvider>
+    // </ProductProvider>  //commented header context
   );
 };
 
