@@ -78,7 +78,7 @@ const BadgeList = () => {
     }, []);
 
     return (
-        <ProductProvider>
+        // <ProductProvider>
             <PageContainer title="Badges List" description="this is Brands List page">
                 {/* breadcrumb */}
                 <Breadcrumb title="Brands List" items={BCrumb} />
@@ -99,7 +99,7 @@ const BadgeList = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider>
+        // </ProductProvider>
     );
 };
 

@@ -85,7 +85,7 @@ const SubCategoryList = () => {
     }, []);
 
     return (
-        <ProductProvider>
+        // <ProductProvider>
             <PageContainer title="Sub Category Two List" description="this is Brands List page">
                 {/* breadcrumb */}
                 <Breadcrumb title="Sub Category Two List" items={BCrumb} />
@@ -106,7 +106,7 @@ const SubCategoryList = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider>
+        // </ProductProvider>
     );
 };
 

@@ -229,112 +229,112 @@ let cartItems = [];
 
 export const Ecommercehandlers = [
   //  Mock api endpoint to get products
-  // http.get('/api/data/eCommerce/ProductsData', () => {
-  //   try {
-  //     return HttpResponse.json({
-  //       status: 200,
-  //       msg: 'Success',
-  //       data: ProductsData,
-  //     });
-  //   } catch (error) {
-  //     return HttpResponse.json({
-  //       status: 400,
-  //       msg: 'Failed to fetch products',
-  //       data: error,
-  //     });
-  //   }
-  // }),
-  // //  Mock api endpoint to get Cart item
-  // http.post('/api/eCommerce/carts', async () => {
-  //   try {
-  //     return HttpResponse.json({ status: 200, msg: 'success', data: cartItems });
-  //   } catch (error) {
-  //     return HttpResponse.json({ status: 400, msg: 'failed', error });
-  //   }
-  // }),
+  http.get('/api/data/eCommerce/ProductsData', () => {
+    try {
+      return HttpResponse.json({
+        status: 200,
+        msg: 'Success',
+        data: ProductsData,
+      });
+    } catch (error) {
+      return HttpResponse.json({
+        status: 400,
+        msg: 'Failed to fetch products',
+        data: error,
+      });
+    }
+  }),
+  //  Mock api endpoint to get Cart item
+  http.post('/api/eCommerce/carts', async () => {
+    try {
+      return HttpResponse.json({ status: 200, msg: 'success', data: cartItems });
+    } catch (error) {
+      return HttpResponse.json({ status: 400, msg: 'failed', error });
+    }
+  }),
 
-  // // Mock endpoint to add a product to the cart
-  // http.post('/api/data/eCommerce/add', async ({ request }) => {
-  //   try {
-  //     const { productId } = (await request.json());
-  //     const productToAdd = ProductsData.find((product) => product.id === productId);
-  //     if (!productToAdd) {
-  //       return HttpResponse.json({ status: 400, msg: 'Product not found' });
-  //     }
-  //     const isItemInCart = cartItems.find(
-  //       (cartItem) => cartItem.id === productToAdd?.id,
-  //     );
-  //     if (isItemInCart) {
-  //       // if product available in the cart then update product to cartItems state
-  //       let newItems = cartItems.map((cartItem) =>
-  //         cartItem.id === productToAdd?.id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem,
-  //       );
-  //       cartItems = newItems;
-  //     } else {
-  //       // Add the product to cartItems state
-  //       cartItems.push({ ...productToAdd, qty: 1 });
-  //     }
+  // Mock endpoint to add a product to the cart
+  http.post('/api/data/eCommerce/add', async ({ request }) => {
+    try {
+      const { productId } = (await request.json());
+      const productToAdd = ProductsData.find((product) => product.id === productId);
+      if (!productToAdd) {
+        return HttpResponse.json({ status: 400, msg: 'Product not found' });
+      }
+      const isItemInCart = cartItems.find(
+        (cartItem) => cartItem.id === productToAdd?.id,
+      );
+      if (isItemInCart) {
+        // if product available in the cart then update product to cartItems state
+        let newItems = cartItems.map((cartItem) =>
+          cartItem.id === productToAdd?.id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem,
+        );
+        cartItems = newItems;
+      } else {
+        // Add the product to cartItems state
+        cartItems.push({ ...productToAdd, qty: 1 });
+      }
 
-  //     return HttpResponse.json({ status: 200, msg: 'Success', data: cartItems });
-  //   } catch (error) {
-  //     return HttpResponse.json({
-  //       status: 400,
-  //       msg: 'Internal server error',
-  //       data: error,
-  //     });
-  //   }
-  // }),
+      return HttpResponse.json({ status: 200, msg: 'Success', data: cartItems });
+    } catch (error) {
+      return HttpResponse.json({
+        status: 400,
+        msg: 'Internal server error',
+        data: error,
+      });
+    }
+  }),
 
-  // // Mock endpoint to increment - decrementqty of a product in the cart
-  // http.put('/api/eCommerce/carts/increment-decrementqty', async ({ request }) => {
-  //   try {
-  //     const { id, action } = (await request.json());
-  //     const productToAdd = ProductsData.find((product) => product.id === id);
-  //     if (!productToAdd) {
-  //       return HttpResponse.json({ status: 400, msg: 'Product not found' });
-  //     }
-  //     if (action === 'Increment') {
-  //       let newItems = cartItems.map((cartItem) =>
-  //         cartItem.id === productToAdd?.id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem,
-  //       );
-  //       cartItems = newItems;
-  //     } else {
-  //       let newItems = cartItems.map((cartItem) =>
-  //         cartItem.id === productToAdd?.id
-  //           ? {
-  //             ...cartItem,
-  //             qty: cartItem.qty > 0 ? cartItem.qty - 1 : cartItem.qty,
-  //           }
-  //           : cartItem,
-  //       );
-  //       cartItems = newItems;
-  //     }
+  // Mock endpoint to increment - decrementqty of a product in the cart
+  http.put('/api/eCommerce/carts/increment-decrementqty', async ({ request }) => {
+    try {
+      const { id, action } = (await request.json());
+      const productToAdd = ProductsData.find((product) => product.id === id);
+      if (!productToAdd) {
+        return HttpResponse.json({ status: 400, msg: 'Product not found' });
+      }
+      if (action === 'Increment') {
+        let newItems = cartItems.map((cartItem) =>
+          cartItem.id === productToAdd?.id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem,
+        );
+        cartItems = newItems;
+      } else {
+        let newItems = cartItems.map((cartItem) =>
+          cartItem.id === productToAdd?.id
+            ? {
+              ...cartItem,
+              qty: cartItem.qty > 0 ? cartItem.qty - 1 : cartItem.qty,
+            }
+            : cartItem,
+        );
+        cartItems = newItems;
+      }
 
-  //     return HttpResponse.json({ status: 200, msg: 'Success', data: cartItems });
-  //   } catch (error) {
-  //     return HttpResponse.json({
-  //       status: 400,
-  //       msg: 'Internal server error',
-  //       data: error,
-  //     });
-  //   }
-  // }),
+      return HttpResponse.json({ status: 200, msg: 'Success', data: cartItems });
+    } catch (error) {
+      return HttpResponse.json({
+        status: 400,
+        msg: 'Internal server error',
+        data: error,
+      });
+    }
+  }),
 
-  // //Mock endpoint to remove an item from the cart
-  // http.delete('/api/eCommerce/remove-item-carts', async ({ request }) => {
-  //   try {
-  //     const { id } = (await request.json());
-  //     let remainingItems = cartItems.filter((product) => {
-  //       return product.id !== id;
-  //     });
-  //     cartItems = remainingItems;
-  //     return HttpResponse.json({ status: 200, msg: 'Success', data: cartItems });
-  //   } catch (error) {
-  //     return HttpResponse.json({
-  //       status: 400,
-  //       msg: 'Internal server error',
-  //       error,
-  //     });
-  //   }
-  // }),
+  //Mock endpoint to remove an item from the cart
+  http.delete('/api/eCommerce/remove-item-carts', async ({ request }) => {
+    try {
+      const { id } = (await request.json());
+      let remainingItems = cartItems.filter((product) => {
+        return product.id !== id;
+      });
+      cartItems = remainingItems;
+      return HttpResponse.json({ status: 200, msg: 'Success', data: cartItems });
+    } catch (error) {
+      return HttpResponse.json({
+        status: 400,
+        msg: 'Internal server error',
+        error,
+      });
+    }
+  }),
 ];

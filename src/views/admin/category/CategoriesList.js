@@ -92,7 +92,7 @@ const CategoriesList = () => {
     }, []);
 
     return (
-        <ProductProvider>
+        // <ProductProvider>
             <PageContainer title="Categories List" description="this is Brands List page">
                 {/* breadcrumb */}
                 <Breadcrumb title="Categories List" items={BCrumb} />
@@ -113,7 +113,7 @@ const CategoriesList = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider >
+        // </ProductProvider >
     );
 };
 

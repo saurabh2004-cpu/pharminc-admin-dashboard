@@ -71,7 +71,7 @@ const ListTax = () => {
     }, []);
 
     return (
-        <ProductProvider>
+        // <ProductProvider>
             <PageContainer title="Tax List" description="this is Tax List page">
                 {/* breadcrumb */}
                 <Breadcrumb title="Tax List" items={BCrumb} />
@@ -92,7 +92,7 @@ const ListTax = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider >
+        // </ProductProvider >
     );
 };
 

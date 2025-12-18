@@ -72,7 +72,7 @@ const ListDeliveryVendor = () => {
     }, []);
 
     return (
-        <ProductProvider>
+        // <ProductProvider>
             <PageContainer title="Delivery Vendor List" description="this is Delivery Vendor page">
                 {/* breadcrumb */}
                 <Breadcrumb title="Delivery Vendor Kist" items={BCrumb} />
@@ -93,7 +93,7 @@ const ListDeliveryVendor = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider>
+        // </ProductProvider>
     );
 };
 

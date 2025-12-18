@@ -18,7 +18,7 @@ const BCrumb = [
 
 const SearchTable = () => {
   return (
-    <ProductProvider>
+    // <ProductProvider>
       <PageContainer title="Search Table" description="this is Search Table page">
         {/* breadcrumb */}
         <Breadcrumb title="Search Table" items={BCrumb} />
@@ -27,7 +27,7 @@ const SearchTable = () => {
           <ProductTableList />
         </Box>
       </PageContainer>
-    </ProductProvider>
+    // </ProductProvider>
   );
 };
 

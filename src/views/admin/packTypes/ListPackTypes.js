@@ -71,7 +71,7 @@ const ListPackTypes = () => {
     }, []);
 
     return (
-        <ProductProvider>
+        // <ProductProvider>
             <PageContainer title="Pack Types List" description="this is Pack Types page">
                 {/* breadcrumb */}
                 <Breadcrumb title="Pack Types List" items={BCrumb} />
@@ -92,7 +92,7 @@ const ListPackTypes = () => {
                     />
                 </Box>
             </PageContainer>
-        </ProductProvider >
+        // </ProductProvider >
     );
 };
 

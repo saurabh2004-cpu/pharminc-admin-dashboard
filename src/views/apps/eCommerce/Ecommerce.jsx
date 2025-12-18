@@ -22,7 +22,7 @@ const Ecommerce = () => {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
 
   return (
-    <ProductProvider>
+    // <ProductProvider>
       <PageContainer title="Shop List" description="this is Shop List page">
         {/* breadcrumb */}
         <Breadcrumb title="Ecom-Shop" items={BCrumb} />
@@ -42,7 +42,7 @@ const Ecommerce = () => {
           </Box>
         </AppCard>
       </PageContainer>
-    </ProductProvider>
+    // </ProductProvider>
   );
 };
 

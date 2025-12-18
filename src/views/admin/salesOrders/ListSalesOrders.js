@@ -116,7 +116,7 @@ const ListSalesOrders = () => {
   }, []);
 
   return (
-    <ProductProvider>
+    // <ProductProvider>
       <PageContainer title="Sales Orders List" description="this is Sales Orders List page">
         {/* breadcrumb */}
         <Breadcrumb title="Sales Orders List" items={BCrumb} />
@@ -137,7 +137,7 @@ const ListSalesOrders = () => {
           />
         </Box>
       </PageContainer>
-    </ProductProvider>
+    // </ProductProvider>
   );
 };
 

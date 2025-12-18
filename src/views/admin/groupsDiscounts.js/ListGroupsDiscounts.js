@@ -72,7 +72,7 @@ const ListGroupsDiscounts = () => {
   }, []);
 
   return (
-    <ProductProvider>
+    // <ProductProvider>
       <PageContainer title="Pricing Groups Discounts List" description="this is Pricing Groups List page">
         <Breadcrumb title="Pricing Groups Discounts List" items={BCrumb} />
         <Box>
@@ -85,7 +85,7 @@ const ListGroupsDiscounts = () => {
           />
         </Box>
       </PageContainer>
-    </ProductProvider>
+    // </ProductProvider>
   );
 };
 

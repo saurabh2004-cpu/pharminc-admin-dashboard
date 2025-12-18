@@ -157,7 +157,7 @@ const ListNetTerms = () => {
   };
 
   return (
-    <ProductProvider>
+    // <ProductProvider>
       <PageContainer title="Net Terms List" description="Net Terms payment tracking">
         <Breadcrumb title="Net Terms List" items={BCrumb} />
 
@@ -250,7 +250,7 @@ const ListNetTerms = () => {
           />
         </Box>
       </PageContainer>
-    </ProductProvider>
+    // </ProductProvider>
   );
 };
 

@@ -28,7 +28,7 @@ const BCrumb = [
 
 const EcommerceDetail = () => {
   return (
-    <ProductProvider>
+    // <ProductProvider>
       <PageContainer title="Shop List" description="this is Shop List page">
         {/* breadcrumb */}
         <Breadcrumb title="Product Detail" items={BCrumb} />
@@ -81,7 +81,7 @@ const EcommerceDetail = () => {
           </Grid>
         </Grid>
       </PageContainer>
-    </ProductProvider>
+    // </ProductProvider>
   );
 };
 
