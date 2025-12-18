@@ -23,15 +23,15 @@ export const ProductProvider = ({ children }) => {
     const [selectedColor, setSelectedColor] = useState('All');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [cartItems, setCartItems] = useState(() => {
-        // Check if localStorage is defined (for client-side rendering)
-        if (typeof window !== 'undefined') {
-            const storedCartItems = localStorage.getItem('cartItems');
-            return storedCartItems ? JSON.parse(storedCartItems) : [];
-        } else {
-            return [];
-        }
-    });
+    // const [cartItems, setCartItems] = useState(() => {
+    //     // Check if localStorage is defined (for client-side rendering)
+    //     if (typeof window !== 'undefined') {
+    //         const storedCartItems = localStorage.getItem('cartItems');
+    //         return storedCartItems ? JSON.parse(storedCartItems) : [];
+    //     } else {
+    //         return [];
+    //     }
+    // });
 
     // Fetch products data from the API 
     const { data: productsData, isLoading: isProductsLoading, error: productsError } = useSWR('/api/data/eCommerce/ProductsData', getFetcher);
@@ -49,35 +49,35 @@ export const ProductProvider = ({ children }) => {
     }, [productsData, productsError, isProductsLoading]);
 
     // Fetch products data from the API 
-    const { data: cartsData, isLoading: isCartsLoading, error: cartsError, mutate: cartMutate } = useSWR('/api/eCommerce/carts', getFetcher);
+    // const { data: cartsData, isLoading: isCartsLoading, error: cartsError, mutate: cartMutate } = useSWR('/api/eCommerce/carts', getFetcher);
 
-    useEffect(() => {
-        if (cartsData) {
-            setCartItems(cartsData.data);
-            setLoading(isCartsLoading);
-        } else if (cartsError) {
-            setError(cartsError);
-            setLoading(isCartsLoading);
-        } else {
-            setLoading(isCartsLoading);
-        }
-    }, [cartsData, cartsError, isCartsLoading])
+    // useEffect(() => {
+    //     if (cartsData) {
+    //         setCartItems(cartsData.data);
+    //         setLoading(isCartsLoading);
+    //     } else if (cartsError) {
+    //         setError(cartsError);
+    //         setLoading(isCartsLoading);
+    //     } else {
+    //         setLoading(isCartsLoading);
+    //     }
+    // }, [cartsData, cartsError, isCartsLoading])
 
     // UseEffect to update local storage whenever cartItems changes
-    useEffect(() => {
-        if (cartItems) {
-            localStorage.setItem("cartItems", JSON.stringify(cartItems));
-        }
-    }, [cartItems]);
+    // useEffect(() => {
+    //     if (cartItems) {
+    //         localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    //     }
+    // }, [cartItems]);
 
 
     // UseEffect to initialize cartItems from local storage when the component mounts
-    useEffect(() => {
-        const storedCartItems = localStorage.getItem("cartItems");
-        if (storedCartItems) {
-            setCartItems(JSON.parse(storedCartItems));
-        }
-    }, []);
+    // useEffect(() => {
+    //     const storedCartItems = localStorage.getItem("cartItems");
+    //     if (storedCartItems) {
+    //         setCartItems(JSON.parse(storedCartItems));
+    //     }
+    // }, []);
 
     // Function to filter products based on search, category, price range, gender, and color
     const filterProducts = (product) => {
@@ -139,31 +139,31 @@ export const ProductProvider = ({ children }) => {
     const searchProducts = (searchText) => setSearchProduct(searchText);
 
     // Function to add an item to the cart
-    const addToCart = async (productId) => {
-        try {
+    // const addToCart = async (productId) => {
+    //     try {
 
-            await cartMutate(postFetcher('/api/data/eCommerce/add', { productId }));
+    //         await cartMutate(postFetcher('/api/data/eCommerce/add', { productId }));
 
-        } catch (error) {
-            console.error('Error adding product to cart:', error);
-        }
-    };
+    //     } catch (error) {
+    //         console.error('Error adding product to cart:', error);
+    //     }
+    // };
 
     // Function to remove an item from the cart
-    const removeFromCart = async (id) => {
-        await cartMutate(deleteFetcher('/api/eCommerce/remove-item-carts', { id, action: "Increment" }));
-    };
+    // const removeFromCart = async (id) => {
+    //     await cartMutate(deleteFetcher('/api/eCommerce/remove-item-carts', { id, action: "Increment" }));
+    // };
 
 
     // Function to increment quantity of a product in the cart
-    const incrementQuantity = async (id) => {
-        await cartMutate(putFetcher('/api/eCommerce/carts/increment-decrementqty', { id, action: "Increment" }));
-    };
+    // const incrementQuantity = async (id) => {
+    //     await cartMutate(putFetcher('/api/eCommerce/carts/increment-decrementqty', { id, action: "Increment" }));
+    // };
 
-    // Function to decrement quantity of a product in the cart
-    const decrementQuantity = async (id) => {
-        await cartMutate(putFetcher('/api/eCommerce/carts/increment-decrementqty', { id, action: "Decrement" }));
-    };
+    // // Function to decrement quantity of a product in the cart
+    // const decrementQuantity = async (id) => {
+    //     await cartMutate(putFetcher('/api/eCommerce/carts/increment-decrementqty', { id, action: "Decrement" }));
+    // };
 
     // Function to delete a product
     const deleteProduct = (productId) => {
@@ -201,8 +201,8 @@ export const ProductProvider = ({ children }) => {
                 selectedColor,
                 loading,
                 error,
-                cartItems,
-                setProducts,
+                // cartItems,
+                // setProducts,
                 setSearchProduct,
                 setSelectedCategory,
                 setSortBy,
@@ -210,7 +210,7 @@ export const ProductProvider = ({ children }) => {
                 setSelectedGender,
                 setSelectedColor,
                 setLoading,
-                setCartItems,
+                // setCartItems,
                 deleteProduct,
                 searchProducts,
                 updateSortBy,
@@ -218,10 +218,10 @@ export const ProductProvider = ({ children }) => {
                 selectCategory,
                 selectGender,
                 selectColor,
-                incrementQuantity,
-                decrementQuantity,
-                removeFromCart,
-                addToCart,
+                // incrementQuantity,
+                // decrementQuantity,
+                // removeFromCart,
+                // addToCart,
                 deleteAllProducts,
                 filteredAndSortedProducts,
                 filterReset, getProductById,

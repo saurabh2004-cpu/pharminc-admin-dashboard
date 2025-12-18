@@ -11,8 +11,8 @@ const Cart = () => {
     cartItems,
   } = useContext(ProductContext);
 
-  const bcount = cartItems.length > 0 ? cartItems.length : '0';
-  const total = sum(cartItems.map((product) => product.price * product.qty));
+  const bcount = [].length > 0 ? [].length : '0';
+  const total = sum([].map((product) => product.price * product.qty));
 
   const [showDrawer, setShowDrawer] = useState(false);
   const handleDrawerClose = () => {
@@ -80,7 +80,7 @@ const Cart = () => {
         {/* Checkout  */}
         {/* ------------------------------------------- */}
         <Box px={3} mt={2}>
-          {cartItems.length > 0 ? (
+          {[].length > 0 ? (
             <>
               <Stack direction="row" justifyContent="space-between" mb={3}>
                 <Typography variant="subtitle2" color="textSecondary" fontWeight={400}>
