@@ -357,6 +357,7 @@ const CreateCustomer = () => {
     } catch (error) {
       // setError(error.response?.data?.message || error.message || 'An error occurred while importing CSV');
       console.error('CSV import error:', error);
+      setCsvDialogOpen(false);
     } finally {
       setLoading(false);
     }
