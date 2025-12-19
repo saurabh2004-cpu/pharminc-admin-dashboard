@@ -1523,7 +1523,7 @@ const CustomersSalesOrders = () => {
                                             Order Total :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            ${tableData[0]?.subTotal?.toFixed(2)}
+                                            ${tableData[0]?.subTotal}
                                         </Typography>
                                     </Box>
 
@@ -1532,7 +1532,7 @@ const CustomersSalesOrders = () => {
                                             Tax Amount:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
-                                            ${tableData[0]?.taxAmount?.toFixed(2)}
+                                            ${tableData[0]?.taxAmount}
                                         </Typography>
                                     </Box>
 
@@ -1541,7 +1541,7 @@ const CustomersSalesOrders = () => {
                                             Shipping Rate:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
-                                            ${tableData[0]?.shippingRate?.toFixed(2)}
+                                            ${tableData[0]?.shippingRate}
                                         </Typography>
                                     </Box>
 
@@ -1550,7 +1550,7 @@ const CustomersSalesOrders = () => {
                                             Final Amount:
                                         </Typography>
                                         <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                            ${tableData[0]?.totalAmount?.toFixed(2)}
+                                            ${tableData[0]?.totalAmount}
                                         </Typography>
                                     </Box>
                                 </Box>
