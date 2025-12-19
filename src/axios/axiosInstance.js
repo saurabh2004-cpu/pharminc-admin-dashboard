@@ -3,10 +3,10 @@ import axios from 'axios';
 const axiosInstance = axios.create({
 
   // for production uncomment this line
-  // baseURL: '/api/v1/',
+  baseURL: '/api/v1/',
 
   //for the local setup
-  baseURL: import.meta.env.VITE_BASE_BACKEND_URL,
+  // baseURL: import.meta.env.VITE_BASE_BACKEND_URL,
 
   headers: {
     'Content-Type': 'multipart/form-data'
