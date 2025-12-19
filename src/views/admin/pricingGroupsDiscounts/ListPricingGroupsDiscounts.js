@@ -53,7 +53,7 @@ const ListPricingGroupsDiscounts = () => {
   const fetchPricingGroupsDiscounts = async () => {
     try {
       const response = await axiosInstance.get('/item-based-discount/get-all-item-based-discounts');
-      console.log("response item based discounts", response);
+      // console.log("response item based discounts", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);

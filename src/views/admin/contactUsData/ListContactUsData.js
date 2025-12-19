@@ -271,7 +271,7 @@ const ListContactUsData = () => {
     const fetchContactUsData = async () => {
         try {
             const response = await axiosInstance.get(`/contact-us-data/get-all-contact-us`);
-            console.log("contact us data response:- ", response);
+            // console.log("contact us data response:- ", response);
 
             if (response.data.statusCode === 200) {
                 // Updated to match your API response structure
@@ -397,7 +397,7 @@ const ListContactUsData = () => {
 
             const res = await axiosInstance.delete(`/contact-us-data/delete-contact-us/${deleteDialog.itemId}`);
 
-            console.log("deleted", res.data);
+            // console.log("deleted", res.data);
 
             if (res.data.statusCode === 200) {
                 setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

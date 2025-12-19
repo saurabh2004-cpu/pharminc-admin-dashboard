@@ -34,7 +34,7 @@ const CreateNetTermnsList = () => {
                 }
             });
 
-            console.log("Create net terms response:", res);
+            // console.log("Create net terms response:", res);
 
             if (res.data.statusCode === 200) {
                 // Reset form on success
@@ -46,7 +46,7 @@ const CreateNetTermnsList = () => {
                 navigate('/dashboard/net-terms-list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("Create pack types error:", res.data.message);
+                // console.log("Create pack types error:", res.data.message);
             }
 
 

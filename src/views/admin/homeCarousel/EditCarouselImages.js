@@ -42,7 +42,7 @@ const EditCarouselImages = () => {
             setFetchLoading(true);
             const res = await axiosInstance.get('/home-carousel/get-carousel');
 
-            console.log("res.data", res.data)
+            // console.log("res.data", res.data)
 
             if (res.data.statusCode === 200) {
                 const carousel = res.data.data;
@@ -239,7 +239,7 @@ const EditCarouselImages = () => {
 
         try {
             const imageName = extractFilenameFromUrl(imageUrl);
-            console.log("Deleting image:", imageName, imageType);
+            // console.log("Deleting image:", imageName, imageType);
 
             const res = await axiosInstance.delete(`/home-carousel/delete-single-image/${imageType}/${imageName}`);
 
@@ -347,9 +347,9 @@ const EditCarouselImages = () => {
                 }))
             };
 
-            console.log('Sending update data:', updateData); // Debug log
-            console.log('Desktop images:', updateData.desktopImages);
-            console.log('Mobile images:', updateData.mobileImages);
+            // console.log('Sending update data:', updateData); // Debug log
+            // console.log('Desktop images:', updateData.desktopImages);
+            // console.log('Mobile images:', updateData.mobileImages);
 
             const res = await axiosInstance.put('/home-carousel/update-carousel-metadata', updateData, {
                 headers: {
@@ -357,7 +357,7 @@ const EditCarouselImages = () => {
                 }
             });
 
-            console.log('Update response:', res);
+            // console.log('Update response:', res);
 
             if (res.data.statusCode === 200) {
                 setSuccess('Carousel metadata updated successfully!');

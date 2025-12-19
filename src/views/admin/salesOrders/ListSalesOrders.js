@@ -95,7 +95,7 @@ const ListSalesOrders = () => {
   const fetchSalesOrders = async () => {
     try {
       const response = await axiosInstance.get('/sales-order/get-sales-orders');
-      console.log("response Sales Orders", response);
+      // console.log("response Sales Orders", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data.salesOrders);

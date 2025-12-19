@@ -32,7 +32,7 @@ const EditBrand = () => {
         try {
             const res = await axiosInstance.get(`/brand/get-brand/${id}`);
 
-            console.log("res", res);
+            // console.log("res", res);
 
             if (res.data.statusCode === 200) {
                 const brandData = res.data.data;

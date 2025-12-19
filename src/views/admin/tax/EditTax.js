@@ -41,7 +41,7 @@ const EditTax = () => {
         }
       });
 
-      console.log("Create category response:", res);
+      // console.log("Create category response:", res);
 
       if (res.data.statusCode === 200) {
         // Reset form on success
@@ -53,7 +53,7 @@ const EditTax = () => {
         navigate('/dashboard/tax/list');
 
       } else if (res.data.statusCode === 400) {
-        console.log("Create category error:", res.data.message);
+        // console.log("Create category error:", res.data.message);
       }
 
 
@@ -69,7 +69,7 @@ const EditTax = () => {
   const fetchTax = async () => {
     try {
       const response = await axiosInstance.get(`/tax/get-tax/${id}`);
-      console.log("response tax details", response);
+      // console.log("response tax details", response);
       if (response.data.statusCode === 200) {
         setFormData({
           name: response.data.data.name,

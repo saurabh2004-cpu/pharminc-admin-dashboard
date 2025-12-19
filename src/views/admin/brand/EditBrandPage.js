@@ -344,7 +344,7 @@ const EditBrandPage = () => {
   const fetchBrandPageById = async () => {
     try {
       const response = await axiosInstance.get(`/brand-page/get-brand-page/${id}`);
-      console.log("response brand page", response.data.data);
+      // console.log("response brand page", response.data.data);
 
       if (response.data.statusCode === 200) {
         const data = response.data.data;
@@ -426,7 +426,7 @@ const EditBrandPage = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      console.log("response brands", response);
+      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setBrands(response.data.data);
@@ -1081,7 +1081,7 @@ const EditBrandPage = () => {
         }
       });
 
-      console.log("update brand page - response", res);
+      // console.log("update brand page - response", res);
 
       if (res.data.statusCode === 200) {
         navigate('/dashboard/brand-pages/list');

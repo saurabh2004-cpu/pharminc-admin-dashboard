@@ -48,7 +48,7 @@ const EditBadge = () => {
                 }
             });
 
-            console.log("Badge creation response:", res.data);
+            // console.log("Badge creation response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setFormData({
@@ -70,7 +70,7 @@ const EditBadge = () => {
         try {
             const res = await axiosInstance.get(`/badge/get-badge/${id}`);
 
-            console.log("res.data", res.data)
+            // console.log("res.data", res.data)
 
             if (res.data.statusCode === 200) {
                 setFormData(res.data.data);

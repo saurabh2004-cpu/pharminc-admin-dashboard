@@ -47,7 +47,7 @@ const ListPricingGroups = () => {
   const fetchPricingGroups = async () => {
     try {
       const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-      console.log("response pricing groups", response);
+      // console.log("response pricing groups", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);

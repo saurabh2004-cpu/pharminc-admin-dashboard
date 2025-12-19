@@ -164,7 +164,7 @@ const CreateCustomerSpecificAmounts = () => {
                 discountedPrice: parseFloat(formData.discountedPrice)
             };
 
-            console.log("Sending data:", discountData);
+            // console.log("Sending data:", discountData);
 
             const res = await axiosInstance.post('/customer-secific-amounts/create-customer-specific-amount', discountData, {
                 headers: {
@@ -172,7 +172,7 @@ const CreateCustomerSpecificAmounts = () => {
                 }
             });
 
-            console.log("Bulk discount creation response:", res.data);
+            // console.log("Bulk discount creation response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setFormData({
@@ -227,7 +227,7 @@ const CreateCustomerSpecificAmounts = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);
@@ -260,7 +260,7 @@ const CreateCustomerSpecificAmounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/admin/get-all-users');
-            console.log("response customers", response);
+            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 const customersData = Array.isArray(response.data.data)

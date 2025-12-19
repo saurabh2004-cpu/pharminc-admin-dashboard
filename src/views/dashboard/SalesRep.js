@@ -28,12 +28,12 @@ const SalesRepDashboard = () => {
         try {
             const response = await axiosInstance.get('/sales-rep/get-current-sales-rep');
 
-            console.log('current salesrep', response);
+            // console.log('current salesrep', response);
             
             if (response.data.statusCode === 200) {
                 const salesRepData = response.data.data;
                 dispatch(salesRepLogin(salesRepData));
-                console.log("Current salesRep:", response);
+                // console.log("Current salesRep:", response);
             } else {
                 window.location.href = '/salas-rep/login';
             }

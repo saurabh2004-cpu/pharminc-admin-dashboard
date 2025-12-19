@@ -240,7 +240,7 @@ const CustomersList = () => {
   const fetchCustomers = async () => {
     try {
       const response = await axiosInstance.get(`/cart/get-all-users-with-cart-items`);
-      console.log("get-all-users-with-cart-items ", response);
+      // console.log("get-all-users-with-cart-items ", response);
 
       if (response.data.statusCode === 200) {
         // Transform the nested data structure to flat structure for table

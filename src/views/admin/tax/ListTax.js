@@ -52,7 +52,7 @@ const ListTax = () => {
     const fetchTaxList = async () => {
         try {
             const response = await axiosInstance.get('/tax/get-all-taxes');
-            console.log("response tax list", response);
+            // console.log("response tax list", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);

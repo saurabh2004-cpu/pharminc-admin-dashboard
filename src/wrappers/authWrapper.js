@@ -24,7 +24,7 @@ const AuthWrapper = ({ children }) => {
                 if (adminResponse.data.statusCode === 200 && adminResponse.data.data) {
                     const userData = adminResponse.data.data;
                     dispatch(login(userData));
-                    console.log("Current admin user logged in:", userData);
+                    // console.log("Current admin user logged in:", userData);
 
                     // Only navigate if we're on a non-admin route and not already there
                     if (location.pathname.startsWith('/salesrep/')) {
@@ -35,7 +35,7 @@ const AuthWrapper = ({ children }) => {
                     throw new Error('Admin not authenticated');
                 }
             } catch (adminError) {
-                console.log('No admin user found, checking for sales rep...');
+                // console.log('No admin user found, checking for sales rep...');
 
                 try {
                     // If admin fetch fails, try to fetch current sales rep
@@ -44,7 +44,7 @@ const AuthWrapper = ({ children }) => {
                     if (salesRepResponse.data.statusCode === 200 && salesRepResponse.data.data) {
                         const salesRepData = salesRepResponse.data.data;
                         dispatch(salesRepLogin(salesRepData));
-                        console.log("Current salesRep logged in:", salesRepData);
+                        // console.log("Current salesRep logged in:", salesRepData);
 
                         // Only navigate if we're on a non-salesrep route and not already there
                         if (!location.pathname.startsWith('/salesrep/')) {

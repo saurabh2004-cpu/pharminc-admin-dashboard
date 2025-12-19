@@ -153,7 +153,7 @@ const ListProduct = () => {
       if (response.data.statusCode === 200) {
         const productsData = response.data.data?.docs || response.data.data || response.data.products
           ;
-        console.log("response products dashboard", response.data);
+        // console.log("response products dashboard", response.data);
 
         // Filter out duplicates based on _id
         const getUniqueProducts = (products) => {

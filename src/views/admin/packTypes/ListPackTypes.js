@@ -52,7 +52,7 @@ const ListPackTypes = () => {
     const fetchPackTypesList = async () => {
         try {
             const response = await axiosInstance.get('/packs-types/get-all-packs-types');
-            console.log("response pack types list", response);
+            // console.log("response pack types list", response);
 
             if (response.status === 200) {
                 setTableData(response.data.data.packs);

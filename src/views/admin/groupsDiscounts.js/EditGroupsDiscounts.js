@@ -68,7 +68,7 @@ const EditGroupsDiscounts = () => {
                 pricingGroupId: formData.pricingGroupId
             };
 
-            console.log("Data being sent for update:", dataToSend);
+            // console.log("Data being sent for update:", dataToSend);
 
             const res = await axiosInstance.put(`/pricing-groups-discount/update-pricing-group-discount/${id}`, dataToSend, {
                 headers: {
@@ -76,7 +76,7 @@ const EditGroupsDiscounts = () => {
                 }
             });
 
-            console.log("Pricing group discount update response:", res.data);
+            // console.log("Pricing group discount update response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setError('success: Pricing group discount updated successfully!');
@@ -97,7 +97,7 @@ const EditGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discount/${id}`);
-            console.log("Pricing group discount by id:", response.data);
+            // console.log("Pricing group discount by id:", response.data);
 
             if (response.data.statusCode === 200 && response.data.data) {
                 const discountData = response.data.data;
@@ -115,7 +115,7 @@ const EditGroupsDiscounts = () => {
                     }))
                     : [];
 
-                console.log("Loaded customers:", customers);
+                // console.log("Loaded customers:", customers);
 
                 setFormData({
                     pricingGroupId: pricingGroupId || '',
@@ -183,7 +183,7 @@ const EditGroupsDiscounts = () => {
             customers: updatedCustomers
         });
 
-        console.log("Updated customers:", updatedCustomers);
+        // console.log("Updated customers:", updatedCustomers);
     };
 
     // Handle individual customer percentage change
@@ -237,7 +237,7 @@ const EditGroupsDiscounts = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);
@@ -269,7 +269,7 @@ const EditGroupsDiscounts = () => {
     const fetchPricingGroups = async () => {
         try {
             const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-            console.log("response pricing groups", response);
+            // console.log("response pricing groups", response);
 
             if (response.data.statusCode === 200) {
                 setPricingGroups(Array.isArray(response.data.data) ? response.data.data : []);
@@ -284,7 +284,7 @@ const EditGroupsDiscounts = () => {
     const fetchAllCustomers = async () => {
         try {
             const response = await axiosInstance.get('/admin/get-all-users');
-            console.log("response customers", response);
+            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 setAllCustomers(Array.isArray(response.data.data) ? response.data.data : []);

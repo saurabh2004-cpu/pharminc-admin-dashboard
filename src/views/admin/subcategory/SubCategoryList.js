@@ -65,7 +65,7 @@ const SubCategoryList = () => {
     const fetchSubCategoryList = async () => {
         try {
             const response = await axiosInstance.get('/subcategory/get-sub-categories');
-            console.log("response sub categories", response.data.data);
+            // console.log("response sub categories", response.data.data);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);

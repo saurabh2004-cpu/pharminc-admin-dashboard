@@ -50,7 +50,7 @@ const CreateBadge = () => {
                 }
             });
 
-            console.log("Badge creation response:", res.data.message);
+            // console.log("Badge creation response:", res.data.message);
 
             if (res.data.statusCode === 200) {
                 setFormData({
@@ -94,7 +94,7 @@ const CreateBadge = () => {
                 }
             });
 
-            console.log("csv imported", res.data)
+            // console.log("csv imported", res.data)
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);

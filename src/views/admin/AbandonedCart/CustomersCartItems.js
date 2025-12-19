@@ -231,7 +231,7 @@ const CustomersCartItems = () => {
     try {
       const res = await axiosInstance.get(`/cart/get-cart-by-customer-id/${customerId}`);
 
-      console.log("customers cart response ", res);
+      // console.log("customers cart response ", res);
 
       if (res.data.statusCode === 200) {
         // Transform the data to flat structure

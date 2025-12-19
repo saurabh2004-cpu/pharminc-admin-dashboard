@@ -45,7 +45,7 @@ const ListGroupsDiscounts = () => {
   const fetchPricingGroupsDiscounts = async () => {
     try {
       const response = await axiosInstance.get('/pricing-groups-discount/all-pricing-group-discounts');
-      console.log("response pricing groups discounts", response);
+      // console.log("response pricing groups discounts", response);
 
       if (response.data.statusCode === 200) {
         // Transform the API data to match table structure

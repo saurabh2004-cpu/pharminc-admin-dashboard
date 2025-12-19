@@ -91,7 +91,7 @@ const EditProductGroups = () => {
     newPreviews.splice(imageIndex, 1);
     setImagePreviews(newPreviews);
 
-    console.log("Image added to deletion list:", imageUrl);
+    // console.log("Image added to deletion list:", imageUrl);
   };
 
 
@@ -380,7 +380,7 @@ const EditProductGroups = () => {
 
     if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
       setError('Compare price must be greater than each price');
-      console.log("compare price is less that eachPrice")
+      // console.log("compare price is less that eachPrice")
       return
     }
 
@@ -459,7 +459,7 @@ const EditProductGroups = () => {
         }
       });
 
-      console.log("Update product group response:", res);
+      // console.log("Update product group response:", res);
 
       if (res.data.statusCode === 200) {
         navigate('/dashboard/productGroup/list');
@@ -479,7 +479,7 @@ const EditProductGroups = () => {
   const fetchProducts = async () => {
     try {
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
-      console.log("response products", response);
+      // console.log("response products", response);
 
       if (response.data.statusCode === 200) {
         const productsArray = Array.isArray(response.data.data)
@@ -503,13 +503,13 @@ const EditProductGroups = () => {
   const fetchPricingGroups = async () => {
     try {
       const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-      console.log("response pricing groups", response);
+      // console.log("response pricing groups", response);
 
       if (response.data.statusCode === 200) {
         setPricingGroups(response.data.data);
       }
     } catch (error) {
-      console.error('Error fetching pricing groups list:', error);
+      // console.error('Error fetching pricing groups list:', error);
       setError('Failed to fetch pricing groups');
     }
   };
@@ -517,7 +517,7 @@ const EditProductGroups = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      console.log("response brands", response);
+      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setCategoryOne(response.data.data);
@@ -532,9 +532,9 @@ const EditProductGroups = () => {
     if (!brandId) return;
 
     try {
-      console.log("Fetching categories for brand ID:", brandId);
+      // console.log("Fetching categories for brand ID:", brandId);
       const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${brandId}`);
-      console.log("response categories", response);
+      // console.log("response categories", response);
 
       if (response.data.statusCode === 200) {
         setCategoryTwo(response.data.data);
@@ -552,9 +552,9 @@ const EditProductGroups = () => {
     if (!categoryId) return;
 
     try {
-      console.log("Fetching subcategories for category ID:", categoryId);
+      // console.log("Fetching subcategories for category ID:", categoryId);
       const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${categoryId}`);
-      console.log("response sub categories", response.data.data);
+      // console.log("response sub categories", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryThree(response.data.data);
@@ -572,9 +572,9 @@ const EditProductGroups = () => {
     if (!subCategoryId) return;
 
     try {
-      console.log("Fetching sub-subcategories for subcategory ID:", subCategoryId);
+      // console.log("Fetching sub-subcategories for subcategory ID:", subCategoryId);
       const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subCategoryId}`);
-      console.log("response sub categories two", response.data.data);
+      // console.log("response sub categories two", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryFour(response.data.data);
@@ -592,7 +592,7 @@ const EditProductGroups = () => {
     try {
       setFetching(true);
       const response = await axiosInstance.get(`/product-group/get-product-group/${id}`);
-      console.log("response product group details", response);
+      // console.log("response product group details", response);
 
       if (response.data.statusCode === 200) {
         const productGroup = response.data.data;
@@ -683,15 +683,15 @@ const EditProductGroups = () => {
           setImagePreviews(imageUrls);
         }
 
-        console.log("Loaded product group with images:", {
-          name: productGroup.name,
-          thumbnail: productGroup.thumbnail,
-          thumbnailUrl: productGroup.thumbnailUrl,
-          images: productGroup.images,
-          imageUrls: productGroup.imageUrls,
-          thumbnailPreview: productGroup.thumbnailUrl,
-          imagePreviews: productGroup.imageUrls || productGroup.images
-        });
+        // console.log("Loaded product group with images:", {
+        //   name: productGroup.name,
+        //   thumbnail: productGroup.thumbnail,
+        //   thumbnailUrl: productGroup.thumbnailUrl,
+        //   images: productGroup.images,
+        //   imageUrls: productGroup.imageUrls,
+        //   thumbnailPreview: productGroup.thumbnailUrl,
+        //   imagePreviews: productGroup.imageUrls || productGroup.images
+        // });
 
         // Fetch child categories based on loaded commerce categories
         if (commerceCategoriesOneId) {

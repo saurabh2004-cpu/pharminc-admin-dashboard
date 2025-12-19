@@ -260,7 +260,7 @@ const CustomersItemsBasedDiscounts = () => {
   const fetchItemsDiscounts = async () => {
     try {
       const response = await axiosInstance.get(`/item-based-discount/get-items-based-discount-by-customer-id/${id}`);
-      console.log("response item discounts ", response);
+      // console.log("response item discounts ", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -393,7 +393,7 @@ const CustomersItemsBasedDiscounts = () => {
     try {
       const res = await axiosInstance.delete(`/item-based-discount/delete-items-based-discount/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

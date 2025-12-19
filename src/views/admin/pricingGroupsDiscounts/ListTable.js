@@ -332,7 +332,7 @@ const ListTable = ({
 
   const fetchCustomerDetails = async (customerIds) => {
     try {
-      console.log("Fetching details for customer IDs:", customerIds);
+      // console.log("Fetching details for customer IDs:", customerIds);
 
       const responses = await Promise.all(
         customerIds.map((id) =>
@@ -357,10 +357,10 @@ const ListTable = ({
             "N/A";
 
           newMap[response.id] = customerName;
-          console.log(`✅ Mapped ${response.id} to: ${customerName}`);
+          // console.log(`✅ Mapped ${response.id} to: ${customerName}`);
         } else {
           newMap[response.id] = "Not Found";
-          console.log(`❌ Failed to fetch details for: ${response.id}`);
+          // console.log(`❌ Failed to fetch details for: ${response.id}`);
         }
       });
 
@@ -415,7 +415,7 @@ const ListTable = ({
     try {
       const res = await axiosInstance.delete(`/item-based-discount/delete-items-based-discount-by-customer-id/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog._id));

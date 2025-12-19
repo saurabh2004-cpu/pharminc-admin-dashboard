@@ -39,7 +39,7 @@ const CreateAdmin = () => {
                 }
             });
 
-            console.log("new admin creation response:", res);
+            // console.log("new admin creation response:", res);
 
             if (res.data.statusCode === 200) {
                 setFormData({

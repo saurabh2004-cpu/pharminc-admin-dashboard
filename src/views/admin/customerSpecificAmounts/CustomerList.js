@@ -220,7 +220,7 @@ const CustomerList = () => {
     const fetchCustomersOfGroup = async () => {
         try {
             const response = await axiosInstance.get(`/customer-secific-amounts/get-customers-of-customer-specific-amount/${id}`);
-            console.log("fetch Customers of Group ", response);
+            // console.log("fetch Customers of Group ", response);
 
             if (response.data.statusCode === 200) {
                 // Extract customers array from the nested response
@@ -322,7 +322,7 @@ const CustomerList = () => {
                 `/customer-secific-amounts/remove-customer-from-customer-specific-amount/${id}/${deleteDialog.itemId}`
             );
 
-            console.log("Customer removed", res.data);
+            // console.log("Customer removed", res.data);
 
             if (res.data.statusCode === 200) {
                 // Remove the customer from the local state

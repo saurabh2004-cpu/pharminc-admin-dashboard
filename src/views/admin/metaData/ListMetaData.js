@@ -221,7 +221,7 @@ const ListMetaData = () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get('/meta-data/get-all-meta-data');
-      console.log("response meta data", response);
+      // console.log("response meta data", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -339,7 +339,7 @@ const ListMetaData = () => {
         `/meta-data/delete-meta-data/${deleteDialog.itemId}`
       );
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
@@ -355,7 +355,7 @@ const ListMetaData = () => {
 
   const handleEditMetaData = (id) => {
 
-    console.log("id page", id);
+    // console.log("id page", id);
 
     navigate(`/dashboard/meta-data/Edit/${id}`);
   };

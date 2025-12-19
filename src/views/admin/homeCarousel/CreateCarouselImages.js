@@ -302,7 +302,7 @@ const CreateCarouselImages = () => {
                 }
             });
 
-            console.log("Upload carousel images response:", res);
+            // console.log("Upload carousel images response:", res);
 
             if (res.data.statusCode === 201) {
                 setSuccess('Carousel images uploaded successfully!');

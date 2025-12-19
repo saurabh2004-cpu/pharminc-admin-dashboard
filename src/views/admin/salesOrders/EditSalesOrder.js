@@ -77,12 +77,12 @@ const EditSalesOrder = () => {
         }
       });
 
-      console.log("Update sales order response:", res);
+      // console.log("Update sales order response:", res);
 
       if (res.data.statusCode === 200) {
         navigate('/dashboard/sales-orders/list');
       } else if (res.data.statusCode === 400) {
-        console.log("Update sales order error:", res.data.message);
+        // console.log("Update sales order error:", res.data.message);
         setError(res.data.message);
       }
 
@@ -97,7 +97,7 @@ const EditSalesOrder = () => {
   const fetchProductsList = async () => {
     try {
       const response = await axiosInstance.get('/products/get-all-products');
-      console.log("response products", response.data);
+      // console.log("response products", response.data);
 
       if (response.data.statusCode === 200) {
         const productsData = response.data.data?.docs || response.data.data || response.data;
@@ -133,7 +133,7 @@ const EditSalesOrder = () => {
 
     try {
       const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
-      console.log("response products pack types", response);
+      // console.log("response products pack types", response);
 
       if (response.status === 200) {
         setPackTypes(response.data.data);
@@ -148,7 +148,7 @@ const EditSalesOrder = () => {
   const fetchCustomersList = async () => {
     try {
       const response = await axiosInstance.get('/admin/get-all-users'); // or whatever your customer endpoint is
-      console.log("response customers", response.data);
+      // console.log("response customers", response.data);
 
       if (response.data.statusCode === 200) {
         const customersData = response.data.data?.docs || response.data.data || response.data;
@@ -182,7 +182,7 @@ const EditSalesOrder = () => {
   const fetchSalesOrder = async () => {
     try {
       const response = await axiosInstance.get(`/sales-order/get-sales-order/${id}`);
-      console.log("response sales order", response.data);
+      // console.log("response sales order", response.data);
 
       if (response.data.statusCode === 200) {
         const salesOrderData = response.data.data.salesOrder || response.data.data;
@@ -269,7 +269,7 @@ const EditSalesOrder = () => {
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);

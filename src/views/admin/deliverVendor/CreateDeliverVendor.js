@@ -40,7 +40,7 @@ const CreateDeliverVendor = () => {
                 }
             });
 
-            console.log("Create delivery vendor response:", res);
+            // console.log("Create delivery vendor response:", res);
 
             if (res.data.statusCode === 200) {
                 // Reset form on success
@@ -52,7 +52,7 @@ const CreateDeliverVendor = () => {
                 navigate('/dashboard/delivery-vendors/list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("Create delivery vendor error:", res.data.message);
+                // console.log("Create delivery vendor error:", res.data.message);
             }
 
 

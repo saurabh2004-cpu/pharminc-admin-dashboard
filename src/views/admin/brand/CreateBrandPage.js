@@ -215,7 +215,7 @@ const CreateBrandPage = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      console.log("response brands", response);
+      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setBrands(response.data.data);
@@ -542,7 +542,7 @@ const CreateBrandPage = () => {
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);
@@ -724,7 +724,7 @@ const CreateBrandPage = () => {
         }
       });
 
-      console.log("create brand page - response", res);
+      // console.log("create brand page - response", res);
 
       if (res.data.statusCode === 200) {
         // Reset form

@@ -327,7 +327,7 @@ const ProductTableList = ({
     try {
       const res = await axiosInstance.delete(`/brand/delete-brand/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         // Remove item from both table data and rows
@@ -338,7 +338,7 @@ const ProductTableList = ({
         handleDeleteCancel();
         
         // You might want to show a success message here
-        console.log("Brand deleted successfully");
+        // console.log("Brand deleted successfully");
       }
     } catch (error) {
       console.error('Error deleting brand:', error);

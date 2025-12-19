@@ -268,7 +268,7 @@ const CustomersByPricingGroups = () => {
     const fetchCustomersByPricingGroupId = async () => {
         try {
             const res = await axiosInstance.get(`/pricing-groups-discount/get-customers-by-pricing-group-id/${pricingGroupId}`);
-            console.log("response customers by pricing group id ", res);
+            // console.log("response customers by pricing group id ", res);
 
             if (res.data.statusCode === 200) {
                 setTableData(res.data.data);
@@ -399,7 +399,7 @@ const CustomersByPricingGroups = () => {
                 `/pricing-groups-discount/remove-customer-from-pricingGroup-discount/${deleteDialog.userId}/${deleteDialog.pricingGroupDiscountId}`
             );
 
-            console.log("deleted customer from discount", res.data);
+            // console.log("deleted customer from discount", res.data);
 
             if (res.data.statusCode === 200) {
                 // Refresh the data after deletion

@@ -73,7 +73,7 @@ const ProductSelectionModal = ({
     useEffect(() => {
         if (open && tableData && tableData.length > 0) {
             const firstOrder = tableData[0];
-            console.log("Initializing form with order data:", firstOrder);
+            // console.log("Initializing form with order data:", firstOrder);
 
             setFormData(prev => ({
                 ...prev,
@@ -88,7 +88,7 @@ const ProductSelectionModal = ({
                 customerPO: firstOrder.customerPO || ''
             }));
 
-            console.log("Form initialized with customer:", firstOrder.customerName);
+            // console.log("Form initialized with customer:", firstOrder.customerName);
         }
     }, [open, tableData, documentNo]);
 
@@ -156,7 +156,7 @@ const ProductSelectionModal = ({
         try {
             setLoading(true);
             const response = await axiosInstance.get('/product-group/get-all-product-groups');
-            console.log("response product groups", response);
+            // console.log("response product groups", response);
 
             if (response.data.statusCode === 200) {
                 if (Array.isArray(response.data.data)) {
@@ -212,7 +212,7 @@ const ProductSelectionModal = ({
 
                     setTotalAmount(unitPrice * (newPackQuantity * currentUnitsQuantity));
 
-                    console.log("total;Amount", unitPrice * (newPackQuantity * currentUnitsQuantity))
+                    // console.log("total;Amount", unitPrice * (newPackQuantity * currentUnitsQuantity))
 
                     setFormData(prev => ({
                         ...prev,
@@ -224,7 +224,7 @@ const ProductSelectionModal = ({
             } else {
                 // For individual products, fetch from API
                 const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
-                console.log("Pack types response:", response.data);
+                // console.log("Pack types response:", response.data);
 
                 if (response.status === 200 && response.data.data) {
                     setPackTypes(response.data.data);
@@ -283,13 +283,13 @@ const ProductSelectionModal = ({
         const unitPrice = product.eachPrice || 0;
         const totalAmount = unitPrice;
 
-        console.log("Recalculating amount:", {
-            unitPrice,
-            packQuantity,
-            unitsQuantity,
-            totalQuantity,
-            totalAmount: totalAmount.toFixed(2)
-        });
+        // console.log("Recalculating amount:", {
+        //     unitPrice,
+        //     packQuantity,
+        //     unitsQuantity,
+        //     totalQuantity,
+        //     totalAmount: totalAmount.toFixed(2)
+        // });
 
         setTotalAmount(totalAmount * (packQuantity * unitsQuantity));
 
@@ -298,7 +298,7 @@ const ProductSelectionModal = ({
 
     // Improved product selection with immediate amount calculation
     const handleProductSelect = (product) => {
-        console.log("Product selected:", product);
+        // console.log("Product selected:", product);
         setSelectedProduct(product);
 
         // Calculate initial amount with default quantities
@@ -312,7 +312,7 @@ const ProductSelectionModal = ({
             amount: initialAmount
         }));
 
-        console.log("Initial amount set to:", initialAmount);
+        // console.log("Initial amount set to:", initialAmount);
 
         // Fetch pack types for the selected product
         const isGroup = isProductGroup(product);
@@ -321,7 +321,7 @@ const ProductSelectionModal = ({
 
     // Improved form input changes with better amount recalculation
     const handleInputChange = (field, value) => {
-        console.log(`Field ${field} changed to:`, value);
+        // console.log(`Field ${field} changed to:`, value);
 
         const updatedFormData = {
             ...formData,
@@ -337,7 +337,7 @@ const ProductSelectionModal = ({
             updatedFormData.amount = newAmount;
             setTotalAmount(newAmount * (packQty * unitQty));
 
-            console.log("Amount updated to:", newAmount);
+            // console.log("Amount updated to:", newAmount);
         }
 
         // Update packType if packQuantity changes and matches a pack type
@@ -345,7 +345,7 @@ const ProductSelectionModal = ({
             const selectedPack = packTypes.find(pack => pack.quantity.toString() === value.toString());
             if (selectedPack) {
                 updatedFormData.packType = selectedPack.name;
-                console.log("Pack type updated to:", selectedPack.name);
+                // console.log("Pack type updated to:", selectedPack.name);
             }
         }
 
@@ -357,7 +357,7 @@ const ProductSelectionModal = ({
         const selectedPackQuantity = e.target.value;
         const selectedPack = packTypes.find(pack => pack.quantity.toString() === selectedPackQuantity.toString());
 
-        console.log("Pack type selected:", selectedPack);
+        // console.log("Pack type selected:", selectedPack);
 
         if (selectedPack) {
             const newAmount = recalculateAmount(selectedPack.quantity.toString(), formData.unitsQuantity);
@@ -371,14 +371,14 @@ const ProductSelectionModal = ({
 
             setTotalAmount(newAmount * (selectedPack.quantity * formData.unitsQuantity));
 
-            console.log("Amount after pack type change:", newAmount);
+            // console.log("Amount after pack type change:", newAmount);
         }
     };
 
     // Improved form submission with better validation
     const handleSubmit = async () => {
-        console.log("Submitting form data:", formData);
-        console.log("Selected product:", selectedProduct);
+        // console.log("Submitting form data:", formData);
+        // console.log("Selected product:", selectedProduct);
 
         // Enhanced validation
         if (!formData.customerName?.trim()) {
@@ -446,7 +446,7 @@ const ProductSelectionModal = ({
                 customerNumber: formData.customerNumber
             };
 
-            console.log("Sending payload to API:", payload);
+            // console.log("Sending payload to API:", payload);
 
             const res = await axiosInstance.post('/sales-order/add-product-to-sales-order', payload, {
                 headers: {
@@ -454,10 +454,10 @@ const ProductSelectionModal = ({
                 }
             });
 
-            console.log("Create sales order response:", res.data);
+            // console.log("Create sales order response:", res.data);
 
             if (res.data.statusCode === 200) {
-                console.log("Sales order created successfully:", res.data.data);
+                // console.log("Sales order created successfully:", res.data.data);
 
                 // Call parent callback to refresh data
                 if (onSalesOrderCreated) {

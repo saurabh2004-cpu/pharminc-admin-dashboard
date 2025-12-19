@@ -94,7 +94,7 @@ const CreateCategory = () => {
                 }
             });
 
-            console.log("Create category response:", res);
+            // console.log("Create category response:", res);
 
             if (res.data.statusCode === 200) {
                 // Reset form on success
@@ -109,7 +109,7 @@ const CreateCategory = () => {
                 navigate('/dashboard/category/list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("Create category error:", res.data.message);
+                // console.log("Create category error:", res.data.message);
                 setError(res.data.message || 'Failed to create category');
             }
 
@@ -124,7 +124,7 @@ const CreateCategory = () => {
     const fetchBrandsList = async () => {
         try {
             const response = await axiosInstance.get('/brand/get-brands-list');
-            console.log("response brands", response.data);
+            // console.log("response brands", response.data);
 
             if (response.data.statusCode === 200) {
                 setBrandsList(response.data.data || []);
@@ -152,7 +152,7 @@ const CreateCategory = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);

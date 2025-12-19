@@ -317,7 +317,7 @@ const ListProductGroup = () => {
     try {
       setError('');
       const response = await axiosInstance.get('/product-group/get-all-product-groups');
-      console.log("response product groups", response);
+      // console.log("response product groups", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -440,7 +440,7 @@ const ListProductGroup = () => {
       setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
 
       const res = await axiosInstance.delete(`/product-group/delete-product-group/${deleteDialog.itemId}`);
-      console.log("deleted product group", res.data);
+      // console.log("deleted product group", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

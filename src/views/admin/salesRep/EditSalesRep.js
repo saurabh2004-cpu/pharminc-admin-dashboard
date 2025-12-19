@@ -80,7 +80,7 @@ const EditSalesRep = () => {
       setFetchLoading(true);
       const res = await axiosInstance.get(`/sales-rep/get-sales-rep/${id}`);
 
-      console.log("fetch sales rep by id ", res);
+      // console.log("fetch sales rep by id ", res);
 
       // Access the data from response.data.data
       const salesRepData = res.data.data;
@@ -165,7 +165,7 @@ const EditSalesRep = () => {
         submitData.password = formData.password;
       }
 
-      console.log("Submitting update data:", submitData);
+      // console.log("Submitting update data:", submitData);
 
       const res = await axiosInstance.put(`/sales-rep/update-sales-rep/${id}`, submitData, {
         headers: {
@@ -173,7 +173,7 @@ const EditSalesRep = () => {
         }
       });
 
-      console.log("Sales rep update response:", res.data);
+      // console.log("Sales rep update response:", res.data);
 
       if (res.data.statusCode === 200) {
         setError('Sales representative updated successfully!');
@@ -218,7 +218,7 @@ const EditSalesRep = () => {
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);
@@ -250,7 +250,7 @@ const EditSalesRep = () => {
   const fetchCustomers = async () => {
     try {
       const response = await axiosInstance.get('/admin/get-all-users');
-      console.log("response customers", response);
+      // console.log("response customers", response);
 
       if (response.data.statusCode === 200) {
         const customersData = Array.isArray(response.data.data)

@@ -346,7 +346,7 @@ const ListTable = ({
 
       const res = await axiosInstance.delete(`/pricing-groups-discount/delete-pricing-group-discount/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setRows(prevRows => prevRows.filter(row => row._id !== deleteDialog.itemId));

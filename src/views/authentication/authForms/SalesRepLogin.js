@@ -44,7 +44,7 @@ const SalesRepLogin = ({ title, subtitle, subtext }) => {
         navigate('/salesrep/dashboards/ecommerce')
       }
 
-      console.log("res", res.data);
+      // console.log("res", res.data);
     } catch (error) {
       console.error(error);
     }

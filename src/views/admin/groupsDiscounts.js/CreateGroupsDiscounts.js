@@ -61,7 +61,7 @@ const CreateGroupsDiscounts = () => {
                 percentage: formData.percentage
             };
 
-            console.log("Data being sent:", dataToSend);
+            // console.log("Data being sent:", dataToSend);
 
             const res = await axiosInstance.post('/pricing-groups-discount/create-pricing-group-discount', dataToSend, {
                 headers: {
@@ -69,7 +69,7 @@ const CreateGroupsDiscounts = () => {
                 }
             });
 
-            console.log("Pricing group discount creation response:", res.data);
+            // console.log("Pricing group discount creation response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setFormData({
@@ -118,7 +118,7 @@ const CreateGroupsDiscounts = () => {
             customers: typeof value === 'string' ? value.split(',') : value
         });
 
-        console.log("Selected customers (ObjectIds):", typeof value === 'string' ? value.split(',') : value);
+        // console.log("Selected customers (ObjectIds):", typeof value === 'string' ? value.split(',') : value);
     };
 
     const handlePercentageChange = (e) => {
@@ -147,7 +147,7 @@ const CreateGroupsDiscounts = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);
@@ -180,7 +180,7 @@ const CreateGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-            console.log("response pricing groups", response);
+            // console.log("response pricing groups", response);
 
             if (response.data.statusCode === 200) {
                 setPricingGroups(Array.isArray(response.data.data) ? response.data.data : []);
@@ -198,7 +198,7 @@ const CreateGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/admin/get-all-users');
-            console.log("response customers", response);
+            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 setCustomers(Array.isArray(response.data.data) ? response.data.data : []);

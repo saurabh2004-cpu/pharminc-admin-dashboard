@@ -272,7 +272,7 @@ const ListCustomerSpecificAmounts = () => {
   const fetchCustomersSpecificAmountGroups = async () => {
     try {
       const response = await axiosInstance.get(`/customer-secific-amounts/get-all-customer-specific-amounts`);
-      console.log("fetch Customers Specific AmountGroups ", response);
+      // console.log("fetch Customers Specific AmountGroups ", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -384,7 +384,7 @@ const ListCustomerSpecificAmounts = () => {
     try {
       const res = await axiosInstance.delete(`/customer-secific-amounts/delete-customer-specific-amount/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

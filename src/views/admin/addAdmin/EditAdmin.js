@@ -51,7 +51,7 @@ const EditAdmin = () => {
         }
       });
 
-      console.log("Admin update response:", res);
+      // console.log("Admin update response:", res);
 
       if (res.data.statusCode === 200) {
         setSuccess('Admin updated successfully!');
@@ -73,7 +73,7 @@ const EditAdmin = () => {
     setFetchLoading(true);
     try {
       const response = await axiosInstance.get(`/admin/get-admin-by-id/${id}`);
-      console.log("Admin data response:", response);
+      // console.log("Admin data response:", response);
 
       if (response.data.statusCode === 200) {
         const adminData = response.data.data;

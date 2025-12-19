@@ -72,7 +72,7 @@ const CreateMetaData = () => {
                 }
             });
 
-            console.log("Meta data creation response:", res.data);
+            // console.log("Meta data creation response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setFormData({
@@ -127,7 +127,7 @@ const CreateMetaData = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);

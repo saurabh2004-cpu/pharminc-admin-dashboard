@@ -131,7 +131,7 @@ const CreateSalesRep = () => {
         customers: formData.customers
       };
 
-      console.log("Submitting data:", submitData);
+      // console.log("Submitting data:", submitData);
 
       const res = await axiosInstance.post('/sales-rep/create-sales-rep', submitData, {
         headers: {
@@ -139,7 +139,7 @@ const CreateSalesRep = () => {
         }
       });
 
-      console.log("Sales rep creation response:", res.data);
+      // console.log("Sales rep creation response:", res.data);
 
       if (res.data.statusCode === 200 || res.data.statusCode === 201) {
         setFormData({
@@ -224,7 +224,7 @@ const CreateSalesRep = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get('/admin/get-all-users');
-      console.log("response customers", response);
+      // console.log("response customers", response);
 
       if (response.data.statusCode === 200) {
         const customersData = Array.isArray(response.data.data)

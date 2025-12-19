@@ -73,7 +73,7 @@ const EditBulkDiscount = () => { // FIXED: Changed component name
   const fetchBulkDiscountById = async () => {
     try {
       const response = await axiosInstance.get(`/bulk-discounts/get-bulk-discount/${id}`);
-      console.log("bulk discount by id response", response);
+      // console.log("bulk discount by id response", response);
 
       if (response.data.statusCode === 200) {
         // FIXED: Access the data from response.data.data, not response.data
@@ -154,7 +154,7 @@ const EditBulkDiscount = () => { // FIXED: Changed component name
         discount: formData.discount
       };
 
-      console.log("Updating bulk discount with data:", submitData);
+      // console.log("Updating bulk discount with data:", submitData);
 
       // FIXED: Use PUT method for update instead of POST
       const res = await axiosInstance.put(`/bulk-discounts/update-bulk-discount/${id}`, submitData, {
@@ -163,7 +163,7 @@ const EditBulkDiscount = () => { // FIXED: Changed component name
         }
       });
 
-      console.log("Bulk discount update response:", res.data);
+      // console.log("Bulk discount update response:", res.data);
 
       if (res.data.statusCode === 200) {
         setError('Bulk discount updated successfully!');
@@ -208,7 +208,7 @@ const EditBulkDiscount = () => { // FIXED: Changed component name
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);
@@ -241,7 +241,7 @@ const EditBulkDiscount = () => { // FIXED: Changed component name
     try {
       setLoading(true);
       const response = await axiosInstance.get('/admin/get-all-users');
-      console.log("response customers", response);
+      // console.log("response customers", response);
 
       if (response.data.statusCode === 200) {
         const customersData = Array.isArray(response.data.data)
@@ -269,7 +269,7 @@ const EditBulkDiscount = () => { // FIXED: Changed component name
     try {
       setLoading(true);
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
-      console.log("response products", response);
+      // console.log("response products", response);
 
       if (response.data.statusCode === 200) {
         const productsArray = Array.isArray(response.data.data)

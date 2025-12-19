@@ -65,12 +65,12 @@ const EditSubCategory = () => {
         }
       });
 
-      console.log("Update subcategory response:", res);
+      // console.log("Update subcategory response:", res);
 
       if (res.data.statusCode === 200) {
         navigate('/dashboard/sub-category/list');
       } else if (res.data.statusCode === 400) {
-        console.log("Update subcategory error:", res.data.message);
+        // console.log("Update subcategory error:", res.data.message);
         setError(res.data.message);
       }
 
@@ -100,7 +100,7 @@ const EditSubCategory = () => {
   const fetchCategoryList = async () => {
     try {
       const response = await axiosInstance.get('/category/get-categories');
-      console.log("response categories", response.data);
+      // console.log("response categories", response.data);
 
       if (response.data.statusCode === 200) {
         setCategoryList(response.data.data || []);
@@ -115,7 +115,7 @@ const EditSubCategory = () => {
     try {
       setDataLoading(true);
       const response = await axiosInstance.get(`/subcategory/get-sub-category/${id}`);
-      console.log("response subcategory", response.data);
+      // console.log("response subcategory", response.data);
 
       if (response.data.statusCode === 200) {
         const subcategoryData = response.data.data;

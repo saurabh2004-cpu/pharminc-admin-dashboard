@@ -494,7 +494,7 @@ const ListTable = ({
         }
       });
 
-      console.log("get sales orders by date response", response)
+      // console.log("get sales orders by date response", response)
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data.salesOrders);
@@ -639,7 +639,7 @@ const ListTable = ({
     try {
       setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
       const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${deleteDialog.itemId}`);
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item.documentNumber !== deleteDialog.itemId));

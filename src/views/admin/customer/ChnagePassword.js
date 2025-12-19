@@ -64,7 +64,7 @@ const ChangePassword = () => {
         }
       });
 
-      console.log("customer password changed:", res);
+      // console.log("customer password changed:", res);
 
       if (res.data.statusCode === 200) {
         // Reset form on success
@@ -80,7 +80,7 @@ const ChangePassword = () => {
         }, 2000);
 
       } else if (res.data.statusCode === 400) {
-        console.log("Failed to update password", res.data.message);
+        // console.log("Failed to update password", res.data.message);
         setError(res.data.message);
         showNotification(res.data.message || 'Failed to update password', 'error');
       }
@@ -108,7 +108,7 @@ const ChangePassword = () => {
         }
       });
 
-      console.log("email sent to user:", res);
+      // console.log("email sent to user:", res);
 
       if (res.data.statusCode === 200) {
         showNotification('Password reset email sent successfully!', 'success');
@@ -119,7 +119,7 @@ const ChangePassword = () => {
         }, 2000);
 
       } else if (res.data.statusCode === 400) {
-        console.log("Failed to send email", res.data.message);
+        // console.log("Failed to send email", res.data.message);
         setError(res.data.message);
         showNotification(res.data.message || 'Failed to send email', 'error');
       }

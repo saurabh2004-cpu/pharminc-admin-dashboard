@@ -259,7 +259,7 @@ const ListNetTermsData = () => {
         try {
             setError('');
             const response = await axiosInstance.get('/net-terms-list/get-all-net-terms-simple');
-            console.log("response product groups", response);
+            // console.log("response product groups", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);
@@ -383,7 +383,7 @@ const ListNetTermsData = () => {
 
             // CORRECT ENDPOINT: Use /net-terms-list/delete-net-term/
             const res = await axiosInstance.delete(`/net-terms-list/delete-net-term/${deleteDialog.itemId}`);
-            console.log("Delete net term response:", res);
+            // console.log("Delete net term response:", res);
 
             if (res.data.statusCode === 200) {
                 setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

@@ -243,7 +243,7 @@ const SalesRepCustomersList = () => {
       }
 
       const response = await axiosInstance.get(`/sales-rep/get-sales-rep-customers/${id}`);
-      console.log("fetch sales rep customers response", response);
+      // console.log("fetch sales rep customers response", response);
 
       if (response.data.statusCode === 200) {
         // Extract customers array
@@ -372,7 +372,7 @@ const SalesRepCustomersList = () => {
         `/sales-rep/remove-customer-from-sales-rep/${id}/${deleteDialog.customerId}`
       );
 
-      console.log("Customer removed", res.data);
+      // console.log("Customer removed", res.data);
 
       if (res.data.statusCode === 200) {
         // Update the local state to remove the customer

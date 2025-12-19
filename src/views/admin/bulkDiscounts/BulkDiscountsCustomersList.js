@@ -232,7 +232,7 @@ const BulkDiscountsCustomersList = () => {
       }
 
       const response = await axiosInstance.get(`/bulk-discounts/get-customer-by-bulk-discount-id/${id}`);
-      console.log("fetch bulk discount customers ", response);
+      // console.log("fetch bulk discount customers ", response);
 
       if (response.data.statusCode === 200) {
         setBulkDiscountData(response.data.data);
@@ -350,7 +350,7 @@ const BulkDiscountsCustomersList = () => {
         `/bulk-discounts/remove-customer-from-bulk-discount/${id}/${deleteDialog.customerId}`
       );
 
-      console.log("Customer removed", res.data);
+      // console.log("Customer removed", res.data);
 
       if (res.data.statusCode === 200) {
         // Update the local state to remove the customer

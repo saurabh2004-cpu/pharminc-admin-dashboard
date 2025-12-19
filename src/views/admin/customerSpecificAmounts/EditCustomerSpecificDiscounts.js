@@ -179,7 +179,7 @@ const EditCustomerSpecificDiscounts = () => {
                 discountedPrice: parseFloat(formData.discountedPrice)
             };
 
-            console.log("Sending update data:", discountData);
+            // console.log("Sending update data:", discountData);
 
             const res = await axiosInstance.put(
                 `/customer-secific-amounts/update-customer-specific-amount/${id}`,
@@ -191,7 +191,7 @@ const EditCustomerSpecificDiscounts = () => {
                 }
             );
 
-            console.log("Update response:", res.data);
+            // console.log("Update response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setError('Discount group updated successfully!');
@@ -210,7 +210,7 @@ const EditCustomerSpecificDiscounts = () => {
     const fetchCustomers = async () => {
         try {
             const response = await axiosInstance.get('/admin/get-all-users');
-            console.log("response customers", response);
+            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 const customersData = Array.isArray(response.data.data)
@@ -234,7 +234,7 @@ const EditCustomerSpecificDiscounts = () => {
     const fetchProducts = async () => {
         try {
             const response = await axiosInstance.get('/products/get-all-products-dashboard');
-            console.log("response products", response);
+            // console.log("response products", response);
 
             if (response.data.statusCode === 200) {
                 const productsArray = Array.isArray(response.data.data)
@@ -261,7 +261,7 @@ const EditCustomerSpecificDiscounts = () => {
             const response = await axiosInstance.get(
                 `/customer-secific-amounts/get-customer-specific-amount-by-id/${id}`
             );
-            console.log("response customer specific amount:", response);
+            // console.log("response customer specific amount:", response);
 
             if (response.data.statusCode === 200) {
                 const data = response.data.data;

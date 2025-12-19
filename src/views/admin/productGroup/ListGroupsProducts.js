@@ -302,7 +302,7 @@ const ListProductGroupProducts = () => {
       setLoading(true);
       setError('');
       const response = await axiosInstance.get(`/product-group/get-products-of-product-group/${id}`);
-      console.log("response product group products", response);
+      // console.log("response product group products", response);
 
       if (response.data.statusCode === 200) {
         setProductGroupInfo(response.data.data);
@@ -432,7 +432,7 @@ const ListProductGroupProducts = () => {
         `/product-group/remove-product-from-product-group/${id}/${deleteDialog.itemId}`
       );
 
-      console.log("removed product from group", res.data);
+      // console.log("removed product from group", res.data);
 
       if (res.data.statusCode === 200) {
         // Remove product from local state

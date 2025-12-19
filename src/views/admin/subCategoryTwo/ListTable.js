@@ -295,7 +295,7 @@ const ListTable = ({
     try {
       const res = await axiosInstance.delete(`/subcategoryTwo/delete-sub-category-two/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

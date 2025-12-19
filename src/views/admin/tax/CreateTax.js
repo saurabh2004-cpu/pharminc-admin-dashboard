@@ -40,7 +40,7 @@ const CreateTax = () => {
                 }
             });
 
-            console.log("Create category response:", res);
+            // console.log("Create category response:", res);
 
             if (res.data.statusCode === 200) {
                 // Reset form on success
@@ -52,7 +52,7 @@ const CreateTax = () => {
                 navigate('/dashboard/tax/list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("Create category error:", res.data.message);
+                // console.log("Create category error:", res.data.message);
             }
 
 

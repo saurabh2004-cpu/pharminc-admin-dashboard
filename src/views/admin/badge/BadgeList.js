@@ -59,7 +59,7 @@ const BadgeList = () => {
     const fetchBadges = async () => {
         try {
             const response = await axiosInstance.get('/badge/get-badges');
-            console.log("response badges", response);
+            // console.log("response badges", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);

@@ -135,7 +135,7 @@ const EditCustomers = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      console.log("response brands", response);
+      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setBrandList(response.data.data);
@@ -428,7 +428,7 @@ const EditCustomers = () => {
         }))
       };
 
-      console.log("Sending data:", dataToSend);
+      // console.log("Sending data:", dataToSend);
 
       const res = await axiosInstance.put(`/admin/update-user-details/${id}`, dataToSend, {
         headers: {
@@ -436,12 +436,12 @@ const EditCustomers = () => {
         }
       });
 
-      console.log("update customer response:", res);
+      // console.log("update customer response:", res);
 
       if (res.data.statusCode === 200) {
         navigate('/dashboard/customers/list');
-      } else if (res.data.statusCode === 400) {
-        console.log("Update Customer error:", res.data.message);
+      } else {
+        // console.log("Create Customer error:", res.data.message);
         setError(res.data.message);
       }
 
@@ -457,7 +457,7 @@ const EditCustomers = () => {
     try {
       const res = await axiosInstance.get(`/admin/get-user/${id}`);
 
-      console.log("res user", res)
+      // console.log("res user", res)
 
       if (res.data.statusCode === 200) {
         const customerData = res.data.data;
@@ -512,11 +512,11 @@ const EditCustomers = () => {
     try {
       if (!customerId) return;
 
-      console.log("Fetching pricing groups for customerId:", customerId);
+      // console.log("Fetching pricing groups for customerId:", customerId);
 
       const res = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discounts-by-customer-id/${customerId}`);
 
-      console.log("pricing groups by Customer id response:", res.data);
+      // console.log("pricing groups by Customer id response:", res.data);
 
       if (res.data.statusCode === 200 && res.data.data) {
         setPricingGroups(res.data.data);
@@ -540,7 +540,7 @@ const EditCustomers = () => {
           }
         });
 
-        console.log("Transformed discounts:", discounts);
+        // console.log("Transformed discounts:", discounts);
 
         setPricingGroupDiscounts(discounts);
 
@@ -550,7 +550,7 @@ const EditCustomers = () => {
           markupDiscount: discounts
         }));
       } else {
-        console.log("No pricing groups data found");
+        // console.log("No pricing groups data found");
         setPricingGroupDiscounts([]);
       }
     } catch (error) {
@@ -585,7 +585,7 @@ const EditCustomers = () => {
   const fetchNetTermsData = async () => {
     try {
       const response = await axiosInstance.get('/net-terms-list/get-all-net-terms-simple');
-      console.log("response product groups", response);
+      // console.log("response product groups", response);
 
       if (response.data.statusCode === 200) {
         setNetTermsList(response.data.data);
@@ -754,7 +754,7 @@ const EditCustomers = () => {
             value={formData.customerId}
             onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
             placeholder="Enter Customer ID"
-            disabled
+          // disabled
           />
         </Grid>
         <Grid size={6}>

@@ -581,7 +581,7 @@ const PendingApprovalCustomers = ({
 
         try {
             const response = await axiosInstance.put(`/admin/approve-customer/${approveDialog.customerId}`);
-            console.log("response approval", response);
+            // console.log("response approval", response);
 
             if (response.data.statusCode === 200) {
                 // Remove the approved customer from both tableData and rows
@@ -592,7 +592,7 @@ const PendingApprovalCustomers = ({
                     prevRows.filter((customer) => customer._id !== approveDialog.customerId)
                 );
 
-                console.log(`Customer ${approveDialog.customerId} approved and removed from pending list`);
+                // console.log(`Customer ${approveDialog.customerId} approved and removed from pending list`);
             }
         } catch (error) {
             console.error('Error approving customer:', error);
@@ -660,7 +660,7 @@ const PendingApprovalCustomers = ({
     const handleDelete = async () => {
         try {
             const res = await axiosInstance.delete(`/admin/delete-user/${deleteDialog.itemId}`);
-            console.log("deleted", res.data);
+            // console.log("deleted", res.data);
 
             if (res.data.statusCode === 200) {
                 setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
@@ -690,7 +690,7 @@ const PendingApprovalCustomers = ({
     const fetchCustomers = async () => {
         try {
             const response = await axiosInstance.get('/admin/get-unapproved-customers');
-            console.log("response customerssss", response);
+            // console.log("response customerssss", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(Array.isArray(response.data.data) ? response.data.data : []);

@@ -297,7 +297,7 @@ const CustomersSalesOrders = () => {
     const fetchCustomerSalesOrder = async () => {
         try {
             const response = await axiosInstance.get(`/sales-order/get-sales-order-by-customer/${customerName}`);
-            console.log("response sales order s by customer name  ", response);
+            // console.log("response sales order s by customer name  ", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);
@@ -403,7 +403,7 @@ const CustomersSalesOrders = () => {
         try {
             const res = await axiosInstance.delete(`/sales-order/delete-sales-order/${id}`);
 
-            console.log("deleted", res.data);
+            // console.log("deleted", res.data);
 
             if (res.data.statusCode === 200) {
                 setTableData((prevData) => prevData.filter((item) => item._id !== id));

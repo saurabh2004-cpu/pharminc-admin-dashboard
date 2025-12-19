@@ -134,7 +134,7 @@ const CreateProduct = () => {
 
     if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
       setError('Compare price must be greater than each price');
-      console.log("compare price is less that eachPrice")
+      // console.log("compare price is less that eachPrice")
       return
     }
 
@@ -183,7 +183,7 @@ const CreateProduct = () => {
         }
       });
 
-      console.log("Create product response:", res);
+      // console.log("Create product response:", res);
 
       if (res.data.statusCode === 200) {
         // Reset form on success
@@ -212,7 +212,7 @@ const CreateProduct = () => {
         navigate('/dashboard/products/list');
 
       } else if (res.data.statusCode === 400) {
-        console.log("Create product error:", res.data.message);
+        // console.log("Create product error:", res.data.message);
         setError(res.data.message);
       }
 
@@ -268,7 +268,7 @@ const CreateProduct = () => {
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);
@@ -311,7 +311,7 @@ const CreateProduct = () => {
         }
       });
 
-      console.log("Images imported", res.data);
+      // console.log("Images imported", res.data);
 
       if (res.data.statusCode === 200) {
         setImageDialogOpen(false);
@@ -353,7 +353,7 @@ const CreateProduct = () => {
   const fetchPackTypesList = async () => {
     try {
       const response = await axiosInstance.get('/packs-types/get-all-packs-types');
-      console.log("response pack types list", response);
+      // console.log("response pack types list", response);
 
       if (response.status === 200) {
         setPackTypes(response.data.data.packs);
@@ -367,7 +367,7 @@ const CreateProduct = () => {
   const fetchPricingGroups = async () => {
     try {
       const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-      console.log("response pricing groups", response);
+      // console.log("response pricing groups", response);
 
       if (response.data.statusCode === 200) {
         setPricingGroups(response.data.data);
@@ -381,7 +381,7 @@ const CreateProduct = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      console.log("response brands", response);
+      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setCategoryOne(response.data.data);
@@ -396,9 +396,9 @@ const CreateProduct = () => {
     if (!formData.commerceCategoriesOne) return;
 
     try {
-      console.log("Fetching categories for brand ID:", formData.commerceCategoriesOne);
+      // console.log("Fetching categories for brand ID:", formData.commerceCategoriesOne);
       const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${formData.commerceCategoriesOne}`);
-      console.log("response categories", response);
+      // console.log("response categories", response);
 
       if (response.data.statusCode === 200) {
         setCategoryTwo(response.data.data);
@@ -416,9 +416,9 @@ const CreateProduct = () => {
     if (!formData.commerceCategoriesTwo) return;
 
     try {
-      console.log("Fetching subcategories for category ID:", formData.commerceCategoriesTwo);
+      // console.log("Fetching subcategories for category ID:", formData.commerceCategoriesTwo);
       const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${formData.commerceCategoriesTwo}`);
-      console.log("response sub categories", response.data.data);
+      // console.log("response sub categories", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryThree(response.data.data);
@@ -436,9 +436,9 @@ const CreateProduct = () => {
     if (!formData.commerceCategoriesThree) return;
 
     try {
-      console.log("Fetching sub-subcategories for subcategory ID:", formData.commerceCategoriesThree);
+      // console.log("Fetching sub-subcategories for subcategory ID:", formData.commerceCategoriesThree);
       const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${formData.commerceCategoriesThree}`);
-      console.log("response sub categories two", response.data.data);
+      // console.log("response sub categories two", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryFour(response.data.data);

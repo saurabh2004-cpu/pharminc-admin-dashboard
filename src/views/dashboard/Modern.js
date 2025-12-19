@@ -20,7 +20,7 @@ const Modern = () => {
 
   const user = useSelector((state) => state.auth.userData);
 
-  console.log("user", user);
+  // console.log("user", user);
   return (
     <Box>
       <Grid container spacing={3}>

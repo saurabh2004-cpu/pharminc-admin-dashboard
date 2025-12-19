@@ -183,7 +183,7 @@ const EditProduct = () => {
 
     if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
       setError('Compare price must be greater than each price');
-      console.log("compare price is less that eachPrice")
+      // console.log("compare price is less that eachPrice")
       return
     }
 
@@ -235,8 +235,8 @@ const EditProduct = () => {
 
       formDataToSend.append('taxable', formData.taxable);
 
-      console.log("Sequence value being sent:", formData.sequence);
-      console.log("Type of sequence:", typeof formData.sequence);
+      // console.log("Sequence value being sent:", formData.sequence);
+      // console.log("Type of sequence:", typeof formData.sequence);
 
       // Append thumbnail if new one is selected
       if (thumbnailFile) {
@@ -257,7 +257,7 @@ const EditProduct = () => {
         formDataToSend.append('imagesToDelete', imageUrl);
       });
 
-      console.log("Images to delete:", imagesToDelete);
+      // console.log("Images to delete:", imagesToDelete);
 
       const res = await axiosInstance.put(`/products/update-product/${id}`, formDataToSend, {
         headers: {
@@ -265,7 +265,7 @@ const EditProduct = () => {
         }
       });
 
-      console.log("Update product response:", res);
+      // console.log("Update product response:", res);
 
       if (res.data.statusCode === 200) {
         navigate('/dashboard/products/list');
@@ -284,7 +284,7 @@ const EditProduct = () => {
   const fetchProductDetails = async () => {
     try {
       const response = await axiosInstance.get(`/products/get-product/${id}`);
-      console.log("response product details", response.data);
+      // console.log("response product details", response.data);
 
       if (response.data.statusCode === 200) {
         const product = response.data.data;
@@ -357,7 +357,7 @@ const EditProduct = () => {
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);
@@ -389,7 +389,7 @@ const EditProduct = () => {
   const fetchPackTypesList = async () => {
     try {
       const response = await axiosInstance.get('/packs-types/get-all-packs-types');
-      console.log("response pack types list", response);
+      // console.log("response pack types list", response);
 
       if (response.status === 200) {
         setPackTypes(response.data.data.packs);
@@ -404,7 +404,7 @@ const EditProduct = () => {
   const fetchPricingGroups = async () => {
     try {
       const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-      console.log("response pricing groups", response);
+      // console.log("response pricing groups", response);
 
       if (response.data.statusCode === 200) {
         setPricingGroups(response.data.data);
@@ -419,7 +419,7 @@ const EditProduct = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      console.log("response brands", response);
+      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setCategoryOne(response.data.data);
@@ -434,7 +434,7 @@ const EditProduct = () => {
   const fetchCategoryList = async () => {
     try {
       const response = await axiosInstance.get('/category/get-categories');
-      console.log("response categories", response);
+      // console.log("response categories", response);
 
       if (response.data.statusCode === 200) {
         setCategoryTwo(response.data.data);
@@ -449,7 +449,7 @@ const EditProduct = () => {
   const fetchSubCategoryList = async () => {
     try {
       const response = await axiosInstance.get('/subcategory/get-sub-categories');
-      console.log("response sub categories", response.data.data);
+      // console.log("response sub categories", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryThree(response.data.data);
@@ -471,7 +471,7 @@ const EditProduct = () => {
       }
 
       const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subcategoryId}`);
-      console.log("response sub categories two", response.data.data);
+      // console.log("response sub categories two", response.data.data);
 
       if (response.data.statusCode === 200) {
         setCategoryFour(response.data.data);
@@ -488,7 +488,7 @@ const EditProduct = () => {
   const fetchBadges = async () => {
     try {
       const response = await axiosInstance.get('/badge/get-badges');
-      console.log("response badges", response);
+      // console.log("response badges", response);
 
       if (response.data.statusCode === 200) {
         setBadges(response.data.data);

@@ -146,7 +146,7 @@ const EditSubCategoryTwo = () => {
   const fetchSubCategoryTwo = async () => {
     try {
       const response = await axiosInstance.get(`/subcategoryTwo/get-sub-category-two/${id}`);
-      console.log("response sub categories", response.data.data);
+      // console.log("response sub categories", response.data.data);
 
       if (response.data.statusCode === 200) {
         const data = response.data.data;

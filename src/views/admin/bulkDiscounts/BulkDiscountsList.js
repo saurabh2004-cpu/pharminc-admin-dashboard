@@ -232,7 +232,7 @@ const BulkDiscountsList = () => {
   const fetchBulkDiscounts = async () => {
     try {
       const response = await axiosInstance.get(`/bulk-discounts/get-all-bulk-discounts`);
-      console.log("fetch all bulk discounts ", response);
+      // console.log("fetch all bulk discounts ", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -345,7 +345,7 @@ const BulkDiscountsList = () => {
       
       const res = await axiosInstance.delete(`/bulk-discounts/delete-bulk-discount/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

@@ -71,7 +71,7 @@ const CategoriesList = () => {
     const fetchCategoryList = async () => {
         try {
             const response = await axiosInstance.get('/category/get-categories');
-            console.log("response categories", response);
+            // console.log("response categories", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);

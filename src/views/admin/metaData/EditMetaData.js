@@ -111,7 +111,7 @@ const EditMetaData = () => {
                 }
             });
 
-            console.log("Meta data update response:", res.data);
+            // console.log("Meta data update response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setError('Meta data updated successfully!');

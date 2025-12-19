@@ -41,7 +41,7 @@ const EditDeliveryVendor = () => {
         }
       });
 
-      console.log("update delivery vendor response:", res);
+      // console.log("update delivery vendor response:", res);
 
       if (res.data.statusCode === 200) {
         // Reset form on success
@@ -53,7 +53,7 @@ const EditDeliveryVendor = () => {
         navigate('/dashboard/delivery-vendors/list');
 
       } else if (res.data.statusCode === 400) {
-        console.log("update delivery vendor error:", res.data.message);
+        // console.log("update delivery vendor error:", res.data.message);
       }
 
 
@@ -69,7 +69,7 @@ const EditDeliveryVendor = () => {
   const fetchDeliveryVendor = async () => {
     try {
       const response = await axiosInstance.get(`/delivery-vendor/get-delivery-vendor/${id}`);
-      console.log("response delivery vendor details", response);
+      // console.log("response delivery vendor details", response);
       if (response.data.statusCode === 200) {
         setFormData({
           vendorName: response.data.data.vendorName,

@@ -50,7 +50,7 @@ const CreatePricingGroups = () => {
                 }
             });
 
-            console.log("Create category response:", res);
+            // console.log("Create category response:", res);
 
             if (res.data.statusCode === 200) {
                 // Reset form on success
@@ -62,7 +62,7 @@ const CreatePricingGroups = () => {
                 navigate('/dashboard/pricing-groups/list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("Create pricing group error:", res.data.message);
+                // console.log("Create pricing group error:", res.data.message);
             }
 
 

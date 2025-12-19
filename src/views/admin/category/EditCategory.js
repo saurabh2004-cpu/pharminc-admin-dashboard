@@ -75,7 +75,7 @@ const CreateCategory = () => {
                         'Content-Type': 'application/json'
                     }
                 });
-                console.log("Update category response:", res);
+                // console.log("Update category response:", res);
             } else {
                 // Create new category
                 res = await axiosInstance.post('/category/create-category', formData, {
@@ -83,7 +83,7 @@ const CreateCategory = () => {
                         'Content-Type': 'application/json'
                     }
                 });
-                console.log("Create category response:", res);
+                // console.log("Create category response:", res);
             }
 
             if (res.data.statusCode === 200) {
@@ -100,7 +100,7 @@ const CreateCategory = () => {
                 navigate('/dashboard/category/list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("Category operation error:", res.data.message);
+                // console.log("Category operation error:", res.data.message);
                 setError(res.data.message || 'Operation failed');
             }
 
@@ -115,7 +115,7 @@ const CreateCategory = () => {
     const fetchBrandsList = async () => {
         try {
             const response = await axiosInstance.get('/brand/get-brands-list');
-            console.log("response brands", response.data);
+            // console.log("response brands", response.data);
 
             if (response.data.statusCode === 200) {
                 setBrandsList(response.data.data || []);

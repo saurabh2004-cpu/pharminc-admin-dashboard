@@ -402,7 +402,7 @@ const ListAdmins = () => {
                 setTableData(prev => prev.filter(admin => admin._id !== deleteDialog.adminId));
 
                 // Show success message (you can add a toast notification here)
-                console.log('Admin deleted successfully');
+                // console.log('Admin deleted successfully');
             }
         } catch (error) {
             console.error('Error deleting admin:', error);
@@ -420,7 +420,7 @@ const ListAdmins = () => {
     const fetchAdminsList = async () => {
         try {
             const response = await axiosInstance.get('/admin/get-all-admins');
-            console.log("admins list Response", response);
+            // console.log("admins list Response", response);
 
             if (response.data.statusCode === 200) {
                 setTableData(response.data.data);

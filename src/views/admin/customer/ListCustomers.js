@@ -131,7 +131,7 @@ const ListCustomers = () => {
     setLoading(true)
     try {
       const response = await axiosInstance.get('/admin/get-all-users');
-      console.log("response customers", response.data);
+      // console.log("response customers", response.data);
 
       if (response.data.statusCode === 200) {
         const customersData = response.data.data?.docs || response.data.data || response.data;

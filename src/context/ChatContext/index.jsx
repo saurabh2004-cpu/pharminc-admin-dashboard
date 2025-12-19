@@ -49,7 +49,7 @@ export const ChatProvider = ({ children }) => {
         } else if (Chatserror) {
             setError(Chatserror)
             setLoading(isChatsLoading);
-            console.log("Failed to fetch the data")
+            // console.log("Failed to fetch the data")
         }
         else {
             setLoading(isChatsLoading);

@@ -76,7 +76,7 @@ const AuthLogin = ({ subtitle }) => {
         }
       });
 
-      console.log("response", res);
+      // console.log("response", res);
 
       if (res.data.statusCode === 200) {
         dispatch(login(res.data.user));
@@ -140,7 +140,7 @@ const AuthLogin = ({ subtitle }) => {
           }
         });
 
-      console.log("Verify OTP response:", res);
+      // console.log("Verify OTP response:", res);
 
       if (res.data.statusCode === 200) {
         showNotification('Login successful! Redirecting...', 'success');

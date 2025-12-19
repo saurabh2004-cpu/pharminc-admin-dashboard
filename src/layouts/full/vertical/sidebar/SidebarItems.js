@@ -20,7 +20,7 @@ const SidebarItems = () => {
   const [adminRole, setAdminRole] = useState('')
   const admin = useSelector((state) => state.auth.userData);
 
-  console.log("admin in sidebar ", admin)
+  // console.log("admin in sidebar ", admin)
 
   const filteredMenuItems = Menuitems.map(item => {
     if (item.children) {

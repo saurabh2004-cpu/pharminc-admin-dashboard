@@ -41,7 +41,7 @@ const EditPackTypes = () => {
                 }
             });
 
-            console.log("Update pack types response:", res);
+            // console.log("Update pack types response:", res);
 
             if (res.data.statusCode === 200) {
                 // Reset form on success
@@ -53,7 +53,7 @@ const EditPackTypes = () => {
                 navigate('/dashboard/pack-types/list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("update pack types error:", res.data.message);
+                // console.log("update pack types error:", res.data.message);
             }
 
 
@@ -68,7 +68,7 @@ const EditPackTypes = () => {
     const fetchPackType = async () => {
         try {
             const response = await axiosInstance.get(`/packs-types/get-packs-type/${id}`);
-            console.log("response single pack type", response);
+            // console.log("response single pack type", response);
             if (response.data.statusCode === 200) {
                 setFormData({
                     name: response.data.data.name,

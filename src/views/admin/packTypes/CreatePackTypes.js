@@ -42,7 +42,7 @@ const CreatePackTypes = () => {
                 }
             });
 
-            console.log("Create pack types response:", res);
+            // console.log("Create pack types response:", res);
 
             if (res.data.statusCode === 200) {
                 // Reset form on success
@@ -54,7 +54,7 @@ const CreatePackTypes = () => {
                 navigate('/dashboard/pack-types/list');
 
             } else if (res.data.statusCode === 400) {
-                console.log("Create pack types error:", res.data.message);
+                // console.log("Create pack types error:", res.data.message);
             }
 
 
@@ -85,7 +85,7 @@ const CreatePackTypes = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);

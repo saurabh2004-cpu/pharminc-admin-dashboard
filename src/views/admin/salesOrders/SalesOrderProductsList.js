@@ -364,7 +364,7 @@ const CustomersSalesOrders = () => {
     // Calculate tax and total amounts
     const calculateOrderTotals = (products) => {
 
-        console.log("products", products);
+        // console.log("products", products);
 
         const orderTotal = products.reduce((sum, product) => {
             const quantity = parseInt(product.packQuantity) * parseInt(product.unitsQuantity);
@@ -565,7 +565,7 @@ const CustomersSalesOrders = () => {
     const fetchSalesOrdersProducts = async () => {
         try {
             const response = await axiosInstance.get(`/sales-order/get-products-by-sales-document-number-dashboard/${documentNo}`);
-            console.log("response sales order products ", response.data.data);
+            // console.log("response sales order products ", response.data.data);
 
             if (response.data.statusCode === 200) {
                 const data = response.data.data;
@@ -610,13 +610,13 @@ const CustomersSalesOrders = () => {
 
     const fetchProductBySku = async (itemSku) => {
         try {
-            console.log("product group data", productGroupsData);
+            // console.log("product group data", productGroupsData);
 
             // Check if it's a product group
             const productGroup = productGroupsData.find(pg => pg.sku === itemSku);
 
             if (productGroup) {
-                console.log("Found product group:", productGroup.name);
+                // console.log("Found product group:", productGroup.name);
 
                 // For product groups, find the lowest stock level among all products
                 let lowestStock = Infinity;
@@ -625,7 +625,7 @@ const CustomersSalesOrders = () => {
                     for (const groupProduct of productGroup.products) {
                         const product = groupProduct.product;
                         if (product && product.stockLevel !== undefined) {
-                            console.log(`Product ${product.sku} stock: ${product.stockLevel}`);
+                            // console.log(`Product ${product.sku} stock: ${product.stockLevel}`);
                             lowestStock = Math.min(lowestStock, product.stockLevel);
                         }
                     }
@@ -633,15 +633,15 @@ const CustomersSalesOrders = () => {
                     // If found valid stock levels, use the lowest one
                     if (lowestStock !== Infinity) {
                         setProductQuantity(lowestStock);
-                        console.log(`Lowest stock in product group: ${lowestStock}`);
+                        // console.log(`Lowest stock in product group: ${lowestStock}`);
                     } else {
                         // If no stock levels found, set to 0 or a default value
                         setProductQuantity(0);
-                        console.log("No stock levels found in product group");
+                        // console.log("No stock levels found in product group");
                     }
                 } else {
                     setProductQuantity(0);
-                    console.log("No products found in product group");
+                    // console.log("No products found in product group");
                 }
             } else {
                 // It's a regular product, fetch it normally
@@ -650,10 +650,10 @@ const CustomersSalesOrders = () => {
                 if (response.status === 200) {
                     const productData = response.data.data;
                     setProductQuantity(productData.stockLevel || 0);
-                    console.log(`Regular product ${itemSku} stock: ${productData.stockLevel}`);
+                    // console.log(`Regular product ${itemSku} stock: ${productData.stockLevel}`);
                 } else {
                     setProductQuantity(0);
-                    console.log(`Product ${itemSku} not found or error`);
+                    // console.log(`Product ${itemSku} not found or error`);
                 }
             }
         } catch (error) {
@@ -665,7 +665,7 @@ const CustomersSalesOrders = () => {
                 // Use the first product's stock as fallback
                 const firstProductStock = productGroup.products[0]?.product?.stockLevel || 0;
                 setProductQuantity(firstProductStock);
-                console.log(`Fallback - Using first product stock: ${firstProductStock}`);
+                // console.log(`Fallback - Using first product stock: ${firstProductStock}`);
             } else {
                 setProductQuantity(0);
             }
@@ -678,7 +678,7 @@ const CustomersSalesOrders = () => {
         try {
             const response = await axiosInstance.get(`/admin/customer-addresses/${customerName}`);
 
-            console.log("response customer addresses", response.data);
+            // console.log("response customer addresses", response.data);
 
             if (response.data.statusCode === 200) {
                 setBillingAddresses(response.data.data.billingAddresses || []);
@@ -710,7 +710,7 @@ const CustomersSalesOrders = () => {
         try {
             const response = await axiosInstance.get(`/user/get-user-by-customer-id/${customerId}`);
 
-            console.log("get user by id ", response);
+            // console.log("get user by id ", response);
 
             if (response.data.statusCode === 200) {
                 setNetTerms(response.data.data);
@@ -935,7 +935,7 @@ const CustomersSalesOrders = () => {
 
     // FIXED: Initialize edit form with proper data
     const handleEditSalesOrder = (order) => {
-        console.log("order in handle edit sales order", order);
+        // console.log("order in handle edit sales order", order);
 
         setRowId(order._id);
         setEditingRowId(order._id);
@@ -992,12 +992,12 @@ const CustomersSalesOrders = () => {
 
     const handleDeleteSalesOrder = async () => {
 
-        console.log("document number", deleteDialog.documentNumber)
+        // console.log("document number", deleteDialog.documentNumber)
 
         try {
             const res = await axiosInstance.delete(`/sales-order/delete-sales-order-by-id/${deleteDialog.itemId}/${deleteDialog.documentNumber}`);
 
-            console.log("resposne of delect sales order", res)
+            // console.log("resposne of delect sales order", res)
 
             if (res.data.statusCode === 200) {
                 setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

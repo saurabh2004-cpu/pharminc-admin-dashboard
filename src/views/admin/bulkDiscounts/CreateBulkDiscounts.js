@@ -121,7 +121,7 @@ const CreateBulkDiscounts = () => {
                 discount: formData.discount
             };
 
-            console.log("Submitting data:", submitData);
+            // console.log("Submitting data:", submitData);
 
             const res = await axiosInstance.post('/bulk-discounts/create-bulk-discount', submitData, {
                 headers: {
@@ -129,7 +129,7 @@ const CreateBulkDiscounts = () => {
                 }
             });
 
-            console.log("Bulk discount creation response:", res.data);
+            // console.log("Bulk discount creation response:", res.data);
 
             if (res.data.statusCode === 200 || res.data.statusCode === 201) {
                 setFormData({
@@ -180,7 +180,7 @@ const CreateBulkDiscounts = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);
@@ -213,7 +213,7 @@ const CreateBulkDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/admin/get-all-users');
-            console.log("response customers", response);
+            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 const customersData = Array.isArray(response.data.data)
@@ -241,7 +241,7 @@ const CreateBulkDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/products/get-all-products-dashboard');
-            console.log("response products", response);
+            // console.log("response products", response);
 
             if (response.data.statusCode === 200) {
                 const productsArray = Array.isArray(response.data.data)

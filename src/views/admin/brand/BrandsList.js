@@ -52,7 +52,7 @@ const BrandsList = () => {
     const fetchBrandsList = async () => {
         try {
             const response = await axiosInstance.get('/brand/get-brands-list');
-            console.log("response brands", response);
+            // console.log("response brands", response);
 
             if (response.data.statusCode === 200) {
                 // Extract the data array from the response

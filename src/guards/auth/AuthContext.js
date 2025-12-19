@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
       const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
         if (user) {
           const fullName = user.displayName;
-          console.log(fullName);
+          // console.log(fullName);
 
           dispatch({
             type: 'AUTH_STATE_CHANGED',

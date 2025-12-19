@@ -109,7 +109,7 @@ const ListNetTerms = () => {
       }
 
       const response = await axiosInstance.get(endpoint);
-      console.log('NetTerms response:', response.data);
+      // console.log('NetTerms response:', response.data);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);

@@ -199,14 +199,14 @@ const CreateSalesOrders = () => {
   // Handle product selection change for a specific item
   const handleProductChange = (index, newValue) => {
 
-    console.log("order items before check", orderItems)
+    // console.log("order items before check", orderItems)
 
     if (Array.isArray(orderItems) && orderItems?.some(item => item.itemSku === newValue.sku)) {
       alert('Product already added');
       return;
     }
 
-    console.log("order items after check", orderItems)
+    // console.log("order items after check", orderItems)
 
     const newItems = [...orderItems];
 
@@ -410,7 +410,7 @@ const CreateSalesOrders = () => {
         }))
       }
 
-      console.log("Creating multiple sales orders:", ordersData);
+      // console.log("Creating multiple sales orders:", ordersData);
 
       const res = await axiosInstance.post('/sales-order/create-bulk-sales-order-admin', ordersData, {
         headers: {
@@ -418,7 +418,7 @@ const CreateSalesOrders = () => {
         }
       });
 
-      console.log("Create bulk sales orders response:", res);
+      // console.log("Create bulk sales orders response:", res);
 
       if (res.data.statusCode === 200) {
         // Reset form on success
@@ -481,7 +481,7 @@ const CreateSalesOrders = () => {
   const fetchProductsList = async () => {
     try {
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
-      console.log("Individual products response:", response.data);
+      // console.log("Individual products response:", response.data);
 
       if (response.data.statusCode === 200) {
         const productsData = response.data.data?.docs || response.data.data || response.data;
@@ -505,7 +505,7 @@ const CreateSalesOrders = () => {
     try {
       setError('');
       const response = await axiosInstance.get('/product-group/get-all-product-groups');
-      console.log("Product groups response:", response);
+      // console.log("Product groups response:", response);
 
       let productGroupsData = [];
 
@@ -541,7 +541,7 @@ const CreateSalesOrders = () => {
   const fetchLatestDocumentNumber = async () => {
     try {
       const response = await axiosInstance.get('/sales-order/get-latest-document-number');
-      console.log("Latest document number response:", response);
+      // console.log("Latest document number response:", response);
 
       if (response.data.statusCode === 200 && response.data.data.documentNumber) {
         setFormData(prev => ({
@@ -566,7 +566,7 @@ const CreateSalesOrders = () => {
 
     try {
       const response = await axiosInstance.get(`/products/get-products-pack-types/${sku}`);
-      console.log("Pack types response for", sku, ":", response);
+      // console.log("Pack types response for", sku, ":", response);
 
       if (response.status === 200 && Array.isArray(response.data.data)) {
         setPackTypes(prev => ({
@@ -584,7 +584,7 @@ const CreateSalesOrders = () => {
   const fetchCustomersList = async () => {
     try {
       const response = await axiosInstance.get('/admin/get-all-users');
-      console.log("Customers response:", response.data);
+      // console.log("Customers response:", response.data);
 
       if (response.data.statusCode === 200) {
         const customersData = response.data.data?.docs || response.data.data || response.data;
@@ -719,7 +719,7 @@ const CreateSalesOrders = () => {
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);

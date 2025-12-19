@@ -56,7 +56,7 @@ const CreatePricingGroupsDiscounts = () => {
                 }
             });
 
-            console.log("Pricing group discount creation response:", res.data);
+            // console.log("Pricing group discount creation response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setFormData({
@@ -121,7 +121,7 @@ const CreatePricingGroupsDiscounts = () => {
                 }
             });
 
-            console.log("CSV imported", res.data);
+            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);
@@ -156,7 +156,7 @@ const CreatePricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-            console.log("response pricing groups", response);
+            // console.log("response pricing groups", response);
 
             if (response.data.statusCode === 200) {
                 // Ensure we always set an array
@@ -175,7 +175,7 @@ const CreatePricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/admin/get-all-users');
-            console.log("response customers", response);
+            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 // Ensure we always set an array
@@ -194,7 +194,7 @@ const CreatePricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/products/get-all-products-dashboard');
-            console.log("response products", response);
+            // console.log("response products", response);
 
             if (response.data.statusCode === 200) {
                 // Correct: products are inside response.data.data (not .docs)
@@ -222,7 +222,7 @@ const CreatePricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/product-group/get-all-product-groups');
-            console.log("response product groups", response);
+            // console.log("response product groups", response);
 
             if (response.data.statusCode === 200) {
                 if (Array.isArray(response.data.data)) {

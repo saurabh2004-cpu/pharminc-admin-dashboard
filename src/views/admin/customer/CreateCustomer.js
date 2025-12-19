@@ -257,7 +257,7 @@ const CreateCustomer = () => {
         }
       });
 
-      console.log("Create customer response:", res);
+      // console.log("Create customer response:", res);
 
       if (res.data.statusCode === 200) {
         // Reset form on success
@@ -300,8 +300,9 @@ const CreateCustomer = () => {
 
         navigate('/dashboard/customers/list');
 
-      } else if (res.data.statusCode === 400) {
-        console.log("Create Customer error:", res.data.message);
+      } else {
+        // console.log("Create Customer error:", res.data.message);
+        setError(res.data.message);
       }
 
     } catch (error) {
@@ -341,7 +342,7 @@ const CreateCustomer = () => {
         }
       });
 
-      console.log("CSV imported", res.data);
+      // console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);
@@ -374,7 +375,7 @@ const CreateCustomer = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      console.log("response brands", response);
+      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setBrandList(response.data.data);
@@ -424,7 +425,7 @@ const CreateCustomer = () => {
   const fetchNetTermsData = async () => {
     try {
       const response = await axiosInstance.get('/net-terms-list/get-all-net-terms-simple');
-      console.log("response product groups", response);
+      // console.log("response product groups", response);
 
       if (response.data.statusCode === 200) {
         setNetTermsList(response.data.data);
@@ -518,7 +519,7 @@ const CreateCustomer = () => {
             value={formData.customerId}
             onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
             placeholder="Enter Customer ID"
-            disabled
+          // disabled
           />
         </Grid>
         <Grid size={6}>

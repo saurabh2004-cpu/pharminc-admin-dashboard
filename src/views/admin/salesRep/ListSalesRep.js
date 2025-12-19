@@ -231,7 +231,7 @@ const ListSalesRep = () => {
   const fetchSalesAllRep = async () => {
     try {
       const response = await axiosInstance.get(`/sales-rep/get-sales-reps`);
-      console.log("fetch all sales reps ", response);
+      // console.log("fetch all sales reps ", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data);
@@ -344,7 +344,7 @@ const ListSalesRep = () => {
 
       const res = await axiosInstance.delete(`/sales-rep/delete-sales-rep/${deleteDialog.itemId}`);
 
-      console.log("deleted", res.data);
+      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));

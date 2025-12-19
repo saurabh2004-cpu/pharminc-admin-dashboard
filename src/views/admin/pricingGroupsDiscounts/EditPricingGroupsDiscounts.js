@@ -55,7 +55,7 @@ const EditPricingGroupsDiscounts = () => {
                 }
             });
 
-            console.log("Pricing group discount update response:", res.data);
+            // console.log("Pricing group discount update response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setError('Item discount updated successfully!');
@@ -87,7 +87,7 @@ const EditPricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get(`/item-based-discount/get-items-based-discount/${id}`);
-            console.log("response items based discount by id", response);
+            // console.log("response items based discount by id", response);
 
             if (response.data.statusCode === 200 && response.data.data) {
                 const discountData = response.data.data;
@@ -101,12 +101,12 @@ const EditPricingGroupsDiscounts = () => {
                 });
 
                 // Log the data for debugging
-                console.log("Setting form data:", {
-                    pricingGroupId: discountData.pricingGroup?._id || discountData.pricingGroupId || '',
-                    customerId: discountData.customerId || '',
-                    productSku: discountData.productSku || discountData.sku || '',
-                    percentage: discountData.percentage || '',
-                });
+                // console.log("Setting form data:", {
+                //     pricingGroupId: discountData.pricingGroup?._id || discountData.pricingGroupId || '',
+                //     customerId: discountData.customerId || '',
+                //     productSku: discountData.productSku || discountData.sku || '',
+                //     percentage: discountData.percentage || '',
+                // });
             } else {
                 setError('No discount data found');
             }
@@ -121,7 +121,7 @@ const EditPricingGroupsDiscounts = () => {
     const fetchPricingGroups = async () => {
         try {
             const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-            console.log("response pricing groups", response);
+            // console.log("response pricing groups", response);
 
             if (response.data.statusCode === 200) {
                 setPricingGroups(Array.isArray(response.data.data) ? response.data.data : []);
@@ -136,7 +136,7 @@ const EditPricingGroupsDiscounts = () => {
     const fetchCustomers = async () => {
         try {
             const response = await axiosInstance.get('/admin/get-all-users');
-            console.log("response customers", response);
+            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 setCustomers(Array.isArray(response.data.data) ? response.data.data : []);
@@ -152,7 +152,7 @@ const EditPricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/products/get-all-products-dashboard');
-            console.log("response products", response);
+            // console.log("response products", response);
 
             if (response.data.statusCode === 200) {
                 // Correct: products are inside response.data.data (not .docs)
@@ -181,7 +181,7 @@ const EditPricingGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/product-group/get-all-product-groups');
-            console.log("response product groups", response);
+            // console.log("response product groups", response);
 
             if (response.data.statusCode === 200) {
                 if (Array.isArray(response.data.data)) {

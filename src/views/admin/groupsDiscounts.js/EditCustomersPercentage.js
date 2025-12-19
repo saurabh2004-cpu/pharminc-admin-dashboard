@@ -42,7 +42,7 @@ const EditCustomersPercentage = () => {
                 percentage: formData.percentage
             };
 
-            console.log("Data being sent for update:", dataToSend);
+            // console.log("Data being sent for update:", dataToSend);
 
             const res = await axiosInstance.put(
                 `/pricing-groups-discount/update-customers-percentage/${customerId}/${pricingGroupDiscountId}`,
@@ -54,7 +54,7 @@ const EditCustomersPercentage = () => {
                 }
             );
 
-            console.log("Customer percentage update response:", res.data);
+            // console.log("Customer percentage update response:", res.data);
 
             if (res.data.statusCode === 200) {
                 setError('success: Customer percentage updated successfully!');
@@ -76,7 +76,7 @@ const EditCustomersPercentage = () => {
             const response = await axiosInstance.get(
                 `/pricing-groups-discount/get-pricing-group-discount-by-customerId-and-discountId/${customerId}/${pricingGroupDiscountId}`
             );
-            console.log("Customer discount data:", response.data);
+            // console.log("Customer discount data:", response.data);
 
             if (response.data.statusCode === 200 && response.data.data) {
                 const discountData = response.data.data;

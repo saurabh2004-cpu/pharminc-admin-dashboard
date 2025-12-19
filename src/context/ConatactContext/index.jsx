@@ -52,7 +52,7 @@ export const ContactContextProvider = ({ children }) => {
     try {
       await mutate(postFetcher("/api/data/contacts/addContact", newContact));
     } catch (error) {
-      console.log("Failed to add contact", error)
+      // console.log("Failed to add contact", error)
     }
   };
 
