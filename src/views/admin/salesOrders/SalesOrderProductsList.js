@@ -1483,11 +1483,12 @@ const CustomersSalesOrders = () => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                             {tableData[0]?.date
-                                                ? new Date(tableData[0].date).toLocaleTimeString([], {
-                                                    hour: "2-digit",
+                                                ? new Date(tableData[0].createdAt).toLocaleTimeString("en-IN", {
+                                                    timeZone: "Asia/Kolkata",
+                                                    hour: "numeric",
                                                     minute: "2-digit",
-                                                    hour12: true,
-                                                })
+                                                    hour12: true
+                                                }).replace(":", ".").toLowerCase()
                                                 : "N/A"}
                                         </Typography>
                                     </Box>
