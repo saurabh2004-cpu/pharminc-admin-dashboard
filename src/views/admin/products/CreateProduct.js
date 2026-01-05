@@ -4,7 +4,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
-// import { IconBuildingArch, IconMail, IconMessage2, IconPhone, IconUser } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { IconUpload, IconFileImport, IconPhoto, IconX } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
@@ -21,10 +20,10 @@ const CreateProduct = () => {
     pricingGroup: '',
     stockLevel: '',
     typesOfPacks: [],
-    commerceCategoriesOne: '',
-    commerceCategoriesTwo: '',
-    commerceCategoriesThree: '',
-    commerceCategoriesFour: '',
+    commerceCategoriesOne: [],
+    commerceCategoriesTwo: [],
+    commerceCategoriesThree: [],
+    commerceCategoriesFour: [],
     pageTitle: '',
     storeDescription: '',
     eachBarcodes: '',
@@ -33,7 +32,6 @@ const CreateProduct = () => {
     taxable: true,
     comparePrice: '',
     sequence: null,
-
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -52,14 +50,13 @@ const CreateProduct = () => {
 
   const [packTypes, setPackTypes] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
-  const [categoryOne, setCategoryOne] = useState([]);
-  const [categoryTwo, setCategoryTwo] = useState([]);
-  const [categoryThree, setCategoryThree] = useState([]);
-  const [categoryFour, setCategoryFour] = useState([]);
+  const [categoryOne, setCategoryOne] = useState([]); // Brands
+  const [categoryTwo, setCategoryTwo] = useState([]); // Categories (filtered by brand)
+  const [categoryThree, setCategoryThree] = useState([]); // Subcategories (filtered by category)
+  const [categoryFour, setCategoryFour] = useState([]); // Sub-subcategories (filtered by subcategory)
   const [taxOptions, setTaxOptions] = useState([true, false]);
 
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
-
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
@@ -115,10 +112,7 @@ const CreateProduct = () => {
   };
 
   const handleSubmit = async () => {
-
-    // console.log("formdata on submit", parseFloat(formData.comparePrice), parseFloat(formData.eachPrice));
-    // return
-
+    // Validation
     if (!formData.sku.trim()) {
       setError('Please enter a SKU');
       return;
@@ -132,10 +126,16 @@ const CreateProduct = () => {
       return;
     }
 
-    if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
+    // Validate compare price
+    if (formData.comparePrice && parseFloat(formData.comparePrice) <= parseFloat(formData.eachPrice)) {
       setError('Compare price must be greater than each price');
-      // console.log("compare price is less that eachPrice")
-      return
+      return;
+    }
+
+    // Validate at least one brand is selected
+    if (!formData.commerceCategoriesOne || formData.commerceCategoriesOne.length === 0) {
+      setError('Please select at least one brand (Commerce Category One)');
+      return;
     }
 
     setLoading(true);
@@ -149,27 +149,45 @@ const CreateProduct = () => {
     formDataToSend.append('ProductName', formData.ProductName);
     formDataToSend.append('eachPrice', formData.eachPrice);
     formDataToSend.append('stockLevel', formData.stockLevel);
-    formDataToSend.append('pricingGroup', formData.pricingGroup);
+    if (formData.pricingGroup) {
+      formDataToSend.append('pricingGroup', formData.pricingGroup);
+    }
 
-    // Append array fields
+    // Append array fields - FIXED FOR MULTIPLE SELECTION
     formData.typesOfPacks.forEach(pack => {
       formDataToSend.append('typesOfPacks', pack);
     });
 
+    // Append commerce categories as arrays
+    formData.commerceCategoriesOne.forEach(category => {
+      formDataToSend.append('commerceCategoriesOne', category);
+    });
+
+    formData.commerceCategoriesTwo.forEach(category => {
+      formDataToSend.append('commerceCategoriesTwo', category);
+    });
+
+    formData.commerceCategoriesThree.forEach(category => {
+      formDataToSend.append('commerceCategoriesThree', category);
+    });
+
+    formData.commerceCategoriesFour.forEach(category => {
+      formDataToSend.append('commerceCategoriesFour', category);
+    });
+
     // Append optional fields
-    if (formData.commerceCategoriesOne) formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne);
-    if (formData.commerceCategoriesTwo) formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo);
-    if (formData.commerceCategoriesThree) formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree);
-    if (formData.commerceCategoriesFour) formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour);
     if (formData.storeDescription) formDataToSend.append('storeDescription', formData.storeDescription);
     if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
     if (formData.packBarcodes) formDataToSend.append('packBarcodes', formData.packBarcodes);
     if (formData.comparePrice) formDataToSend.append('comparePrice', formData.comparePrice);
+    if (formData.sequence) formDataToSend.append('sequence', formData.sequence);
     formDataToSend.append('taxable', formData.taxable);
 
     // Append thumbnail image
-    formDataToSend.append('thumbnail', thumbnailFile);
+    if (thumbnailFile) {
+      formDataToSend.append('thumbnail', thumbnailFile);
+    }
 
     // Append multiple images
     imageFiles.forEach((file) => {
@@ -183,7 +201,7 @@ const CreateProduct = () => {
         }
       });
 
-      // console.log("Create product response:", res);
+      console.log("Create product response:", res);
 
       if (res.data.statusCode === 200) {
         // Reset form on success
@@ -194,14 +212,17 @@ const CreateProduct = () => {
           stockLevel: '',
           typesOfPacks: [],
           pricingGroup: '',
-          commerceCategoriesOne: '',
-          commerceCategoriesTwo: '',
-          commerceCategoriesThree: '',
-          commerceCategoriesFour: '',
+          commerceCategoriesOne: [],
+          commerceCategoriesTwo: [],
+          commerceCategoriesThree: [],
+          commerceCategoriesFour: [],
           storeDescription: '',
           pageTitle: '',
           eachBarcodes: '',
-          packBarcodes: ''
+          packBarcodes: '',
+          taxable: true,
+          comparePrice: '',
+          sequence: null,
         });
 
         handleRemoveThumbnail();
@@ -209,10 +230,15 @@ const CreateProduct = () => {
         imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
         setImagePreviews([]);
 
-        navigate('/dashboard/products/list');
+        setError('Product created successfully!');
+        
+        // Navigate after 2 seconds to show success message
+        setTimeout(() => {
+          navigate('/dashboard/products/list');
+        }, 2000);
 
       } else if (res.data.statusCode === 400) {
-        // console.log("Create product error:", res.data.message);
+        console.log("Create product error:", res.data.message);
         setError(res.data.message);
       }
 
@@ -227,10 +253,6 @@ const CreateProduct = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // if (!file.name.toLowerCase().endsWith('.csv')) {
-      //   setError('Please select a valid CSV file');
-      //   return;
-      // }
       setSelectedFile(file);
       setError('');
     }
@@ -240,7 +262,6 @@ const CreateProduct = () => {
   const handleImageFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      // Validate that all files are images
       const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
       if (invalidFiles.length > 0) {
         setError('Please select only image files (jpg, png, gif, etc.)');
@@ -268,7 +289,7 @@ const CreateProduct = () => {
         }
       });
 
-      // console.log("CSV imported", res.data);
+      console.log("CSV imported", res.data);
 
       if (res.data.statusCode === 200) {
         setCsvDialogOpen(false);
@@ -300,7 +321,6 @@ const CreateProduct = () => {
       setLoading(true);
       const formDataForUpload = new FormData();
 
-      // Append all images with the key 'images' as expected by the backend
       selectedImages.forEach((image) => {
         formDataForUpload.append('images', image);
       });
@@ -311,7 +331,7 @@ const CreateProduct = () => {
         }
       });
 
-      // console.log("Images imported", res.data);
+      console.log("Images imported", res.data);
 
       if (res.data.statusCode === 200) {
         setImageDialogOpen(false);
@@ -353,10 +373,10 @@ const CreateProduct = () => {
   const fetchPackTypesList = async () => {
     try {
       const response = await axiosInstance.get('/packs-types/get-all-packs-types');
-      // console.log("response pack types list", response);
+      console.log("response pack types list", response);
 
       if (response.status === 200) {
-        setPackTypes(response.data.data.packs);
+        setPackTypes(response.data.data.packs || []);
       }
     } catch (error) {
       console.error('Error fetching pack types list:', error);
@@ -367,10 +387,10 @@ const CreateProduct = () => {
   const fetchPricingGroups = async () => {
     try {
       const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-      // console.log("response pricing groups", response);
+      console.log("response pricing groups", response);
 
       if (response.data.statusCode === 200) {
-        setPricingGroups(response.data.data);
+        setPricingGroups(response.data.data || []);
       }
     } catch (error) {
       console.error('Error fetching pricing groups list:', error);
@@ -381,10 +401,10 @@ const CreateProduct = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      // console.log("response brands", response);
+      console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
-        setCategoryOne(response.data.data);
+        setCategoryOne(response.data.data || []);
       }
     } catch (error) {
       console.error('Error fetching brands list:', error);
@@ -392,117 +412,163 @@ const CreateProduct = () => {
     }
   };
 
-  const fetchCategoryList = async () => {
-    if (!formData.commerceCategoriesOne) return;
-
-    try {
-      // console.log("Fetching categories for brand ID:", formData.commerceCategoriesOne);
-      const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${formData.commerceCategoriesOne}`);
-      // console.log("response categories", response);
-
-      if (response.data.statusCode === 200) {
-        setCategoryTwo(response.data.data);
-      } else {
-        setCategoryTwo([]);
-      }
-    } catch (error) {
-      console.error('Error fetching category list:', error);
+  // Fetch categories by selected brand IDs
+  const fetchCategoriesByBrandIds = async (brandIds) => {
+    if (!brandIds || brandIds.length === 0) {
       setCategoryTwo([]);
-      setError('Failed to fetch categories');
+      return;
+    }
+
+    try {
+      // For multiple brands, we need to fetch categories for each brand
+      const allCategories = [];
+      const uniqueCategoryIds = new Set();
+      
+      for (const brandId of brandIds) {
+        const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${brandId}`);
+        
+        if (response.data.statusCode === 200 && response.data.data) {
+          response.data.data.forEach(category => {
+            if (!uniqueCategoryIds.has(category._id)) {
+              uniqueCategoryIds.add(category._id);
+              allCategories.push(category);
+            }
+          });
+        }
+      }
+      
+      setCategoryTwo(allCategories);
+    } catch (error) {
+      console.error('Error fetching categories by brand:', error);
+      setCategoryTwo([]);
+      setError('Failed to fetch categories for selected brands');
     }
   };
 
-  const fetchSubCategoryList = async () => {
-    if (!formData.commerceCategoriesTwo) return;
-
-    try {
-      // console.log("Fetching subcategories for category ID:", formData.commerceCategoriesTwo);
-      const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${formData.commerceCategoriesTwo}`);
-      // console.log("response sub categories", response.data.data);
-
-      if (response.data.statusCode === 200) {
-        setCategoryThree(response.data.data);
-      } else {
-        setCategoryThree([]);
-      }
-    } catch (error) {
-      console.error('Error fetching sub category list:', error);
+  // Fetch subcategories by selected category IDs
+  const fetchSubCategoriesByCategoryIds = async (categoryIds) => {
+    if (!categoryIds || categoryIds.length === 0) {
       setCategoryThree([]);
-      setError('Failed to fetch subcategories');
+      return;
     }
-  };
-
-  const fetchSubCategoryTwoList = async () => {
-    if (!formData.commerceCategoriesThree) return;
 
     try {
-      // console.log("Fetching sub-subcategories for subcategory ID:", formData.commerceCategoriesThree);
-      const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${formData.commerceCategoriesThree}`);
-      // console.log("response sub categories two", response.data.data);
-
-      if (response.data.statusCode === 200) {
-        setCategoryFour(response.data.data);
-      } else {
-        setCategoryFour([]);
+      // For multiple categories, fetch subcategories for each category
+      const allSubCategories = [];
+      const uniqueSubCategoryIds = new Set();
+      
+      for (const categoryId of categoryIds) {
+        const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${categoryId}`);
+        
+        if (response.data.statusCode === 200 && response.data.data) {
+          response.data.data.forEach(subCategory => {
+            if (!uniqueSubCategoryIds.has(subCategory._id)) {
+              uniqueSubCategoryIds.add(subCategory._id);
+              allSubCategories.push(subCategory);
+            }
+          });
+        }
       }
+      
+      setCategoryThree(allSubCategories);
     } catch (error) {
-      console.error('Error fetching sub category two list:', error);
-      setCategoryFour([]);
-      setError('Failed to fetch sub-subcategories');
+      console.error('Error fetching subcategories by category:', error);
+      setCategoryThree([]);
+      setError('Failed to fetch subcategories for selected categories');
     }
   };
 
-  // Fixed useEffect hooks with proper dependencies and cleanup
+  // Fetch sub-subcategories by selected subcategory IDs
+  const fetchSubCategoriesTwoByCategoryIds = async (subCategoryIds) => {
+    if (!subCategoryIds || subCategoryIds.length === 0) {
+      setCategoryFour([]);
+      return;
+    }
+
+    try {
+      // For multiple subcategories, fetch sub-subcategories for each subcategory
+      const allSubCategoriesTwo = [];
+      const uniqueSubCategoryTwoIds = new Set();
+      
+      for (const subCategoryId of subCategoryIds) {
+        const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subCategoryId}`);
+        
+        if (response.data.statusCode === 200 && response.data.data) {
+          response.data.data.forEach(subCategoryTwo => {
+            if (!uniqueSubCategoryTwoIds.has(subCategoryTwo._id)) {
+              uniqueSubCategoryTwoIds.add(subCategoryTwo._id);
+              allSubCategoriesTwo.push(subCategoryTwo);
+            }
+          });
+        }
+      }
+      
+      setCategoryFour(allSubCategoriesTwo);
+    } catch (error) {
+      console.error('Error fetching sub-subcategories by subcategory:', error);
+      setCategoryFour([]);
+      setError('Failed to fetch sub-subcategories for selected subcategories');
+    }
+  };
+
+  // Load all initial data on component mount
   useEffect(() => {
-    if (formData.commerceCategoriesOne) {
-      fetchCategoryList();
+    fetchPackTypesList();
+    fetchPricingGroups();
+    fetchBrandsList();
+    // Don't fetch categories initially - wait for brand selection
+  }, []);
+
+  // Effect to fetch categories when brands change
+  useEffect(() => {
+    if (formData.commerceCategoriesOne && formData.commerceCategoriesOne.length > 0) {
+      fetchCategoriesByBrandIds(formData.commerceCategoriesOne);
     } else {
-      // Clear child categories when brand is not selected
+      // If no brands selected, clear all dependent categories
       setCategoryTwo([]);
       setCategoryThree([]);
       setCategoryFour([]);
+      // Also clear the selections in formData
       setFormData(prev => ({
         ...prev,
-        commerceCategoriesTwo: '',
-        commerceCategoriesThree: '',
-        commerceCategoriesFour: ''
+        commerceCategoriesTwo: [],
+        commerceCategoriesThree: [],
+        commerceCategoriesFour: []
       }));
     }
   }, [formData.commerceCategoriesOne]);
 
+  // Effect to fetch subcategories when categories change
   useEffect(() => {
-    if (formData.commerceCategoriesTwo) {
-      fetchSubCategoryList();
+    if (formData.commerceCategoriesTwo && formData.commerceCategoriesTwo.length > 0) {
+      fetchSubCategoriesByCategoryIds(formData.commerceCategoriesTwo);
     } else {
-      // Clear child categories when category is not selected
+      // If no categories selected, clear dependent subcategories
       setCategoryThree([]);
       setCategoryFour([]);
+      // Also clear the selections in formData
       setFormData(prev => ({
         ...prev,
-        commerceCategoriesThree: '',
-        commerceCategoriesFour: ''
+        commerceCategoriesThree: [],
+        commerceCategoriesFour: []
       }));
     }
   }, [formData.commerceCategoriesTwo]);
 
+  // Effect to fetch sub-subcategories when subcategories change
   useEffect(() => {
-    if (formData.commerceCategoriesThree) {
-      fetchSubCategoryTwoList();
+    if (formData.commerceCategoriesThree && formData.commerceCategoriesThree.length > 0) {
+      fetchSubCategoriesTwoByCategoryIds(formData.commerceCategoriesThree);
     } else {
-      // Clear child categories when subcategory is not selected
+      // If no subcategories selected, clear sub-subcategories
       setCategoryFour([]);
+      // Also clear the selection in formData
       setFormData(prev => ({
         ...prev,
-        commerceCategoriesFour: ''
+        commerceCategoriesFour: []
       }));
     }
   }, [formData.commerceCategoriesThree]);
-
-  React.useEffect(() => {
-    fetchPackTypesList();
-    fetchPricingGroups();
-    fetchBrandsList();
-  }, []);
 
   const BCrumb = [
     {
@@ -519,8 +585,6 @@ const CreateProduct = () => {
       <Breadcrumb title="Create Product" items={BCrumb} />
       <Grid container spacing={2}>
         {/* SKU and Product Name - Two per row */}
-
-        {/* Thumbnail Image Upload */}
         <Grid size={12}>
           <CustomFormLabel htmlFor="thumbnail-upload" sx={{ mt: 2 }}>
             Product Thumbnail
@@ -806,6 +870,7 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
+        {/* commerce categories */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
             Select Commerce category One (Brand)
@@ -813,37 +878,48 @@ const CreateProduct = () => {
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerce-category-one-select"
-              value={categoryOne.find(category => category._id === formData.commerceCategoriesOne) || null}
+              value={categoryOne.filter(category =>
+                formData.commerceCategoriesOne.includes(category._id)
+              )}
               onChange={(event, newValue) => {
+                const newBrandIds = newValue.map(v => v._id);
                 setFormData({
                   ...formData,
-                  commerceCategoriesOne: newValue ? newValue._id : '',
-                  commerceCategoriesTwo: '',
-                  commerceCategoriesThree: '',
-                  commerceCategoriesFour: ''
+                  commerceCategoriesOne: newBrandIds,
+                  commerceCategoriesTwo: [],
+                  commerceCategoriesThree: [],
+                  commerceCategoriesFour: []
                 });
+                
+                // Fetch categories for selected brands
+                fetchCategoriesByBrandIds(newBrandIds);
               }}
               options={categoryOne}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || categoryOne.length === 0}
               noOptionsText={categoryOne.length === 0 ? 'Loading brands...' : 'No brands found'}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
                   placeholder={categoryOne.length === 0 ? 'Loading brands...' : 'Search and select a brand'}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />
@@ -852,43 +928,65 @@ const CreateProduct = () => {
           </FormControl>
         </Grid>
 
-        {/* Commerce Category Two and Three - Two per row */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
-            Select Commerce category Two
+            Select Commerce category Two (Multiple)
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerce-category-two-select"
-              value={categoryTwo.find(category => category._id === formData.commerceCategoriesTwo) || null}
+              value={categoryTwo.filter(category =>
+                formData.commerceCategoriesTwo.includes(category._id)
+              )}
               onChange={(event, newValue) => {
+                const newCategoryIds = newValue.map(v => v._id);
                 setFormData({
                   ...formData,
-                  commerceCategoriesTwo: newValue ? newValue._id : '',
-                  commerceCategoriesThree: '',
-                  commerceCategoriesFour: ''
+                  commerceCategoriesTwo: newCategoryIds,
+                  commerceCategoriesThree: [],
+                  commerceCategoriesFour: []
                 });
+                
+                // Fetch subcategories for selected categories
+                fetchSubCategoriesByCategoryIds(newCategoryIds);
               }}
               options={categoryTwo}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || categoryTwo.length === 0}
-              noOptionsText={categoryTwo.length === 0 ? 'Select brand first...' : 'No categories found'}
+              noOptionsText={
+                formData.commerceCategoriesOne.length === 0 
+                  ? 'Please select brands first' 
+                  : categoryTwo.length === 0 
+                    ? 'No categories available for selected brands' 
+                    : 'No categories found'
+              }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={categoryTwo.length === 0 ? 'Select brand first...' : 'Search and select a category'}
+                  placeholder={
+                    formData.commerceCategoriesOne.length === 0 
+                      ? 'Please select brands first' 
+                      : categoryTwo.length === 0 
+                        ? 'No categories available for selected brands' 
+                        : 'Search and select categories'
+                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />
@@ -899,39 +997,62 @@ const CreateProduct = () => {
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
-            Select Commerce category Three
+            Select Commerce category Three (Multiple)
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerceCategoryThree-select"
-              value={categoryThree.find(category => category._id === formData.commerceCategoriesThree) || null}
+              value={categoryThree.filter(category =>
+                formData.commerceCategoriesThree.includes(category._id)
+              )}
               onChange={(event, newValue) => {
+                const newSubCategoryIds = newValue.map(v => v._id);
                 setFormData({
                   ...formData,
-                  commerceCategoriesThree: newValue ? newValue._id : '',
-                  commerceCategoriesFour: ''
+                  commerceCategoriesThree: newSubCategoryIds,
+                  commerceCategoriesFour: []
                 });
+                
+                // Fetch sub-subcategories for selected subcategories
+                fetchSubCategoriesTwoByCategoryIds(newSubCategoryIds);
               }}
               options={categoryThree}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || categoryThree.length === 0}
-              noOptionsText={categoryThree.length === 0 ? 'Select category first...' : 'No subcategories found'}
+              noOptionsText={
+                formData.commerceCategoriesTwo.length === 0 
+                  ? 'Please select categories first' 
+                  : categoryThree.length === 0 
+                    ? 'No subcategories available for selected categories' 
+                    : 'No subcategories found'
+              }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={categoryThree.length === 0 ? 'Select category first...' : 'Search and select a subcategory'}
+                  placeholder={
+                    formData.commerceCategoriesTwo.length === 0 
+                      ? 'Please select categories first' 
+                      : categoryThree.length === 0 
+                        ? 'No subcategories available for selected categories' 
+                        : 'Search and select subcategories'
+                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />
@@ -942,35 +1063,57 @@ const CreateProduct = () => {
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
-            Select Commerce category four
+            Select Commerce category four (Multiple)
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerceCategoryFour-select"
-              value={categoryFour.find(category => category._id === formData.commerceCategoriesFour) || null}
+              value={categoryFour.filter(category =>
+                formData.commerceCategoriesFour.includes(category._id)
+              )}
               onChange={(event, newValue) => {
-                setFormData({ ...formData, commerceCategoriesFour: newValue ? newValue._id : '' });
+                setFormData({
+                  ...formData,
+                  commerceCategoriesFour: newValue.map(v => v._id)
+                });
               }}
               options={categoryFour}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || categoryFour.length === 0}
-              noOptionsText={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'No sub-subcategories found'}
+              noOptionsText={
+                formData.commerceCategoriesThree.length === 0 
+                  ? 'Please select subcategories first' 
+                  : categoryFour.length === 0 
+                    ? 'No sub-subcategories available for selected subcategories' 
+                    : 'No sub-subcategories found'
+              }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'Search and select a sub-subcategory'}
+                  placeholder={
+                    formData.commerceCategoriesThree.length === 0 
+                      ? 'Please select subcategories first' 
+                      : categoryFour.length === 0 
+                        ? 'No sub-subcategories available for selected subcategories' 
+                        : 'Search and select sub-subcategories'
+                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />
@@ -978,8 +1121,6 @@ const CreateProduct = () => {
             />
           </FormControl>
         </Grid>
-
-
 
         {/* tax selection */}
         <Grid size={6}>
@@ -1020,21 +1161,19 @@ const CreateProduct = () => {
         </Grid>
 
         <Grid size={6}>
-          <CustomFormLabel htmlFor="stockLevel" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="sequence" sx={{ mt: 2 }}>
             Sequence
           </CustomFormLabel>
           <CustomOutlinedInput
-            id="stockLevel"
+            id="sequence"
             fullWidth
+            type="number"
             value={formData.sequence}
             onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
             disabled={loading}
-            placeholder="Enter Sequence "
+            placeholder="Enter Sequence"
           />
         </Grid>
-
-
-
 
         {/* Store Description - Full Width */}
         <Grid size={12}>
@@ -1044,6 +1183,8 @@ const CreateProduct = () => {
           <CustomOutlinedInput
             id="storeDescription"
             fullWidth
+            multiline
+            rows={3}
             value={formData.storeDescription}
             onChange={(e) => setFormData({ ...formData, storeDescription: e.target.value })}
             disabled={loading}
@@ -1360,7 +1501,6 @@ const CreateProduct = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
     </div>
   );
 };

@@ -21,7 +21,9 @@ import {
   Autocomplete,
   TextField,
   InputAdornment,
-  Alert
+  Alert,
+  Backdrop,
+  CircularProgress
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -29,7 +31,6 @@ import CustomOutlinedInput from '../.../../../../components/forms/theme-elements
 import axiosInstance from '../../../axios/axiosInstance';
 import { IconUpload, IconFileImport, IconPhoto, IconX, IconTrash, IconSearch, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router';
-import { CircularProgress, Backdrop } from '@mui/material';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 const EditProductGroups = () => {
@@ -42,10 +43,10 @@ const EditProductGroups = () => {
     eachPrice: '',
     primaryUnitsType: '',
     pricingGroup: '',
-    commerceCategoriesOne: '',
-    commerceCategoriesTwo: '',
-    commerceCategoriesThree: '',
-    commerceCategoriesFour: '',
+    commerceCategoriesOne: [],
+    commerceCategoriesTwo: [],
+    commerceCategoriesThree: [],
+    commerceCategoriesFour: [],
     pageTitle: '',
     storeDescription: '',
     eachBarcodes: '',
@@ -77,10 +78,9 @@ const EditProductGroups = () => {
   const [categoryThree, setCategoryThree] = useState([]);
   const [categoryFour, setCategoryFour] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
-  const [taxOptions, setTaxOptions] = useState([true, false]);
+  const [taxOptions] = useState([true, false]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
-
-
+  const [hasFetchedProductDetails, setHasFetchedProductDetails] = useState(false);
 
   const handleRemoveExistingImage = (imageUrl, imageIndex) => {
     // Add to deletion list
@@ -90,10 +90,7 @@ const EditProductGroups = () => {
     const newPreviews = [...imagePreviews];
     newPreviews.splice(imageIndex, 1);
     setImagePreviews(newPreviews);
-
-    // console.log("Image added to deletion list:", imageUrl);
   };
-
 
   // Filter products for search
   const filteredProducts = useMemo(() => {
@@ -369,8 +366,8 @@ const EditProductGroups = () => {
       setError('Please select at least one product');
       return;
     }
-    if (!formData.commerceCategoriesOne) {
-      setError('Please select a brand (Commerce Category One)');
+    if (!formData.commerceCategoriesOne || formData.commerceCategoriesOne.length === 0) {
+      setError('Please select at least one brand (Commerce Category One)');
       return;
     }
     if (!formData.eachPrice) {
@@ -378,10 +375,9 @@ const EditProductGroups = () => {
       return;
     }
 
-    if (parseFloat(formData.comparePrice) < parseFloat(formData.eachPrice)) {
+    if (formData.comparePrice && parseFloat(formData.comparePrice) <= parseFloat(formData.eachPrice)) {
       setError('Compare price must be greater than each price');
-      // console.log("compare price is less that eachPrice")
-      return
+      return;
     }
 
     const missingPackTypes = selectedProductIds.filter(id => !productPackTypes[id]);
@@ -418,15 +414,40 @@ const EditProductGroups = () => {
     formDataToSend.append('price', formData.price.toString());
     formDataToSend.append('taxable', formData.taxable.toString());
 
-    // **FIX: Append optional ObjectId fields - send 'null' string for empty values**
-    formDataToSend.append('commerceCategoriesOne', formData.commerceCategoriesOne || 'null');
-    formDataToSend.append('pricingGroup', formData.pricingGroup || 'null');
-    formDataToSend.append('commerceCategoriesTwo', formData.commerceCategoriesTwo || 'null');
-    formDataToSend.append('commerceCategoriesThree', formData.commerceCategoriesThree || 'null');
-    formDataToSend.append('commerceCategoriesFour', formData.commerceCategoriesFour || 'null');
+    if (formData.commerceCategoriesOne && formData.commerceCategoriesOne.length > 0) {
+      formData.commerceCategoriesOne.forEach(category => {
+        formDataToSend.append('commerceCategoriesOne', category);
+      });
+    } else {
+      formDataToSend.append('commerceCategoriesOne', '[]');
+    }
 
-    // Append other optional fields
+    if (formData.commerceCategoriesTwo && formData.commerceCategoriesTwo.length > 0) {
+      formData.commerceCategoriesTwo.forEach(category => {
+        formDataToSend.append('commerceCategoriesTwo', category);
+      });
+    } else {
+      formDataToSend.append('commerceCategoriesTwo', '[]');
+    }
+
+    if (formData.commerceCategoriesThree && formData.commerceCategoriesThree.length > 0) {
+      formData.commerceCategoriesThree.forEach(category => {
+        formDataToSend.append('commerceCategoriesThree', category);
+      });
+    } else {
+      formDataToSend.append('commerceCategoriesThree', '[]');
+    }
+
+    if (formData.commerceCategoriesFour && formData.commerceCategoriesFour.length > 0) {
+      formData.commerceCategoriesFour.forEach(category => {
+        formDataToSend.append('commerceCategoriesFour', category);
+      });
+    } else {
+      formDataToSend.append('commerceCategoriesFour', '[]');
+    }
+
     if (formData.primaryUnitsType) formDataToSend.append('primaryUnitsType', formData.primaryUnitsType);
+    if (formData.pricingGroup) formDataToSend.append('pricingGroup', formData.pricingGroup);
     if (formData.storeDescription) formDataToSend.append('storeDescription', formData.storeDescription);
     if (formData.pageTitle) formDataToSend.append('pageTitle', formData.pageTitle);
     if (formData.eachBarcodes) formDataToSend.append('eachBarcodes', formData.eachBarcodes);
@@ -459,8 +480,6 @@ const EditProductGroups = () => {
         }
       });
 
-      // console.log("Update product group response:", res);
-
       if (res.data.statusCode === 200) {
         navigate('/dashboard/productGroup/list');
       } else if (res.data.statusCode === 400) {
@@ -475,11 +494,11 @@ const EditProductGroups = () => {
     }
   };
 
-  // Fetch functions (same as before)
+  // Fetch functions
   const fetchProducts = async () => {
     try {
+      setFetching(true);
       const response = await axiosInstance.get('/products/get-all-products-dashboard');
-      // console.log("response products", response);
 
       if (response.data.statusCode === 200) {
         const productsArray = Array.isArray(response.data.data)
@@ -497,19 +516,20 @@ const EditProductGroups = () => {
       console.error('Error fetching products list:', error);
       setError('Error fetching products: ' + error.message);
       setProducts([]);
+    } finally {
+      setFetching(false);
     }
   };
 
   const fetchPricingGroups = async () => {
     try {
       const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-      // console.log("response pricing groups", response);
 
       if (response.data.statusCode === 200) {
         setPricingGroups(response.data.data);
       }
     } catch (error) {
-      // console.error('Error fetching pricing groups list:', error);
+      console.error('Error fetching pricing groups list:', error);
       setError('Failed to fetch pricing groups');
     }
   };
@@ -517,7 +537,6 @@ const EditProductGroups = () => {
   const fetchBrandsList = async () => {
     try {
       const response = await axiosInstance.get('/brand/get-brands-list');
-      // console.log("response brands", response);
 
       if (response.data.statusCode === 200) {
         setCategoryOne(response.data.data);
@@ -528,63 +547,109 @@ const EditProductGroups = () => {
     }
   };
 
-  const fetchCategoryList = async (brandId) => {
-    if (!brandId) return;
-
-    try {
-      // console.log("Fetching categories for brand ID:", brandId);
-      const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${brandId}`);
-      // console.log("response categories", response);
-
-      if (response.data.statusCode === 200) {
-        setCategoryTwo(response.data.data);
-      } else {
-        setCategoryTwo([]);
-      }
-    } catch (error) {
-      console.error('Error fetching category list:', error);
+  // Fetch categories by selected brand IDs
+  const fetchCategoriesByBrandIds = async (brandIds) => {
+    if (!brandIds || brandIds.length === 0) {
       setCategoryTwo([]);
-      setError('Failed to fetch categories');
+      return;
+    }
+
+    try {
+      const allCategories = [];
+      const uniqueCategoryIds = new Set();
+
+      for (const brandId of brandIds) {
+        const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${brandId}`);
+
+        if (response.data.statusCode === 200 && response.data.data) {
+          response.data.data.forEach(category => {
+            if (!uniqueCategoryIds.has(category._id)) {
+              uniqueCategoryIds.add(category._id);
+              allCategories.push(category);
+            }
+          });
+        }
+      }
+
+      setCategoryTwo(allCategories);
+
+      // After fetching categories, also fetch subcategories for any selected categories
+      if (hasFetchedProductDetails && formData.commerceCategoriesTwo.length > 0) {
+        fetchSubCategoriesByCategoryIds(formData.commerceCategoriesTwo);
+      }
+    } catch (error) {
+      console.error('Error fetching categories by brand:', error);
+      setCategoryTwo([]);
+      setError('Failed to fetch categories for selected brands');
     }
   };
 
-  const fetchSubCategoryList = async (categoryId) => {
-    if (!categoryId) return;
-
-    try {
-      // console.log("Fetching subcategories for category ID:", categoryId);
-      const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${categoryId}`);
-      // console.log("response sub categories", response.data.data);
-
-      if (response.data.statusCode === 200) {
-        setCategoryThree(response.data.data);
-      } else {
-        setCategoryThree([]);
-      }
-    } catch (error) {
-      console.error('Error fetching sub category list:', error);
+  // Fetch subcategories by selected category IDs
+  const fetchSubCategoriesByCategoryIds = async (categoryIds) => {
+    if (!categoryIds || categoryIds.length === 0) {
       setCategoryThree([]);
-      setError('Failed to fetch subcategories');
+      return;
+    }
+
+    try {
+      const allSubCategories = [];
+      const uniqueSubCategoryIds = new Set();
+
+      for (const categoryId of categoryIds) {
+        const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${categoryId}`);
+
+        if (response.data.statusCode === 200 && response.data.data) {
+          response.data.data.forEach(subCategory => {
+            if (!uniqueSubCategoryIds.has(subCategory._id)) {
+              uniqueSubCategoryIds.add(subCategory._id);
+              allSubCategories.push(subCategory);
+            }
+          });
+        }
+      }
+
+      setCategoryThree(allSubCategories);
+
+      // After fetching subcategories, also fetch sub-subcategories for any selected subcategories
+      if (hasFetchedProductDetails && formData.commerceCategoriesThree.length > 0) {
+        fetchSubCategoriesTwoByCategoryIds(formData.commerceCategoriesThree);
+      }
+    } catch (error) {
+      console.error('Error fetching subcategories by category:', error);
+      setCategoryThree([]);
+      setError('Failed to fetch subcategories for selected categories');
     }
   };
 
-  const fetchSubCategoryTwoList = async (subCategoryId) => {
-    if (!subCategoryId) return;
+  // Fetch sub-subcategories by selected subcategory IDs
+  const fetchSubCategoriesTwoByCategoryIds = async (subCategoryIds) => {
+    if (!subCategoryIds || subCategoryIds.length === 0) {
+      setCategoryFour([]);
+      return;
+    }
 
     try {
-      // console.log("Fetching sub-subcategories for subcategory ID:", subCategoryId);
-      const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subCategoryId}`);
-      // console.log("response sub categories two", response.data.data);
+      const allSubCategoriesTwo = [];
+      const uniqueSubCategoryTwoIds = new Set();
 
-      if (response.data.statusCode === 200) {
-        setCategoryFour(response.data.data);
-      } else {
-        setCategoryFour([]);
+      for (const subCategoryId of subCategoryIds) {
+        const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subCategoryId}`);
+
+        if (response.data.statusCode === 200 && response.data.data) {
+          response.data.data.forEach(subCategoryTwo => {
+            if (!uniqueSubCategoryTwoIds.has(subCategoryTwo._id)) {
+              uniqueSubCategoryTwoIds.add(subCategoryTwo._id);
+              allSubCategoriesTwo.push(subCategoryTwo);
+            }
+          });
+        }
       }
+
+      setCategoryFour(allSubCategoriesTwo);
     } catch (error) {
-      console.error('Error fetching sub category two list:', error);
+      console.error('Error fetching sub-subcategories by subcategory:', error);
       setCategoryFour([]);
-      setError('Failed to fetch sub-subcategories');
+      setError('Failed to fetch sub-subcategories for selected subcategories');
     }
   };
 
@@ -592,16 +657,35 @@ const EditProductGroups = () => {
     try {
       setFetching(true);
       const response = await axiosInstance.get(`/product-group/get-product-group/${id}`);
-      // console.log("response product group details", response);
 
       if (response.data.statusCode === 200) {
         const productGroup = response.data.data;
 
-        // Extract category IDs from the nested objects
-        const commerceCategoriesOneId = productGroup.commerceCategoriesOne?._id || '';
-        const commerceCategoriesTwoId = productGroup.commerceCategoriesTwo?._id || '';
-        const commerceCategoriesThreeId = productGroup.commerceCategoriesThree?._id || '';
-        const commerceCategoriesFourId = productGroup.commerceCategoriesFour?._id || '';
+        // Extract category IDs - handle arrays for multiple selection
+        const commerceCategoriesOneIds = productGroup.commerceCategoriesOne
+          ? Array.isArray(productGroup.commerceCategoriesOne)
+            ? productGroup.commerceCategoriesOne.map(cat => cat._id)
+            : [productGroup.commerceCategoriesOne._id]
+          : [];
+
+        const commerceCategoriesTwoIds = productGroup.commerceCategoriesTwo
+          ? Array.isArray(productGroup.commerceCategoriesTwo)
+            ? productGroup.commerceCategoriesTwo.map(cat => cat._id)
+            : [productGroup.commerceCategoriesTwo._id]
+          : [];
+
+        const commerceCategoriesThreeIds = productGroup.commerceCategoriesThree
+          ? Array.isArray(productGroup.commerceCategoriesThree)
+            ? productGroup.commerceCategoriesThree.map(cat => cat._id)
+            : [productGroup.commerceCategoriesThree._id]
+          : [];
+
+        const commerceCategoriesFourIds = productGroup.commerceCategoriesFour
+          ? Array.isArray(productGroup.commerceCategoriesFour)
+            ? productGroup.commerceCategoriesFour.map(cat => cat._id)
+            : [productGroup.commerceCategoriesFour._id]
+          : [];
+
         const pricingGroupId = productGroup.pricingGroup?._id || '';
 
         // Set form data with product group details
@@ -614,10 +698,10 @@ const EditProductGroups = () => {
           eachPrice: productGroup.eachPrice || '',
           primaryUnitsType: productGroup.primaryUnitsType || '',
           pricingGroup: pricingGroupId,
-          commerceCategoriesOne: commerceCategoriesOneId,
-          commerceCategoriesTwo: commerceCategoriesTwoId,
-          commerceCategoriesThree: commerceCategoriesThreeId,
-          commerceCategoriesFour: commerceCategoriesFourId,
+          commerceCategoriesOne: commerceCategoriesOneIds,
+          commerceCategoriesTwo: commerceCategoriesTwoIds,
+          commerceCategoriesThree: commerceCategoriesThreeIds,
+          commerceCategoriesFour: commerceCategoriesFourIds,
           pageTitle: productGroup.pageTitle || '',
           storeDescription: productGroup.storeDescription || '',
           eachBarcodes: productGroup.eachBarcodes || '',
@@ -662,48 +746,29 @@ const EditProductGroups = () => {
         setProductUnitsQuantities(unitsQuantities);
         setStockWarnings(stockWarningsData);
 
-        // IMPORTANT: Set thumbnail preview using the actual S3 URL from the response
+        // Set thumbnail preview using the actual S3 URL from the response
         if (productGroup.thumbnailUrl) {
           setThumbnailPreview(productGroup.thumbnailUrl);
         } else if (productGroup.thumbnail) {
-          // Fallback: construct URL if thumbnailUrl is not available
-          setThumbnailPreview(`https://${process.env.CLAUDE_FRONT_URL}/product-group-images/${productGroup.thumbnail}`);
+          setThumbnailPreview(`${process.env.REACT_APP_S3_URL || ''}/product-images/${productGroup.thumbnail}`);
         }
 
-        // IMPORTANT: Set existing images previews using the actual S3 URLs from the response
+        // Set existing images previews using the actual S3 URLs from the response
         if (productGroup.imageUrls && Array.isArray(productGroup.imageUrls)) {
-          // Use the imageUrls array which contains full S3 URLs
           setImagePreviews(productGroup.imageUrls.slice(1));
         } else if (productGroup.images && Array.isArray(productGroup.images)) {
-
-          // Fallback: construct URLs if imageUrls is not available
           const imageUrls = productGroup.images.slice(1).map(image =>
-            `https://${process.env.CLAUDE_FRONT_URL}/product-group-images/${image}`
+            `${process.env.REACT_APP_S3_URL || ''}/product-images/${image}`
           );
           setImagePreviews(imageUrls);
         }
 
-        // console.log("Loaded product group with images:", {
-        //   name: productGroup.name,
-        //   thumbnail: productGroup.thumbnail,
-        //   thumbnailUrl: productGroup.thumbnailUrl,
-        //   images: productGroup.images,
-        //   imageUrls: productGroup.imageUrls,
-        //   thumbnailPreview: productGroup.thumbnailUrl,
-        //   imagePreviews: productGroup.imageUrls || productGroup.images
-        // });
+        // Set flag that product details have been fetched
+        setHasFetchedProductDetails(true);
 
-        // Fetch child categories based on loaded commerce categories
-        if (commerceCategoriesOneId) {
-          fetchCategoryList(commerceCategoriesOneId).then(() => {
-            if (commerceCategoriesTwoId) {
-              fetchSubCategoryList(commerceCategoriesTwoId).then(() => {
-                if (commerceCategoriesThreeId) {
-                  fetchSubCategoryTwoList(commerceCategoriesThreeId);
-                }
-              });
-            }
-          });
+        // Fetch categories for selected brands
+        if (commerceCategoriesOneIds.length > 0) {
+          fetchCategoriesByBrandIds(commerceCategoriesOneIds);
         }
       } else {
         setError('Failed to fetch product group details');
@@ -718,49 +783,46 @@ const EditProductGroups = () => {
 
   // Effects for commerce category dependencies
   useEffect(() => {
-    if (formData.commerceCategoriesOne) {
-      fetchCategoryList(formData.commerceCategoriesOne);
-    } else {
-      // Clear child categories when brand is not selected
+    if (hasFetchedProductDetails && formData.commerceCategoriesOne && formData.commerceCategoriesOne.length > 0) {
+      fetchCategoriesByBrandIds(formData.commerceCategoriesOne);
+    } else if (hasFetchedProductDetails) {
       setCategoryTwo([]);
       setCategoryThree([]);
       setCategoryFour([]);
       setFormData(prev => ({
         ...prev,
-        commerceCategoriesTwo: '',
-        commerceCategoriesThree: '',
-        commerceCategoriesFour: ''
+        commerceCategoriesTwo: [],
+        commerceCategoriesThree: [],
+        commerceCategoriesFour: []
       }));
     }
-  }, [formData.commerceCategoriesOne]);
+  }, [formData.commerceCategoriesOne, hasFetchedProductDetails]);
 
   useEffect(() => {
-    if (formData.commerceCategoriesTwo) {
-      fetchSubCategoryList(formData.commerceCategoriesTwo);
-    } else {
-      // Clear child categories when category is not selected
+    if (hasFetchedProductDetails && formData.commerceCategoriesTwo && formData.commerceCategoriesTwo.length > 0) {
+      fetchSubCategoriesByCategoryIds(formData.commerceCategoriesTwo);
+    } else if (hasFetchedProductDetails) {
       setCategoryThree([]);
       setCategoryFour([]);
       setFormData(prev => ({
         ...prev,
-        commerceCategoriesThree: '',
-        commerceCategoriesFour: ''
+        commerceCategoriesThree: [],
+        commerceCategoriesFour: []
       }));
     }
-  }, [formData.commerceCategoriesTwo]);
+  }, [formData.commerceCategoriesTwo, hasFetchedProductDetails]);
 
   useEffect(() => {
-    if (formData.commerceCategoriesThree) {
-      fetchSubCategoryTwoList(formData.commerceCategoriesThree);
-    } else {
-      // Clear child categories when subcategory is not selected
+    if (hasFetchedProductDetails && formData.commerceCategoriesThree && formData.commerceCategoriesThree.length > 0) {
+      fetchSubCategoriesTwoByCategoryIds(formData.commerceCategoriesThree);
+    } else if (hasFetchedProductDetails) {
       setCategoryFour([]);
       setFormData(prev => ({
         ...prev,
-        commerceCategoriesFour: ''
+        commerceCategoriesFour: []
       }));
     }
-  }, [formData.commerceCategoriesThree]);
+  }, [formData.commerceCategoriesThree, hasFetchedProductDetails]);
 
   useEffect(() => {
     fetchProducts();
@@ -778,7 +840,6 @@ const EditProductGroups = () => {
   const selectedProductsDetails = products.filter(product =>
     selectedProductIds.includes(product._id)
   );
-
 
   const BCrumb = [
     {
@@ -943,7 +1004,6 @@ const EditProductGroups = () => {
             )}
           </Box>
 
-          {/* Show current images previews */}
           {/* Current Images Display with Delete Option */}
           {imagePreviews.length > 0 && (
             <Box sx={{ mt: 2 }}>
@@ -1073,45 +1133,55 @@ const EditProductGroups = () => {
           </FormControl>
         </Grid>
 
-        {/* Commerce Categories */}
+        {/* Commerce Categories - Updated for Multiple Selection */}
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-one-select" sx={{ mt: 2 }}>
-            Select Commerce Category One (Brand)
+            Select Commerce Category One (Brand) (Multiple)
             <span style={{ color: 'red' }}>*</span>
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerce-category-one-select"
-              value={categoryOne.find(category => category._id === formData.commerceCategoriesOne) || null}
+              value={categoryOne.filter(category =>
+                formData.commerceCategoriesOne.includes(category._id)
+              )}
               onChange={(event, newValue) => {
+                const newBrandIds = newValue.map(v => v._id);
                 setFormData({
                   ...formData,
-                  commerceCategoriesOne: newValue ? newValue._id : '',
-                  commerceCategoriesTwo: '',
-                  commerceCategoriesThree: '',
-                  commerceCategoriesFour: ''
+                  commerceCategoriesOne: newBrandIds,
+                  commerceCategoriesTwo: [],
+                  commerceCategoriesThree: [],
+                  commerceCategoriesFour: []
                 });
+
+                fetchCategoriesByBrandIds(newBrandIds);
               }}
               options={categoryOne}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || fetching || categoryOne.length === 0}
               noOptionsText={categoryOne.length === 0 ? 'Loading brands...' : 'No brands found'}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={categoryOne.length === 0 ? 'Loading brands...' : 'Search and select a brand'}
+                  placeholder={categoryOne.length === 0 ? 'Loading brands...' : 'Search and select brands'}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />
@@ -1122,40 +1192,62 @@ const EditProductGroups = () => {
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerce-category-two-select" sx={{ mt: 2 }}>
-            Select Commerce Category Two
+            Select Commerce Category Two (Multiple)
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerce-category-two-select"
-              value={categoryTwo.find(category => category._id === formData.commerceCategoriesTwo) || null}
+              value={categoryTwo.filter(category =>
+                formData.commerceCategoriesTwo.includes(category._id)
+              )}
               onChange={(event, newValue) => {
+                const newCategoryIds = newValue.map(v => v._id);
                 setFormData({
                   ...formData,
-                  commerceCategoriesTwo: newValue ? newValue._id : '',
-                  commerceCategoriesThree: '',
-                  commerceCategoriesFour: ''
+                  commerceCategoriesTwo: newCategoryIds,
+                  commerceCategoriesThree: [],
+                  commerceCategoriesFour: []
                 });
+
+                fetchSubCategoriesByCategoryIds(newCategoryIds);
               }}
               options={categoryTwo}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || fetching || categoryTwo.length === 0}
-              noOptionsText={categoryTwo.length === 0 ? 'Select brand first...' : 'No categories found'}
+              noOptionsText={
+                formData.commerceCategoriesOne.length === 0
+                  ? 'Please select brands first'
+                  : categoryTwo.length === 0
+                    ? 'No categories available for selected brands'
+                    : 'No categories found'
+              }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={categoryTwo.length === 0 ? 'Select brand first...' : 'Search and select a category'}
+                  placeholder={
+                    formData.commerceCategoriesOne.length === 0
+                      ? 'Please select brands first'
+                      : categoryTwo.length === 0
+                        ? 'No categories available for selected brands'
+                        : 'Search and select categories'
+                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />
@@ -1166,39 +1258,61 @@ const EditProductGroups = () => {
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryThree-select" sx={{ mt: 2 }}>
-            Select Commerce Category Three
+            Select Commerce Category Three (Multiple)
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerceCategoryThree-select"
-              value={categoryThree.find(category => category._id === formData.commerceCategoriesThree) || null}
+              value={categoryThree.filter(category =>
+                formData.commerceCategoriesThree.includes(category._id)
+              )}
               onChange={(event, newValue) => {
+                const newSubCategoryIds = newValue.map(v => v._id);
                 setFormData({
                   ...formData,
-                  commerceCategoriesThree: newValue ? newValue._id : '',
-                  commerceCategoriesFour: ''
+                  commerceCategoriesThree: newSubCategoryIds,
+                  commerceCategoriesFour: []
                 });
+
+                fetchSubCategoriesTwoByCategoryIds(newSubCategoryIds);
               }}
               options={categoryThree}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || fetching || categoryThree.length === 0}
-              noOptionsText={categoryThree.length === 0 ? 'Select category first...' : 'No subcategories found'}
+              noOptionsText={
+                formData.commerceCategoriesTwo.length === 0
+                  ? 'Please select categories first'
+                  : categoryThree.length === 0
+                    ? 'No subcategories available for selected categories'
+                    : 'No subcategories found'
+              }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={categoryThree.length === 0 ? 'Select category first...' : 'Search and select a subcategory'}
+                  placeholder={
+                    formData.commerceCategoriesTwo.length === 0
+                      ? 'Please select categories first'
+                      : categoryThree.length === 0
+                        ? 'No subcategories available for selected categories'
+                        : 'Search and select subcategories'
+                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />
@@ -1209,35 +1323,57 @@ const EditProductGroups = () => {
 
         <Grid size={6}>
           <CustomFormLabel htmlFor="commerceCategoryFour-select" sx={{ mt: 2 }}>
-            Select Commerce Category Four
+            Select Commerce Category Four (Multiple)
           </CustomFormLabel>
           <FormControl fullWidth>
             <Autocomplete
+              multiple
               id="commerceCategoryFour-select"
-              value={categoryFour.find(category => category._id === formData.commerceCategoriesFour) || null}
+              value={categoryFour.filter(category =>
+                formData.commerceCategoriesFour.includes(category._id)
+              )}
               onChange={(event, newValue) => {
-                setFormData({ ...formData, commerceCategoriesFour: newValue ? newValue._id : '' });
+                setFormData({
+                  ...formData,
+                  commerceCategoriesFour: newValue.map(v => v._id)
+                });
               }}
               options={categoryFour}
               getOptionLabel={(option) => option.name || ''}
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || fetching || categoryFour.length === 0}
-              noOptionsText={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'No sub-subcategories found'}
+              noOptionsText={
+                formData.commerceCategoriesThree.length === 0
+                  ? 'Please select subcategories first'
+                  : categoryFour.length === 0
+                    ? 'No sub-subcategories available for selected subcategories'
+                    : 'No sub-subcategories found'
+              }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option._id}
+                    label={option.name}
+                    size="small"
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder={categoryFour.length === 0 ? 'No SubCategory Two Available' : 'Search and select a sub-subcategory'}
+                  placeholder={
+                    formData.commerceCategoriesThree.length === 0
+                      ? 'Please select subcategories first'
+                      : categoryFour.length === 0
+                        ? 'No sub-subcategories available for selected subcategories'
+                        : 'Search and select sub-subcategories'
+                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.23)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(0, 0, 0, 0.87)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'primary.main',
-                      },
+                      '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0, 0, 0, 0.87)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main' },
                     },
                   }}
                 />

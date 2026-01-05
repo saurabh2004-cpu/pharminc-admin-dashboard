@@ -677,7 +677,7 @@ const ListProductGroupProducts = () => {
                         {/* Brand */}
                         <TableCell sx={columnWidths.brand}>
                           <Typography variant="body2">
-                            {product.commerceCategoriesOne?.name || 'N/A'}
+                            {product.commerceCategoriesOne?.map((cat) => cat.name).join(', ') || 'N/A'}
                           </Typography>
                         </TableCell>
 

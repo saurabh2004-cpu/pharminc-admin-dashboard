@@ -36,7 +36,6 @@ import {
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-// import CustomSwitch from '../../../forms/theme-elements/CustomSwitch';
 import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconDownload } from '@tabler/icons-react';
 import { ProductContext } from "../../../context/EcommerceContext";
 import axiosInstance from '../../../axios/axiosInstance';
@@ -56,10 +55,7 @@ function descendingComparator(a, b, orderBy) {
   return 0;
 }
 
-function getComparator(
-  order,
-  orderBy,
-) {
+function getComparator(order, orderBy) {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -83,16 +79,15 @@ function EnhancedTableHead(props) {
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
   };
 
   const headCellStyle = {
-    backgroundColor: '#f0f8ff', // ✅ apply to all header cells
+    backgroundColor: '#f0f8ff',
     fontWeight: 600,
-    zIndex: 4, // slightly lower than sticky so sticky overlaps
+    zIndex: 4,
   };
-
 
   return (
     <TableHead>
@@ -115,7 +110,7 @@ function EnhancedTableHead(props) {
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
               ...headCellStyle,
-              ...(index === 0 ? stickyCellStyle : {}), // 👈 first col sticky
+              ...(index === 0 ? stickyCellStyle : {}),
             }}
           >
             <TableSortLabel
@@ -146,7 +141,9 @@ const EnhancedTableToolbar = (props) => {
     rows,
     headCells,
     onExportAll,
-    onExportByCategories
+    onExportByCategories,
+    onOpenFilterDialog,
+    filterCount
   } = props;
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -215,8 +212,31 @@ const EnhancedTableToolbar = (props) => {
         ) : (
           <>
             <Tooltip title="Filter list">
-              <IconButton>
+              <IconButton
+                onClick={onOpenFilterDialog}
+                sx={{ position: 'relative' }}
+              >
                 <IconFilter size="1.2rem" />
+                {filterCount > 0 && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      backgroundColor: 'error.main',
+                      color: 'white',
+                      fontSize: '0.7rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {filterCount}
+                  </Box>
+                )}
               </IconButton>
             </Tooltip>
             <Tooltip title="Export Options">
@@ -233,7 +253,6 @@ const EnhancedTableToolbar = (props) => {
         )}
       </Toolbar>
 
-      {/* Export Options Dialog */}
       <Dialog
         open={exportDialogOpen}
         onClose={() => setExportDialogOpen(false)}
@@ -290,9 +309,7 @@ const ListTable = ({
   setTableData
 }) => {
 
-  const {
-    filteredAndSortedProducts,
-  } = useContext(ProductContext);
+  const { filteredAndSortedProducts } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
@@ -306,6 +323,7 @@ const ListTable = ({
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  // Export dialog states
   const [exportCategoriesDialogOpen, setExportCategoriesDialogOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [brands, setBrands] = useState([]);
@@ -318,7 +336,23 @@ const ListTable = ({
   const [selectedSubCategoryTwo, setSelectedSubCategoryTwo] = useState('');
   const [togglingProductId, setTogglingProductId] = useState(null);
 
+  // Filter dialog states - SEPARATE from export states
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [filterBrand, setFilterBrand] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterSubCategory, setFilterSubCategory] = useState('');
+  const [filterSubCategoryTwo, setFilterSubCategoryTwo] = useState('');
+  const [filterCategories, setFilterCategories] = useState([]);
+  const [filterSubCategories, setFilterSubCategories] = useState([]);
+  const [filterSubCategoriesTwo, setFilterSubCategoriesTwo] = useState([]);
 
+  // Calculate filter count
+  const filterCount = [
+    filterBrand,
+    filterCategory,
+    filterSubCategory,
+    filterSubCategoryTwo
+  ].filter(Boolean).length;
 
   const handleToggleProductStatus = async (productId, currentStatus) => {
     try {
@@ -339,7 +373,6 @@ const ListTable = ({
           )
         );
 
-        // Update the rows with the new status
         setRows((prevRows) =>
           prevRows.map((item) =>
             item._id === productId ? { ...item, inactive: !item.inactive } : item
@@ -353,8 +386,6 @@ const ListTable = ({
     }
   };
 
-
-  // Handle CSV export
   const handleExportCSV = async () => {
     try {
       const response = await axiosInstance.get(
@@ -374,6 +405,150 @@ const ListTable = ({
     }
   };
 
+  // ========== FILTER FUNCTIONS ==========
+
+  // Fetch brands for filter
+  const fetchFilterBrands = async () => {
+    try {
+      const response = await axiosInstance.get('/brand/get-brands-list');
+      if (response.data.statusCode === 200) {
+        setBrands(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching brands:', error);
+    }
+  };
+
+  // Fetch categories for filter based on selected brand
+  const fetchFilterCategories = async (brandId) => {
+    if (!brandId) {
+      setFilterCategories([]);
+      return;
+    }
+    try {
+      const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${brandId}`);
+      if (response.data.statusCode === 200) {
+        setFilterCategories(response.data.data);
+      } else {
+        setFilterCategories([]);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setFilterCategories([]);
+    }
+  };
+
+  // Fetch subcategories for filter based on selected category
+  const fetchFilterSubCategories = async (categoryId) => {
+    if (!categoryId) {
+      setFilterSubCategories([]);
+      return;
+    }
+    try {
+      const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${categoryId}`);
+      if (response.data.statusCode === 200) {
+        setFilterSubCategories(response.data.data);
+      } else {
+        setFilterSubCategories([]);
+      }
+    } catch (error) {
+      console.error('Error fetching subcategories:', error);
+      setFilterSubCategories([]);
+    }
+  };
+
+  // Fetch subcategories two for filter based on selected subcategory
+  const fetchFilterSubCategoriesTwo = async (subCategoryId) => {
+    if (!subCategoryId) {
+      setFilterSubCategoriesTwo([]);
+      return;
+    }
+    try {
+      const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subCategoryId}`);
+      if (response.data.statusCode === 200) {
+        setFilterSubCategoriesTwo(response.data.data);
+      } else {
+        setFilterSubCategoriesTwo([]);
+      }
+    } catch (error) {
+      console.error('Error fetching subcategories two:', error);
+      setFilterSubCategoriesTwo([]);
+    }
+  };
+
+  // Handle filter brand change
+  const handleFilterBrandChange = (event) => {
+    const brandId = event.target.value;
+    setFilterBrand(brandId);
+    setFilterCategory('');
+    setFilterSubCategory('');
+    setFilterSubCategoryTwo('');
+    setFilterCategories([]);
+    setFilterSubCategories([]);
+    setFilterSubCategoriesTwo([]);
+    if (brandId) {
+      fetchFilterCategories(brandId);
+    }
+  };
+
+  // Handle filter category change
+  const handleFilterCategoryChange = (event) => {
+    const categoryId = event.target.value;
+    setFilterCategory(categoryId);
+    setFilterSubCategory('');
+    setFilterSubCategoryTwo('');
+    setFilterSubCategories([]);
+    setFilterSubCategoriesTwo([]);
+    if (categoryId) {
+      fetchFilterSubCategories(categoryId);
+    }
+  };
+
+  // Handle filter subcategory change
+  const handleFilterSubCategoryChange = (event) => {
+    const subCategoryId = event.target.value;
+    setFilterSubCategory(subCategoryId);
+    setFilterSubCategoryTwo('');
+    setFilterSubCategoriesTwo([]);
+    if (subCategoryId) {
+      fetchFilterSubCategoriesTwo(subCategoryId);
+    }
+  };
+
+  // Handle filter subcategory two change
+  const handleFilterSubCategoryTwoChange = (event) => {
+    setFilterSubCategoryTwo(event.target.value);
+  };
+
+  // Reset all filters
+  const resetFilters = () => {
+    setFilterBrand('');
+    setFilterCategory('');
+    setFilterSubCategory('');
+    setFilterSubCategoryTwo('');
+    setFilterCategories([]);
+    setFilterSubCategories([]);
+    setFilterSubCategoriesTwo([]);
+  };
+
+  // Open filter dialog
+  const handleOpenFilterDialog = () => {
+    setFilterDialogOpen(true);
+    fetchFilterBrands();
+  };
+
+  // Close filter dialog
+  const handleCloseFilterDialog = () => {
+    setFilterDialogOpen(false);
+  };
+
+  // Apply filters and close dialog
+  const handleApplyFilters = () => {
+    handleCloseFilterDialog();
+    // Filters will be applied automatically via useEffect
+  };
+
+  // ========== EXPORT FUNCTIONS ==========
 
   // Fetch brands for export dialog
   const fetchBrands = async () => {
@@ -387,7 +562,7 @@ const ListTable = ({
     }
   };
 
-  // Fetch categories based on selected brand
+  // Fetch categories based on selected brand for export
   const fetchCategories = async (brandId) => {
     if (!brandId) {
       setCategories([]);
@@ -406,7 +581,7 @@ const ListTable = ({
     }
   };
 
-  // Fetch subcategories based on selected category
+  // Fetch subcategories based on selected category for export
   const fetchSubCategories = async (categoryId) => {
     if (!categoryId) {
       setSubCategories([]);
@@ -425,7 +600,7 @@ const ListTable = ({
     }
   };
 
-  // Fetch subcategories two based on selected subcategory
+  // Fetch subcategories two based on selected subcategory for export
   const fetchSubCategoriesTwo = async (subCategoryId) => {
     if (!subCategoryId) {
       setSubCategoriesTwo([]);
@@ -492,7 +667,6 @@ const ListTable = ({
   const handleExportByCategories = async () => {
     setExportLoading(true);
     try {
-      // Build query parameters
       const params = new URLSearchParams();
       if (selectedBrand) params.append('brandId', selectedBrand);
       if (selectedCategory) params.append('categoryId', selectedCategory);
@@ -504,7 +678,6 @@ const ListTable = ({
         { responseType: 'blob' }
       );
 
-      // Generate filename from response headers or create custom one
       const contentDisposition = response.headers['content-disposition'];
       let filename = 'products_export.csv';
 
@@ -523,7 +696,6 @@ const ListTable = ({
       link.click();
       document.body.removeChild(link);
 
-      // Close dialog and reset selections
       setExportCategoriesDialogOpen(false);
       resetExportSelections();
 
@@ -557,7 +729,6 @@ const ListTable = ({
     resetExportSelections();
   };
 
-
   // Define column widths for products table
   const columnWidths = {
     serial: { minWidth: '80px' },
@@ -576,132 +747,101 @@ const ListTable = ({
     actions: { minWidth: '160px' },
   };
 
+  // ========== MAIN FILTER AND SEARCH LOGIC ==========
+  
+  // Apply filters and search together
   useEffect(() => {
     let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
+    let result = [...baseData];
 
+    // Apply category filters first
+    if (filterBrand || filterCategory || filterSubCategory || filterSubCategoryTwo) {
+      result = result.filter(item => {
+        // ✅ CORRECTED: Filter by brand (commerceCategoriesOne)
+        if (filterBrand) {
+          const hasBrand = item.commerceCategoriesOne?.some(cat => 
+            cat._id === filterBrand
+          );
+          if (!hasBrand) return false;
+        }
+
+        // ✅ CORRECTED: Filter by category (commerceCategoriesTwo)
+        if (filterCategory) {
+          const hasCategory = item.commerceCategoriesTwo?.some(cat => 
+            cat._id === filterCategory
+          );
+          if (!hasCategory) return false;
+        }
+
+        // ✅ CORRECTED: Filter by subcategory (commerceCategoriesThree)
+        if (filterSubCategory) {
+          const hasSubCategory = item.commerceCategoriesThree?.some(cat => 
+            cat._id === filterSubCategory
+          );
+          if (!hasSubCategory) return false;
+        }
+
+        // ✅ CORRECTED: Filter by subcategory two (commerceCategoriesFour)
+        if (filterSubCategoryTwo) {
+          const hasSubCategoryTwo = item.commerceCategoriesFour?.some(cat => 
+            cat._id === filterSubCategoryTwo
+          );
+          if (!hasSubCategoryTwo) return false;
+        }
+
+        return true;
+      });
+
+      console.log('Filtered by categories:', result.length, 'products');
+    }
+
+    // Then apply search filter on filtered results
     if (search) {
       const searchValue = search.toLowerCase();
-      const filteredRows = baseData.filter((row) => {
-        const values = [
-          ...Object.values(row).map((val) => (typeof val === "object" ? "" : String(val))),
-          row.pricingGroup?.name,
-          row.commerceCategoriesOne?.name,
-          row.commerceCategoriesTwo?.name,
-          row.commerceCategoriesThree?.name,
-          row.commerceCategoriesFour?.name,
-          format(new Date(row.createdAt), "E, MMM d yyyy"), // also searchable date
-        ];
-
-        return values.some((val) =>
-          String(val || "")
-            .toLowerCase()
-            .includes(searchValue)
-        );
-      });
-      setRows(filteredRows);
-    } else {
-      setRows(baseData);
-    }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList, search]);
-
-
-  const handleSearch = (event) => {
-    const searchValue = event.target.value.toLowerCase();
-    setSearch(searchValue);
-
-    let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
-
-    if (searchValue) {
-      const filteredRows = baseData.filter((row) => {
-        // Helper function to search in a value
+      result = result.filter((row) => {
         const searchInValue = (value) => {
           if (!value) return false;
 
-          // Handle arrays
           if (Array.isArray(value)) {
             return value.some(item =>
               item?.toString().toLowerCase().includes(searchValue)
             );
           }
 
-          // Handle objects - search through all properties
           if (typeof value === 'object') {
             return Object.values(value).some(val =>
               searchInValue(val)
             );
           }
 
-          // Handle primitive values
           return value.toString().toLowerCase().includes(searchValue);
         };
 
-        // Check all relevant fields
         return (
-          // SKU and Product Identification
           searchInValue(row.sku) ||
-          searchInValue(row.itemSku) ||
-          searchInValue(row.productCode) ||
-          searchInValue(row.productId) ||
-
-          // Product Names and Titles
-          searchInValue(row.title) ||
-          searchInValue(row.productName) ||
+          searchInValue(row.ProductName) ||
           searchInValue(row.name) ||
-          searchInValue(row.displayName) ||
-
-          // Product Type and Classification
           searchInValue(row.type) ||
-          searchInValue(row.productType) ||
-          searchInValue(row.category) ||
-
-          // Pricing Information
           searchInValue(row.pricingGroup) ||
-          searchInValue(row.priceGroup) ||
-          searchInValue(row.costGroup) ||
-
-          // Commerce Categories
-          searchInValue(row.commerceCategoryOne) ||
-          searchInValue(row.commerceCategoryTwo) ||
-          searchInValue(row.commerceCategoryThree) ||
-          searchInValue(row.commerceCategoryFour) ||
-          searchInValue(row.categoryOne) ||
-          searchInValue(row.categoryTwo) ||
-          searchInValue(row.categoryThree) ||
-          searchInValue(row.categoryFour) ||
-
-          // Barcodes
-          searchInValue(row.barcode) ||
-          searchInValue(row.barcodes) ||
-          searchInValue(row.eachBarcode) ||
+          searchInValue(row.commerceCategoriesOne) ||
+          searchInValue(row.commerceCategoriesTwo) ||
+          searchInValue(row.commerceCategoriesThree) ||
+          searchInValue(row.commerceCategoriesFour) ||
           searchInValue(row.eachBarcodes) ||
-          searchInValue(row.packBarcode) ||
           searchInValue(row.packBarcodes) ||
-          searchInValue(row.ean) ||
-          searchInValue(row.upc) ||
-          searchInValue(row.gtin) ||
-          searchInValue(row.isbn) ||
-
-          // Additional Product Details
           searchInValue(row.description) ||
-          searchInValue(row.brand) ||
-          searchInValue(row.manufacturer) ||
-          searchInValue(row.supplier) ||
-          searchInValue(row.supplierCode) ||
-          searchInValue(row.vendor) ||
-
-          // Search in nested objects (if your data structure has them)
-          (row.commerceCategories && searchInValue(row.commerceCategories)) ||
-          (row.categories && searchInValue(row.categories)) ||
-          (row.barcodeData && searchInValue(row.barcodeData))
+          searchInValue(row.storeDescription)
         );
       });
-
-      setRows(filteredRows);
-    } else {
-      setRows(baseData);
     }
-  };
 
+    setRows(result);
+    setPage(0); // Reset to first page when filters/search change
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, search, filterBrand, filterCategory, filterSubCategory, filterSubCategoryTwo]);
+
+  const handleSearch = (event) => {
+    setSearch(event.target.value);
+  };
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -775,7 +915,7 @@ const ListTable = ({
   };
 
   const handleDeleteClick = (event, id, name) => {
-    event.stopPropagation(); // Prevent row selection
+    event.stopPropagation();
     setDeleteDialog({
       open: true,
       itemId: id,
@@ -783,12 +923,10 @@ const ListTable = ({
       isDeleting: false
     });
   };
-  //delete product
+
   const handleDelete = async () => {
     try {
       const res = await axiosInstance.delete(`/products/delete-product/${deleteDialog.itemId}`);
-
-      // console.log("deleted", res.data);
 
       if (res.data.statusCode === 200) {
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
@@ -800,7 +938,6 @@ const ListTable = ({
     }
   };
 
-  //edit product
   const handleEdit = (id) => {
     navigate(`/dashboard/products/edit/${id}`);
   };
@@ -808,8 +945,8 @@ const ListTable = ({
   const stickyCellStyle = {
     position: "sticky",
     left: 0,
-    zIndex: 5, // higher than other cells so it stays on top
-    backgroundColor: '#f0f8ff', // keeps background clean while scrolling
+    zIndex: 5,
+    backgroundColor: '#f0f8ff',
   };
 
   return (
@@ -822,20 +959,213 @@ const ListTable = ({
           placeholder={isBrandsList ? "Search Product" : "Search Product"}
           onExportAll={handleExportCSV}
           onExportByCategories={handleOpenExportByCategories}
+          onOpenFilterDialog={handleOpenFilterDialog}
+          filterCount={filterCount}
         />
+
+        {/* Active Filters Display */}
+        {filterCount > 0 && (
+          <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Typography variant="body2" color="textSecondary">
+              Active Filters:
+            </Typography>
+            {filterBrand && (
+              <Chip
+                label={`Brand: ${brands.find(b => b._id === filterBrand)?.name || 'Selected'}`}
+                onDelete={() => {
+                  setFilterBrand('');
+                  setFilterCategory('');
+                  setFilterSubCategory('');
+                  setFilterSubCategoryTwo('');
+                }}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
+            )}
+            {filterCategory && (
+              <Chip
+                label={`Category: ${filterCategories.find(c => c._id === filterCategory)?.name || 'Selected'}`}
+                onDelete={() => {
+                  setFilterCategory('');
+                  setFilterSubCategory('');
+                  setFilterSubCategoryTwo('');
+                }}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
+            )}
+            {filterSubCategory && (
+              <Chip
+                label={`Sub Category: ${filterSubCategories.find(sc => sc._id === filterSubCategory)?.name || 'Selected'}`}
+                onDelete={() => {
+                  setFilterSubCategory('');
+                  setFilterSubCategoryTwo('');
+                }}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
+            )}
+            {filterSubCategoryTwo && (
+              <Chip
+                label={`Sub Category Two: ${filterSubCategoriesTwo.find(sc => sc._id === filterSubCategoryTwo)?.name || 'Selected'}`}
+                onDelete={() => setFilterSubCategoryTwo('')}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
+            )}
+            <Button
+              size="small"
+              onClick={resetFilters}
+              sx={{ ml: 'auto' }}
+            >
+              Clear All Filters
+            </Button>
+          </Box>
+        )}
+
+        {/* Filter Dialog */}
+        <Dialog
+          open={filterDialogOpen}
+          onClose={handleCloseFilterDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            Filter Products
+            {filterCount > 0 && (
+              <Chip
+                label={`${filterCount} active filter${filterCount > 1 ? 's' : ''}`}
+                size="small"
+                color="primary"
+                sx={{ ml: 2 }}
+              />
+            )}
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+              Select categories to filter products. Leave fields empty to show all products.
+            </Typography>
+
+            <Box display="flex" flexDirection="column" gap={3}>
+              {/* Brand Filter */}
+              <FormControl fullWidth>
+                <Typography variant="subtitle2" gutterBottom>
+                  Brand (Commerce Category Level 1)
+                </Typography>
+                <Select
+                  value={filterBrand}
+                  onChange={handleFilterBrandChange}
+                  displayEmpty
+                >
+                  <MenuItem value="">All Brands</MenuItem>
+                  {brands.map((brand) => (
+                    <MenuItem key={brand._id} value={brand._id}>
+                      {brand.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Category Filter */}
+              <FormControl fullWidth>
+                <Typography variant="subtitle2" gutterBottom>
+                  Category (Commerce Category Level 2)
+                </Typography>
+                <Select
+                  value={filterCategory}
+                  onChange={handleFilterCategoryChange}
+                  displayEmpty
+                  disabled={!filterBrand}
+                >
+                  <MenuItem value="">All Categories</MenuItem>
+                  {filterCategories.map((category) => (
+                    <MenuItem key={category._id} value={category._id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* SubCategory Filter */}
+              <FormControl fullWidth>
+                <Typography variant="subtitle2" gutterBottom>
+                  Sub Category (Commerce Category Level 3)
+                </Typography>
+                <Select
+                  value={filterSubCategory}
+                  onChange={handleFilterSubCategoryChange}
+                  displayEmpty
+                  disabled={!filterCategory}
+                >
+                  <MenuItem value="">All Sub Categories</MenuItem>
+                  {filterSubCategories.map((subCategory) => (
+                    <MenuItem key={subCategory._id} value={subCategory._id}>
+                      {subCategory.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* SubCategory Two Filter */}
+              <FormControl fullWidth>
+                <Typography variant="subtitle2" gutterBottom>
+                  Sub Category Two (Commerce Category Level 4)
+                </Typography>
+                <Select
+                  value={filterSubCategoryTwo}
+                  onChange={handleFilterSubCategoryTwoChange}
+                  displayEmpty
+                  disabled={!filterSubCategory}
+                >
+                  <MenuItem value="">All Sub Categories Two</MenuItem>
+                  {filterSubCategoriesTwo.map((subCategoryTwo) => (
+                    <MenuItem key={subCategoryTwo._id} value={subCategoryTwo._id}>
+                      {subCategoryTwo.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={resetFilters}
+              color="error"
+              disabled={filterCount === 0}
+            >
+              Clear All
+            </Button>
+            <Box sx={{ flexGrow: 1 }} />
+            <Button onClick={handleCloseFilterDialog}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApplyFilters}
+              variant="contained"
+              sx={{ backgroundColor: '#2E2F7F' }}
+            >
+              Apply Filters
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer sx={{ width: "100%" }}>
             <Table
               sx={{
                 minWidth: 1800,
-                borderCollapse: "collapse", // ensures borders connect
+                borderCollapse: "collapse",
                 "& td, & th": {
-                  paddingTop: "4px",    // 👈 reduce vertical padding
+                  paddingTop: "4px",
                   paddingBottom: "4px",
-                  borderRight: "1px solid rgba(224, 224, 224, 1)", // vertical line
+                  borderRight: "1px solid rgba(224, 224, 224, 1)",
                 },
                 "& td:last-child, & th:last-child": {
-                  borderRight: "none", // no border on last column
+                  borderRight: "none",
                 },
               }}
               aria-labelledby="tableTitle"
@@ -878,7 +1208,6 @@ const ListTable = ({
                         </TableCell>}
 
                         {isProductsList ? (
-                          // Products List View with enhanced styling and widths
                           <>
                             <TableCell sx={{ ...columnWidths.actions, ...stickyCellStyle }} >
                               <Box display="flex" gap={1}>
@@ -907,10 +1236,8 @@ const ListTable = ({
                                     style={{ width: "70px", height: "70px", objectFit: "cover" }}
                                   />
                                 </Box>
-
                               </Box>
                             </TableCell>
-
 
                             <TableCell sx={{ ...columnWidths.sku, cursor: "pointer" }} onClick={() => handleEdit(row._id)}>
                               <Box display="flex" alignItems="center">
@@ -985,9 +1312,9 @@ const ListTable = ({
                             <TableCell sx={columnWidths.brand}>
                               <Box display="flex" alignItems="center">
                                 <Box>
-                                  <Typography fontWeight="400">
-                                    {row.commerceCategoriesOne?.name || 'ANY'}
-                                  </Typography>
+                                  {
+                                    row.commerceCategoriesOne?.map((category) => category.name).join(', ') || ''
+                                  }
                                 </Box>
                               </Box>
                             </TableCell>
@@ -995,9 +1322,9 @@ const ListTable = ({
                             <TableCell sx={columnWidths.category}>
                               <Box display="flex" alignItems="center">
                                 <Box>
-                                  <Typography fontWeight="400">
-                                    {row.commerceCategoriesTwo?.name || 'ANY'}
-                                  </Typography>
+                                  {
+                                    row.commerceCategoriesTwo?.map((category) => category.name).join(', ') || ''
+                                  }
                                 </Box>
                               </Box>
                             </TableCell>
@@ -1005,9 +1332,9 @@ const ListTable = ({
                             <TableCell sx={columnWidths.subCategory}>
                               <Box display="flex" alignItems="center">
                                 <Box>
-                                  <Typography fontWeight="400">
-                                    {row.commerceCategoriesThree?.name || 'ANY'}
-                                  </Typography>
+                                  {
+                                    row.commerceCategoriesThree?.map((category) => category.name).join(', ') || ''
+                                  }
                                 </Box>
                               </Box>
                             </TableCell>
@@ -1015,9 +1342,9 @@ const ListTable = ({
                             <TableCell sx={columnWidths.subCategory}>
                               <Box display="flex" alignItems="center">
                                 <Box>
-                                  <Typography fontWeight="400">
-                                    {row.commerceCategoriesFour?.name || 'ANY'}
-                                  </Typography>
+                                  {
+                                    row.commerceCategoriesFour?.map((category) => category.name).join(', ') || ''
+                                  }
                                 </Box>
                               </Box>
                             </TableCell>
@@ -1120,8 +1447,6 @@ const ListTable = ({
                                 </Box>
                               </Box>
                             </TableCell>
-
-
                           </>
                         ) : (
                           ''
@@ -1182,7 +1507,6 @@ const ListTable = ({
           </Typography>
 
           <Box display="flex" flexDirection="column" gap={3}>
-            {/* Brand Selection */}
             <FormControl fullWidth>
               <Typography variant="subtitle2" gutterBottom>
                 Brand (Commerce Category Level 1)
@@ -1202,7 +1526,6 @@ const ListTable = ({
               </Select>
             </FormControl>
 
-            {/* Category Selection */}
             <FormControl fullWidth>
               <Typography variant="subtitle2" gutterBottom>
                 Category (Commerce Category Level 2)
@@ -1222,7 +1545,6 @@ const ListTable = ({
               </Select>
             </FormControl>
 
-            {/* SubCategory Selection */}
             <FormControl fullWidth>
               <Typography variant="subtitle2" gutterBottom>
                 Sub Category (Commerce Category Level 3)
@@ -1242,7 +1564,6 @@ const ListTable = ({
               </Select>
             </FormControl>
 
-            {/* SubCategory Two Selection */}
             <FormControl fullWidth>
               <Typography variant="subtitle2" gutterBottom>
                 Sub Category Two (Commerce Category Level 4)
@@ -1281,7 +1602,6 @@ const ListTable = ({
           </Button>
         </DialogActions>
       </Dialog>
-
 
       <DeleteConfirmationDialog
         open={deleteDialog.open}

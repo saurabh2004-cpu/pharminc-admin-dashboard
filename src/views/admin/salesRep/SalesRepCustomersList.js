@@ -247,7 +247,7 @@ const SalesRepCustomersList = () => {
 
       if (response.data.statusCode === 200) {
         // Extract customers array
-        const customersData = response.data.data.customers || [];
+        const customersData = response.data.data || [];
         setCustomers(customersData);
         setRows(customersData);
 

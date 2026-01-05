@@ -634,28 +634,28 @@ const ListProductGroup = () => {
                         {/* Commerce Category One (Brand) */}
                         <TableCell sx={columnWidths.commerceCategoriesOne}>
                           <Typography variant="body2">
-                            {row?.commerceCategoriesOne?.name || 'N/A'}
+                            {row?.commerceCategoriesOne?.map((category) => category.name).join(', ') || 'N/A'}
                           </Typography>
                         </TableCell>
 
                         {/* Commerce Category Two (Category) */}
                         <TableCell sx={columnWidths.commerceCategoriesTwo}>
                           <Typography variant="body2">
-                            {row?.commerceCategoriesTwo?.name || 'N/A'}
+                            {row?.commerceCategoriesTwo?.map((category) => category.name).join(', ') || 'N/A'}
                           </Typography>
                         </TableCell>
 
                         {/* Commerce Category Three (Sub Category) */}
                         <TableCell sx={columnWidths.commerceCategoriesThree}>
                           <Typography variant="body2">
-                            {row?.commerceCategoriesThree?.name || 'N/A'}
+                            {row?.commerceCategoriesThree?.map((category) => category.name).join(', ') || 'N/A'}
                           </Typography>
                         </TableCell>
 
                         {/* Commerce Category Four (Sub Sub Category) */}
                         <TableCell sx={columnWidths.commerceCategoriesFour}>
                           <Typography variant="body2">
-                            {row?.commerceCategoriesFour?.name || 'N/A'}
+                            {row?.commerceCategoriesFour?.map((category) => category.name).join(', ') || 'N/A'}
                           </Typography>
                         </TableCell>
 
