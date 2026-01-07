@@ -761,7 +761,7 @@ const ListTable = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Customer"}
+          placeholder={isBrandsList ? "Search Customer" : "Search Customer"}
           approvalFilter={approvalFilter}
           setApprovalFilter={setApprovalFilter}
         />
