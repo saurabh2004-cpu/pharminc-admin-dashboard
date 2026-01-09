@@ -534,15 +534,16 @@ const ListContactUsData = () => {
                                                     <TableCell>
                                                         <Typography
                                                             sx={{
-                                                                maxWidth: 200,
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                                whiteSpace: 'nowrap'
+                                                                minWidth: 400,
+                                                                maxWidth: 400,
+                                                                whiteSpace: 'normal',
+                                                                wordBreak: 'break-word',
                                                             }}
                                                         >
                                                             {row?.Message || 'N/A'}
                                                         </Typography>
                                                     </TableCell>
+
 
                                                     <TableCell>
                                                         <Typography>

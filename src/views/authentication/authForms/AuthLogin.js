@@ -214,7 +214,7 @@ const AuthLogin = ({ subtitle }) => {
             fontWeight="500"
             sx={{ textDecoration: 'none', color: 'primary.main' }}
           >
-            Log In As Sales Rep
+            Login as Sales Rep
           </Typography>
 
           {/* <Typography
