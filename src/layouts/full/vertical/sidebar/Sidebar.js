@@ -200,7 +200,8 @@ const Sidebar = () => {
       {/* Logo */}
       {/* ------------------------------------------- */}
       <Box px={2}>
-        <Logo />
+        {/* <Logo /> */}
+        <img src={Logo} alt="logo" style={{ height: 65, marginTop: 10 }} />
       </Box>
       {/* ------------------------------------------- */}
       {/* Sidebar For Mobile */}
