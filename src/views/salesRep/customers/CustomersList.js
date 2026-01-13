@@ -291,11 +291,11 @@ const SalesRepCustomers = () => {
         // For non-Master Sales Reps, fetch only their assigned customers
         const response = await axiosInstance.get(`/sales-rep/get-sales-rep-customers/${salesRep._id}`);
 
-        // console.log("response of get-sales- rep- customers  ", response);
+        console.log("response of get-sales- rep- customers  ", response);
 
         if (response.data.statusCode === 200) {
           // The API returns an array of customer objects directly
-          const customersData = response.data.data.customers || [];
+          const customersData = response.data.data || [];
           setCustomers(customersData);
           setRows(customersData);
 

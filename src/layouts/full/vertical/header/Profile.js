@@ -20,7 +20,7 @@ const Profile = () => {
   const user = useSelector((state) => state.auth.userData);
   const salesRep = useSelector((state) => state.auth.salesRepData);
 
-  console.log("sales rep data in prodfile", salesRep);
+  // console.log("sales rep data in prodfile", salesRep);
 
   const handleClick2 = (event) => {
     setAnchorEl2(event.currentTarget);
