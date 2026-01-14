@@ -535,12 +535,16 @@ const ListTable = ({
       let params = {};
       let filename = "sales_orders_export.csv";
 
+      // console.log("dateFilterActive", dateFilter.from, "to", dateFilter.to);
+
+      // return
+
       // If date filter is active, export filtered data
       if (dateFilterActive) {
         endpoint = '/sales-order/export-sales-orders-by-date-frame';
         params = {
-          from: dateFilter.from,
-          to: dateFilter.to
+          startDate: dateFilter.from,
+          endDate: dateFilter.to
         };
         filename = `sales-orders-${dateFilter.from}-to-${dateFilter.to}.csv`;
       }
