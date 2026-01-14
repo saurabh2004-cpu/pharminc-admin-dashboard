@@ -68,6 +68,12 @@ const ListCustomers = () => {
       label: 'Phone Number',
     },
     {
+      id: 'ABN ',
+      numeric: false,
+      disablePadding: false,
+      label: 'ABN',
+    },
+    {
       id: 'category',
       numeric: false,
       disablePadding: false,

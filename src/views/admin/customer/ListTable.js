@@ -908,6 +908,12 @@ const ListTable = ({
                                 </Typography>}
                               </TableCell>
 
+                              <TableCell sx={columnWidths.category}>
+                                 <Typography fontWeight="400">
+                                  {row.abn || 'N/A'}
+                                </Typography>
+                              </TableCell>
+
                               <TableCell sx={columnWidths.subCategory}>
                                 <Typography fontWeight="400">
                                   {row.category || 'N/A'}

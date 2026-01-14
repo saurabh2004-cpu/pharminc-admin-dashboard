@@ -397,6 +397,12 @@ const PendingApprovalCustomers = ({
             label: 'Phone Number',
         },
         {
+            id: 'ABN',
+            numeric: false,
+            disablePadding: false,
+            label: 'ABN',
+        },
+        {
             id: 'category',
             numeric: false,
             disablePadding: false,
@@ -852,6 +858,12 @@ const PendingApprovalCustomers = ({
                                                             <TableCell sx={columnWidths.category}>
                                                                 <Typography fontWeight="400">
                                                                     {row.CustomerPhoneNo || 'N/A'}
+                                                                </Typography>
+                                                            </TableCell>
+
+                                                            <TableCell sx={columnWidths.category}>
+                                                                <Typography fontWeight="400">
+                                                                    {row.abn || 'N/A'}
                                                                 </Typography>
                                                             </TableCell>
 
