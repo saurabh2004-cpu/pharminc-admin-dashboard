@@ -586,6 +586,20 @@ const Menuitems = [
       },
     ]
   },
+  {
+    id: uniqueId(),
+    title: 'Minimun Order Value',
+    icon: IconCalendar,
+    href: '/dashboard/minimum-order-value',
+    children: [
+      {
+        id: uniqueId(),
+        title: ' Order Value',
+        icon: IconPoint,
+        href: '/dashboard/admin/minimum-order-value',
+      },
+    ]
+  },
 
 
 

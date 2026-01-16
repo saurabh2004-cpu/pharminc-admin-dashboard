@@ -565,7 +565,7 @@ const CustomersSalesOrders = () => {
     const fetchSalesOrdersProducts = async () => {
         try {
             const response = await axiosInstance.get(`/sales-order/get-products-by-sales-document-number-dashboard/${documentNo}`);
-            // console.log("response sales order products ", response.data.data);
+            console.log("response sales order products ", response.data.data);
 
             if (response.data.statusCode === 200) {
                 const data = response.data.data;

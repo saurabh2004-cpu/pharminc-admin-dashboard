@@ -128,6 +128,8 @@ const CreateNetTermnsList = Loadable(lazy(() => import('../views/admin/netTernsL
 const EditNetTermsList = Loadable(lazy(() => import('../views/admin/netTernsList/EditNetTermsList')));
 const ListNetTermsData = Loadable(lazy(() => import('../views/admin/netTernsList/ListNetTermsData')));
 
+const MinimumOrderValueManager = Loadable(lazy(() => import('../views/admin/minimumOrderValue/MinimumOrderValueManager')));
+
 const Router = [
 
   {
@@ -262,6 +264,9 @@ const Router = [
       { path: '/dashboard/net-terms-list/create', element: <CreateNetTermnsList /> },
       { path: '/dashboard/net-terms-list/edit/:id', element: <EditNetTermsList /> },
       { path: '/dashboard/net-terms-list', element: <ListNetTermsData /> },
+
+      { path: '/dashboard/admin/minimum-order-value', element: <MinimumOrderValueManager /> },
+
 
 
     ],
