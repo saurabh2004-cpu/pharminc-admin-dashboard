@@ -61,7 +61,8 @@ const EditCustomers = () => {
     }],
     password: '',
     inactive: false,
-    markupDiscount: []
+    markupDiscount: [],
+    abn: '',
   });
 
   const [error, setError] = React.useState('');
@@ -917,6 +918,21 @@ const EditCustomers = () => {
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             disabled={loading}
             placeholder="Enter Category"
+          />
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="defaultShippingRate" sx={{ mt: 0 }}>
+            ABN
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="defaultShippingRate"
+            fullWidth
+            type="text"
+            value={formData.abn}
+            onChange={(e) => setFormData({ ...formData, abn: parseFloat(e.target.value) || 0 })}
+            disabled={loading}
+            placeholder="Enter ABN"
           />
         </Grid>
 

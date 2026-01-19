@@ -9,10 +9,7 @@ import {
     Typography,
     Box,
     FormControl,
-    MenuItem,
-    Select,
     Chip,
-    OutlinedInput
 } from '@mui/material';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
@@ -25,7 +22,7 @@ import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 const CreateGroupsDiscounts = () => {
     const [formData, setFormData] = React.useState({
         customers: [], // Array of customer ObjectIds (_id)
-        pricingGroupId: '',
+        pricingGroupIds: [], // Changed to array for multiple pricing groups
         percentage: ''
     });
     const [error, setError] = React.useState('');
@@ -38,8 +35,10 @@ const CreateGroupsDiscounts = () => {
 
     const handleSubmit = async () => {
         // Form validation
-        if (!formData.customers || formData.customers.length === 0 || !formData.percentage || !formData.pricingGroupId) {
-            setError('Please fill in all required fields and select at least one customer');
+        if (!formData.customers || formData.customers.length === 0 || 
+            !formData.percentage || !formData.pricingGroupIds || 
+            formData.pricingGroupIds.length === 0) {
+            setError('Please fill in all required fields and select at least one customer and one pricing group');
             return;
         }
 
@@ -54,14 +53,12 @@ const CreateGroupsDiscounts = () => {
         try {
             setLoading(true);
 
-            // ✅ CORRECTED: Send data with proper field names matching backend
+            // Send data to create multiple pricing group discounts
             const dataToSend = {
-                customers: formData.customers, // Array of customer ObjectIds (_id)
-                pricingGroupId: formData.pricingGroupId, // Changed from pricingGroup to pricingGroupId
+                customers: formData.customers, // Array of customer ObjectIds
+                pricingGroupIds: formData.pricingGroupIds, // Array of pricing group ObjectIds
                 percentage: formData.percentage
             };
-
-            // console.log("Data being sent:", dataToSend);
 
             const res = await axiosInstance.post('/pricing-groups-discount/create-pricing-group-discount', dataToSend, {
                 headers: {
@@ -69,15 +66,13 @@ const CreateGroupsDiscounts = () => {
                 }
             });
 
-            // console.log("Pricing group discount creation response:", res.data);
-
             if (res.data.statusCode === 200) {
                 setFormData({
-                    pricingGroupId: '',
+                    pricingGroupIds: [],
                     customers: [],
                     percentage: '',
                 });
-                setError('Pricing group discount created successfully!');
+                setError(`Successfully created ${res.data.data.created} pricing group discount(s)!`);
                 setTimeout(() => {
                     navigate('/dashboard/groups-discounts/list');
                 }, 2000);
@@ -102,23 +97,20 @@ const CreateGroupsDiscounts = () => {
         }
     };
 
-    const handlePricingGroupChange = (e) => {
-        setFormData({ ...formData, pricingGroupId: e.target.value });
-    };
-
-    // ✅ CORRECTED: Handle multiple customer selection with ObjectIds
-    const handleCustomerChange = (event) => {
-        const {
-            target: { value },
-        } = event;
-
-        // value will be an array of customer._id (ObjectIds)
+    // Handle multiple pricing group selection
+    const handlePricingGroupChange = (event, newValue) => {
         setFormData({
             ...formData,
-            customers: typeof value === 'string' ? value.split(',') : value
+            pricingGroupIds: newValue.map(group => group._id)
         });
+    };
 
-        // console.log("Selected customers (ObjectIds):", typeof value === 'string' ? value.split(',') : value);
+    // Handle multiple customer selection
+    const handleCustomerChange = (event, newValue) => {
+        setFormData({
+            ...formData,
+            customers: newValue.map(customer => customer._id)
+        });
     };
 
     const handlePercentageChange = (e) => {
@@ -146,8 +138,6 @@ const CreateGroupsDiscounts = () => {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-
-            // console.log("CSV imported", res.data);
 
             if (res.data.statusCode === 200) {
                 setCsvDialogOpen(false);
@@ -180,7 +170,6 @@ const CreateGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
-            // console.log("response pricing groups", response);
 
             if (response.data.statusCode === 200) {
                 setPricingGroups(Array.isArray(response.data.data) ? response.data.data : []);
@@ -198,7 +187,6 @@ const CreateGroupsDiscounts = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get('/admin/get-all-users');
-            // console.log("response customers", response);
 
             if (response.data.statusCode === 200) {
                 setCustomers(Array.isArray(response.data.data) ? response.data.data : []);
@@ -236,36 +224,45 @@ const CreateGroupsDiscounts = () => {
         <div>
             <Breadcrumb title="Create Groups Discounts" items={BCrumb} />
             <Grid container marginTop={4}>
-                {/* Pricing Group Selection */}
+                {/* Multiple Pricing Group Selection */}
                 <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="pricing-group-select"
                         sx={{ mt: 2 }}
                     >
-                        Select Pricing Group *
+                        Select Pricing Groups
+                        <span style={{ color: 'red' }}>*</span>
+                        <Typography component="span" sx={{ ml: 1, fontSize: '0.875rem', color: 'text.secondary' }}>
+                            (Multiple selection allowed)
+                        </Typography>
                     </CustomFormLabel>
                 </Grid>
                 <Grid size={12}>
                     <FormControl fullWidth>
                         <Autocomplete
                             id="pricing-group-select"
-                            value={pricingGroups.find(group => group._id === formData.pricingGroupId) || null}
-                            onChange={(event, newValue) => {
-                                handlePricingGroupChange({
-                                    target: {
-                                        value: newValue ? newValue._id : ''
-                                    }
-                                });
-                            }}
+                            multiple
+                            value={pricingGroups.filter(group => formData.pricingGroupIds.includes(group._id))}
+                            onChange={handlePricingGroupChange}
                             options={Array.isArray(pricingGroups) ? pricingGroups : []}
                             getOptionLabel={(option) => option.name || ''}
                             isOptionEqualToValue={(option, value) => option._id === value._id}
                             disabled={loading || !Array.isArray(pricingGroups) || pricingGroups.length === 0}
                             noOptionsText={!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'No pricing groups found'}
+                            renderTags={(value, getTagProps) =>
+                                value.map((option, index) => (
+                                    <Chip
+                                        {...getTagProps({ index })}
+                                        key={option._id}
+                                        label={option.name || 'Unknown'}
+                                        size="small"
+                                    />
+                                ))
+                            }
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
-                                    placeholder={!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'Search and select a pricing group'}
+                                    placeholder={!Array.isArray(pricingGroups) || pricingGroups.length === 0 ? 'Loading pricing groups...' : 'Search and select pricing groups'}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             '& fieldset': {
@@ -283,9 +280,14 @@ const CreateGroupsDiscounts = () => {
                             )}
                         />
                     </FormControl>
+                    {formData.pricingGroupIds.length > 0 && (
+                        <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.secondary' }}>
+                            {formData.pricingGroupIds.length} pricing group{formData.pricingGroupIds.length > 1 ? 's' : ''} selected
+                        </Typography>
+                    )}
                 </Grid>
 
-                {/* ✅ CORRECTED: Multiple Customer Selection with Search */}
+                {/* Multiple Customer Selection */}
                 <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="customer-select"
@@ -304,13 +306,7 @@ const CreateGroupsDiscounts = () => {
                             id="customer-select"
                             multiple
                             value={customers.filter(customer => formData.customers.includes(customer._id))}
-                            onChange={(event, newValue) => {
-                                handleCustomerChange({
-                                    target: {
-                                        value: newValue.map(customer => customer._id)
-                                    }
-                                });
-                            }}
+                            onChange={handleCustomerChange}
                             options={Array.isArray(customers) ? customers : []}
                             getOptionLabel={(option) => `${option.customerId}${option.customerName ? ' - ' + option.customerName : ''}`}
                             isOptionEqualToValue={(option, value) => option._id === value._id}
@@ -396,15 +392,40 @@ const CreateGroupsDiscounts = () => {
                     )}
                 </Grid>
 
+                {/* Summary Box */}
+                {formData.pricingGroupIds.length > 0 && formData.customers.length > 0 && (
+                    <Grid size={12} mt={2}>
+                        <Box sx={{
+                            p: 2,
+                            borderRadius: '8px',
+                            backgroundColor: '#f0f9ff',
+                            border: '1px solid #3b82f6'
+                        }}>
+                            <Typography variant="body2" fontWeight="bold" gutterBottom>
+                                Summary:
+                            </Typography>
+                            <Typography variant="body2">
+                                • {formData.pricingGroupIds.length} pricing group{formData.pricingGroupIds.length > 1 ? 's' : ''} selected
+                            </Typography>
+                            <Typography variant="body2">
+                                • {formData.customers.length} customer{formData.customers.length > 1 ? 's' : ''} selected
+                            </Typography>
+                            <Typography variant="body2" fontWeight="bold" mt={1}>
+                                Total documents to be created: {formData.pricingGroupIds.length * formData.customers.length}
+                            </Typography>
+                        </Box>
+                    </Grid>
+                )}
+
                 {/* Error/Success Message */}
                 {error && (
                     <Grid size={12} mt={2}>
                         <div style={{
-                            color: error.includes('success') ? 'green' : 'red',
+                            color: error.includes('success') || error.includes('Successfully') ? 'green' : 'red',
                             padding: '8px',
                             borderRadius: '4px',
-                            backgroundColor: error.includes('success') ? '#f0f9ff' : '#fef2f2',
-                            border: `1px solid ${error.includes('success') ? '#22c55e' : '#ef4444'}`
+                            backgroundColor: error.includes('success') || error.includes('Successfully') ? '#f0f9ff' : '#fef2f2',
+                            border: `1px solid ${error.includes('success') || error.includes('Successfully') ? '#22c55e' : '#ef4444'}`
                         }}>
                             {error}
                         </div>
@@ -476,7 +497,7 @@ const CreateGroupsDiscounts = () => {
                             )}
                         </Box>
 
-                        {error && !error.includes('success') && (
+                        {error && !error.includes('success') && !error.includes('Successfully') && (
                             <Typography variant="body2" color="error" sx={{ mt: 1 }}>
                                 {error}
                             </Typography>

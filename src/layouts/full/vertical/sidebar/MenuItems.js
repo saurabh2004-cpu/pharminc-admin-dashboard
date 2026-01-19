@@ -42,6 +42,111 @@ const Menuitems = [
     icon: IconShoppingCart,
     href: '/',
   },
+
+  {
+    id: uniqueId(),
+    title: 'Sales order',
+    icon: IconFileDescription,
+    href: '/dashboard/sales-order',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Sales Order',
+        icon: IconPoint,
+        href: '/dashboard/sales-order/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Sales Order List',
+        icon: IconPoint,
+        href: '/dashboard/sales-orders/list',
+      },
+    ]
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Customers',
+    icon: IconNotebook,
+    href: '/dashboard/customers',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Customer',
+        icon: IconPoint,
+        href: '/dashboard/customers/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'List Customers',
+        icon: IconPoint,
+        href: '/dashboard/customers/list',
+      },
+      {
+        id: uniqueId(),
+        title: 'Pending Customers',
+        icon: IconPoint,
+        href: '/dashboard/customers/PendingCustomers',
+      },
+    ]
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Products',
+    icon: IconShoppingBag,
+    href: '/dashboard/products',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Product',
+        icon: IconPoint,
+        href: '/dashboard/products/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Product List',
+        icon: IconPoint,
+        href: '/dashboard/products/list',
+      },
+
+      {
+        id: uniqueId(),
+        title: 'Create Kit',
+        icon: IconPoint,
+        href: '/dashboard/productGroup/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Kit List',
+        icon: IconPoint,
+        href: '/dashboard/productGroup/list',
+      },
+    ]
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Pack Types',
+    icon: IconBox,
+    href: '/dashboard/pack-types',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Pack Type',
+        icon: IconPoint,
+        href: '/dashboard/pack-types/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Pack Type List',
+        icon: IconPoint,
+        href: '/dashboard/pack-types/list',
+      },
+    ],
+  },
+
+
   {
     id: uniqueId(),
     title: 'Brand',
@@ -228,109 +333,13 @@ const Menuitems = [
   // },
 
 
-  {
-    id: uniqueId(),
-    title: 'Pack Types',
-    icon: IconBox,
-    href: '/dashboard/pack-types',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Create Pack Type',
-        icon: IconPoint,
-        href: '/dashboard/pack-types/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Pack Type List',
-        icon: IconPoint,
-        href: '/dashboard/pack-types/list',
-      },
-    ],
-  },
 
 
-  {
-    id: uniqueId(),
-    title: 'Products',
-    icon: IconShoppingBag,
-    href: '/dashboard/products',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Create Product',
-        icon: IconPoint,
-        href: '/dashboard/products/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Product List',
-        icon: IconPoint,
-        href: '/dashboard/products/list',
-      },
-
-      {
-        id: uniqueId(),
-        title: 'Create Kit',
-        icon: IconPoint,
-        href: '/dashboard/productGroup/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Kit List',
-        icon: IconPoint,
-        href: '/dashboard/productGroup/list',
-      },
-    ]
-  },
 
 
-  {
-    id: uniqueId(),
-    title: 'Sales order',
-    icon: IconFileDescription,
-    href: '/dashboard/sales-order',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Create Sales Order',
-        icon: IconPoint,
-        href: '/dashboard/sales-order/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Sales Order List',
-        icon: IconPoint,
-        href: '/dashboard/sales-orders/list',
-      },
-    ]
-  },
-  {
-    id: uniqueId(),
-    title: 'Customers',
-    icon: IconNotebook,
-    href: '/dashboard/customers',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Create Customer',
-        icon: IconPoint,
-        href: '/dashboard/customers/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'List Customers',
-        icon: IconPoint,
-        href: '/dashboard/customers/list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Pending Customers',
-        icon: IconPoint,
-        href: '/dashboard/customers/PendingCustomers',
-      },
-    ]
-  },
+
+
+
   {
     id: uniqueId(),
     title: 'Abandoned Carts ',
@@ -400,7 +409,7 @@ const Menuitems = [
     ]
   },
 
-  
+
   // {
   //   id: uniqueId(),
   //   title: 'Bulk Discounts ',

@@ -680,6 +680,7 @@ const ListTable = ({
     shipping: { minWidth: '400px' },
     billing: { minWidth: '400px' },
     customerPO: { minWidth: '150px' },
+    salesRep: { minWidth: '400px' },
     creditcard: { minWidth: '250px' },
     itemSku: { minWidth: '150px' },
     packQuantity: { minWidth: '160px' },
@@ -912,6 +913,26 @@ const ListTable = ({
                               <Typography fontWeight="400">
                                 {row?.customerPO || 'N/A'}
                               </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.salesRep}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              {row.salesRep instanceof Object && (
+                                <>
+                                  <Typography fontWeight="400">
+                                    Name: {row?.salesRep?.name || 'N/A'}
+                                  </Typography>
+                                  <Typography fontWeight="400">
+                                    Email: {row?.salesRep?.email || 'N/A'}
+                                  </Typography>
+                                  <Typography fontWeight="400">
+                                    Role: {row?.salesRep?.role || 'N/A'}
+                                  </Typography>
+                                </>
+                              )}
                             </Box>
                           </Box>
                         </TableCell>

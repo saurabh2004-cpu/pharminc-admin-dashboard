@@ -65,6 +65,7 @@ const CreateCustomer = () => {
     password: '',
     inactive: null,
     markupDiscount: null,
+    abn: '',
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -622,6 +623,21 @@ const CreateCustomer = () => {
 
             </Select>
           </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="defaultShippingRate" sx={{ mt: 0 }}>
+            ABN
+          </CustomFormLabel>
+          <CustomOutlinedInput
+            id="defaultShippingRate"
+            fullWidth
+            type="text"
+            value={formData.abn}
+            onChange={(e) => setFormData({ ...formData, abn: parseFloat(e.target.value) || 0 })}
+            disabled={loading}
+            placeholder="Enter ABN"
+          />
         </Grid>
 
         {/* <Grid size={6}>

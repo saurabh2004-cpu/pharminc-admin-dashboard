@@ -74,12 +74,12 @@ const ListSalesOrders = () => {
       disablePadding: false,
       label: 'Customer PO',
     },
-    // {
-    //   id: 'CreditCard',
-    //   numeric: false,
-    //   disablePadding: false,
-    //   label: 'Credit Card',
-    // },
+    {
+      id: 'SalesRep',
+      numeric: false,
+      disablePadding: false,
+      label: 'Sales Rep',
+    },
     {
       id: 'LastUpdatedDate',
       numeric: false,
@@ -95,7 +95,7 @@ const ListSalesOrders = () => {
   const fetchSalesOrders = async () => {
     try {
       const response = await axiosInstance.get('/sales-order/get-sales-orders');
-      // console.log("response Sales Orders", response);
+      console.log("response Sales Orders", response);
 
       if (response.data.statusCode === 200) {
         setTableData(response.data.data.salesOrders);

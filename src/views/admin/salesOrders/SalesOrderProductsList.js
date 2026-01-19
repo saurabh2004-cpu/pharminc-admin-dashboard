@@ -1444,7 +1444,7 @@ const CustomersSalesOrders = () => {
                     <Grid item xs={12} lg={5} maxWidth={290}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                             {/* Order Details */}
-                            <Paper sx={{ p: 3 }}>
+                            <Paper sx={{ p: 3, minWidth: 400 }}>
                                 <Typography variant="h6" gutterBottom color="primary">
                                     Order Details
                                 </Typography>
@@ -1558,7 +1558,7 @@ const CustomersSalesOrders = () => {
                             </Paper>
 
                             {/* Delivery Address Details */}
-                            <Paper sx={{ p: 3 }}>
+                            <Paper sx={{ p: 3, minWidth: 400 }}>
                                 <Typography variant="h6" gutterBottom color="primary">
                                     Delivery Address Details :
                                 </Typography>
@@ -1604,69 +1604,70 @@ const CustomersSalesOrders = () => {
                                 </Box>
                             </Paper>
 
-                            {order.creditCard && <Paper sx={{ p: 3 }}>
-                                <Typography variant="h6" gutterBottom color="primary">
-                                    Credit Cards Details :
-                                </Typography>
-                                <Divider sx={{ mb: 2 }} />
+                            {order.creditCard &&
+                                <Paper sx={{ p: 3, minWidth: 400 }}>
+                                    <Typography variant="h6" gutterBottom color="primary">
+                                        Credit Cards Details :
+                                    </Typography>
+                                    <Divider sx={{ mb: 2 }} />
 
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
-                                            Card Number:
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
-                                            {tableData[0]?.creditCard?.cardNumber.slice(-4).padStart(tableData[0]?.creditCard?.cardNumber.length, '*') || 'N/A'}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
-                                            Expires In:
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
-                                            {tableData[0]?.creditCard?.expiryMonth} / {tableData[0]?.creditCard?.expiryYear}
-                                        </Typography>
-                                    </Box>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                                Card Number:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
+                                                {tableData[0]?.creditCard?.cardNumber.slice(-4).padStart(tableData[0]?.creditCard?.cardNumber.length, '*') || 'N/A'}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                                Expires In:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', maxWidth: 200 }}>
+                                                {tableData[0]?.creditCard?.expiryMonth} / {tableData[0]?.creditCard?.expiryYear}
+                                            </Typography>
+                                        </Box>
 
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
-                                            fullName:
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            {tableData[0]?.creditCard?.fullName || 'N/A'}
-                                        </Typography>
-                                    </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                                fullName:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                {tableData[0]?.creditCard?.fullName || 'N/A'}
+                                            </Typography>
+                                        </Box>
 
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
-                                            Transaction Id:
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            {tableData[0]?.creditCard?.transactionId || 'N/A'}
-                                        </Typography>
-                                    </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                                Transaction Id:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                {tableData[0]?.creditCard?.transactionId || 'N/A'}
+                                            </Typography>
+                                        </Box>
 
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
-                                            Transaction Status:
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            {tableData[0]?.creditCard?.transactionStatus || 'N/A'}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
-                                            Authorisation Code:
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            {tableData[0]?.creditCard?.authorisationCode || 'N/A'}
-                                        </Typography>
-                                    </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                                Transaction Status:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                {tableData[0]?.creditCard?.transactionStatus || 'N/A'}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: 100 }}>
+                                                Authorisation Code:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                {tableData[0]?.creditCard?.authorisationCode || 'N/A'}
+                                            </Typography>
+                                        </Box>
 
-                                </Box>
-                            </Paper>}
+                                    </Box>
+                                </Paper>}
 
-                            <Paper sx={{ p: 3 }}>
+                            <Paper sx={{ p: 3, minWidth: 400 }}>
                                 <Typography variant="h6" gutterBottom color="primary">
                                     Order Comments
                                 </Typography>
@@ -1680,6 +1681,29 @@ const CustomersSalesOrders = () => {
                                         </Typography>
                                     </Box>
 
+                                </Box>
+                            </Paper>
+
+                            <Paper sx={{ p: 3, minWidth: 400 }}>
+                                <Typography variant="h6" gutterBottom color="primary">
+                                    Sales Rep Details
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                    {tableData[0]?.salesRep &&
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', }}>
+                                                Name:  {tableData[0]?.salesRep.name || ''}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left',  }}>
+                                                Email:  {tableData[0]?.salesRep.email || ''}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left',  }}>
+                                                Role:  {tableData[0]?.salesRep.role || ''}
+                                            </Typography>
+                                        </Box>
+                                    }
                                 </Box>
                             </Paper>
                         </Box>
