@@ -38,6 +38,12 @@ const SubCategoryList = () => {
             label: 'Category Description',
         },
         {
+            id: 'sequence',
+            numeric: false,
+            disablePadding: false,
+            label: 'Category Sequence',
+        },
+        {
             id: 'description-color',
             numeric: false,
             disablePadding: false,
@@ -84,26 +90,26 @@ const SubCategoryList = () => {
 
     return (
         // <ProductProvider>
-            <PageContainer title="Sub Categories List" description="this is Brands List page">
-                {/* breadcrumb */}
-                <Breadcrumb title="Sub Categories List" items={BCrumb} />
-                {/* end breadcrumb */}
-                <Box
-                // sx={{
-                //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-                //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-                //     transition: "margin-left 0.3s ease", // smooth animation
-                // }}
-                >
-                    <ListTable
-                        showCheckBox={false}
-                        headCells={headCells}
-                        tableData={tableData}
-                        isBrandsList={true} // Add this prop to identify it's brands data
-                        setTableData={setTableData}
-                    />
-                </Box>
-            </PageContainer>
+        <PageContainer title="Sub Categories List" description="this is Brands List page">
+            {/* breadcrumb */}
+            <Breadcrumb title="Sub Categories List" items={BCrumb} />
+            {/* end breadcrumb */}
+            <Box
+            // sx={{
+            //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+            //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+            //     transition: "margin-left 0.3s ease", // smooth animation
+            // }}
+            >
+                <ListTable
+                    showCheckBox={false}
+                    headCells={headCells}
+                    tableData={tableData}
+                    isBrandsList={true} // Add this prop to identify it's brands data
+                    setTableData={setTableData}
+                />
+            </Box>
+        </PageContainer>
         // </ProductProvider>
     );
 };

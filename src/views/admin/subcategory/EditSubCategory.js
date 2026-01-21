@@ -17,7 +17,8 @@ const EditSubCategory = () => {
     slug: '',
     category: '',
     description: '',
-    descriptionColour: '#000000'
+    descriptionColour: '#000000',
+    sequence: ''
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -139,6 +140,7 @@ const EditSubCategory = () => {
           category: categoryId,
           description: subcategoryData.description || '',
           descriptionColour: subcategoryData.descriptionColour || '#000000',
+          sequence: subcategoryData.sequence || '',
         });
       } else {
         setError('Failed to fetch subcategory details');
@@ -223,6 +225,26 @@ const EditSubCategory = () => {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             disabled={loading}
             placeholder="Enter subcategory description"
+          />
+        </Grid>
+
+        {/* Sequence */}
+        <Grid size={12}>
+          <CustomFormLabel
+            htmlFor="subcategory-sequence"
+            sx={{ mt: 2 }}
+          >
+            Sequence
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <CustomOutlinedInput
+            id="subcategory-sequence"
+            fullWidth
+            value={formData.sequence}
+            onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+            disabled={loading}
+            placeholder="Enter subcategory sequence"
           />
         </Grid>
 

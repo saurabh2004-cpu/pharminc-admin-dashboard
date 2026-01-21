@@ -15,6 +15,7 @@ const CreateSubCategoryTwo = () => {
     subCategory: '',
     description: '',
     descriptionColour: '#000000',
+    sequence: 0,
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -205,6 +206,22 @@ const CreateSubCategoryTwo = () => {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             disabled={loading}
             placeholder="Enter subcategory two description"
+          />
+        </Grid>
+
+        <Grid size={12}>
+          <CustomFormLabel htmlFor="subcategory-two-sequence" sx={{ mt: 2 }}>
+            Sequence
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <CustomOutlinedInput
+            id="subcategory-two-sequence"
+            fullWidth
+            value={formData.sequence}
+            onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+            disabled={loading}
+            placeholder="Enter subcategory two sequence"
           />
         </Grid>
 

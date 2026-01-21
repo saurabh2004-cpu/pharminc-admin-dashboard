@@ -15,6 +15,7 @@ const EditSubCategoryTwo = () => {
     subCategory: '',
     description: '',
     descriptionColour: '#000000',
+    sequence: ''
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -156,6 +157,7 @@ const EditSubCategoryTwo = () => {
           subCategory: data.subCategory?._id || data.subCategory || '',
           description: data.description || '',
           descriptionColour: data.descriptionColour || '#000000',
+          sequence: data.sequence || '',
         });
 
         // Set the selected subcategory object for display purposes
@@ -238,6 +240,26 @@ const EditSubCategoryTwo = () => {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             disabled={loading}
             placeholder="Enter subcategory two Description"
+          />
+        </Grid>
+
+        {/* Sequence */}
+        <Grid size={12}>
+          <CustomFormLabel
+            htmlFor="subcategory-sequence"
+            sx={{ mt: 2 }}
+          >
+            Sequence
+          </CustomFormLabel>
+        </Grid>
+        <Grid size={12}>
+          <CustomOutlinedInput
+            id="subcategory-sequence"
+            fullWidth
+            value={formData.sequence}
+            onChange={(e) => setFormData({ ...formData, sequence: e.target.value })}
+            disabled={loading}
+            placeholder="Enter subcategory two sequence"
           />
         </Grid>
 
