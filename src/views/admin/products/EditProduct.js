@@ -31,6 +31,7 @@ const EditProduct = () => {
     comparePrice: 0,
     taxable: false,
     sequence: null,
+    inactive: false,
   });
 
   const [error, setError] = React.useState('');
@@ -59,6 +60,7 @@ const EditProduct = () => {
   const [badges, setBadges] = useState([]);
   const [typesList, setTypesList] = useState(["Inventory Item", "Kit/Package", "Service", "Non-Inventory Item"]);
   const [taxOptions, setTaxOptions] = useState([true, false]);
+  const [statusOptions, setStatusOptions] = useState([false, true]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
   const [hasFetchedProductDetails, setHasFetchedProductDetails] = useState(false);
 
@@ -269,6 +271,8 @@ const EditProduct = () => {
         formDataToSend.append('thumbnail', thumbnailFile);
       }
 
+      formDataToSend.append('inactive', formData.inactive);
+
       // Append replacement images with their indices
       Object.entries(replacementImages).forEach(([index, imageData]) => {
         formDataToSend.append(`replaceImage_${index}`, imageData.file);
@@ -357,6 +361,7 @@ const EditProduct = () => {
           comparePrice: product.comparePrice || '',
           taxable: product.taxable || false,
           sequence: product.sequence,
+          inactive: product.inactive || false,
         });
 
         // Set existing images
@@ -1413,6 +1418,43 @@ const EditProduct = () => {
               {taxOptions.map((tax) => (
                 <MenuItem key={tax} value={tax}>
                   {tax === true ? 'Taxable' : 'Non Taxable'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="status-select" sx={{ mt: 2 }}>
+            Status
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="status-select"
+              value={formData.inactive}
+              onChange={(e) => {
+                setFormData({ ...formData, inactive: e.target.value });
+              }}
+              disabled={loading || statusOptions.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                {statusOptions.length === 0 ? 'Select a status' : 'Select a status'}
+              </MenuItem>
+              {statusOptions.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status === true ? 'Inactive' : 'Active'}
                 </MenuItem>
               ))}
             </Select>

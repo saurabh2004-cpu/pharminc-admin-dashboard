@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Grid, MenuItem, Select, FormControl, Snackbar, Alert } from '@mui/material';
+import { Grid, MenuItem, Select, FormControl, Snackbar, Alert, Checkbox, FormControlLabel } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router';
 const ChangePassword = () => {
   const [formData, setFormData] = React.useState({
     newPassword: '',
+    sendEmail: false,
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -70,10 +71,11 @@ const ChangePassword = () => {
         // Reset form on success
         setFormData({
           newPassword: '',
+          sendEmail: false,
         });
 
         showNotification('Password updated successfully!', 'success');
-        
+
         // Navigate after a short delay to show the success message
         setTimeout(() => {
           navigate('/dashboard/customers/list');
@@ -112,7 +114,7 @@ const ChangePassword = () => {
 
       if (res.data.statusCode === 200) {
         showNotification('Password reset email sent successfully!', 'success');
-        
+
         // Navigate after a short delay to show the success message
         setTimeout(() => {
           navigate('/dashboard/customers/list');
@@ -135,7 +137,7 @@ const ChangePassword = () => {
   };
 
   const handleClear = () => {
-    setFormData({ newPassword: '' });
+    setFormData({ newPassword: '', sendEmail: false });
     setError('');
     showNotification('Form cleared', 'info');
   };
@@ -162,6 +164,20 @@ const ChangePassword = () => {
             }}
             placeholder="Enter Password"
             type="password"
+          />
+        </Grid>
+
+        {/* Send Email Checkbox */}
+        <Grid size={12} mt={1}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formData.sendEmail}
+                onChange={(e) => setFormData({ ...formData, sendEmail: e.target.checked })}
+                color="primary"
+              />
+            }
+            label="Send Email Notification"
           />
         </Grid>
 
@@ -221,8 +237,8 @@ const ChangePassword = () => {
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert 
-          onClose={handleCloseNotification} 
+        <Alert
+          onClose={handleCloseNotification}
           severity={notification.severity}
           variant="filled"
           sx={{ width: '100%' }}

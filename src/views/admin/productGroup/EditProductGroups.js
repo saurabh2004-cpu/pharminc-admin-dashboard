@@ -54,6 +54,7 @@ const EditProductGroups = () => {
     taxable: true,
     comparePrice: '',
     sequence: null,
+    inactive: false,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,6 +80,7 @@ const EditProductGroups = () => {
   const [categoryFour, setCategoryFour] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [taxOptions] = useState([true, false]);
+  const [statusOptions, setStatusOptions] = useState([false, true]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
   const [hasFetchedProductDetails, setHasFetchedProductDetails] = useState(false);
 
@@ -463,6 +465,8 @@ const EditProductGroups = () => {
       formDataToSend.append('productGroupThumbnail', thumbnailFile);
     }
 
+    formDataToSend.append('inactive', formData.inactive.toString());
+
     // Append new images if any were selected
     imageFiles.forEach((file) => {
       formDataToSend.append('images', file);
@@ -658,6 +662,8 @@ const EditProductGroups = () => {
       setFetching(true);
       const response = await axiosInstance.get(`/product-group/get-product-group/${id}`);
 
+      console.log("get product group details response", response.data.data);
+
       if (response.data.statusCode === 200) {
         const productGroup = response.data.data;
 
@@ -709,6 +715,7 @@ const EditProductGroups = () => {
           taxable: productGroup.taxable !== undefined ? productGroup.taxable : true,
           comparePrice: productGroup.comparePrice || '',
           sequence: productGroup.sequence !== undefined ? productGroup.sequence : null,
+          inactive: productGroup.inactive || false,
         });
 
         // Set selected product IDs
@@ -1432,6 +1439,42 @@ const EditProductGroups = () => {
             disabled={loading || fetching}
             placeholder="Enter Sequence"
           />
+        </Grid>
+
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="status-select" sx={{ mt: 2 }}>
+            Status
+          </CustomFormLabel>
+          <FormControl fullWidth>
+            <Select
+              id="status-select"
+              value={formData.inactive}  // This is already boolean from state
+              onChange={(e) => {
+                // Convert string to boolean
+                const value = e.target.value === 'true';
+                setFormData({ ...formData, inactive: value });
+              }}
+              disabled={loading || fetching || statusOptions.length === 0}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 0, 0, 0.87)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                Select a status
+              </MenuItem>
+              <MenuItem value="false">Active</MenuItem>
+              <MenuItem value="true">Inactive</MenuItem>
+            </Select>
+          </FormControl>
         </Grid>
 
         {/* Product Selection */}
