@@ -925,17 +925,48 @@ const ListTable = ({
                                   <Typography fontWeight="400">
                                     Name: {row?.salesRep?.name || 'N/A'}
                                   </Typography>
-                                  <Typography fontWeight="400">
+                                  {/* <Typography fontWeight="400">
                                     Email: {row?.salesRep?.email || 'N/A'}
                                   </Typography>
                                   <Typography fontWeight="400">
                                     Role: {row?.salesRep?.role || 'N/A'}
-                                  </Typography>
+                                  </Typography> */}
                                 </>
                               )}
                             </Box>
                           </Box>
                         </TableCell>
+
+                        <TableCell sx={columnWidths.createdAt}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.customerPO || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.salesRep}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.comments || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.customerPO}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.totalAmount.toFixed(2) || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
                         {/* <TableCell sx={columnWidths.creditcard}>
                           <Box display="flex" alignItems="center">
                             <Box >
@@ -968,8 +999,17 @@ const ListTable = ({
                         <TableCell sx={columnWidths.createdAt}>
                           <Typography>
                             {format(new Date(row.updatedAt), 'E, MMM d yyyy')}
+                            (<Typography>
+                              {new Date(row.createdAt).toLocaleTimeString("en-IN", {
+                                timeZone: "Asia/Kolkata",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true
+                              }).replace(":", ".").toLowerCase()}
+                            </Typography>)
                           </Typography>
                         </TableCell>
+
                       </TableRow>
                     );
                   })}
@@ -991,7 +1031,7 @@ const ListTable = ({
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
-      </Box>
+      </Box >
 
       <DeleteConfirmationDialog
         open={deleteDialog.open}
@@ -1017,7 +1057,7 @@ const ListTable = ({
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Box >
   );
 };
 

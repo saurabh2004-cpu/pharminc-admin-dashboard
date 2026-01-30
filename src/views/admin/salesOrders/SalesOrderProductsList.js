@@ -1696,10 +1696,10 @@ const CustomersSalesOrders = () => {
                                             <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', }}>
                                                 Name:  {tableData[0]?.salesRep.name || ''}
                                             </Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left',  }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', }}>
                                                 Email:  {tableData[0]?.salesRep.email || ''}
                                             </Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left',  }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'left', }}>
                                                 Role:  {tableData[0]?.salesRep.role || ''}
                                             </Typography>
                                         </Box>

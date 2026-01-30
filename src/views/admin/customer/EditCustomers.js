@@ -582,6 +582,43 @@ const EditCustomers = () => {
     }
   };
 
+  const handleDeleteMarkupDiscount = async (discountId, index) => {
+    try {
+      if (!window.confirm('Are you sure you want to delete this markup/discount?')) {
+        return;
+      }
+      console.log("discountId", discountId);
+
+      setLoading(true);
+      // specific route for delete markup discount
+      const res = await axiosInstance.delete(`/admin/delete-markup-discount/${id}/${discountId}`);
+
+
+      if (res.data.statusCode === 200) {
+        const updatedDiscounts = [...pricingGroupDiscounts];
+        updatedDiscounts.splice(index, 1);
+        setPricingGroupDiscounts(updatedDiscounts);
+
+        // Also update formData markupDiscount
+        setFormData(prev => ({
+          ...prev,
+          markupDiscount: updatedDiscounts
+        }));
+
+        // Re-fetch to ensure sync
+        fetPricingGroupsByCustomerId();
+
+      } else {
+        setError(res.data.message || 'Failed to delete markup/discount');
+      }
+    } catch (error) {
+      console.error('Error deleting markup discount:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to delete markup discount');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch product groups
   const fetchNetTermsData = async () => {
     try {
@@ -1311,6 +1348,9 @@ const EditCustomers = () => {
                     <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 'bold' }}>
                       Percentage
                     </th>
+                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 'bold' }}>
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1328,6 +1368,16 @@ const EditCustomers = () => {
                           placeholder="Enter percentage (e.g., +10 or -5)"
                           sx={{ maxWidth: '200px' }}
                         />
+                      </td>
+                      <td style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteMarkupDiscount(discount.pricingGroup, index)}
+                          disabled={loading}
+                          size="small"
+                        >
+                          <IconTrash size="1.2rem" />
+                        </IconButton>
                       </td>
                     </tr>
                   ))}

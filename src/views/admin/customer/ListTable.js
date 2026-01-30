@@ -909,7 +909,7 @@ const ListTable = ({
                               </TableCell>
 
                               <TableCell sx={columnWidths.category}>
-                                 <Typography fontWeight="400">
+                                <Typography fontWeight="400">
                                   {row.abn || 'N/A'}
                                 </Typography>
                               </TableCell>
@@ -927,9 +927,9 @@ const ListTable = ({
                               </TableCell>
 
                               <TableCell sx={columnWidths.pageTitle}>
-                                {row.netTerms?.netTermName && row.netTerms?.daysCount ? (
+                                {row.netTerms?.netTermName ? (
                                   <Typography fontWeight="400">
-                                    {`${row.netTerms.netTermName} - ${row.netTerms.daysCount}`}
+                                    {`${row.netTerms.netTermName}  ${row.netTerms.daysCount ? "-" + row.netTerms.daysCount : ''}`}
                                   </Typography>
                                 ) : (
                                   <Typography fontWeight="400">N/A</Typography>

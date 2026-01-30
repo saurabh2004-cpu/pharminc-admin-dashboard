@@ -178,19 +178,19 @@ const ListCustomers = () => {
 
   return (
     // <ProductProvider>
-      <PageContainer title="Customers List" description="this is Customers List page">
-        <Breadcrumb title="Customers List" items={BCrumb} />
-        <Box>
-          <ListTable
-            showCheckBox={false}
-            headCells={headCells}
-            tableData={tableData}
-            isProductsList={true}
-            setTableData={setTableData}
-            loading={loading}
-          />
-        </Box>
-      </PageContainer>
+    <PageContainer title="Customers List" description="this is Customers List page">
+      <Breadcrumb title="Customers List" items={BCrumb} />
+      <Box>
+        <ListTable
+          showCheckBox={false}
+          headCells={headCells}
+          tableData={tableData}
+          isProductsList={true}
+          setTableData={setTableData}
+          loading={loading}
+        />
+      </Box>
+    </PageContainer>
     // </ProductProvider>
   );
 };

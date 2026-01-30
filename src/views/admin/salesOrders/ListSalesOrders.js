@@ -26,10 +26,10 @@ const ListSalesOrders = () => {
       label: 'Actions',
     },
     {
-      id: 'documentNumber',
+      id: 'orderNumber',
       numeric: false,
       disablePadding: false,
-      label: 'Document Number',
+      label: 'Order Number',
     },
     {
       id: 'date',
@@ -80,13 +80,36 @@ const ListSalesOrders = () => {
       disablePadding: false,
       label: 'Sales Rep',
     },
+    // {
+    //   id: 'paymentTerms',
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: 'Payment Terms',
+    // },
+    {
+      id: 'Po-Number',
+      numeric: false,
+      disablePadding: false,
+      label: 'Po Number',
+    },
+    {
+      id: 'Order Comments',
+      numeric: false,
+      disablePadding: false,
+      label: 'Order Comments',
+    },
+    {
+      id: 'totalAmount',
+      numeric: false,
+      disablePadding: false,
+      label: 'Total Amount',
+    },
     {
       id: 'LastUpdatedDate',
       numeric: false,
       disablePadding: false,
       label: 'Last Updated Date',
     },
-
   ];
 
   const [tableData, setTableData] = React.useState([]);
@@ -117,26 +140,26 @@ const ListSalesOrders = () => {
 
   return (
     // <ProductProvider>
-      <PageContainer title="Sales Orders List" description="this is Sales Orders List page">
-        {/* breadcrumb */}
-        <Breadcrumb title="Sales Orders List" items={BCrumb} />
-        {/* end breadcrumb */}
-        <Box
-        // sx={{
-        //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-        //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-        //     transition: "margin-left 0.3s ease", // smooth animation
-        // }}
-        >
-          <ListTable
-            showCheckBox={false}
-            headCells={headCells}
-            tableData={tableData}
-            isBrandsList={true} // Add this prop to identify it's brands data
-            setTableData={setTableData}
-          />
-        </Box>
-      </PageContainer>
+    <PageContainer title="Sales Orders List" description="this is Sales Orders List page">
+      {/* breadcrumb */}
+      <Breadcrumb title="Sales Orders List" items={BCrumb} />
+      {/* end breadcrumb */}
+      <Box
+      // sx={{
+      //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+      //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+      //     transition: "margin-left 0.3s ease", // smooth animation
+      // }}
+      >
+        <ListTable
+          showCheckBox={false}
+          headCells={headCells}
+          tableData={tableData}
+          isBrandsList={true} // Add this prop to identify it's brands data
+          setTableData={setTableData}
+        />
+      </Box>
+    </PageContainer>
     // </ProductProvider>
   );
 };
