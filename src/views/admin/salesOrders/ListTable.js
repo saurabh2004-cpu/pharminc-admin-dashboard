@@ -1005,8 +1005,8 @@ const ListTable = ({
                                 hour: "numeric",
                                 minute: "2-digit",
                                 hour12: true
-                              }).replace(":", ".").toLowerCase()}
                             </Typography>)
+                              }).replace(":", ".").toLowerCase()}
                           </Typography>
                         </TableCell>
 
