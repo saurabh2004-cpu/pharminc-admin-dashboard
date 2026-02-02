@@ -198,11 +198,11 @@ const ProductGroupProductsTable = ({ products, productGroupsData }) => {
             <Table size="small" sx={{ minWidth: 400 }}>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>SKU</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Product Name</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }} align="right">Tax %</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Pack Type</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }} align="right">Units Quantity</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Item Code</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Product Description</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }} align="right"> GST %</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}> Type of Pack</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }} align="right">Quantity</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -335,7 +335,7 @@ const CustomersSalesOrders = () => {
             id: 'discountPercentages',
             numeric: false,
             disablePadding: false,
-            label: 'Discount Percentages',
+            label: 'Discount %',
         },
     ];
 
@@ -565,7 +565,7 @@ const CustomersSalesOrders = () => {
     const fetchSalesOrdersProducts = async () => {
         try {
             const response = await axiosInstance.get(`/sales-order/get-products-by-sales-document-number-dashboard/${documentNo}`);
-            console.log("response sales order products ", response.data.data);
+            // console.log("response sales order products ", response.data.data);
 
             if (response.data.statusCode === 200) {
                 const data = response.data.data;
@@ -1503,7 +1503,7 @@ const CustomersSalesOrders = () => {
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
-                                            NetTerms :
+                                            Payment Terms :
                                         </Typography>
                                         {netTerms?.netTermName && netTerms?.daysCount && <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                             {`${netTerms?.netTermName}- (${netTerms?.daysCount})` || 'N/A'}

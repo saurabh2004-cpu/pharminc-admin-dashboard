@@ -23,6 +23,8 @@ import {
   Button,
   Snackbar,
   Alert,
+  ToggleButton,
+  Switch,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -637,6 +639,24 @@ const ListTable = ({
     });
   };
 
+  const toggleStatus = async (e, id) => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.put(`/sales-order/toggle-order-status/${id}`);
+      console.log("updated", res.data);
+      if (res.data.statusCode === 200) {
+        setTableData((prevData) => prevData.map((item) => item._id === id ? res.data.data : item));
+        setRows((prevRows) => prevRows.map((item) => item._id === id ? res.data.data : item));
+        setLoading(false);
+        toast.success(res.data.message);
+      }
+    } catch (error) {
+      console.error("Error toggling status:", error);
+      setLoading(false);
+      toast.error("Failed to toggle status");
+    }
+  };
+
 
 
   const handleDeleteSalesOrder = async () => {
@@ -687,7 +707,7 @@ const ListTable = ({
     unitsQuantity: { minWidth: '160px' },
     amount: { minWidth: '160px' },
     finalAmount: { minWidth: '160px' },
-    createdAt: { minWidth: '200px' },
+    createdAt: { minWidth: '250px' },
     actions: { minWidth: '200px' }, // Increased width to accommodate new button
   };
 
@@ -822,6 +842,18 @@ const ListTable = ({
                                 <IconTrash size="1.1rem" />
                               </IconButton>
                             </Tooltip>
+
+                            {row.status && (
+                              <Tooltip title="Toggle Status">
+                                <Switch
+                                  checked={row.status === "Processed"}
+                                  onChange={(e) => toggleStatus(e, row._id)}
+                                  disabled={loading}
+                                  color="success"
+                                />
+                              </Tooltip>
+                            )}
+
                           </Box>
                         </TableCell>
 
