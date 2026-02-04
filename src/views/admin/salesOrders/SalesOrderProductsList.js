@@ -28,6 +28,7 @@ import {
     MenuItem,
     Collapse,
     IconButton as MuiIconButton,
+    Chip,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
@@ -88,9 +89,9 @@ function EnhancedTableHead(props) {
         <TableHead>
             <TableRow>
                 {/* Expand/Collapse column */}
-                <TableCell sx={{ ...headCellStyle, ...stickyCellStyle, width: 60 }}>
+                {/* <TableCell sx={{ ...headCellStyle, ...stickyCellStyle, width: 60 }}>
                     Expand
-                </TableCell>
+                </TableCell> */}
 
                 {/* Actions column */}
                 <TableCell sx={{ ...headCellStyle, ...stickyCellStyle, width: 100 }}>
@@ -208,7 +209,8 @@ const ProductGroupProductsTable = ({ products, productGroupsData }) => {
                 <TableBody>
                     {products.map((productItem, index) => (
                         <TableRow key={productItem._id || index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                            <TableCell component="th" scope="row" sx={{ fontSize: '0.75rem' }}>
+                            <TableCell
+                                component="th" scope="row" sx={{ fontSize: '0.75rem' }}>
                                 {productItem.product?.sku || 'N/A'}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.75rem' }}>
@@ -1183,7 +1185,7 @@ const CustomersSalesOrders = () => {
                                                         }}
                                                     >
                                                         {/* Expand/Collapse Column */}
-                                                        <TableCell sx={{ ...stickyCellStyle, width: 60 }}>
+                                                        {/*<TableCell sx={{ ...stickyCellStyle, width: 60 }}>
                                                             {isProductGroupRow && (
                                                                 <MuiIconButton
                                                                     size="small"
@@ -1192,7 +1194,7 @@ const CustomersSalesOrders = () => {
                                                                     {isExpanded ? <IconChevronUp size="1rem" /> : <IconChevronDown size="1rem" />}
                                                                 </MuiIconButton>
                                                             )}
-                                                        </TableCell>
+                                                        </TableCell> */}
 
                                                         {/* Actions Column */}
                                                         <TableCell sx={{ ...stickyCellStyle, width: 100 }}>
@@ -1246,7 +1248,12 @@ const CustomersSalesOrders = () => {
 
                                                         {/* SKU */}
                                                         <TableCell sx={{ width: 120 }}>
-                                                            <Typography fontWeight="500" variant="body2">
+                                                            <Typography
+                                                                fontWeight="500"
+                                                                variant="body2"
+                                                                onClick={() => isProductGroupRow && toggleRowExpansion(row._id)}
+                                                                sx={{ cursor: isProductGroupRow ? 'pointer' : 'default' }}
+                                                            >
                                                                 {row.itemSku || "N/A"}
                                                                 {isProductGroupRow && (
                                                                     <Typography variant="caption" color="primary" display="block">
@@ -1479,6 +1486,22 @@ const CustomersSalesOrders = () => {
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
+                                            Order date :
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData[0]?.date
+                                                ? new Date(tableData[0].createdAt).toLocaleDateString("en-IN", {
+                                                    timeZone: "Asia/Kolkata",
+                                                    year: "numeric",
+                                                    month: "short",
+                                                    day: "numeric"
+                                                })
+                                                : "N/A"}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
                                             Order Time :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -1491,6 +1514,32 @@ const CustomersSalesOrders = () => {
                                                 }).replace(":", ".").toLowerCase()
                                                 : "N/A"}
                                         </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
+                                            Total Items :
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData.length}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
+                                            Order Status :
+                                        </Typography>
+
+                                        <Chip
+                                            label={tableData[0]?.status}
+                                            size="small"
+                                            sx={{
+                                                fontWeight: 600,
+                                                color: 'white',
+                                                backgroundColor:
+                                                    tableData[0]?.status === 'Processed' ? 'success.main' : 'error.main',
+                                            }}
+                                        />
                                     </Box>
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1510,14 +1559,14 @@ const CustomersSalesOrders = () => {
                                         </Typography>}
                                     </Box>
 
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    {/* <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
                                             Total Items :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                             {rows.length}
                                         </Typography>
-                                    </Box>
+                                    </Box> */}
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
@@ -1530,7 +1579,7 @@ const CustomersSalesOrders = () => {
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
-                                            Tax Amount:
+                                            GST :
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
                                             ${tableData[0]?.taxAmount}
@@ -1539,7 +1588,7 @@ const CustomersSalesOrders = () => {
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
-                                            Shipping Rate:
+                                            Shipping:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 500, color: 'secondary.main' }}>
                                             ${tableData[0]?.shippingRate}
@@ -1548,7 +1597,7 @@ const CustomersSalesOrders = () => {
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '1px solid #e0e0e0' }}>
                                         <Typography variant="body1" color="textSecondary" sx={{ minWidth: 120, fontWeight: 'bold' }}>
-                                            Final Amount:
+                                            Total :
                                         </Typography>
                                         <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                                             ${tableData[0]?.totalAmount}

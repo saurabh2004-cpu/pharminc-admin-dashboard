@@ -639,21 +639,22 @@ const ListTable = ({
     });
   };
 
-  const toggleStatus = async (e, id) => {
+  const toggleStatus = async (e, documentNumber) => {
     try {
       setLoading(true);
-      const res = await axiosInstance.put(`/sales-order/toggle-order-status/${id}`);
+      const res = await axiosInstance.put(`/sales-order/toggle-order-status/${documentNumber}`);
       console.log("updated", res.data);
       if (res.data.statusCode === 200) {
-        setTableData((prevData) => prevData.map((item) => item._id === id ? res.data.data : item));
-        setRows((prevRows) => prevRows.map((item) => item._id === id ? res.data.data : item));
+        const updatedOrder = Array.isArray(res.data.data) ? res.data.data[0] : res.data.data;
+        setTableData((prevData) => prevData.map((item) => item.documentNumber === documentNumber ? updatedOrder : item));
+        setRows((prevRows) => prevRows.map((item) => item.documentNumber === documentNumber ? updatedOrder : item));
         setLoading(false);
-        toast.success(res.data.message);
+        // toast.success(res.data.message);
       }
     } catch (error) {
       console.error("Error toggling status:", error);
       setLoading(false);
-      toast.error("Failed to toggle status");
+      // toast.error("Failed to toggle status");
     }
   };
 
@@ -707,7 +708,7 @@ const ListTable = ({
     unitsQuantity: { minWidth: '160px' },
     amount: { minWidth: '160px' },
     finalAmount: { minWidth: '160px' },
-    createdAt: { minWidth: '250px' },
+    createdAt: { minWidth: '280px' },
     actions: { minWidth: '200px' }, // Increased width to accommodate new button
   };
 
@@ -847,7 +848,7 @@ const ListTable = ({
                               <Tooltip title="Toggle Status">
                                 <Switch
                                   checked={row.status === "Processed"}
-                                  onChange={(e) => toggleStatus(e, row._id)}
+                                  onChange={(e) => toggleStatus(e, row.documentNumber)}
                                   disabled={loading}
                                   color="success"
                                 />
@@ -993,7 +994,7 @@ const ListTable = ({
                           <Box display="flex" alignItems="center">
                             <Box >
                               <Typography fontWeight="400">
-                                {row?.totalAmount.toFixed(2) || 'N/A'}
+                                {row?.totalAmount?.toFixed(2) || 'N/A'}
                               </Typography>
                             </Box>
                           </Box>
@@ -1028,19 +1029,18 @@ const ListTable = ({
                           </Box>
                         </TableCell> */}
 
-                        <TableCell sx={columnWidths.createdAt}>
+                        {row.updatedAt && <TableCell sx={columnWidths.createdAt}>
                           <Typography>
-                            {format(new Date(row.updatedAt), 'E, MMM d yyyy')}
-                            (<Typography>
-                              {new Date(row.createdAt).toLocaleTimeString("en-IN", {
-                                timeZone: "Asia/Kolkata",
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: true
-                              }).replace(":", ".").toLowerCase()}
-                            </Typography>)
+                            {format(new Date(row.updatedAt), 'E, MMM d yyyy')}  {", "}
+                            {new Date(row.createdAt).toLocaleTimeString("en-IN", {
+                              timeZone: "Asia/Kolkata",
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true
+                            }).replace(":", ".").toLowerCase()}
+
                           </Typography>
-                        </TableCell>
+                        </TableCell>}
 
                       </TableRow>
                     );
