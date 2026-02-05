@@ -9,10 +9,11 @@ import { store } from './store/authStore'
 import AuthWrapper from './wrappers/authWrapper';
 
 async function deferRender() {
-  const { worker } = await import("./api/mocks/browser");
-  return worker.start({
-    onUnhandledRequest: 'bypass',
-  });
+  // const { worker } = await import("./api/mocks/browser");
+  // return worker.start({
+  //   onUnhandledRequest: 'bypass',
+  // });
+  return Promise.resolve();
 }
 
 deferRender().then(() => {

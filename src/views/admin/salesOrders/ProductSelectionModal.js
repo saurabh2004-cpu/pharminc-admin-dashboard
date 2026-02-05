@@ -66,7 +66,12 @@ const ProductSelectionModal = ({
         packType: '',
         unitsQuantity: 1,
         amount: 0,
-        comments: ''
+        comments: '',
+        discountType: '',
+        discountPercentage: '',
+        subTotal: 0,
+        totalAmount: 0,
+        finalAmount: 0
     });
 
     // Better initialization that preserves customer data
@@ -273,27 +278,46 @@ const ProductSelectionModal = ({
         }
     }, [productSearch, productList, productGroups]);
 
+    // Unified calculation function
+    const calculateValues = (packQty, unitQty, discType, discPct, product = selectedProduct) => {
+        const basePrice = product?.eachPrice || 0;
+        let adjustedPrice = basePrice;
+        const pct = parseFloat(discPct);
+
+        if (!isNaN(pct)) {
+            if (discType === 'Pricing Group Discount') {
+                // +10 increases, -10 decreases
+                adjustedPrice = basePrice + (basePrice * pct / 100);
+            } else if (discType === 'Item Discount' || discType === 'Custom Discount') {
+                // Positive only, always deducted
+                adjustedPrice = basePrice - (basePrice * Math.abs(pct) / 100);
+            }
+        }
+
+        if (adjustedPrice < 0) adjustedPrice = 0;
+
+        const quantity = (parseInt(packQty) || 1) * (parseInt(unitQty) || 1);
+        const total = adjustedPrice * quantity;
+
+        return {
+            unitPrice: parseFloat(adjustedPrice.toFixed(2)),
+            total: parseFloat(total.toFixed(2))
+        };
+    };
+
     // Improved amount calculation function
     const recalculateAmount = (packQty, unitQty, product = selectedProduct) => {
-        if (!product) return 0;
+        // This is kept for compatibility with existing calls, but using state for discount
+        const { unitPrice, total } = calculateValues(
+            packQty,
+            unitQty,
+            formData.discountType,
+            formData.discountPercentage,
+            product
+        );
 
-        const packQuantity = parseInt(packQty) || 1;
-        const unitsQuantity = parseInt(unitQty) || 1;
-        const totalQuantity = packQuantity * unitsQuantity;
-        const unitPrice = product.eachPrice || 0;
-        const totalAmount = unitPrice;
-
-        // console.log("Recalculating amount:", {
-        //     unitPrice,
-        //     packQuantity,
-        //     unitsQuantity,
-        //     totalQuantity,
-        //     totalAmount: totalAmount.toFixed(2)
-        // });
-
-        setTotalAmount(totalAmount * (packQuantity * unitsQuantity));
-
-        return parseFloat(totalAmount.toFixed(2));
+        setTotalAmount(total);
+        return unitPrice;
     };
 
     // Improved product selection with immediate amount calculation
@@ -301,16 +325,31 @@ const ProductSelectionModal = ({
         // console.log("Product selected:", product);
         setSelectedProduct(product);
 
-        // Calculate initial amount with default quantities
+        // Reset discount fields when product changes
         const initialPackQuantity = formData.packQuantity || '1';
         const initialUnitsQuantity = formData.unitsQuantity || 1;
-        const initialAmount = recalculateAmount(initialPackQuantity, initialUnitsQuantity, product);
+
+        // Calculate initial amount (no discount initially)
+        const { unitPrice, total } = calculateValues(
+            initialPackQuantity,
+            initialUnitsQuantity,
+            '',
+            '',
+            product
+        );
 
         setFormData(prev => ({
             ...prev,
             itemSku: product.sku || '',
-            amount: initialAmount
+            amount: unitPrice,
+            discountType: '',
+            discountPercentage: '',
+            subTotal: total,
+            totalAmount: total,
+            finalAmount: total
         }));
+
+        setTotalAmount(total);
 
         // console.log("Initial amount set to:", initialAmount);
 
@@ -321,35 +360,14 @@ const ProductSelectionModal = ({
 
     // Improved form input changes with better amount recalculation
     const handleInputChange = (field, value) => {
-        // console.log(`Field ${field} changed to:`, value);
-
-        const updatedFormData = {
-            ...formData,
-            [field]: value
-        };
-
-        // Recalculate amount when quantities change
-        if (field === 'packQuantity' || field === 'unitsQuantity') {
-            const packQty = field === 'packQuantity' ? value : updatedFormData.packQuantity;
-            const unitQty = field === 'unitsQuantity' ? value : updatedFormData.unitsQuantity;
-
-            const newAmount = recalculateAmount(packQty, unitQty);
-            updatedFormData.amount = newAmount;
-            setTotalAmount(newAmount * (packQty * unitQty));
-
-            // console.log("Amount updated to:", newAmount);
-        }
-
-        // Update packType if packQuantity changes and matches a pack type
-        if (field === 'packQuantity' && packTypes.length > 0) {
-            const selectedPack = packTypes.find(pack => pack.quantity.toString() === value.toString());
-            if (selectedPack) {
-                updatedFormData.packType = selectedPack.name;
-                // console.log("Pack type updated to:", selectedPack.name);
+        // Discount Validation
+        if (field === 'discountPercentage') {
+            if (formData.discountType === 'Item Discount' || formData.discountType === 'Custom Discount') {
+                if (parseFloat(value) < 0) return; // Prevent negative input
             }
         }
 
-        setFormData(updatedFormData);
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     // Improved pack type change handler
@@ -357,23 +375,73 @@ const ProductSelectionModal = ({
         const selectedPackQuantity = e.target.value;
         const selectedPack = packTypes.find(pack => pack.quantity.toString() === selectedPackQuantity.toString());
 
-        // console.log("Pack type selected:", selectedPack);
-
         if (selectedPack) {
-            const newAmount = recalculateAmount(selectedPack.quantity.toString(), formData.unitsQuantity);
-
             setFormData(prev => ({
                 ...prev,
                 packQuantity: selectedPack.quantity.toString(),
-                packType: selectedPack.name,
-                amount: newAmount
+                packType: selectedPack.name
             }));
-
-            setTotalAmount(newAmount * (selectedPack.quantity * formData.unitsQuantity));
-
-            // console.log("Amount after pack type change:", newAmount);
         }
     };
+
+    // Real-time calculation effect
+    useEffect(() => {
+        if (step !== 2 || !selectedProduct) return;
+
+        const basePrice = selectedProduct.eachPrice || 0;
+        let adjustedPrice = basePrice;
+        const pct = parseFloat(formData.discountPercentage);
+        const discType = formData.discountType;
+
+        if (!isNaN(pct) && discType) {
+            if (discType === 'Pricing Group Discount') {
+                // Allow positive and negative
+                adjustedPrice = basePrice + (basePrice * pct / 100);
+            } else if (discType === 'Item Discount' || discType === 'Custom Discount') {
+                // Only positive, deduct
+                const absPct = Math.abs(pct);
+                adjustedPrice = basePrice - (basePrice * absPct / 100);
+            }
+        }
+
+        // Safety check
+        if (adjustedPrice < 0) adjustedPrice = 0;
+
+        const packQty = parseInt(formData.packQuantity) || 1;
+        const unitsQty = parseInt(formData.unitsQuantity) || 1;
+
+        // Total Amount = Discounted Unit Price * Pack Qty * Units Qty
+        const quantityMultiplier = packQty * unitsQty;
+        const total = adjustedPrice * quantityMultiplier;
+
+        setFormData(prev => {
+            // Avoid infinite loop by checking if values actually changed
+            if (
+                prev.amount === parseFloat(adjustedPrice.toFixed(2)) &&
+                prev.totalAmount === parseFloat(total.toFixed(2))
+            ) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                amount: parseFloat(adjustedPrice.toFixed(2)),
+                totalAmount: parseFloat(total.toFixed(2)),
+                finalAmount: parseFloat(total.toFixed(2)),
+                subTotal: parseFloat(total.toFixed(2))
+            };
+        });
+
+        setTotalAmount(total);
+
+    }, [
+        formData.discountType,
+        formData.discountPercentage,
+        formData.packQuantity,
+        formData.unitsQuantity,
+        selectedProduct,
+        step
+    ]);
 
     // Improved form submission with better validation
     const handleSubmit = async () => {
@@ -443,7 +511,12 @@ const ProductSelectionModal = ({
                 amount: parseFloat(formData.amount),
                 comments: formData.comments || '',
                 isProductGroup: isProductGroup(selectedProduct),
-                customerNumber: formData.customerNumber
+                customerNumber: formData.customerNumber,
+                discountType: formData.discountType || null,
+                discountPercentages: formData.discountPercentage ? formData.discountPercentage.toString() : '0',
+                subTotal: parseFloat(formData.subTotal || formData.totalAmount),
+                totalAmount: parseFloat(formData.totalAmount),
+                finalAmount: parseFloat(formData.finalAmount || formData.totalAmount)
             };
 
             // console.log("Sending payload to API:", payload);
@@ -503,7 +576,12 @@ const ProductSelectionModal = ({
             packType: '',
             unitsQuantity: 1,
             amount: 0,
-            comments: ''
+            comments: '',
+            discountType: '',
+            discountPercentage: '',
+            subTotal: 0,
+            totalAmount: 0,
+            finalAmount: 0
         }));
         onClose();
     };
@@ -560,7 +638,7 @@ const ProductSelectionModal = ({
                 </Box>
             </DialogTitle>
 
-            <DialogContent dividers sx={{ overflow: 'hidden' }}>
+            <DialogContent dividers sx={{ overflowY: 'auto', p: 3 }}>
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
@@ -713,7 +791,7 @@ const ProductSelectionModal = ({
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body2">
-                                                <strong>Unit Price:</strong> ${(selectedProduct.eachPrice || 0).toFixed(2)}
+                                                <strong>Base Price:</strong> ${(selectedProduct.eachPrice || 0).toFixed(2)}
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
@@ -730,19 +808,6 @@ const ProductSelectionModal = ({
                                                 <Typography variant="body2">
                                                     <strong>Products in Group:</strong> {selectedProduct.products.length}
                                                 </Typography>
-                                                <Box sx={{ mt: 1, pl: 2 }}>
-                                                    {selectedProduct.products.slice(0, 3).map((productItem, index) => (
-                                                        <Typography key={index} variant="caption" display="block">
-                                                            • {productItem.product?.sku} - {productItem.product?.ProductName}
-                                                            (Stock: {productItem.product?.stockLevel || 0})
-                                                        </Typography>
-                                                    ))}
-                                                    {selectedProduct.products.length > 3 && (
-                                                        <Typography variant="caption" color="textSecondary">
-                                                            ... and {selectedProduct.products.length - 3} more products
-                                                        </Typography>
-                                                    )}
-                                                </Box>
                                             </Grid>
                                         )}
                                     </Grid>
@@ -752,13 +817,11 @@ const ProductSelectionModal = ({
 
                         <Divider sx={{ mb: 3 }} />
 
-                        {/* Order Information */}
-                        <Grid container spacing={3}>
-                            {/* Customer Info (Read-only) */}
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="customer-name">
-                                    Customer Name
-                                </CustomFormLabel>
+                        {/* Order Form - 2 Column Grid */}
+                        <Grid container spacing={2}>
+                            {/* Row 1: Customer Context */}
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="customer-name">Customer Name</CustomFormLabel>
                                 <CustomOutlinedInput
                                     id="customer-name"
                                     fullWidth
@@ -766,11 +829,8 @@ const ProductSelectionModal = ({
                                     disabled
                                 />
                             </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="sales-channel">
-                                    Sales Channel
-                                </CustomFormLabel>
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="sales-channel">Sales Channel</CustomFormLabel>
                                 <CustomOutlinedInput
                                     id="sales-channel"
                                     fullWidth
@@ -779,90 +839,111 @@ const ProductSelectionModal = ({
                                 />
                             </Grid>
 
-                            {/* Product Details */}
-                            {!isProductGroup(selectedProduct) && <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="pack-type">
-                                    Pack Type *
-                                </CustomFormLabel>
-                                <FormControl fullWidth>
+                            {/* Row 2: Quantity Inputs */}
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="pack-type">Pack Quantity *</CustomFormLabel>
+                                {isProductGroup(selectedProduct) ? (
                                     <TextField
                                         select
                                         id="pack-type"
                                         value={formData.packQuantity}
                                         onChange={handlePackTypeChange}
                                         disabled={packTypes.length === 0 || loading}
+                                        fullWidth
                                         size="small"
                                     >
-                                        <MenuItem value="" disabled>
-                                            {packTypes.length === 0 ? 'Loading pack types...' : 'Select pack type'}
-                                        </MenuItem>
                                         {packTypes.map((pack) => (
                                             <MenuItem key={pack._id} value={pack.quantity.toString()}>
-                                                {pack.name} (Quantity: {pack.quantity})
+                                                {pack.name} (Qty: {pack.quantity})
                                             </MenuItem>
                                         ))}
                                     </TextField>
-                                </FormControl>
-                                {formData.packType && (
-                                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                                        Selected: {formData.packType}
-                                    </Typography>
+                                ) : (
+                                    <TextField
+                                        select
+                                        id="pack-type"
+                                        value={formData.packQuantity}
+                                        onChange={handlePackTypeChange}
+                                        disabled={packTypes.length === 0 || loading}
+                                        fullWidth
+                                        size="small"
+                                    >
+                                        {packTypes.map((pack) => (
+                                            <MenuItem key={pack._id} value={pack.quantity.toString()}>
+                                                {pack.name} (Qty: {pack.quantity})
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
                                 )}
-                            </Grid>}
-
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="units-quantity">
-                                    Units Quantity *
-                                </CustomFormLabel>
-                                <CustomOutlinedInput
-                                    id="units-quantity"
-                                    fullWidth
-                                    type="number"
-                                    value={formData.unitsQuantity}
-                                    onChange={(e) => handleInputChange('unitsQuantity', e.target.value)}
-                                    inputProps={{
-                                        min: 1,
-                                        max: selectedProduct
-                                            ? (isProductGroup(selectedProduct)
-                                                ? calculateProductGroupStock(selectedProduct)
-                                                : selectedProduct.stockLevel)
-                                            : undefined
-                                    }}
-                                    disabled={loading}
-                                />
-                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                                    Total Items: {parseInt(formData.packQuantity || 1) * parseInt(formData.unitsQuantity || 1)}
-                                </Typography>
                             </Grid>
 
-                            {/* Amount Calculation */}
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="unit-price">
-                                    Unit Price
-                                </CustomFormLabel>
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="units-quantity">Units Quantity *</CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="units-quantity"
+                                    type="number"
+                                    fullWidth
+                                    value={formData.unitsQuantity}
+                                    onChange={(e) => handleInputChange('unitsQuantity', e.target.value)}
+                                    inputProps={{ min: 1 }}
+                                />
+                            </Grid>
+
+                            {/* Row 3: Discount Inputs */}
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="discount-type">Discount Type</CustomFormLabel>
+                                <TextField
+                                    select
+                                    id="discount-type"
+                                    fullWidth
+                                    value={formData.discountType}
+                                    onChange={(e) => handleInputChange('discountType', e.target.value)}
+                                    size="small"
+                                >
+                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value="Pricing Group Discount">Pricing Group Discount</MenuItem>
+                                    <MenuItem value="Item Discount">Item Discount</MenuItem>
+                                    <MenuItem value="Custom Discount">Custom Discount</MenuItem>
+                                </TextField>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="discount-percentage">Discount (%)</CustomFormLabel>
+                                <CustomOutlinedInput
+                                    id="discount-percentage"
+                                    type="number"
+                                    fullWidth
+                                    value={formData.discountPercentage}
+                                    onChange={(e) => handleInputChange('discountPercentage', e.target.value)}
+                                    disabled={!formData.discountType}
+                                    placeholder={!formData.discountType ? "Select type first" : "0"}
+                                    endAdornment={<InputAdornment position="end">%</InputAdornment>}
+                                />
+                            </Grid>
+
+                            {/* Row 4: Calculated Prices (Read-Only) */}
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="unit-price">Unit Price (Discounted)</CustomFormLabel>
                                 <CustomOutlinedInput
                                     id="unit-price"
                                     fullWidth
-                                    value={(selectedProduct?.eachPrice || 0).toFixed(2)}
+                                    value={formData.amount?.toFixed(2) || '0.00'}
                                     disabled
                                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                                    sx={{ fontWeight: 'bold' }}
                                 />
                             </Grid>
 
-                            <Grid item xs={12} sm={6}>
-                                <CustomFormLabel htmlFor="total-amount">
-                                    Total Amount
-                                </CustomFormLabel>
+                            <Grid item xs={12} md={6}>
+                                <CustomFormLabel htmlFor="total-amount">Total Amount</CustomFormLabel>
                                 <CustomOutlinedInput
                                     id="total-amount"
                                     fullWidth
-                                    value={totalAmount.toFixed(2)}
+                                    value={formData.totalAmount?.toFixed(2) || '0.00'}
                                     disabled
                                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                                    sx={{ fontWeight: 'bold' }}
                                 />
-                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                                    Calculation: ${(selectedProduct?.eachPrice || 0).toFixed(2)} × {formData.packQuantity || 1} × {formData.unitsQuantity || 1}
-                                </Typography>
                             </Grid>
                         </Grid>
                     </Box>
@@ -889,7 +970,7 @@ const ProductSelectionModal = ({
                         <Button
                             onClick={handleSubmit}
                             variant="contained"
-                            disabled={loading}
+                            disabled={loading || formData.totalAmount <= 0}
                             startIcon={loading ? <CircularProgress size={16} /> : null}
                         >
                             {loading ? 'Adding...' : 'Add Product'}

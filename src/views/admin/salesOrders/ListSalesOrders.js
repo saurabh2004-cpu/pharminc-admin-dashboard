@@ -45,10 +45,10 @@ const ListSalesOrders = () => {
       label: 'Customer Name',
     },
     {
-      id: 'salesChannel',
+      id: 'paymentTerms',
       numeric: false,
       disablePadding: false,
-      label: 'Sales Channel',
+      label: 'Payment Terms',
     },
     {
       id: 'trackingNumber',

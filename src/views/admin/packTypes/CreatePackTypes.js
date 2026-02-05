@@ -1,8 +1,9 @@
 import React from 'react';
-import { Grid, Dialog, DialogTitle, DialogContent, Typography, Box, DialogActions } from '@mui/material';
+import { Grid, Dialog, DialogTitle, DialogContent, Typography, Box, DialogActions, MenuItem } from '@mui/material';
 import Button from '@mui/material/Button';
-import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
-import CustomOutlinedInput from '../.../../../../components/forms/theme-elements/CustomOutlinedInput';
+import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
+import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
+import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import { IconFileImport, IconUpload, } from '@tabler/icons';
 import axiosInstance from '../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
@@ -13,6 +14,7 @@ const CreatePackTypes = () => {
     const [formData, setFormData] = React.useState({
         name: '',
         quantity: '',
+        isDefault: false,
     });
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
@@ -179,6 +181,31 @@ const CreatePackTypes = () => {
                         disabled={loading}
                         placeholder="Enter pack quantity"
                     />
+                </Grid>
+
+                <Grid size={12}>
+                    <CustomFormLabel htmlFor="isDefault" sx={{ mt: 0 }}>
+                        Is Default <span style={{ color: 'red' }}>*</span>
+                    </CustomFormLabel>
+                </Grid>
+
+                <Grid size={12}>
+                    <CustomTextField
+                        id="isDefault"
+                        select
+                        fullWidth
+                        value={formData.isDefault ? 'true' : 'false'}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                isDefault: e.target.value === 'true',
+                            })
+                        }
+                        disabled={loading}
+                    >
+                        <MenuItem value="true">True</MenuItem>
+                        <MenuItem value="false">False</MenuItem>
+                    </CustomTextField>
                 </Grid>
 
                 {/* Error Message */}

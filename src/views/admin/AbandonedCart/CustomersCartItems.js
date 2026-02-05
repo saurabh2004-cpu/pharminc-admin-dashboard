@@ -635,7 +635,7 @@ const CustomersCartItems = () => {
               </Paper>
 
               {/* Cart Sumary */}
-              {/* <Paper sx={{ p: 3 }}>
+              <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom color="primary">
                   Cart Summary
                 </Typography>
@@ -686,7 +686,7 @@ const CustomersCartItems = () => {
                 ) : (
                   <Typography variant="body2">No summary available</Typography>
                 )}
-              </Paper> */}
+              </Paper>
             </Box>
           </Grid>
         </Grid >

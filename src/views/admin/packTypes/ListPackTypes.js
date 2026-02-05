@@ -38,6 +38,12 @@ const ListPackTypes = () => {
             label: 'Quantity',
         },
         {
+            id: 'isDefault',
+            numeric: false,
+            disablePadding: false,
+            label: 'Is Default',
+        },
+        {
             id: 'createdAt',
             numeric: false,
             disablePadding: false,
@@ -72,26 +78,26 @@ const ListPackTypes = () => {
 
     return (
         // <ProductProvider>
-            <PageContainer title="Pack Types List" description="this is Pack Types page">
-                {/* breadcrumb */}
-                <Breadcrumb title="Pack Types List" items={BCrumb} />
-                {/* end breadcrumb */}
-                <Box
-                // sx={{
-                //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-                //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-                //     transition: "margin-left 0.3s ease", // smooth animation
-                // }}
-                >
-                    < ListTable
-                        showCheckBox={false}
-                        headCells={headCells}
-                        tableData={tableData}
-                        isBrandsList={true} // Add this prop to identify it's brands data
-                        setTableData={setTableData}
-                    />
-                </Box>
-            </PageContainer>
+        <PageContainer title="Pack Types List" description="this is Pack Types page">
+            {/* breadcrumb */}
+            <Breadcrumb title="Pack Types List" items={BCrumb} />
+            {/* end breadcrumb */}
+            <Box
+            // sx={{
+            //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+            //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+            //     transition: "margin-left 0.3s ease", // smooth animation
+            // }}
+            >
+                < ListTable
+                    showCheckBox={false}
+                    headCells={headCells}
+                    tableData={tableData}
+                    isBrandsList={true} // Add this prop to identify it's brands data
+                    setTableData={setTableData}
+                />
+            </Box>
+        </PageContainer>
         // </ProductProvider >
     );
 };

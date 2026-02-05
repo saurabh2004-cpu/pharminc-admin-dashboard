@@ -290,6 +290,7 @@ const CustomersSalesOrders = () => {
     const [selectedDeliveryVendor, setSelectedDeliveryVendor] = useState('');
     const [productGroupsIds, setProductGroupsIds] = useState([]);
     const [productGroupsData, setProductGroupsData] = useState([]);
+    const [editingBasePrice, setEditingBasePrice] = useState(0);
 
 
     const theme = useTheme();
@@ -298,10 +299,10 @@ const CustomersSalesOrders = () => {
     // Define headCells for the table
     const headCells = [
         {
-            id: 'sku',
+            id: 'ItemCode',
             numeric: false,
             disablePadding: false,
-            label: 'SKU',
+            label: 'Item Code',
         },
         {
             id: 'amount',
@@ -310,7 +311,7 @@ const CustomersSalesOrders = () => {
             label: 'Amount',
         },
         {
-            id: 'tax',
+            id: 'Gst',
             numeric: false,
             disablePadding: false,
             label: 'Tax',
@@ -325,7 +326,7 @@ const CustomersSalesOrders = () => {
             id: 'unitsQuantity',
             numeric: false,
             disablePadding: false,
-            label: 'Units Quantity',
+            label: 'Quantity',
         },
         {
             id: 'discountType',
@@ -641,8 +642,13 @@ const CustomersSalesOrders = () => {
                         setProductQuantity(0);
                         // console.log("No stock levels found in product group");
                     }
+
+                    // Set base price for product group
+                    setEditingBasePrice(productGroup.price || 0);
+
                 } else {
                     setProductQuantity(0);
+                    setEditingBasePrice(productGroup.price || 0);
                     // console.log("No products found in product group");
                 }
             } else {
@@ -652,6 +658,7 @@ const CustomersSalesOrders = () => {
                 if (response.status === 200) {
                     const productData = response.data.data;
                     setProductQuantity(productData.stockLevel || 0);
+                    setEditingBasePrice(productData.eachPrice || 0);
                     // console.log(`Regular product ${itemSku} stock: ${productData.stockLevel}`);
                 } else {
                     setProductQuantity(0);
@@ -774,27 +781,65 @@ const CustomersSalesOrders = () => {
         }
     }, [updateFormData.packQuantity, updateFormData.unitsQuantity, productQuentity, editingRowId]);
 
-    // FIXED: Recalculate amount when quantities change
+    // FIXED: Recalculate amounts when quantities or discounts change
     useEffect(() => {
         if (editingRowId && updateFormData.packQuantity !== undefined && updateFormData.unitsQuantity !== undefined) {
-            const currentRow = rows.find(row => row._id === editingRowId);
-            if (!currentRow) return;
 
-            // Get the per-unit price from the current row
-            const perUnitPrice = parseFloat(currentRow.amount);
+            const currentRow = rows.find(row => row._id === editingRowId);
+
+            // Calculate Unit Price based on Discount
+            let newUnitPrice = editingBasePrice;
+            const discountType = updateFormData.discountType;
+            const discountPercentage = parseFloat(updateFormData.discountPercentages);
+
+            if (discountType && !isNaN(discountPercentage)) {
+                if (discountType === 'Pricing Group Discount') {
+                    // Allow positive and negative
+                    newUnitPrice = editingBasePrice + (editingBasePrice * discountPercentage / 100);
+                } else if (discountType === 'Item Discount' || discountType === 'Custom Discount') {
+                    // Only positive deductions
+                    const absPct = Math.abs(discountPercentage);
+                    newUnitPrice = editingBasePrice - (editingBasePrice * absPct / 100);
+                }
+            }
+
+            // Safety check
+            if (newUnitPrice < 0) newUnitPrice = 0;
 
             const newPackQuantity = parseInt(updateFormData.packQuantity) || 1;
             const newUnitsQuantity = parseInt(updateFormData.unitsQuantity) || 1;
 
             // Calculate new total amount = per-unit price * pack quantity * units quantity
-            const newTotalAmount = perUnitPrice * newPackQuantity * newUnitsQuantity;
+            const newTotalAmount = newUnitPrice * newPackQuantity * newUnitsQuantity;
 
-            setUpdateFormData(prev => ({
-                ...prev,
-                calculatedTotalAmount: newTotalAmount // Store calculated total for display
-            }));
+            // Calculate Final Amount (inc Tax)
+            const taxPct = (currentRow?.taxApplied && currentRow?.taxPercentages) ? parseFloat(currentRow.taxPercentages) : 0;
+            const taxAmount = newTotalAmount * taxPct / 100;
+            const finalAmt = newTotalAmount + taxAmount;
+
+            setUpdateFormData(prev => {
+                const roundedPrice = parseFloat(newUnitPrice.toFixed(2));
+                const roundedFinal = parseFloat(finalAmt.toFixed(2));
+
+                // Only update if changed to avoid loops
+                if (prev.calculatedTotalAmount === newTotalAmount && prev.amount === roundedPrice && prev.finalAmount === roundedFinal) return prev;
+                return {
+                    ...prev,
+                    amount: roundedPrice,
+                    calculatedTotalAmount: newTotalAmount, // Store calculated total for display
+                    finalAmount: roundedFinal
+                };
+            });
         }
-    }, [updateFormData.packQuantity, updateFormData.unitsQuantity, editingRowId, rows]);
+    }, [
+        updateFormData.packQuantity,
+        updateFormData.unitsQuantity,
+        updateFormData.discountType,
+        updateFormData.discountPercentages,
+        editingBasePrice,
+        editingRowId,
+        rows
+    ]);
 
     const handleSearch = (event) => {
         const searchValue = event.target.value.toLowerCase();
@@ -960,6 +1005,8 @@ const CustomersSalesOrders = () => {
             finalAmount: order.finalAmount || 0,
             amount: order.amount || 0,
             packType: order.packType || '',
+            discountType: order.discountType || '',
+            discountPercentages: order.discountPercentages || '',
         });
     };
 
@@ -1037,6 +1084,11 @@ const CustomersSalesOrders = () => {
                 return;
             }
 
+            if (updateFormData.amount <= 0) {
+                setError('Unit price must be greater than 0');
+                return;
+            }
+
             setLoading(true);
             setError('');
 
@@ -1047,11 +1099,12 @@ const CustomersSalesOrders = () => {
             }
 
             const updatedData = {
-                ...updateFormData,
                 packQuantity: updateFormData.packQuantity.toString(),
                 unitsQuantity: updateFormData.unitsQuantity,
-                packType: updateFormData.packType || currentRow.packType
-                // Remove amount calculation - backend handles it
+                packType: updateFormData.packType || currentRow.packType,
+                discountType: updateFormData.discountType,
+                discountPercentages: updateFormData.discountPercentages,
+                amount: updateFormData.amount
             };
 
             const res = await axiosInstance.put(
@@ -1080,6 +1133,13 @@ const CustomersSalesOrders = () => {
     };
 
     const handleUpdateFormChange = (field, value) => {
+        // Validation for Item/Custom discount (positive only)
+        if (field === 'discountPercentages') {
+            const type = updateFormData.discountType;
+            if (type === 'Item Discount' || type === 'Custom Discount') {
+                if (parseFloat(value) < 0) return;
+            }
+        }
         setUpdateFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -1393,19 +1453,51 @@ const CustomersSalesOrders = () => {
                                                             )}
                                                         </TableCell>
 
-                                                        <TableCell sx={{ width: 100 }}>
-                                                            <Box>
-                                                                <Typography variant="body2">
-                                                                    {row.discountType || ""}
-                                                                </Typography>
-                                                            </Box>
+                                                        <TableCell sx={{ width: 140 }}>
+                                                            {isRowEditing ? (
+                                                                <TextField
+                                                                    select
+                                                                    size="small"
+                                                                    value={updateFormData.discountType || ''}
+                                                                    onChange={(e) => handleUpdateFormChange('discountType', e.target.value)}
+                                                                    fullWidth
+                                                                >
+                                                                    <MenuItem value="">
+                                                                        <em>None</em>
+                                                                    </MenuItem>
+                                                                    <MenuItem value="Pricing Group Discount">Pricing Group Discount</MenuItem>
+                                                                    <MenuItem value="Item Discount">Item Discount</MenuItem>
+                                                                    <MenuItem value="Custom Discount">Custom Discount</MenuItem>
+                                                                </TextField>
+                                                            ) : (
+                                                                <Box>
+                                                                    <Typography variant="body2">
+                                                                        {row.discountType || "None"}
+                                                                    </Typography>
+                                                                </Box>
+                                                            )}
                                                         </TableCell>
-                                                        <TableCell sx={{ width: 100 }}>
-                                                            <Box>
-                                                                <Typography variant="body2">
-                                                                    {row.discountType?.trim() === "Compare Price" ? `$ ${row.discountPercentages}` : row.discountPercentages + "%"}
-                                                                </Typography>
-                                                            </Box>
+                                                        <TableCell sx={{ width: 150 }}>
+                                                            {isRowEditing ? (
+                                                                <TextField
+                                                                    size="small"
+                                                                    type="number"
+                                                                    value={updateFormData.discountPercentages || ''}
+                                                                    onChange={(e) => handleUpdateFormChange('discountPercentages', e.target.value)}
+                                                                    placeholder="0"
+                                                                    disabled={!updateFormData.discountType}
+                                                                    InputProps={{
+                                                                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                                                    }}
+                                                                    fullWidth
+                                                                />
+                                                            ) : (
+                                                                <Box>
+                                                                    <Typography variant="body2">
+                                                                        {row.discountType?.trim() === "Compare Price" ? `$ ${row.discountPercentages}` : (row.discountPercentages ? `${row.discountPercentages}%` : "0%")}
+                                                                    </Typography>
+                                                                </Box>
+                                                            )}
                                                         </TableCell>
                                                     </TableRow>
 
