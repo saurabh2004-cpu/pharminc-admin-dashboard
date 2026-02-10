@@ -32,6 +32,7 @@ const EditProduct = () => {
     taxable: false,
     sequence: null,
     inactive: false,
+    defaultPackType: '',
   });
 
   const [error, setError] = React.useState('');
@@ -266,6 +267,11 @@ const EditProduct = () => {
 
       formDataToSend.append('taxable', formData.taxable);
 
+      // Append defaultPackType - FIXED to send 'null' string if empty
+      formDataToSend.append('defaultPackType', formData.defaultPackType || 'null');
+
+      // Append thumbnail if new one is selected
+
       // Append thumbnail if new one is selected
       if (thumbnailFile) {
         formDataToSend.append('thumbnail', thumbnailFile);
@@ -362,6 +368,7 @@ const EditProduct = () => {
           taxable: product.taxable || false,
           sequence: product.sequence,
           inactive: product.inactive || false,
+          defaultPackType: product.defaultPackType || '',
         });
 
         // Set existing images
@@ -689,6 +696,43 @@ const EditProduct = () => {
       }));
     }
   }, [formData.commerceCategoriesThree, hasFetchedProductDetails]);
+
+  // Smart Default for Pack Type
+  useEffect(() => {
+    // Only run this logic if product details have been fetched or if we are not dependent on it for this logic
+    // But since this is edit page, we want to respect existing data first.
+    // However, if user changes pack types, we should update default.
+
+    const selectedPacks = formData.typesOfPacks;
+
+    // If exactly one pack type is selected, auto-select it as default
+    if (selectedPacks.length === 1) {
+      if (formData.defaultPackType !== selectedPacks[0]) {
+        setFormData(prev => ({
+          ...prev,
+          defaultPackType: selectedPacks[0]
+        }));
+      }
+    }
+    // If multiple packs selected, and current default is not in list (and is not empty), reset it
+    else if (selectedPacks.length > 1) {
+      if (formData.defaultPackType && !selectedPacks.includes(formData.defaultPackType)) {
+        setFormData(prev => ({
+          ...prev,
+          defaultPackType: ''
+        }));
+      }
+    }
+    // If no packs selected (or array empty), clear default
+    else if (selectedPacks.length === 0) {
+      if (formData.defaultPackType) {
+        setFormData(prev => ({
+          ...prev,
+          defaultPackType: ''
+        }));
+      }
+    }
+  }, [formData.typesOfPacks, formData.defaultPackType]);
 
   const BCrumb = [
     {
@@ -1091,6 +1135,34 @@ const EditProduct = () => {
                 />
               )}
             />
+          </FormControl>
+        </Grid>
+
+        {/* Default Pack Type Selection */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="default-pack-type" sx={{ mt: 2 }}>
+            Default Pack Type
+            {formData.typesOfPacks.length > 0 && <span style={{ color: 'red' }}>*</span>}
+          </CustomFormLabel>
+          <FormControl fullWidth disabled={formData.typesOfPacks.length === 0}>
+            <Select
+              id="default-pack-type"
+              value={formData.defaultPackType}
+              onChange={(e) => setFormData({ ...formData, defaultPackType: e.target.value })}
+              displayEmpty
+            >
+              <MenuItem value="" disabled>
+                {formData.typesOfPacks.length === 0 ? "Select Pack Types first" : "Select Default Pack Type"}
+              </MenuItem>
+              {packTypes
+                .filter(pack => formData.typesOfPacks.includes(pack._id))
+                .map((pack) => (
+                  <MenuItem key={pack._id} value={pack._id}>
+                    {pack.name}
+                  </MenuItem>
+                ))
+              }
+            </Select>
           </FormControl>
         </Grid>
 

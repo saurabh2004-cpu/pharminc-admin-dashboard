@@ -147,7 +147,7 @@ const CreateAdmin = () => {
                     </FormControl>
                 </Grid>
 
-                <Grid size={12}>
+                {/* <Grid size={12}>
                     <CustomFormLabel
                         htmlFor="bi-background-color"
                         sx={{ mt: 3 }}
@@ -163,7 +163,7 @@ const CreateAdmin = () => {
                         value={formData.backgroundColor}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     />
-                </Grid>
+                </Grid> */}
 
 
                 {error && (

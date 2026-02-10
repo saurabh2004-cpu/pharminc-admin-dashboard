@@ -32,6 +32,7 @@ const CreateProduct = () => {
     taxable: true,
     comparePrice: '',
     sequence: null,
+    defaultPackType: '',
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -184,6 +185,9 @@ const CreateProduct = () => {
     if (formData.sequence) formDataToSend.append('sequence', formData.sequence);
     formDataToSend.append('taxable', formData.taxable);
 
+    // Append defaultPackType - FIXED to send null string if empty
+    formDataToSend.append('defaultPackType', formData.defaultPackType || 'null');
+
     // Append thumbnail image
     if (thumbnailFile) {
       formDataToSend.append('thumbnail', thumbnailFile);
@@ -223,6 +227,7 @@ const CreateProduct = () => {
           taxable: true,
           comparePrice: '',
           sequence: null,
+          defaultPackType: '',
         });
 
         handleRemoveThumbnail();
@@ -231,7 +236,7 @@ const CreateProduct = () => {
         setImagePreviews([]);
 
         setError('Product created successfully!');
-        
+
         // Navigate after 2 seconds to show success message
         setTimeout(() => {
           navigate('/dashboard/products/list');
@@ -423,10 +428,10 @@ const CreateProduct = () => {
       // For multiple brands, we need to fetch categories for each brand
       const allCategories = [];
       const uniqueCategoryIds = new Set();
-      
+
       for (const brandId of brandIds) {
         const response = await axiosInstance.get(`/category/get-categories-by-brand-id/${brandId}`);
-        
+
         if (response.data.statusCode === 200 && response.data.data) {
           response.data.data.forEach(category => {
             if (!uniqueCategoryIds.has(category._id)) {
@@ -436,7 +441,7 @@ const CreateProduct = () => {
           });
         }
       }
-      
+
       setCategoryTwo(allCategories);
     } catch (error) {
       console.error('Error fetching categories by brand:', error);
@@ -456,10 +461,10 @@ const CreateProduct = () => {
       // For multiple categories, fetch subcategories for each category
       const allSubCategories = [];
       const uniqueSubCategoryIds = new Set();
-      
+
       for (const categoryId of categoryIds) {
         const response = await axiosInstance.get(`/subcategory/get-sub-categories-by-category-id/${categoryId}`);
-        
+
         if (response.data.statusCode === 200 && response.data.data) {
           response.data.data.forEach(subCategory => {
             if (!uniqueSubCategoryIds.has(subCategory._id)) {
@@ -469,7 +474,7 @@ const CreateProduct = () => {
           });
         }
       }
-      
+
       setCategoryThree(allSubCategories);
     } catch (error) {
       console.error('Error fetching subcategories by category:', error);
@@ -489,10 +494,10 @@ const CreateProduct = () => {
       // For multiple subcategories, fetch sub-subcategories for each subcategory
       const allSubCategoriesTwo = [];
       const uniqueSubCategoryTwoIds = new Set();
-      
+
       for (const subCategoryId of subCategoryIds) {
         const response = await axiosInstance.get(`/subcategoryTwo/get-sub-categories-two-by-category-id/${subCategoryId}`);
-        
+
         if (response.data.statusCode === 200 && response.data.data) {
           response.data.data.forEach(subCategoryTwo => {
             if (!uniqueSubCategoryTwoIds.has(subCategoryTwo._id)) {
@@ -502,7 +507,7 @@ const CreateProduct = () => {
           });
         }
       }
-      
+
       setCategoryFour(allSubCategoriesTwo);
     } catch (error) {
       console.error('Error fetching sub-subcategories by subcategory:', error);
@@ -569,6 +574,40 @@ const CreateProduct = () => {
       }));
     }
   }, [formData.commerceCategoriesThree]);
+
+  // Smart Default for Pack Type
+  useEffect(() => {
+    const selectedPacks = formData.typesOfPacks;
+
+    // If exactly one pack type is selected, auto-select it as default
+    if (selectedPacks.length === 1) {
+      if (formData.defaultPackType !== selectedPacks[0]) {
+        setFormData(prev => ({
+          ...prev,
+          defaultPackType: selectedPacks[0]
+        }));
+      }
+    }
+    // If multiple packs selected, check if current default is still valid
+    else if (selectedPacks.length > 1) {
+      if (formData.defaultPackType && !selectedPacks.includes(formData.defaultPackType)) {
+        // If current default is removed, reset it
+        setFormData(prev => ({
+          ...prev,
+          defaultPackType: ''
+        }));
+      }
+    }
+    // If no packs selected, clear default
+    else if (selectedPacks.length === 0) {
+      if (formData.defaultPackType) {
+        setFormData(prev => ({
+          ...prev,
+          defaultPackType: ''
+        }));
+      }
+    }
+  }, [formData.typesOfPacks, formData.defaultPackType]);
 
   const BCrumb = [
     {
@@ -800,10 +839,9 @@ const CreateProduct = () => {
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => (
                   <Chip
+                    label={option.name}
                     {...getTagProps({ index })}
                     key={option._id}
-                    label={option.name}
-                    size="small"
                   />
                 ))
               }
@@ -827,6 +865,34 @@ const CreateProduct = () => {
                 />
               )}
             />
+          </FormControl>
+        </Grid>
+
+        {/* Default Pack Type Selection */}
+        <Grid size={6}>
+          <CustomFormLabel htmlFor="default-pack-type" sx={{ mt: 2 }}>
+            Default Pack Type
+            {formData.typesOfPacks.length > 0 && <span style={{ color: 'red' }}>*</span>}
+          </CustomFormLabel>
+          <FormControl fullWidth disabled={formData.typesOfPacks.length === 0}>
+            <Select
+              id="default-pack-type"
+              value={formData.defaultPackType}
+              onChange={(e) => setFormData({ ...formData, defaultPackType: e.target.value })}
+              displayEmpty
+            >
+              <MenuItem value="" disabled>
+                {formData.typesOfPacks.length === 0 ? "Select Pack Types first" : "Select Default Pack Type"}
+              </MenuItem>
+              {packTypes
+                .filter(pack => formData.typesOfPacks.includes(pack._id))
+                .map((pack) => (
+                  <MenuItem key={pack._id} value={pack._id}>
+                    {pack.name}
+                  </MenuItem>
+                ))
+              }
+            </Select>
           </FormControl>
         </Grid>
 
@@ -892,7 +958,7 @@ const CreateProduct = () => {
                   commerceCategoriesThree: [],
                   commerceCategoriesFour: []
                 });
-                
+
                 // Fetch categories for selected brands
                 fetchCategoriesByBrandIds(newBrandIds);
               }}
@@ -947,7 +1013,7 @@ const CreateProduct = () => {
                   commerceCategoriesThree: [],
                   commerceCategoriesFour: []
                 });
-                
+
                 // Fetch subcategories for selected categories
                 fetchSubCategoriesByCategoryIds(newCategoryIds);
               }}
@@ -956,10 +1022,10 @@ const CreateProduct = () => {
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || categoryTwo.length === 0}
               noOptionsText={
-                formData.commerceCategoriesOne.length === 0 
-                  ? 'Please select brands first' 
-                  : categoryTwo.length === 0 
-                    ? 'No categories available for selected brands' 
+                formData.commerceCategoriesOne.length === 0
+                  ? 'Please select brands first'
+                  : categoryTwo.length === 0
+                    ? 'No categories available for selected brands'
                     : 'No categories found'
               }
               renderTags={(value, getTagProps) =>
@@ -976,10 +1042,10 @@ const CreateProduct = () => {
                 <TextField
                   {...params}
                   placeholder={
-                    formData.commerceCategoriesOne.length === 0 
-                      ? 'Please select brands first' 
-                      : categoryTwo.length === 0 
-                        ? 'No categories available for selected brands' 
+                    formData.commerceCategoriesOne.length === 0
+                      ? 'Please select brands first'
+                      : categoryTwo.length === 0
+                        ? 'No categories available for selected brands'
                         : 'Search and select categories'
                   }
                   sx={{
@@ -1013,7 +1079,7 @@ const CreateProduct = () => {
                   commerceCategoriesThree: newSubCategoryIds,
                   commerceCategoriesFour: []
                 });
-                
+
                 // Fetch sub-subcategories for selected subcategories
                 fetchSubCategoriesTwoByCategoryIds(newSubCategoryIds);
               }}
@@ -1022,10 +1088,10 @@ const CreateProduct = () => {
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || categoryThree.length === 0}
               noOptionsText={
-                formData.commerceCategoriesTwo.length === 0 
-                  ? 'Please select categories first' 
-                  : categoryThree.length === 0 
-                    ? 'No subcategories available for selected categories' 
+                formData.commerceCategoriesTwo.length === 0
+                  ? 'Please select categories first'
+                  : categoryThree.length === 0
+                    ? 'No subcategories available for selected categories'
                     : 'No subcategories found'
               }
               renderTags={(value, getTagProps) =>
@@ -1042,10 +1108,10 @@ const CreateProduct = () => {
                 <TextField
                   {...params}
                   placeholder={
-                    formData.commerceCategoriesTwo.length === 0 
-                      ? 'Please select categories first' 
-                      : categoryThree.length === 0 
-                        ? 'No subcategories available for selected categories' 
+                    formData.commerceCategoriesTwo.length === 0
+                      ? 'Please select categories first'
+                      : categoryThree.length === 0
+                        ? 'No subcategories available for selected categories'
                         : 'Search and select subcategories'
                   }
                   sx={{
@@ -1083,10 +1149,10 @@ const CreateProduct = () => {
               isOptionEqualToValue={(option, value) => option._id === value._id}
               disabled={loading || categoryFour.length === 0}
               noOptionsText={
-                formData.commerceCategoriesThree.length === 0 
-                  ? 'Please select subcategories first' 
-                  : categoryFour.length === 0 
-                    ? 'No sub-subcategories available for selected subcategories' 
+                formData.commerceCategoriesThree.length === 0
+                  ? 'Please select subcategories first'
+                  : categoryFour.length === 0
+                    ? 'No sub-subcategories available for selected subcategories'
                     : 'No sub-subcategories found'
               }
               renderTags={(value, getTagProps) =>
@@ -1103,10 +1169,10 @@ const CreateProduct = () => {
                 <TextField
                   {...params}
                   placeholder={
-                    formData.commerceCategoriesThree.length === 0 
-                      ? 'Please select subcategories first' 
-                      : categoryFour.length === 0 
-                        ? 'No sub-subcategories available for selected subcategories' 
+                    formData.commerceCategoriesThree.length === 0
+                      ? 'Please select subcategories first'
+                      : categoryFour.length === 0
+                        ? 'No sub-subcategories available for selected subcategories'
                         : 'Search and select sub-subcategories'
                   }
                   sx={{
@@ -1236,21 +1302,23 @@ const CreateProduct = () => {
         </Grid>
 
         {/* Error Message */}
-        {error && (
-          <Grid size={12} mt={2}>
-            <div
-              style={{
-                color: error.includes('success') ? 'green' : 'red',
-                padding: '10px',
-                backgroundColor: error.includes('success') ? '#e8f5e8' : '#ffebee',
-                borderRadius: '4px',
-                border: error.includes('success') ? '1px solid #4caf50' : '1px solid #ffcdd2'
-              }}
-            >
-              {error}
-            </div>
-          </Grid>
-        )}
+        {
+          error && (
+            <Grid size={12} mt={2}>
+              <div
+                style={{
+                  color: error.includes('success') ? 'green' : 'red',
+                  padding: '10px',
+                  backgroundColor: error.includes('success') ? '#e8f5e8' : '#ffebee',
+                  borderRadius: '4px',
+                  border: error.includes('success') ? '1px solid #4caf50' : '1px solid #ffcdd2'
+                }}
+              >
+                {error}
+              </div>
+            </Grid>
+          )
+        }
 
         {/* Submit Button */}
         <Grid size={12} mt={3}>
@@ -1281,10 +1349,10 @@ const CreateProduct = () => {
             Import Product Images
           </Button>
         </Grid>
-      </Grid>
+      </Grid >
 
       {/* CSV Import Dialog */}
-      <Dialog
+      < Dialog
         open={csvDialogOpen}
         onClose={handleCloseCsvDialog}
         maxWidth="sm"
@@ -1367,10 +1435,10 @@ const CreateProduct = () => {
             {loading ? 'Importing...' : 'Import'}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog >
 
       {/* Image Import Dialog */}
-      <Dialog
+      < Dialog
         open={imageDialogOpen}
         onClose={handleCloseImageDialog}
         maxWidth="sm"
@@ -1500,8 +1568,8 @@ const CreateProduct = () => {
             {loading ? "Importing..." : "Import Images"}
           </Button>
         </DialogActions>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   );
 };
 

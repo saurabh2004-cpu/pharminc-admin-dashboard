@@ -478,11 +478,6 @@ const ListTable = ({
                               </Typography>
                             </TableCell>
 
-                            <TableCell>
-                              <Typography fontWeight="600">
-                                {row.isDefault ? 'Yes' : 'No'}
-                              </Typography>
-                            </TableCell>
 
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>

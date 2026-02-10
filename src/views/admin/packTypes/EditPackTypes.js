@@ -14,7 +14,6 @@ const EditPackTypes = () => {
     const [formData, setFormData] = React.useState({
         name: '',
         quantity: '',
-        isDefault: false,
     });
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
@@ -75,7 +74,6 @@ const EditPackTypes = () => {
                 setFormData({
                     name: response.data.data.name,
                     quantity: response.data.data.quantity,
-                    isDefault: response.data.data.isDefault,
                 });
             } else {
                 setError('Failed to fetch pack type');
@@ -143,30 +141,7 @@ const EditPackTypes = () => {
                     />
                 </Grid>
 
-                <Grid size={12}>
-                    <CustomFormLabel htmlFor="isDefault" sx={{ mt: 0 }}>
-                        Is Default <span style={{ color: 'red' }}>*</span>
-                    </CustomFormLabel>
-                </Grid>
 
-                <Grid size={12}>
-                    <CustomTextField
-                        id="isDefault"
-                        select
-                        fullWidth
-                        value={formData.isDefault ? 'true' : 'false'}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                isDefault: e.target.value === 'true',
-                            })
-                        }
-                        disabled={loading}
-                    >
-                        <MenuItem value="true">True</MenuItem>
-                        <MenuItem value="false">False</MenuItem>
-                    </CustomTextField>
-                </Grid>
 
                 {/* Error Message */}
                 {error && (

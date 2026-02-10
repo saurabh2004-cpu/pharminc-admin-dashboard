@@ -37,12 +37,7 @@ const ListPackTypes = () => {
             disablePadding: false,
             label: 'Quantity',
         },
-        {
-            id: 'isDefault',
-            numeric: false,
-            disablePadding: false,
-            label: 'Is Default',
-        },
+       
         {
             id: 'createdAt',
             numeric: false,

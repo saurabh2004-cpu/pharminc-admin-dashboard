@@ -14,7 +14,6 @@ const CreatePackTypes = () => {
     const [formData, setFormData] = React.useState({
         name: '',
         quantity: '',
-        isDefault: false,
     });
     const [error, setError] = React.useState('');
     const [loading, setLoading] = React.useState(false);
@@ -181,31 +180,6 @@ const CreatePackTypes = () => {
                         disabled={loading}
                         placeholder="Enter pack quantity"
                     />
-                </Grid>
-
-                <Grid size={12}>
-                    <CustomFormLabel htmlFor="isDefault" sx={{ mt: 0 }}>
-                        Is Default <span style={{ color: 'red' }}>*</span>
-                    </CustomFormLabel>
-                </Grid>
-
-                <Grid size={12}>
-                    <CustomTextField
-                        id="isDefault"
-                        select
-                        fullWidth
-                        value={formData.isDefault ? 'true' : 'false'}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                isDefault: e.target.value === 'true',
-                            })
-                        }
-                        disabled={loading}
-                    >
-                        <MenuItem value="true">True</MenuItem>
-                        <MenuItem value="false">False</MenuItem>
-                    </CustomTextField>
                 </Grid>
 
                 {/* Error Message */}
