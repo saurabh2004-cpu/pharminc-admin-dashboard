@@ -267,6 +267,8 @@ const CustomersSalesOrders = () => {
         trackingNumber: "",
         date: "",
         deliveryVendor: "",
+        comments: "",
+        shippingRate: 0,
     });
     const [loading, setLoading] = useState(false);
     const [editingRowId, setEditingRowId] = useState(null);
@@ -462,6 +464,8 @@ const CustomersSalesOrders = () => {
                 shippingAddress: formatSalesOrderAddress(tableData[0]?.shippingAddress),
                 trackingNumber: tableData[0]?.trackingNumber || "",
                 deliveryVendor: tableData[0]?.deliveryVendor || "",
+                comments: tableData[0]?.comments || "",
+                shippingRate: tableData[0]?.shippingRate || 0,
                 date: tableData[0]?.date
                     ? new Date(tableData[0].date).toISOString().split("T")[0]
                     : "",
@@ -523,6 +527,8 @@ const CustomersSalesOrders = () => {
                     trackingNumber: formData.trackingNumber,
                     date: formData.date,
                     deliveryVendor: selectedDeliveryVendor,
+                    comments: formData.comments,
+                    shippingRate: parseFloat(formData.shippingRate) || 0,
                 },
                 { headers: { "Content-Type": "application/json" } }
             );
@@ -1563,7 +1569,7 @@ const CustomersSalesOrders = () => {
                                         <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 120 }}>
                                             Customer Name :
                                         </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500, maxWidth: 200 }}>
+                                        <Typography onClick={() => navigate(`/dashboard/customers/edit/${tableData[0].customerNumber}`)} variant="body2" sx={{ cursor: 'pointer', color: 'blue', fontWeight: 500, maxWidth: 200 }}>
                                             {tableData[0]?.customerName || 'N/A'}
                                         </Typography>
                                     </Box>
@@ -1571,7 +1577,7 @@ const CustomersSalesOrders = () => {
                                         <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 120 }}>
                                             Customer Id :
                                         </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 500, maxWidth: 200 }}>
+                                        <Typography variant="body2" onClick={() => navigate(`/dashboard/customers/edit/${tableData[0].customerNumber}`)} sx={{ cursor: 'pointer', color: 'blue', fontWeight: 500, maxWidth: 200 }}>
                                             {tableData[0]?.customerNumber || 'N/A'}
                                         </Typography>
                                     </Box>
@@ -1920,6 +1926,46 @@ const CustomersSalesOrders = () => {
                                         </MenuItem>
                                     ))}
                                 </TextField>
+                            </Box>
+
+                            {/* Comments */}
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80, mt: 1 }}>
+                                    Comments:
+                                </Typography>
+                                <TextField
+                                    multiline
+                                    rows={3}
+                                    size="small"
+                                    value={formData.comments}
+                                    onChange={(e) => handleInputChange("comments", e.target.value)}
+                                    placeholder="Enter order comments (optional)"
+                                    sx={{ minWidth: 270 }}
+                                />
+                            </Box>
+
+                            {/* Shipping Rate */}
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
+                                    Shipping Rate:
+                                </Typography>
+                                <TextField
+                                    type="number"
+                                    size="small"
+                                    value={formData.shippingRate}
+                                    onChange={(e) => {
+                                        const value = parseFloat(e.target.value);
+                                        if (value >= 0 || e.target.value === '') {
+                                            handleInputChange("shippingRate", e.target.value === '' ? 0 : value);
+                                        }
+                                    }}
+                                    placeholder="0.00"
+                                    inputProps={{ min: 0, step: "0.01" }}
+                                    sx={{ minWidth: 270 }}
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                    }}
+                                />
                             </Box>
 
 

@@ -16,7 +16,8 @@ import {
   Chip,
   Autocomplete,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  TextField
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CustomFormLabel from '../.../../../../components/forms/theme-elements/CustomFormLabel';
@@ -70,6 +71,7 @@ const EditCustomers = () => {
   const [statusLoading, setStatusLoading] = React.useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
+  const [userId, setUserId] = useState(null)
   const [pricingGroupDiscounts, setPricingGroupDiscounts] = useState([]);
   const [pricingGroups, setPricingGroups] = useState([]);
   const [customerId, setCustomerId] = useState('');
@@ -80,6 +82,15 @@ const EditCustomers = () => {
   const [brandList, setBrandList] = useState([]);
   const [billingSameAsShipping, setBillingSameAsShipping] = React.useState(false);
   const [netTermsList, setNetTermsList] = useState([]);
+
+  // Add Pricing Group Discount Modal States
+  const [addDiscountModalOpen, setAddDiscountModalOpen] = useState(false);
+  const [availablePricingGroups, setAvailablePricingGroups] = useState([]);
+  const [newDiscountForm, setNewDiscountForm] = useState({
+    pricingGroupIds: [],
+    percentage: ''
+  });
+  const [discountModalLoading, setDiscountModalLoading] = useState(false);
 
 
 
@@ -162,7 +173,7 @@ const EditCustomers = () => {
 
         // Find if this customer is assigned to any sales rep
         const customerSalesRep = response.data.data.find(rep =>
-          rep.customers.includes(id)
+          rep.customers.includes(userId)
         );
 
         if (customerSalesRep) {
@@ -188,7 +199,7 @@ const EditCustomers = () => {
     try {
       setSalesRepLoading(true);
       const response = await axiosInstance.post(
-        `/sales-rep/add-customer-to-sales-rep/${selectedSalesRep}/${id}`
+        `/sales-rep/add-customer-to-sales-rep/${selectedSalesRep}/${userId}`
       );
 
       if (response.data.statusCode === 200) {
@@ -235,7 +246,7 @@ const EditCustomers = () => {
     try {
       const newStatus = !formData.inactive;
 
-      const res = await axiosInstance.put(`/admin/update-user-status/${id}`, {
+      const res = await axiosInstance.put(`/admin/update-user-status/${userId}`, {
         status: newStatus
       }, {
         headers: {
@@ -431,7 +442,7 @@ const EditCustomers = () => {
 
       // console.log("Sending data:", dataToSend);
 
-      const res = await axiosInstance.put(`/admin/update-user-details/${id}`, dataToSend, {
+      const res = await axiosInstance.put(`/admin/update-user-details/${userId}`, dataToSend, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -457,13 +468,14 @@ const EditCustomers = () => {
   const fetchCustomer = async () => {
     try {
       const res = await axiosInstance.get(`/admin/get-user/${id}`);
-
       // console.log("res user", res)
 
       if (res.data.statusCode === 200) {
         const customerData = res.data.data;
 
-        // Set customerId from the response
+        setUserId(customerData._id)
+
+        // Set customerId from the response 
         setCustomerId(customerData._id);
 
         // Check if addresses exist in the response
@@ -591,7 +603,7 @@ const EditCustomers = () => {
 
       setLoading(true);
       // specific route for delete markup discount
-      const res = await axiosInstance.delete(`/admin/delete-markup-discount/${id}/${discountId}`);
+      const res = await axiosInstance.delete(`/admin/delete-markup-discount/${userId}/${discountId}`);
 
 
       if (res.data.statusCode === 200) {
@@ -616,6 +628,126 @@ const EditCustomers = () => {
       setError(error.response?.data?.message || error.message || 'Failed to delete markup discount');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch available pricing groups for the modal
+  const fetchAvailablePricingGroups = async () => {
+    try {
+      setDiscountModalLoading(true);
+      const response = await axiosInstance.get('/pricing-groups/get-pricing-groups');
+
+      if (response.data.statusCode === 200) {
+        setAvailablePricingGroups(Array.isArray(response.data.data) ? response.data.data : []);
+      } else {
+        setAvailablePricingGroups([]);
+      }
+    } catch (error) {
+      console.error('Error fetching pricing groups:', error);
+      setError('Error fetching pricing groups: ' + error.message);
+      setAvailablePricingGroups([]);
+    } finally {
+      setDiscountModalLoading(false);
+    }
+  };
+
+  // Handle opening the add discount modal
+  const handleOpenAddDiscountModal = () => {
+    setAddDiscountModalOpen(true);
+    fetchAvailablePricingGroups();
+  };
+
+  // Handle closing the add discount modal
+  const handleCloseAddDiscountModal = () => {
+    setAddDiscountModalOpen(false);
+    setNewDiscountForm({
+      pricingGroupIds: [],
+      percentage: ''
+    });
+    setError('');
+  };
+
+  // Handle pricing group selection in modal
+  const handleModalPricingGroupChange = (event, newValue) => {
+    setNewDiscountForm({
+      ...newDiscountForm,
+      pricingGroupIds: newValue.map(group => group._id)
+    });
+  };
+
+  // Handle percentage change in modal
+  const handleModalPercentageChange = (e) => {
+    const value = e.target.value;
+    // Allow +, -, digits, and decimal point
+    if (value === '' || /^[+-]?\d*\.?\d*$/.test(value)) {
+      setNewDiscountForm({ ...newDiscountForm, percentage: value });
+    }
+  };
+
+  // Submit new pricing group discount
+  const handleSubmitNewDiscount = async () => {
+    // Validation
+    if (!newDiscountForm.pricingGroupIds || newDiscountForm.pricingGroupIds.length === 0) {
+      setError('Please select at least one pricing group');
+      return;
+    }
+
+    if (!newDiscountForm.percentage) {
+      setError('Please enter a percentage value');
+      return;
+    }
+
+    // Parse the percentage (remove + or - sign for validation)
+    const percentageValue = parseFloat(newDiscountForm.percentage.toString().replace(/[+-]/g, ''));
+
+    if (isNaN(percentageValue) || percentageValue <= 0 || percentageValue > 100) {
+      setError('Please enter a valid percentage between 0 and 100');
+      return;
+    }
+
+    if (!userId) {
+      setError('User ID not found. Please refresh the page.');
+      return;
+    }
+
+    try {
+      setDiscountModalLoading(true);
+      setError('');
+
+      const dataToSend = {
+        customers: [userId], // Array with current user's ID
+        pricingGroupIds: newDiscountForm.pricingGroupIds,
+        percentage: newDiscountForm.percentage
+      };
+
+      console.log('Sending data:', dataToSend);
+
+      const res = await axiosInstance.post(
+        '/pricing-groups-discount/create-pricing-group-discount',
+        dataToSend,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (res.data.statusCode === 200) {
+        setError(`Successfully created ${res.data.data.created || newDiscountForm.pricingGroupIds.length} pricing group discount(s)!`);
+
+        // Close modal and reset form
+        handleCloseAddDiscountModal();
+
+        // Refresh the pricing group discounts table
+        await fetPricingGroupsByCustomerId();
+      } else {
+        setError(res.data.message || 'Failed to create pricing group discount');
+      }
+    } catch (error) {
+      console.error('Error creating pricing group discount:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to create pricing group discount');
+    } finally {
+      setDiscountModalLoading(false);
     }
   };
 
@@ -650,12 +782,18 @@ const EditCustomers = () => {
     const fetch = async () => {
       await Promise.all([
         fetchCustomer(),
-        fetchSalesReps(),
         fetchNetTermsData()
       ])
     }
     fetch();
   }, [id]);
+
+  // Fetch sales reps after userId is set
+  useEffect(() => {
+    if (userId) {
+      fetchSalesReps();
+    }
+  }, [userId]);
 
   const BCrumb = [
     {
@@ -1389,6 +1527,19 @@ const EditCustomers = () => {
               No pricing group discounts found for this customer.
             </Typography>
           )}
+
+          {/* Add Discount Button */}
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<IconPlus size="1rem" />}
+              onClick={handleOpenAddDiscountModal}
+              disabled={loading || !userId}
+              sx={{ borderColor: '#2E2F7F', color: '#2E2F7F' }}
+            >
+              Add
+            </Button>
+          </Box>
         </Grid>
 
         {/* Comments */}
@@ -1438,6 +1589,137 @@ const EditCustomers = () => {
           </Button>
         </Grid>
       </Grid>
+
+      {/* Add Pricing Group Discount Modal */}
+      <Dialog
+        open={addDiscountModalOpen}
+        onClose={handleCloseAddDiscountModal}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Add Pricing Group Discount
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            {/* Pricing Groups Multi-Select */}
+            <CustomFormLabel htmlFor="modal-pricing-group-select" sx={{ mt: 0 }}>
+              Select Pricing Groups
+              <span style={{ color: 'red' }}>*</span>
+              <Typography component="span" sx={{ ml: 1, fontSize: '0.875rem', color: 'text.secondary' }}>
+                (Multiple selection allowed)
+              </Typography>
+            </CustomFormLabel>
+            <FormControl fullWidth sx={{ mt: 1 }}>
+              <Autocomplete
+                id="modal-pricing-group-select"
+                multiple
+                value={availablePricingGroups.filter(group => newDiscountForm.pricingGroupIds.includes(group._id))}
+                onChange={handleModalPricingGroupChange}
+                options={Array.isArray(availablePricingGroups) ? availablePricingGroups : []}
+                getOptionLabel={(option) => option.name || ''}
+                isOptionEqualToValue={(option, value) => option._id === value._id}
+                disabled={discountModalLoading || !Array.isArray(availablePricingGroups) || availablePricingGroups.length === 0}
+                noOptionsText={!Array.isArray(availablePricingGroups) || availablePricingGroups.length === 0 ? 'Loading pricing groups...' : 'No pricing groups found'}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      {...getTagProps({ index })}
+                      key={option._id}
+                      label={option.name || 'Unknown'}
+                      size="small"
+                    />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder={!Array.isArray(availablePricingGroups) || availablePricingGroups.length === 0 ? 'Loading pricing groups...' : 'Search and select pricing groups'}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(0, 0, 0, 0.23)',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'rgba(0, 0, 0, 0.87)',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                  />
+                )}
+              />
+            </FormControl>
+            {newDiscountForm.pricingGroupIds.length > 0 && (
+              <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.secondary' }}>
+                {newDiscountForm.pricingGroupIds.length} pricing group{newDiscountForm.pricingGroupIds.length > 1 ? 's' : ''} selected
+              </Typography>
+            )}
+
+            {/* Percentage Input */}
+            <CustomFormLabel htmlFor="modal-percentage" sx={{ mt: 2 }}>
+              Discount Percentage (%)
+              <span style={{ color: 'red' }}>*</span>
+              <Typography component="span" sx={{ ml: 1, fontSize: '0.875rem', color: 'text.secondary' }}>
+                (Use + for markup, - for discount)
+              </Typography>
+            </CustomFormLabel>
+            <CustomOutlinedInput
+              id="modal-percentage"
+              fullWidth
+              type="text"
+              value={newDiscountForm.percentage}
+              onChange={handleModalPercentageChange}
+              placeholder="Enter discount percentage (e.g., +10 or -10)"
+              disabled={discountModalLoading}
+              sx={{
+                mt: 1,
+                '& input': {
+                  color: newDiscountForm.percentage.toString().startsWith('-')
+                    ? 'error.main'
+                    : newDiscountForm.percentage.toString().startsWith('+')
+                      ? 'success.main'
+                      : 'text.primary'
+                }
+              }}
+            />
+            {newDiscountForm.percentage && (
+              <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+                {newDiscountForm.percentage.toString().startsWith('-')
+                  ? '📉 Discount applied'
+                  : newDiscountForm.percentage.toString().startsWith('+')
+                    ? '📈 Markup applied'
+                    : 'ℹ️ Add + or - sign'}
+              </Typography>
+            )}
+
+            {/* Error Message in Modal */}
+            {error && !error.includes('success') && !error.includes('Successfully') && (
+              <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+                {error}
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseAddDiscountModal}
+            disabled={discountModalLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmitNewDiscount}
+            variant="contained"
+            disabled={discountModalLoading || !newDiscountForm.pricingGroupIds.length || !newDiscountForm.percentage}
+            sx={{ backgroundColor: '#2E2F7F' }}
+          >
+            {discountModalLoading ? 'Creating...' : 'Submit'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
