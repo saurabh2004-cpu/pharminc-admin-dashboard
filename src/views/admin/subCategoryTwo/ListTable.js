@@ -33,30 +33,54 @@ import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
+  let aValue = a[orderBy];
+  let bValue = b[orderBy];
+
+  // Special handling for nested subCategory object
+  if (orderBy === 'subCategory') {
+    aValue = (a.subCategory?.name || '').toLowerCase();
+    bValue = (b.subCategory?.name || '').toLowerCase();
   }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
+  // Standardize numeric fields
+  else if (orderBy === 'sequence') {
+    aValue = parseFloat(aValue) || 0;
+    bValue = parseFloat(bValue) || 0;
+  }
+  // Handle date fields by converting to timestamps
+  else if (orderBy === 'createdAt' || orderBy === 'createAlt') {
+    const valA = a.createAlt || a.createdAt;
+    const valB = b.createAlt || b.createdAt;
+    aValue = valA ? new Date(valA).getTime() : 0;
+    bValue = valB ? new Date(valB).getTime() : 0;
+  }
+  // Standardize strings for alphabetical sorting
+  else if (typeof aValue === 'string') {
+    aValue = aValue.toLowerCase();
+    bValue = (bValue || '').toLowerCase();
   }
 
+  if (bValue < aValue) {
+    return -1;
+  }
+  if (bValue > aValue) {
+    return 1;
+  }
   return 0;
 }
 
-function getComparator(
-  order,
-  orderBy,
-) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+function getComparator(order, orderBy) {
+  return (a, b) => {
+    const comp = descendingComparator(a, b, orderBy);
+    return order === 'desc' ? comp : -comp;
+  };
 }
 
 function stableSort(array, comparator) {
+  if (!array) return [];
   const stabilizedThis = array.map((el, index) => [el, index]);
   stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
+    const orderResult = comparator(a[0], b[0]);
+    if (orderResult !== 0) return orderResult;
     return a[1] - b[1];
   });
   return stabilizedThis.map((el) => el[0]);
@@ -109,6 +133,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -191,7 +221,7 @@ const ListTable = ({
   } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('name');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -232,6 +262,7 @@ const ListTable = ({
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0); // Reset page to 0 on sort
   };
 
 

@@ -30,15 +30,34 @@ import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) return -1;
-  if (b[orderBy] > a[orderBy]) return 1;
+  let aValue = a[orderBy];
+  let bValue = b[orderBy];
+
+  // Handle date fields by converting to timestamps
+  if (orderBy === 'createdAt' || orderBy === 'updatedAt') {
+    aValue = aValue ? new Date(aValue).getTime() : 0;
+    bValue = bValue ? new Date(bValue).getTime() : 0;
+  }
+  // Standardize strings for alphabetical sorting
+  else if (typeof aValue === 'string') {
+    aValue = aValue.toLowerCase();
+    bValue = (bValue || '').toLowerCase();
+  }
+
+  if (bValue < aValue) {
+    return -1;
+  }
+  if (bValue > aValue) {
+    return 1;
+  }
   return 0;
 }
 
 function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+  return (a, b) => {
+    const comp = descendingComparator(a, b, orderBy);
+    return order === 'desc' ? comp : -comp;
+  };
 }
 
 function stableSort(array, comparator) {
@@ -98,6 +117,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -175,7 +200,7 @@ const ListTable = ({
   const { filteredAndSortedProducts } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('name');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
@@ -217,6 +242,7 @@ const ListTable = ({
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0); // Always reset page to 0 on sort
   };
 
   const handleSelectAllClick = (event) => {

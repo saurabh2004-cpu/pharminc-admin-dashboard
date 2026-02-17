@@ -115,6 +115,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -333,17 +339,17 @@ const ProductTableList = ({
         // Remove item from both table data and rows
         setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
         setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
-        
+
         // Close dialog
         handleDeleteCancel();
-        
+
         // You might want to show a success message here
         // console.log("Brand deleted successfully");
       }
     } catch (error) {
       console.error('Error deleting brand:', error);
       setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
-      
+
       // You might want to show an error message here
       alert("Failed to delete brand. Please try again.");
     }
@@ -443,18 +449,18 @@ const ProductTableList = ({
                             <TableCell sx={stickyCellStyle}>
                               <Box display="flex" gap={1}>
                                 <Tooltip title="Edit">
-                                  <IconButton 
-                                    size="small" 
-                                    color="primary" 
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
                                     onClick={(event) => handleEditBrand(event, row._id)}
                                   >
                                     <IconEdit size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton 
-                                    size="small" 
-                                    color="error" 
+                                  <IconButton
+                                    size="small"
+                                    color="error"
                                     onClick={(event) => handleDeleteClick(event, row._id, row.name)}
                                   >
                                     <IconTrash size="1.1rem" />

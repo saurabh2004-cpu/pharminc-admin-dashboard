@@ -124,6 +124,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -546,7 +552,7 @@ const ListTable = ({
           setFilter={setFilter}
         />
 
-      
+
         <Paper variant="outlined" sx={{ mx: 2, mt: 1, border: `1px solid ${borderColor}` }}>
           <TableContainer sx={{ width: "100%" }}>
             <Table
@@ -723,7 +729,7 @@ const ListTable = ({
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 30, 50,100,200]}
+            rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}

@@ -72,6 +72,11 @@ function descendingComparator(a, b, orderBy) {
       return item.inactive ? 1 : 0;
     }
 
+    // Chronological date sorting
+    if (id === 'createdAt' || id === 'updatedAt' || id === 'date') {
+      return val ? new Date(val).getTime() : 0;
+    }
+
     // Handle commerce category arrays (Level 1-4)
     if (id.startsWith('commerceCategories')) {
       if (Array.isArray(val)) {
@@ -106,9 +111,10 @@ function descendingComparator(a, b, orderBy) {
 }
 
 function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+  return (a, b) => {
+    const comp = descendingComparator(a, b, orderBy);
+    return order === 'desc' ? comp : -comp;
+  };
 }
 
 function stableSort(array, comparator) {
@@ -161,12 +167,19 @@ function EnhancedTableHead(props) {
             sx={{
               ...headCellStyle,
               ...(index === 0 ? stickyCellStyle : {}),
+              userSelect: 'text', // Allow text selection for copying
             }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (

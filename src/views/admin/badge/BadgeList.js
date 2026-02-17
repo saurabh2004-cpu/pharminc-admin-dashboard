@@ -32,16 +32,16 @@ const BadgeList = () => {
             label: 'Badge Name',
         },
         {
-            id: 'Background ',
+            id: 'backgroundColor',
             numeric: false,
             disablePadding: false,
-            label: 'Background ',
+            label: 'Background',
         },
         {
-            id: 'Text ',
+            id: 'text',
             numeric: false,
             disablePadding: false,
-            label: 'Text ',
+            label: 'Text',
         },
 
         {
@@ -79,26 +79,26 @@ const BadgeList = () => {
 
     return (
         // <ProductProvider>
-            <PageContainer title="Badges List" description="this is Brands List page">
-                {/* breadcrumb */}
-                <Breadcrumb title="Brands List" items={BCrumb} />
-                {/* end breadcrumb */}
-                <Box
-                    // sx={{
-                    //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-                    //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-                    //     transition: "margin-left 0.3s ease", // smooth animation
-                    // }}
-                >
-                    <ListTable
-                        showCheckBox={false}
-                        headCells={headCells}
-                        tableData={tableData}
-                        isBrandsList={true} // Add this prop to identify it's brands data
-                        setTableData={setTableData}
-                    />
-                </Box>
-            </PageContainer>
+        <PageContainer title="Badges List" description="this is Brands List page">
+            {/* breadcrumb */}
+            <Breadcrumb title="Brands List" items={BCrumb} />
+            {/* end breadcrumb */}
+            <Box
+            // sx={{
+            //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+            //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+            //     transition: "margin-left 0.3s ease", // smooth animation
+            // }}
+            >
+                <ListTable
+                    showCheckBox={false}
+                    headCells={headCells}
+                    tableData={tableData}
+                    isBrandsList={true} // Add this prop to identify it's brands data
+                    setTableData={setTableData}
+                />
+            </Box>
+        </PageContainer>
         // </ProductProvider>
     );
 };

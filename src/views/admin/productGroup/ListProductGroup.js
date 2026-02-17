@@ -121,12 +121,18 @@ function EnhancedTableHead(props) {
             align={headCell.numeric ? 'left' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={{ ...headCellStyle, ...columnWidths[headCell.id] }}
+            sx={{ ...headCellStyle, ...columnWidths[headCell.id], userSelect: 'text', }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -297,9 +303,10 @@ const ListProductGroup = () => {
 
   // Column width configuration for table body
   const columnWidths = {
+    sku: { minWidth: '100px', maxWidth: '200px' },
     actions: { minWidth: '120px', maxWidth: '120px' },
     thumbnail: { minWidth: '100px', maxWidth: '100px' },
-    name: { minWidth: '200px', maxWidth: '300px' },
+    name: { minWidth: '100px', maxWidth: '300px' },
     slug: { minWidth: '200px', maxWidth: '300px' },
     productsCount: { minWidth: '150px', maxWidth: '180px' },
     commerceCategoriesOne: { minWidth: '250px', maxWidth: '300px' },
@@ -583,7 +590,7 @@ const ListProductGroup = () => {
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={columnWidths.name}>
+                        <TableCell sx={columnWidths.sku}>
                           <Typography
                             fontWeight="500"
                             variant="body1"

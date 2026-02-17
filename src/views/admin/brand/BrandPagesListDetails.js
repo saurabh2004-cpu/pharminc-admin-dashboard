@@ -31,27 +31,39 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
+  let aValue = a[orderBy];
+  let bValue = b[orderBy];
+
+  // Special handling for nested brand object
   if (orderBy === 'brand') {
-    const aValue = a.brand?.name || '';
-    const bValue = b.brand?.name || '';
-    if (bValue < aValue) return -1;
-    if (bValue > aValue) return 1;
-    return 0;
+    aValue = (a.brand?.name || '').toLowerCase();
+    bValue = (b.brand?.name || '').toLowerCase();
+  }
+  // Handle date fields by converting to timestamps
+  else if (orderBy === 'updatedAt' || orderBy === 'createdAt') {
+    aValue = aValue ? new Date(aValue).getTime() : 0;
+    bValue = bValue ? new Date(bValue).getTime() : 0;
+  }
+  // Handle standard string fields for case-insensitive comparison
+  else if (typeof aValue === 'string') {
+    aValue = aValue.toLowerCase();
+    bValue = (bValue || '').toLowerCase();
   }
 
-  if (b[orderBy] < a[orderBy]) {
+  if (bValue < aValue) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (bValue > aValue) {
     return 1;
   }
   return 0;
 }
 
 function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+  return (a, b) => {
+    const comp = descendingComparator(a, b, orderBy);
+    return order === 'desc' ? comp : -comp;
+  };
 }
 
 function stableSort(array, comparator) {
@@ -115,6 +127,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -125,10 +143,6 @@ function EnhancedTableHead(props) {
             </TableSortLabel>
           </TableCell>
         ))}
-
-        <TableCell sx={headCellStyle}>
-          Last Updated Date
-        </TableCell>
       </TableRow>
     </TableHead>
   );
@@ -257,6 +271,12 @@ const BrandPagesListDetails = () => {
       numeric: false,
       disablePadding: false,
     },
+    {
+      id: 'updatedAt',
+      label: 'Last Updated Date',
+      numeric: false,
+      disablePadding: false,
+    },
   ];
 
   const fetchBrandPages = async () => {
@@ -304,6 +324,7 @@ const BrandPagesListDetails = () => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0); // Reset page to 0 when sorting changes
   };
 
   const handleSelectAllClick = (event) => {
@@ -419,7 +440,7 @@ const BrandPagesListDetails = () => {
 
   return (
     <Box>
-      <Breadcrumb title="Edit Brand Page" items={BCrumb} />
+      <Breadcrumb title="Brand Pages List" items={BCrumb} />
 
       <Box>
         <EnhancedTableToolbar

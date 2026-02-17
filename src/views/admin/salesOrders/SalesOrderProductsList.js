@@ -46,18 +46,18 @@ function descendingComparator(a, b, orderBy) {
 
     // Handle special cases for nested or calculated properties
     if (orderBy === 'ProductName') {
-        aValue = a.itemName || a.productName || '';
-        bValue = b.itemName || b.productName || '';
+        aValue = (a.itemName || a.productName || '').toLowerCase();
+        bValue = (b.itemName || b.productName || '').toLowerCase();
     } else if (orderBy === 'ItemCode') {
-        aValue = a.itemSku || '';
-        bValue = b.itemSku || '';
+        aValue = (a.itemSku || '').toLowerCase();
+        bValue = (b.itemSku || '').toLowerCase();
     } else if (orderBy === 'Gst') {
         // Sort by tax rate, considering if tax is applied
         aValue = a.taxApplied ? (Number(a.taxPercentages) || 0) : 0;
         bValue = b.taxApplied ? (Number(b.taxPercentages) || 0) : 0;
     } else if (orderBy === 'packQuantity') {
-        aValue = a.packType || '';
-        bValue = b.packType || '';
+        aValue = (a.packType || '').toLowerCase();
+        bValue = (b.packType || '').toLowerCase();
     } else if (orderBy === 'amount') {
         // Sort by line total instead of just unit price
         aValue = (Number(a.amount) || 0) * (Number(a.unitsQuantity) || 1) * (Number(a.packQuantity) || 1);
@@ -68,6 +68,16 @@ function descendingComparator(a, b, orderBy) {
     } else if (orderBy === 'discountPercentages') {
         aValue = Number(a.discountPercentages) || 0;
         bValue = Number(b.discountPercentages) || 0;
+    }
+    // Handle standard string fields
+    else if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = (bValue || '').toLowerCase();
+    }
+    // Handle date fields if any
+    else if (orderBy === 'createdAt' || orderBy === 'updatedAt' || orderBy === 'date') {
+        aValue = aValue ? new Date(aValue).getTime() : 0;
+        bValue = bValue ? new Date(bValue).getTime() : 0;
     }
 
     if (bValue < aValue) {
@@ -80,9 +90,10 @@ function descendingComparator(a, b, orderBy) {
 }
 
 function getComparator(order, orderBy) {
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
+    return (a, b) => {
+        const comp = descendingComparator(a, b, orderBy);
+        return order === 'desc' ? comp : -comp;
+    };
 }
 
 function stableSort(array, comparator) {
@@ -133,12 +144,21 @@ function EnhancedTableHead(props) {
                         align={headCell.numeric ? 'right' : 'left'}
                         padding={headCell.disablePadding ? 'none' : 'normal'}
                         sortDirection={orderBy === headCell.id ? order : false}
-                        sx={headCellStyle}
+                        sx={{
+                            ...headCellStyle,
+                            userSelect: 'text', // Allow text selection for copying
+                        }}
                     >
                         <TableSortLabel
                             active={orderBy === headCell.id}
                             direction={orderBy === headCell.id ? order : 'asc'}
                             onClick={createSortHandler(headCell.id)}
+                            sx={{
+                                userSelect: 'text', // Allow text selection on the label
+                                '& .MuiTableSortLabel-icon': {
+                                    opacity: 0.5,
+                                },
+                            }}
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
@@ -1009,6 +1029,7 @@ const CustomersSalesOrders = () => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
         setOrderBy(property);
+        setPage(0); // Always reset page to 0 on sort
     };
 
     const handleSelectAllClick = (event) => {

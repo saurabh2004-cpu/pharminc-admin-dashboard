@@ -35,30 +35,41 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
-    if (b[orderBy] < a[orderBy]) {
-        return -1;
+    let aValue = a[orderBy];
+    let bValue = b[orderBy];
+
+    // Handle date fields by converting to timestamps
+    if (orderBy === 'createdAt' || orderBy === 'updatedAt') {
+        aValue = aValue ? new Date(aValue).getTime() : 0;
+        bValue = bValue ? new Date(bValue).getTime() : 0;
     }
-    if (b[orderBy] > a[orderBy]) {
-        return 1;
+    // Handle string fields for case-insensitive comparison
+    else if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = (bValue || '').toLowerCase();
     }
 
+    if (bValue < aValue) {
+        return -1;
+    }
+    if (bValue > aValue) {
+        return 1;
+    }
     return 0;
 }
 
-function getComparator(
-    order,
-    orderBy,
-) {
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
+function getComparator(order, orderBy) {
+    return (a, b) => {
+        const comp = descendingComparator(a, b, orderBy);
+        return order === 'desc' ? comp : -comp;
+    };
 }
 
 function stableSort(array, comparator) {
     const stabilizedThis = array.map((el, index) => [el, index]);
     stabilizedThis.sort((a, b) => {
-        const order = comparator(a[0], b[0]);
-        if (order !== 0) return order;
+        const orderResult = comparator(a[0], b[0]);
+        if (orderResult !== 0) return orderResult;
         return a[1] - b[1];
     });
     return stabilizedThis.map((el) => el[0]);
@@ -113,6 +124,12 @@ function EnhancedTableHead(props) {
                             active={orderBy === headCell.id}
                             direction={orderBy === headCell.id ? order : 'asc'}
                             onClick={createSortHandler(headCell.id)}
+                            sx={{
+                                userSelect: 'text',
+                                '& .MuiTableSortLabel-icon': {
+                                    opacity: 0.5,
+                                },
+                            }}
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
@@ -123,11 +140,6 @@ function EnhancedTableHead(props) {
                         </TableSortLabel>
                     </TableCell>
                 ))}
-
-                {/* Created At column */}
-                <TableCell sx={headCellStyle}>
-                    Submitted Date
-                </TableCell>
             </TableRow>
         </TableHead>
     );
@@ -266,6 +278,12 @@ const ListContactUsData = () => {
             numeric: false,
             disablePadding: false,
         },
+        {
+            id: 'createdAt',
+            label: 'Submitted Date',
+            numeric: false,
+            disablePadding: false,
+        },
     ];
 
     const fetchContactUsData = async () => {
@@ -314,6 +332,7 @@ const ListContactUsData = () => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
         setOrderBy(property);
+        setPage(0);
     };
 
     const handleSelectAllClick = (event) => {

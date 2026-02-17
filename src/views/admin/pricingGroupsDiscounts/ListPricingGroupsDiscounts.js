@@ -39,7 +39,7 @@ const ListPricingGroupsDiscounts = () => {
       label: 'Customer Name',
     },
     {
-      id: 'updated At',
+      id: 'updatedAt',
       numeric: false,
       disablePadding: false,
       label: 'Last Updated Date',
@@ -73,26 +73,26 @@ const ListPricingGroupsDiscounts = () => {
 
   return (
     // <ProductProvider>
-      <PageContainer title="Item Discounts List" description="this is Item Discounts List page">
-        {/* breadcrumb */}
-        <Breadcrumb title="Item Discounts" items={BCrumb} />
-        {/* end breadcrumb */}
-        <Box
-        // sx={{
-        //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-        //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-        //     transition: "margin-left 0.3s ease", // smooth animation
-        // }}
-        >
-          <ListTable
-            showCheckBox={false}
-            headCells={headCells}
-            tableData={tableData}
-            isBrandsList={true} // Add this prop to identify it's brands data
-            setTableData={setTableData}
-          />
-        </Box>
-      </PageContainer>
+    <PageContainer title="Item Discounts List" description="this is Item Discounts List page">
+      {/* breadcrumb */}
+      <Breadcrumb title="Item Discounts" items={BCrumb} />
+      {/* end breadcrumb */}
+      <Box
+      // sx={{
+      //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+      //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+      //     transition: "margin-left 0.3s ease", // smooth animation
+      // }}
+      >
+        <ListTable
+          showCheckBox={false}
+          headCells={headCells}
+          tableData={tableData}
+          isBrandsList={true} // Add this prop to identify it's brands data
+          setTableData={setTableData}
+        />
+      </Box>
+    </PageContainer>
     // </ProductProvider>
   );
 };

@@ -53,17 +53,26 @@ function descendingComparator(a, b, orderBy) {
 
   // Special handling for nested or complex fields
   if (orderBy === 'netTerms') {
-    aValue = a.netTerms?.netTermName || '';
-    bValue = b.netTerms?.netTermName || '';
+    aValue = (a.netTerms?.netTermName || '').toLowerCase();
+    bValue = (b.netTerms?.netTermName || '').toLowerCase();
   } else if (orderBy === 'shippingAddresses') {
-    aValue = a.shippingAddresses?.[0]?.shippingAddressOne || '';
-    bValue = b.shippingAddresses?.[0]?.shippingAddressOne || '';
+    aValue = (a.shippingAddresses?.[0]?.shippingAddressOne || '').toLowerCase();
+    bValue = (b.shippingAddresses?.[0]?.shippingAddressOne || '').toLowerCase();
   } else if (orderBy === 'billingAddresses') {
-    aValue = a.billingAddresses?.[0]?.billingAddressOne || '';
-    bValue = b.billingAddresses?.[0]?.billingAddressOne || '';
+    aValue = (a.billingAddresses?.[0]?.billingAddressOne || '').toLowerCase();
+    bValue = (b.billingAddresses?.[0]?.billingAddressOne || '').toLowerCase();
   } else if (orderBy === 'inactive') {
     aValue = a.inactive ? 1 : 0;
     bValue = b.inactive ? 1 : 0;
+  } else if (orderBy === 'createdAt' || orderBy === 'updatedAt') {
+    aValue = aValue ? new Date(aValue).getTime() : 0;
+    bValue = bValue ? new Date(bValue).getTime() : 0;
+  } else if (orderBy === 'defaultShippingRate') {
+    aValue = parseFloat(aValue) || 0;
+    bValue = parseFloat(bValue) || 0;
+  } else if (typeof aValue === 'string') {
+    aValue = aValue.toLowerCase();
+    bValue = (bValue || '').toLowerCase();
   }
 
   if (bValue < aValue) {
@@ -75,13 +84,11 @@ function descendingComparator(a, b, orderBy) {
   return 0;
 }
 
-function getComparator(
-  order,
-  orderBy,
-) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+function getComparator(order, orderBy) {
+  return (a, b) => {
+    const comp = descendingComparator(a, b, orderBy);
+    return order === 'desc' ? comp : -comp;
+  };
 }
 
 
@@ -245,12 +252,19 @@ function EnhancedTableHead(props) {
             sx={{
               ...headCellStyle,
               ...(index === 0 ? stickyCellStyle : {}),
+              userSelect: 'text', // Allow text selection on the cell
             }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text', // Allow text selection on the label
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -621,6 +635,7 @@ const ListTable = ({
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0); // Always reset page to 0 on sort
   };
 
   const handleSelectAllClick = (event) => {

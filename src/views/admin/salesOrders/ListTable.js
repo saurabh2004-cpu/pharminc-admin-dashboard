@@ -38,10 +38,25 @@ function descendingComparator(a, b, orderBy) {
   let aValue = a[orderBy];
   let bValue = b[orderBy];
 
-  // Handle nested salesRep name
+  // Handle nested salesRep object
   if (orderBy === 'salesRep') {
-    aValue = a.salesRep?.name || '';
-    bValue = b.salesRep?.name || '';
+    aValue = (a.salesRep?.name || '').toLowerCase();
+    bValue = (b.salesRep?.name || '').toLowerCase();
+  }
+  // Handle date fields
+  else if (orderBy === 'date' || orderBy === 'createdAt' || orderBy === 'updatedAt') {
+    aValue = aValue ? new Date(aValue).getTime() : 0;
+    bValue = bValue ? new Date(bValue).getTime() : 0;
+  }
+  // Handle numeric fields
+  else if (orderBy === 'totalAmount' || orderBy === 'amount' || orderBy === 'finalAmount') {
+    aValue = parseFloat(aValue) || 0;
+    bValue = parseFloat(bValue) || 0;
+  }
+  // Standardize strings for alphabetical sorting
+  else if (typeof aValue === 'string') {
+    aValue = aValue.toLowerCase();
+    bValue = (bValue || '').toLowerCase();
   }
 
   if (bValue < aValue) {
@@ -54,9 +69,10 @@ function descendingComparator(a, b, orderBy) {
 }
 
 function getComparator(order, orderBy) {
-  return order === 'asc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+  return (a, b) => {
+    const comp = descendingComparator(a, b, orderBy);
+    return order === 'desc' ? comp : -comp;
+  };
 }
 
 function stableSort(array, comparator) {
@@ -107,15 +123,21 @@ function EnhancedTableHead(props) {
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
-
+              ...headCellStyle,
               ...(index === 0 ? stickyCellStyle : {}),
+              userSelect: 'text', // Allow text selection on the cell
             }}
           >
             <TableSortLabel
-
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text', // Allow text selection on the label
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -584,6 +606,7 @@ const ListTable = ({
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0); // Always reset page to 0 on sort
   };
 
   const handleSelectAllClick = (event) => {
@@ -706,7 +729,7 @@ const ListTable = ({
     serial: { minWidth: '80px' },
     date: { minWidth: '200px' },
     document: { minWidth: '145px' },
-    date: { minWidth: '120px' },
+    // date: { minWidth: '120px' },
     customer: { minWidth: '160px' },
     salesChannel: { minWidth: '160px' },
     tracking: { minWidth: '160px' },

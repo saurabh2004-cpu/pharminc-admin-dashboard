@@ -44,7 +44,7 @@ const SubCategoryList = () => {
             label: 'Category Sequence',
         },
         {
-            id: 'description-color',
+            id: 'descriptionColour',
             numeric: false,
             disablePadding: false,
             label: 'Category Description Color',

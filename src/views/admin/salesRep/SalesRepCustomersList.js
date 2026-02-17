@@ -31,20 +31,41 @@ import { useNavigate, useParams } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
+  let aValue, bValue;
+
+  if (orderBy === 'phone') {
+    aValue = (a.CustomerPhoneNo || a.contactPhone || '').toString();
+    bValue = (b.CustomerPhoneNo || b.contactPhone || '').toString();
+  } else if (orderBy === 'email') {
+    aValue = (a.customerEmail || a.contactEmail || '').toLowerCase();
+    bValue = (b.customerEmail || b.contactEmail || '').toLowerCase();
+  } else if (orderBy === 'createdAt') {
+    aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  } else {
+    aValue = a[orderBy];
+    bValue = b[orderBy];
+
+    if (typeof aValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = (bValue || '').toLowerCase();
+    }
   }
 
+  if (bValue < aValue) {
+    return -1;
+  }
+  if (bValue > aValue) {
+    return 1;
+  }
   return 0;
 }
 
 function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+  return (a, b) => {
+    const comp = descendingComparator(a, b, orderBy);
+    return order === 'desc' ? comp : -comp;
+  };
 }
 
 function stableSort(array, comparator) {
@@ -105,6 +126,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -115,10 +142,6 @@ function EnhancedTableHead(props) {
             </TableSortLabel>
           </TableCell>
         ))}
-
-        <TableCell sx={headCellStyle}>
-          Created Date
-        </TableCell>
       </TableRow>
     </TableHead>
   );
@@ -232,6 +255,12 @@ const SalesRepCustomersList = () => {
       label: 'Email',
       numeric: false,
       disablePadding: false,
+    },
+    {
+      id: 'createdAt',
+      label: 'Created Date',
+      numeric: false,
+      disablePadding: false,
     }
   ];
 
@@ -292,6 +321,7 @@ const SalesRepCustomersList = () => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0);
   };
 
   const handleSelectAllClick = (event) => {

@@ -36,20 +36,41 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
+  let aValue = a[orderBy];
+  let bValue = b[orderBy];
+
+  // Sanitize and parse percentage strings
+  if (orderBy === 'percentage') {
+    const parse = (v) => {
+      if (typeof v === 'number') return v;
+      if (!v) return 0;
+      const sanitized = v.toString().replace(/[^\d.-]/g, '');
+      return parseFloat(sanitized) || 0;
+    };
+    aValue = parse(aValue);
+    bValue = parse(bValue);
   }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
+  // Convert dates to timestamps for reliable comparison
+  else if (orderBy === 'updatedAt' || orderBy === 'createdAt') {
+    aValue = aValue ? new Date(aValue).getTime() : 0;
+    bValue = bValue ? new Date(bValue).getTime() : 0;
+  }
+  // Standardize strings for alphabetical sorting
+  else if (typeof aValue === 'string') {
+    aValue = aValue.toLowerCase();
+    bValue = (bValue || '').toLowerCase();
   }
 
+  if (bValue < aValue) {
+    return -1;
+  }
+  if (bValue > aValue) {
+    return 1;
+  }
   return 0;
 }
 
-function getComparator(
-  order,
-  orderBy,
-) {
+function getComparator(order, orderBy) {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -58,8 +79,8 @@ function getComparator(
 function stableSort(array, comparator) {
   const stabilizedThis = array.map((el, index) => [el, index]);
   stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
+    const orderResult = comparator(a[0], b[0]);
+    if (orderResult !== 0) return orderResult;
     return a[1] - b[1];
   });
   return stabilizedThis.map((el) => el[0]);
@@ -114,6 +135,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -124,11 +151,6 @@ function EnhancedTableHead(props) {
             </TableSortLabel>
           </TableCell>
         ))}
-
-        {/* Created At column */}
-        <TableCell sx={headCellStyle}>
-          Last Updated Date
-        </TableCell>
       </TableRow>
     </TableHead>
   );
@@ -219,7 +241,7 @@ const CustomersItemsBasedDiscounts = () => {
   } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('productSku');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -248,12 +270,12 @@ const CustomersItemsBasedDiscounts = () => {
       numeric: false,
       disablePadding: false,
     },
-    // {
-    //   id: 'pricingGroup',
-    //   label: 'Pricing Group Name',
-    //   numeric: false,
-    //   disablePadding: false,
-    // },
+    {
+      id: 'updatedAt',
+      label: 'Last Updated Date',
+      numeric: false,
+      disablePadding: false,
+    },
   ];
 
 
@@ -311,6 +333,7 @@ const CustomersItemsBasedDiscounts = () => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0);
   };
 
   const handleSelectAllClick = (event) => {

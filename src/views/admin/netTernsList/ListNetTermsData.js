@@ -33,19 +33,39 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
-    if (b[orderBy] < a[orderBy]) {
+    let aValue = a[orderBy];
+    let bValue = b[orderBy];
+
+    // Handle date fields by converting to timestamps
+    if (orderBy === 'updatedAt' || orderBy === 'createdAt') {
+        aValue = aValue ? new Date(aValue).getTime() : 0;
+        bValue = bValue ? new Date(bValue).getTime() : 0;
+    }
+    // Handle numeric fields
+    else if (orderBy === 'daysCount') {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+    }
+    // Handle string fields for case-insensitive comparison
+    else if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = (bValue || '').toLowerCase();
+    }
+
+    if (bValue < aValue) {
         return -1;
     }
-    if (b[orderBy] > a[orderBy]) {
+    if (bValue > aValue) {
         return 1;
     }
     return 0;
 }
 
 function getComparator(order, orderBy) {
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
+    return (a, b) => {
+        const comp = descendingComparator(a, b, orderBy);
+        return order === 'desc' ? comp : -comp;
+    };
 }
 
 function stableSort(array, comparator) {
@@ -127,6 +147,12 @@ function EnhancedTableHead(props) {
                             active={orderBy === headCell.id}
                             direction={orderBy === headCell.id ? order : 'asc'}
                             onClick={createSortHandler(headCell.id)}
+                            sx={{
+                                userSelect: 'text',
+                                '& .MuiTableSortLabel-icon': {
+                                    opacity: 0.5,
+                                },
+                            }}
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
@@ -137,11 +163,6 @@ function EnhancedTableHead(props) {
                         </TableSortLabel>
                     </TableCell>
                 ))}
-
-                {/* Last Updated Date column */}
-                <TableCell sx={{ ...headCellStyle, ...columnWidths.updatedAt }}>
-                    Last Updated Date
-                </TableCell>
             </TableRow>
         </TableHead>
     );
@@ -209,7 +230,7 @@ const EnhancedTableToolbar = (props) => {
 
 const ListNetTermsData = () => {
     const [order, setOrder] = useState('asc');
-    const [orderBy, setOrderBy] = useState('name');
+    const [orderBy, setOrderBy] = useState('netTermName');
     const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
     const [dense, setDense] = useState(false);
@@ -224,7 +245,7 @@ const ListNetTermsData = () => {
     // Corrected headCells based on API response
     const headCells = [
         {
-            id: 'NetTermName',
+            id: 'netTermName',
             label: 'Net Term Name',
             numeric: false,
             disablePadding: false,
@@ -232,6 +253,12 @@ const ListNetTermsData = () => {
         {
             id: 'daysCount',
             label: 'Days Count',
+            numeric: true,
+            disablePadding: false,
+        },
+        {
+            id: 'updatedAt',
+            label: 'Last Updated Date',
             numeric: false,
             disablePadding: false,
         },
@@ -303,6 +330,7 @@ const ListNetTermsData = () => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
         setOrderBy(property);
+        setPage(0);
     };
 
     const handleSelectAllClick = (event) => {

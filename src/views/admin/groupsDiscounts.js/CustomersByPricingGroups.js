@@ -33,28 +33,52 @@ import { useNavigate, useParams } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
-function descendingComparator(a, b, orderBy) {
-    if (b[orderBy] < a[orderBy]) {
-        return -1;
-    }
-    if (b[orderBy] > a[orderBy]) {
-        return 1;
-    }
-    return 0;
-}
-
+// This function determines the sort order of two elements
 function getComparator(order, orderBy) {
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
+    return (a, b) => {
+        let aValue = a[orderBy];
+        let bValue = b[orderBy];
+
+        // Sanitize and parse percentage strings
+        if (orderBy === 'percentage') {
+            const parse = (v) => {
+                if (typeof v === 'number') return v;
+                if (!v) return 0;
+                const sanitized = v.toString().replace(/[^\d.-]/g, '');
+                return parseFloat(sanitized) || 0;
+            };
+            aValue = parse(aValue);
+            bValue = parse(bValue);
+        }
+        // Convert dates to timestamps for reliable comparison
+        else if (orderBy === 'updatedAt' || orderBy === 'createdAt') {
+            aValue = aValue ? new Date(aValue).getTime() : 0;
+            bValue = bValue ? new Date(bValue).getTime() : 0;
+        }
+        // Standardize strings for alphabetical sorting
+        else if (typeof aValue === 'string') {
+            aValue = aValue.toLowerCase();
+            bValue = (bValue || '').toLowerCase();
+        }
+
+        // Return comparison result based on direction
+        if (aValue < bValue) {
+            return order === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return order === 'asc' ? 1 : -1;
+        }
+        return 0;
+    };
 }
 
+// Higher-order sort function that maintains stability for equal elements
 function stableSort(array, comparator) {
     const stabilizedThis = array.map((el, index) => [el, index]);
     stabilizedThis.sort((a, b) => {
-        const order = comparator(a[0], b[0]);
-        if (order !== 0) return order;
-        return a[1] - b[1];
+        const orderResult = comparator(a[0], b[0]);
+        if (orderResult !== 0) return orderResult;
+        return a[1] - b[1]; // Maintain original index for stability
     });
     return stabilizedThis.map((el) => el[0]);
 }
@@ -111,6 +135,12 @@ function EnhancedTableHead(props) {
                             active={orderBy === headCell.id}
                             direction={orderBy === headCell.id ? order : 'asc'}
                             onClick={createSortHandler(headCell.id)}
+                            sx={{
+                                userSelect: 'text',
+                                '& .MuiTableSortLabel-icon': {
+                                    opacity: 0.5,
+                                },
+                            }}
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
@@ -310,8 +340,16 @@ const CustomersByPricingGroups = () => {
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
-        setOrder(isAsc ? 'desc' : 'asc');
+
+        // If sorting a date-related column for the first time, default to 'desc' (newest first)
+        let nextOrder = isAsc ? 'desc' : 'asc';
+        if (orderBy !== property && (property === 'updatedAt' || property === 'createdAt')) {
+            nextOrder = 'desc';
+        }
+
+        setOrder(nextOrder);
         setOrderBy(property);
+        setPage(0); // Always reset page to 0 to ensure the user sees the top results
     };
 
     const handleSelectAllClick = (event) => {

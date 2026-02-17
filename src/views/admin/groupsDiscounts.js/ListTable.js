@@ -36,10 +36,25 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import { set } from 'lodash';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
+  let aValue = a[orderBy];
+  let bValue = b[orderBy];
+
+  // Special handling for nested or complex fields
+  if (orderBy === 'pricingGroup') {
+    aValue = (a.pricingGroup?.name || 'ANY').toLowerCase();
+    bValue = (b.pricingGroup?.name || 'ANY').toLowerCase();
+  } else if (orderBy === 'updatedAt' || orderBy === 'createdAt') {
+    aValue = aValue ? new Date(aValue).getTime() : 0;
+    bValue = bValue ? new Date(bValue).getTime() : 0;
+  } else if (typeof aValue === 'string') {
+    aValue = aValue.toLowerCase();
+    bValue = (bValue || '').toLowerCase();
+  }
+
+  if (bValue < aValue) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (bValue > aValue) {
     return 1;
   }
 
@@ -112,6 +127,12 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{
+                userSelect: 'text',
+                '& .MuiTableSortLabel-icon': {
+                  opacity: 0.5,
+                },
+              }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -267,6 +288,7 @@ const ListTable = ({
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0); // Added to ensure user sees the beginning of sorted data
   };
 
   const handleSelectAllClick = (event) => {

@@ -31,13 +31,44 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
-  // Handle nested product object
-  const aValue = orderBy.startsWith('product.')
-    ? a.product?.[orderBy.split('.')[1]]
-    : a[orderBy];
-  const bValue = orderBy.startsWith('product.')
-    ? b.product?.[orderBy.split('.')[1]]
-    : b[orderBy];
+  const getVal = (item, id) => {
+    let val;
+    if (id.startsWith('product.')) {
+      const field = id.split('.')[1];
+      val = item.product?.[field];
+
+      if (field === 'eachPrice' || field === 'stockLevel') {
+        return parseFloat(val) || 0;
+      }
+      if (field === 'pricingGroup') {
+        return (val?.name || 'ANY').toLowerCase();
+      }
+      if (field === 'commerceCategoriesOne') {
+        if (Array.isArray(val)) {
+          return val.map(cat => cat.name || '').join(', ').toLowerCase();
+        }
+        return (val?.name || '').toLowerCase();
+      }
+      if (field === 'createdAt') {
+        return val ? new Date(val).getTime() : 0;
+      }
+      if (typeof val === 'string') {
+        return val.toLowerCase();
+      }
+    } else {
+      val = item[id];
+      if (id === 'packQuantity' || id === 'unitsQuantity') {
+        return parseFloat(val) || 0;
+      }
+      if (typeof val === 'string') {
+        return val.toLowerCase();
+      }
+    }
+    return val || '';
+  };
+
+  const aValue = getVal(a, orderBy);
+  const bValue = getVal(b, orderBy);
 
   if (bValue < aValue) {
     return -1;
@@ -126,11 +157,6 @@ function EnhancedTableHead(props) {
             </TableSortLabel>
           </TableCell>
         ))}
-
-        {/* Created At column */}
-        <TableCell sx={headCellStyle}>
-          Created Date
-        </TableCell>
       </TableRow>
     </TableHead>
   );
@@ -291,6 +317,12 @@ const ListProductGroupProducts = () => {
     {
       id: 'product.commerceCategoriesOne',
       label: 'Brand',
+      numeric: false,
+      disablePadding: false,
+    },
+    {
+      id: 'product.createdAt',
+      label: 'Created Date',
       numeric: false,
       disablePadding: false,
     },

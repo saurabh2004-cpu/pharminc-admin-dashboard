@@ -113,6 +113,12 @@ function EnhancedTableHead(props) {
                             active={orderBy === headCell.id}
                             direction={orderBy === headCell.id ? order : 'asc'}
                             onClick={createSortHandler(headCell.id)}
+                            sx={{
+                                userSelect: 'text',
+                                '& .MuiTableSortLabel-icon': {
+                                    opacity: 0.5,
+                                },
+                            }}
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
