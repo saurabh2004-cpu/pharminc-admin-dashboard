@@ -41,10 +41,39 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
-    if (b[orderBy] < a[orderBy]) {
+    let aValue = a[orderBy];
+    let bValue = b[orderBy];
+
+    // Handle special cases for nested or calculated properties
+    if (orderBy === 'ProductName') {
+        aValue = a.itemName || a.productName || '';
+        bValue = b.itemName || b.productName || '';
+    } else if (orderBy === 'ItemCode') {
+        aValue = a.itemSku || '';
+        bValue = b.itemSku || '';
+    } else if (orderBy === 'Gst') {
+        // Sort by tax rate, considering if tax is applied
+        aValue = a.taxApplied ? (Number(a.taxPercentages) || 0) : 0;
+        bValue = b.taxApplied ? (Number(b.taxPercentages) || 0) : 0;
+    } else if (orderBy === 'packQuantity') {
+        aValue = a.packType || '';
+        bValue = b.packType || '';
+    } else if (orderBy === 'amount') {
+        // Sort by line total instead of just unit price
+        aValue = (Number(a.amount) || 0) * (Number(a.unitsQuantity) || 1) * (Number(a.packQuantity) || 1);
+        bValue = (Number(b.amount) || 0) * (Number(b.unitsQuantity) || 1) * (Number(b.packQuantity) || 1);
+    } else if (orderBy === 'unitsQuantity') {
+        aValue = Number(a.unitsQuantity) || 0;
+        bValue = Number(b.unitsQuantity) || 0;
+    } else if (orderBy === 'discountPercentages') {
+        aValue = Number(a.discountPercentages) || 0;
+        bValue = Number(b.discountPercentages) || 0;
+    }
+
+    if (bValue < aValue) {
         return -1;
     }
-    if (b[orderBy] > a[orderBy]) {
+    if (bValue > aValue) {
         return 1;
     }
     return 0;
@@ -209,12 +238,11 @@ const ProductGroupProductsTable = ({ products, productGroupsData }) => {
                 <TableBody>
                     {products.map((productItem, index) => (
                         <TableRow key={productItem._id || index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                            <TableCell
-                                component="th" scope="row" sx={{ fontSize: '0.75rem' }}>
+                            <TableCell component="th" scope="row" sx={{ fontSize: '0.75rem' }}>
                                 {productItem.product?.sku || 'N/A'}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.75rem' }}>
-                                {productItem.product?.ProductName || 'N/A'}
+                                {productItem.product?.itemName || 'N/A'}
                             </TableCell>
                             <TableCell align="right" sx={{ fontSize: '0.75rem' }}>
                                 {productItem.product?.taxPercentages || 0}%
@@ -236,7 +264,7 @@ const ProductGroupProductsTable = ({ products, productGroupsData }) => {
 const CustomersSalesOrders = () => {
     const { filteredAndSortedProducts } = useContext(ProductContext);
     const [order, setOrder] = useState('asc');
-    const [orderBy, setOrderBy] = useState('calories');
+    const [orderBy, setOrderBy] = useState('ItemCode');
     const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
     const [dense, setDense] = useState(false);
@@ -293,6 +321,10 @@ const CustomersSalesOrders = () => {
     const [productGroupsIds, setProductGroupsIds] = useState([]);
     const [productGroupsData, setProductGroupsData] = useState([]);
     const [editingBasePrice, setEditingBasePrice] = useState(0);
+    const [pricingGroupDiscounts, setPricingGroupDiscounts] = useState([]);
+    const [itemsDiscount, setItemsDiscount] = useState([]);
+    const [customerId, setCustomerId] = useState('');
+    const [editingProduct, setEditingProduct] = useState(null);
 
 
     const theme = useTheme();
@@ -307,6 +339,12 @@ const CustomersSalesOrders = () => {
             label: 'Item Code',
         },
         {
+            id: 'ProductName',
+            numeric: false,
+            disablePadding: false,
+            label: 'Product Description',
+        },
+        {
             id: 'amount',
             numeric: false,
             disablePadding: false,
@@ -316,7 +354,7 @@ const CustomersSalesOrders = () => {
             id: 'Gst',
             numeric: false,
             disablePadding: false,
-            label: 'Tax',
+            label: 'GST',
         },
         {
             id: 'packQuantity',
@@ -596,6 +634,8 @@ const CustomersSalesOrders = () => {
 
                 const uniqueData = Array.from(uniqueMap.values());
 
+                console.log("uniqueData", uniqueData);
+
                 setTableData(uniqueData);
                 setRows(uniqueData);
             }
@@ -651,6 +691,7 @@ const CustomersSalesOrders = () => {
 
                     // Set base price for product group
                     setEditingBasePrice(productGroup.price || 0);
+                    setEditingProduct(productGroup);
 
                 } else {
                     setProductQuantity(0);
@@ -665,6 +706,7 @@ const CustomersSalesOrders = () => {
                     const productData = response.data.data;
                     setProductQuantity(productData.stockLevel || 0);
                     setEditingBasePrice(productData.eachPrice || 0);
+                    setEditingProduct(productData);
                     // console.log(`Regular product ${itemSku} stock: ${productData.stockLevel}`);
                 } else {
                     setProductQuantity(0);
@@ -687,6 +729,94 @@ const CustomersSalesOrders = () => {
 
             setError(error.message);
         }
+    };
+
+    const fetchCustomerByCustomerNumber = async () => {
+        if (!formData.customerNumber) {
+            console.log("No customerNumber in formData");
+            return;
+        }
+        try {
+            console.log("Fetching customer by number:", formData.customerNumber);
+            setLoading(true);
+            const response = await axiosInstance.get(`/user/get-user-by-customer-id/${formData.customerNumber}`);
+            console.log("Customer fetch response:", response.data);
+            if (response.data.statusCode === 200) {
+                const customerData = response.data.data;
+                const id = customerData._id || customerData.id;
+                console.log("Setting customerId to:", id);
+                setCustomerId(id);
+            }
+        } catch (error) {
+            console.error('Error fetching customer by customer number:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchPricingGroupDiscounts = async () => {
+        if (!customerId) return;
+        try {
+            console.log("Fetching pricing group discounts for customerId:", customerId);
+            setLoading(true);
+            const response = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discounts-by-customer-id/${customerId}`);
+            console.log("Pricing group discounts response:", response.data);
+            if (response.data.statusCode === 200) {
+                setPricingGroupDiscounts(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching pricing group discounts:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchItemsDiscount = async () => {
+        if (!formData.customerNumber) return;
+        try {
+            console.log("Fetching items discount for:", formData.customerNumber);
+            setLoading(true);
+            const response = await axiosInstance.get(`/item-based-discount/get-items-based-discount-by-customer-id/${formData.customerNumber}`);
+            console.log("Items discount response:", response.data);
+            if (response.data.statusCode === 200) {
+                setItemsDiscount(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching items discount:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getItemBasedDiscount = (productSku) => {
+        if (!productSku) return null;
+        const discount = itemsDiscount.find(d => d.productSku === productSku);
+        console.log(`getItemBasedDiscount for ${productSku}:`, discount);
+        return discount;
+    };
+
+    const getPricingGroupDiscount = (product) => {
+        if (!product || !customerId) {
+            console.log("getPricingGroupDiscount: Missing product or customerId", { product, customerId });
+            return null;
+        }
+        const productPricingGroupId = product.pricingGroup?._id || product.pricingGroup;
+        console.log("productPricingGroupId:", productPricingGroupId);
+        if (productPricingGroupId) {
+            const groupDiscount = pricingGroupDiscounts.find(gd =>
+                (gd.pricingGroup?._id === productPricingGroupId || gd.pricingGroup === productPricingGroupId)
+            );
+            console.log("Matching groupDiscount found:", groupDiscount);
+
+            if (groupDiscount && groupDiscount.customers) {
+                const customerSpec = groupDiscount.customers.find(c =>
+                    (c.user?._id === customerId || c.user === customerId)
+                );
+                console.log("Customer specific discount specs:", customerSpec);
+                return customerSpec;
+            }
+        }
+        return null;
     };
 
     const fetchCustomerAddresses = async (customerName) => {
@@ -755,8 +885,16 @@ const CustomersSalesOrders = () => {
     useEffect(() => {
         if (formData.customerNumber) {
             fetchCustomerAddresses(formData.customerNumber);
+            fetchCustomerByCustomerNumber();
+            fetchItemsDiscount();
         }
     }, [formData.customerNumber]);
+
+    useEffect(() => {
+        if (customerId) {
+            fetchPricingGroupDiscounts();
+        }
+    }, [customerId]);
 
     useEffect(() => {
         if (formData.billingAddress && formData.billingAddress._id) {
@@ -795,17 +933,24 @@ const CustomersSalesOrders = () => {
 
             // Calculate Unit Price based on Discount
             let newUnitPrice = editingBasePrice;
+            // Clean and parse percentage
             const discountType = updateFormData.discountType;
-            const discountPercentage = parseFloat(updateFormData.discountPercentages);
+            const rawPct = updateFormData.discountPercentages;
+            const cleanedPct = typeof rawPct === 'string' ? rawPct.replace(/[^\d.+-]/g, '') : rawPct;
+            const discountPercentage = parseFloat(cleanedPct);
 
             if (discountType && !isNaN(discountPercentage)) {
                 if (discountType === 'Pricing Group Discount') {
-                    // Allow positive and negative
-                    newUnitPrice = editingBasePrice + (editingBasePrice * discountPercentage / 100);
+                    // If pct is negative (e.g., -10), it's a discount
+                    if (discountPercentage < 0) {
+                        newUnitPrice = editingBasePrice - (editingBasePrice * Math.abs(discountPercentage) / 100);
+                    } else {
+                        // If pct is positive (e.g., 10 or +10), it's a markup/addition
+                        newUnitPrice = editingBasePrice + (editingBasePrice * discountPercentage / 100);
+                    }
                 } else if (discountType === 'Item Discount' || discountType === 'Custom Discount') {
-                    // Only positive deductions
-                    const absPct = Math.abs(discountPercentage);
-                    newUnitPrice = editingBasePrice - (editingBasePrice * absPct / 100);
+                    // These are always treated as deductions/discounts
+                    newUnitPrice = editingBasePrice - (editingBasePrice * Math.abs(discountPercentage) / 100);
                 }
             }
 
@@ -1139,6 +1284,35 @@ const CustomersSalesOrders = () => {
     };
 
     const handleUpdateFormChange = (field, value) => {
+        if (field === 'discountType') {
+            let pct = '';
+            const sku = updateFormData.itemSku;
+            console.log("Discount Type Change:", value, "SKU:", sku);
+            console.log("Current itemsDiscount:", itemsDiscount);
+            console.log("Current pricingGroupDiscounts:", pricingGroupDiscounts);
+            console.log("Current editingProduct:", editingProduct);
+
+            if (value === 'Item Discount' && sku) {
+                const itemDisc = getItemBasedDiscount(sku);
+                console.log("Found Item Discount:", itemDisc);
+                if (itemDisc) pct = itemDisc.percentage;
+            } else if (value === 'Pricing Group Discount' && editingProduct) {
+                const groupDisc = getPricingGroupDiscount(editingProduct);
+                console.log("Found Group Discount:", groupDisc);
+                if (groupDisc) pct = groupDisc.percentage;
+            } else if (value === 'Custom Discount') {
+                pct = updateFormData.discountPercentages; // Keep current value
+            }
+
+            console.log("Setting Percentage to:", pct);
+            setUpdateFormData(prev => ({
+                ...prev,
+                [field]: value,
+                discountPercentages: pct
+            }));
+            return;
+        }
+
         // Validation for Item/Custom discount (positive only)
         if (field === 'discountPercentages') {
             const type = updateFormData.discountType;
@@ -1313,7 +1487,7 @@ const CustomersSalesOrders = () => {
                                                         </TableCell>
 
                                                         {/* SKU */}
-                                                        <TableCell sx={{ width: 120 }}>
+                                                        <TableCell sx={{ width: 100 }}>
                                                             <Typography
                                                                 fontWeight="500"
                                                                 variant="body2"
@@ -1326,6 +1500,13 @@ const CustomersSalesOrders = () => {
                                                                         Product Kit
                                                                     </Typography>
                                                                 )}
+                                                            </Typography>
+                                                        </TableCell>
+
+                                                        {/* Product Description */}
+                                                        <TableCell sx={{ width: 240 }}>
+                                                            <Typography variant="body2">
+                                                                {row.itemName || row.productName || "N/A"}
                                                             </Typography>
                                                         </TableCell>
 
@@ -1459,7 +1640,7 @@ const CustomersSalesOrders = () => {
                                                             )}
                                                         </TableCell>
 
-                                                        <TableCell sx={{ width: 140 }}>
+                                                        <TableCell sx={{ width: 155 }}>
                                                             {isRowEditing ? (
                                                                 <TextField
                                                                     select
@@ -1487,9 +1668,14 @@ const CustomersSalesOrders = () => {
                                                             {isRowEditing ? (
                                                                 <TextField
                                                                     size="small"
-                                                                    type="number"
+                                                                    type="text"
                                                                     value={updateFormData.discountPercentages || ''}
-                                                                    onChange={(e) => handleUpdateFormChange('discountPercentages', e.target.value)}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        if (val === '' || /^[+-]?\d*\.?\d*$/.test(val)) {
+                                                                            handleUpdateFormChange('discountPercentages', val);
+                                                                        }
+                                                                    }}
                                                                     placeholder="0"
                                                                     disabled={!updateFormData.discountType}
                                                                     InputProps={{
@@ -1511,7 +1697,7 @@ const CustomersSalesOrders = () => {
                                                     {isProductGroupRow && isExpanded && (
                                                         <TableRow>
                                                             <TableCell colSpan={2} sx={{ padding: 0, border: 'none' }} />
-                                                            <TableCell colSpan={6} sx={{ padding: 0, border: 'none' }}>
+                                                            <TableCell colSpan={7} sx={{ padding: 0, border: 'none' }}>
                                                                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                                                                     <ProductGroupProductsTable
                                                                         products={productGroupProducts}
@@ -1526,7 +1712,7 @@ const CustomersSalesOrders = () => {
                                         })}
                                     {emptyRows > 0 && (
                                         <TableRow style={{ height: 33 * emptyRows }}>
-                                            <TableCell colSpan={headCells.length + 2} />
+                                            <TableCell colSpan={headCells.length + 1} />
                                         </TableRow>
                                     )}
                                 </TableBody>

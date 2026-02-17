@@ -49,6 +49,9 @@ const ProductSelectionModal = ({
     const [step, setStep] = useState(1); // 1: Product Selection, 2: Form
     const [packTypes, setPackTypes] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
+    const [pricingGroupDiscounts, setPricingGroupDiscounts] = useState([]);
+    const [itemsDiscount, setItemsDiscount] = useState([]);
+    const [customerId, setCustomerId] = useState('');
 
     // Form data state
     const [formData, setFormData] = useState({
@@ -62,6 +65,7 @@ const ProductSelectionModal = ({
         billingAddress: '',
         customerPO: '',
         itemSku: '',
+        itemName: '',
         packQuantity: '',
         packType: '',
         unitsQuantity: 1,
@@ -185,6 +189,125 @@ const ProductSelectionModal = ({
         }
     };
 
+    // fetch customer by customerNumber 
+    const fetchCustomerByCustomerNumber = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get(`/user/get-user-by-customer-id/${formData.customerNumber}`);
+            if (response.data.statusCode === 200) {
+                setCustomerId(response.data.data._id);
+            }
+        } catch (error) {
+            console.error('Error fetching customer by customer number:', error);
+            setError('Error fetching customer by customer number: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch pricing group discounts
+    const fetchPricingGroupDiscounts = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get(`/pricing-groups-discount/get-pricing-group-discounts-by-customer-id/${customerId}`);
+            console.log("response pricing groups", response);
+
+            if (response.data.statusCode === 200) {
+                setPricingGroupDiscounts(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching product groups list:', error);
+            setError('Error fetching product groups: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // fetch items discount
+    const fetchItemsDiscount = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get(`/item-based-discount/get-items-based-discount-by-customer-id/${formData.customerNumber}`);
+            console.log("response items discount", response);
+
+            if (response.data.statusCode === 200) {
+                setItemsDiscount(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching product groups list:', error);
+            setError('Error fetching product groups: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (formData.customerNumber) {
+            setLoading(true);
+            Promise.all([
+                fetchCustomerByCustomerNumber(),
+                fetchItemsDiscount()
+            ]).finally(() => {
+                setLoading(false);
+            });
+        }
+    }, [formData.customerNumber]);
+
+    useEffect(() => {
+        if (customerId) {
+            setLoading(true);
+            Promise.all([
+                fetchPricingGroupDiscounts(),
+            ]).finally(() => {
+                setLoading(false);
+            });
+        }
+    }, [customerId]);
+
+    const getItemBasedDiscount = (product) => {
+        if (!product) return null;
+        return itemsDiscount.find(d => d.productSku === product.sku);
+    };
+
+    const getPricingGroupDiscount = (product) => {
+        if (!product || !customerId) return null;
+        const productPricingGroupId = product.pricingGroup?._id || product.pricingGroup;
+        if (productPricingGroupId) {
+            const groupDiscount = pricingGroupDiscounts.find(gd =>
+                (gd.pricingGroup?._id === productPricingGroupId || gd.pricingGroup === productPricingGroupId)
+            );
+
+            if (groupDiscount && groupDiscount.customers) {
+                const customerSpec = groupDiscount.customers.find(c =>
+                    (c.user?._id === customerId || c.user === customerId)
+                );
+                return customerSpec;
+            }
+        }
+        return null;
+    };
+
+    const findBestDiscount = (product) => {
+        const itemDiscount = getItemBasedDiscount(product);
+        if (itemDiscount) {
+            return {
+                type: 'Item Discount',
+                percentage: itemDiscount.percentage
+            };
+        }
+
+        const pricingDiscount = getPricingGroupDiscount(product);
+        if (pricingDiscount) {
+            return {
+                type: 'Pricing Group Discount',
+                percentage: pricingDiscount.percentage
+            };
+        }
+
+        return null;
+    };
+
+
     // Combine products and product groups for display
     useEffect(() => {
         const combinedList = [...productList, ...productGroups];
@@ -282,14 +405,22 @@ const ProductSelectionModal = ({
     const calculateValues = (packQty, unitQty, discType, discPct, product = selectedProduct) => {
         const basePrice = product?.eachPrice || 0;
         let adjustedPrice = basePrice;
-        const pct = parseFloat(discPct);
+
+        // Remove non-numeric characters except + and - and . for parsing
+        const cleanedPct = typeof discPct === 'string' ? discPct.replace(/[^\d.+-]/g, '') : discPct;
+        const pct = parseFloat(cleanedPct);
 
         if (!isNaN(pct)) {
             if (discType === 'Pricing Group Discount') {
-                // +10 increases, -10 decreases
-                adjustedPrice = basePrice + (basePrice * pct / 100);
+                // If pct is negative (e.g., -10), it's a discount
+                if (pct < 0) {
+                    adjustedPrice = basePrice - (basePrice * Math.abs(pct) / 100);
+                } else {
+                    // If pct is positive (e.g., 10 or +10), it's a markup/addition
+                    adjustedPrice = basePrice + (basePrice * pct / 100);
+                }
             } else if (discType === 'Item Discount' || discType === 'Custom Discount') {
-                // Positive only, always deducted
+                // Always treated as deductions/discounts
                 adjustedPrice = basePrice - (basePrice * Math.abs(pct) / 100);
             }
         }
@@ -307,7 +438,6 @@ const ProductSelectionModal = ({
 
     // Improved amount calculation function
     const recalculateAmount = (packQty, unitQty, product = selectedProduct) => {
-        // This is kept for compatibility with existing calls, but using state for discount
         const { unitPrice, total } = calculateValues(
             packQty,
             unitQty,
@@ -322,14 +452,12 @@ const ProductSelectionModal = ({
 
     // Improved product selection with immediate amount calculation
     const handleProductSelect = (product) => {
-        // console.log("Product selected:", product);
         setSelectedProduct(product);
 
-        // Reset discount fields when product changes
         const initialPackQuantity = formData.packQuantity || '1';
         const initialUnitsQuantity = formData.unitsQuantity || 1;
 
-        // Calculate initial amount (no discount initially)
+        // Default to None (no discount) upon product selection
         const { unitPrice, total } = calculateValues(
             initialPackQuantity,
             initialUnitsQuantity,
@@ -341,6 +469,7 @@ const ProductSelectionModal = ({
         setFormData(prev => ({
             ...prev,
             itemSku: product.sku || '',
+            itemName: product.ProductName || '',
             amount: unitPrice,
             discountType: '',
             discountPercentage: '',
@@ -351,8 +480,6 @@ const ProductSelectionModal = ({
 
         setTotalAmount(total);
 
-        // console.log("Initial amount set to:", initialAmount);
-
         // Fetch pack types for the selected product
         const isGroup = isProductGroup(product);
         fetchProductsAvailablePackTypes(product.sku, isGroup);
@@ -360,6 +487,26 @@ const ProductSelectionModal = ({
 
     // Improved form input changes with better amount recalculation
     const handleInputChange = (field, value) => {
+        if (field === 'discountType') {
+            let pct = '';
+            if (value === 'Item Discount' && selectedProduct) {
+                const itemDisc = getItemBasedDiscount(selectedProduct);
+                if (itemDisc) pct = itemDisc.percentage;
+            } else if (value === 'Pricing Group Discount' && selectedProduct) {
+                const groupDisc = getPricingGroupDiscount(selectedProduct);
+                if (groupDisc) pct = groupDisc.percentage;
+            } else if (value === 'Custom Discount') {
+                pct = formData.discountPercentage; // Keep old value if switching to custom
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                [field]: value,
+                discountPercentage: pct
+            }));
+            return;
+        }
+
         // Discount Validation
         if (field === 'discountPercentage') {
             if (formData.discountType === 'Item Discount' || formData.discountType === 'Custom Discount') {
@@ -388,47 +535,29 @@ const ProductSelectionModal = ({
     useEffect(() => {
         if (step !== 2 || !selectedProduct) return;
 
-        const basePrice = selectedProduct.eachPrice || 0;
-        let adjustedPrice = basePrice;
-        const pct = parseFloat(formData.discountPercentage);
-        const discType = formData.discountType;
-
-        if (!isNaN(pct) && discType) {
-            if (discType === 'Pricing Group Discount') {
-                // Allow positive and negative
-                adjustedPrice = basePrice + (basePrice * pct / 100);
-            } else if (discType === 'Item Discount' || discType === 'Custom Discount') {
-                // Only positive, deduct
-                const absPct = Math.abs(pct);
-                adjustedPrice = basePrice - (basePrice * absPct / 100);
-            }
-        }
-
-        // Safety check
-        if (adjustedPrice < 0) adjustedPrice = 0;
-
-        const packQty = parseInt(formData.packQuantity) || 1;
-        const unitsQty = parseInt(formData.unitsQuantity) || 1;
-
-        // Total Amount = Discounted Unit Price * Pack Qty * Units Qty
-        const quantityMultiplier = packQty * unitsQty;
-        const total = adjustedPrice * quantityMultiplier;
+        const { unitPrice, total } = calculateValues(
+            formData.packQuantity,
+            formData.unitsQuantity,
+            formData.discountType,
+            formData.discountPercentage,
+            selectedProduct
+        );
 
         setFormData(prev => {
             // Avoid infinite loop by checking if values actually changed
             if (
-                prev.amount === parseFloat(adjustedPrice.toFixed(2)) &&
-                prev.totalAmount === parseFloat(total.toFixed(2))
+                prev.amount === unitPrice &&
+                prev.totalAmount === total
             ) {
                 return prev;
             }
 
             return {
                 ...prev,
-                amount: parseFloat(adjustedPrice.toFixed(2)),
-                totalAmount: parseFloat(total.toFixed(2)),
-                finalAmount: parseFloat(total.toFixed(2)),
-                subTotal: parseFloat(total.toFixed(2))
+                amount: unitPrice,
+                totalAmount: total,
+                finalAmount: total,
+                subTotal: total
             };
         });
 
@@ -505,6 +634,7 @@ const ProductSelectionModal = ({
                 billingAddress: formData.billingAddress,
                 customerPO: formData.customerPO,
                 itemSku: formData.itemSku,
+                itemName: formData.itemName,
                 packQuantity: parseInt(formData.packQuantity),
                 packType: formData.packType,
                 unitsQuantity: parseInt(formData.unitsQuantity),
@@ -669,15 +799,15 @@ const ProductSelectionModal = ({
                             </Box>
                         ) : (
                             <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
-                                <Table stickyHeader size="small">
+                                <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', width: '100%' }}>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell width="60px">Select</TableCell>
-                                            <TableCell>SKU</TableCell>
+                                            <TableCell sx={{ width: '60px' }}>Select</TableCell>
+                                            <TableCell sx={{ width: '120px' }}>SKU</TableCell>
                                             <TableCell>Product Name</TableCell>
-                                            <TableCell align="right">Price</TableCell>
-                                            <TableCell align="right">Stock Level</TableCell>
-                                            <TableCell width="100px">Type</TableCell>
+                                            <TableCell align="right" sx={{ width: '100px' }}>Price</TableCell>
+                                            <TableCell align="right" sx={{ width: '120px' }}>Stock Level</TableCell>
+                                            <TableCell sx={{ width: '100px' }}>Type</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -703,12 +833,27 @@ const ProductSelectionModal = ({
                                                         />
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Typography variant="body2" fontWeight={500}>
+                                                        <Typography
+                                                            variant="body2"
+                                                            fontWeight={500}
+                                                            sx={{
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}
+                                                        >
                                                             {product.sku || 'N/A'}
                                                         </Typography>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Typography variant="body2">
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}
+                                                        >
                                                             {product.ProductName || 'N/A'}
                                                         </Typography>
                                                     </TableCell>
@@ -911,10 +1056,16 @@ const ProductSelectionModal = ({
                                 <CustomFormLabel htmlFor="discount-percentage">Discount (%)</CustomFormLabel>
                                 <CustomOutlinedInput
                                     id="discount-percentage"
-                                    type="number"
+                                    type="text"
                                     fullWidth
                                     value={formData.discountPercentage}
-                                    onChange={(e) => handleInputChange('discountPercentage', e.target.value)}
+                                    onChange={(e) => {
+                                        // Allow only numbers, decimal point, and +/- signs
+                                        const val = e.target.value;
+                                        if (val === '' || /^[+-]?\d*\.?\d*$/.test(val)) {
+                                            handleInputChange('discountPercentage', val);
+                                        }
+                                    }}
                                     disabled={!formData.discountType}
                                     placeholder={!formData.discountType ? "Select type first" : "0"}
                                     endAdornment={<InputAdornment position="end">%</InputAdornment>}

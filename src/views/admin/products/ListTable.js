@@ -45,13 +45,63 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import { IconCheck, IconX } from '@tabler/icons';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
+  const getVal = (item, id) => {
+    let val = item[id];
+
+    // Numeric sorting for price fields
+    if (id === 'eachPrice' || id === 'comparePrice') {
+      if (typeof val === 'number') return val;
+      if (!val) return 0;
+      const sanitized = val.toString().replace(/[^\d.-]/g, '');
+      const parsed = parseFloat(sanitized);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    // Special handling for pricing group object
+    if (id === 'pricingGroup') {
+      return (val?.name || 'ANY').toLowerCase();
+    }
+
+    // Special handling for badge object
+    if (id === 'badge') {
+      return (val?.name || 'ANY').toLowerCase();
+    }
+
+    // Status sorting based on inactive boolean
+    if (id === 'status') {
+      return item.inactive ? 1 : 0;
+    }
+
+    // Handle commerce category arrays (Level 1-4)
+    if (id.startsWith('commerceCategories')) {
+      if (Array.isArray(val)) {
+        return val
+          .map((cat) => (typeof cat === 'object' ? cat?.name : cat) || '')
+          .join(', ')
+          .toLowerCase();
+      }
+      return (val || '').toString().toLowerCase();
+    }
+
+    // Default string sorting
+    if (typeof val === 'string') {
+      return val.toLowerCase();
+    }
+
+    // Default numeric or fallback sorting
+    if (val === null || val === undefined) return '';
+    return val;
+  };
+
+  const aValue = getVal(a, orderBy);
+  const bValue = getVal(b, orderBy);
+
+  if (bValue < aValue) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (bValue > aValue) {
     return 1;
   }
-
   return 0;
 }
 
@@ -312,7 +362,7 @@ const ListTable = ({
   const { filteredAndSortedProducts } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('sku');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -748,7 +798,7 @@ const ListTable = ({
   };
 
   // ========== MAIN FILTER AND SEARCH LOGIC ==========
-  
+
   // Apply filters and search together
   useEffect(() => {
     let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
@@ -759,7 +809,7 @@ const ListTable = ({
       result = result.filter(item => {
         // ✅ CORRECTED: Filter by brand (commerceCategoriesOne)
         if (filterBrand) {
-          const hasBrand = item.commerceCategoriesOne?.some(cat => 
+          const hasBrand = item.commerceCategoriesOne?.some(cat =>
             cat._id === filterBrand
           );
           if (!hasBrand) return false;
@@ -767,7 +817,7 @@ const ListTable = ({
 
         // ✅ CORRECTED: Filter by category (commerceCategoriesTwo)
         if (filterCategory) {
-          const hasCategory = item.commerceCategoriesTwo?.some(cat => 
+          const hasCategory = item.commerceCategoriesTwo?.some(cat =>
             cat._id === filterCategory
           );
           if (!hasCategory) return false;
@@ -775,7 +825,7 @@ const ListTable = ({
 
         // ✅ CORRECTED: Filter by subcategory (commerceCategoriesThree)
         if (filterSubCategory) {
-          const hasSubCategory = item.commerceCategoriesThree?.some(cat => 
+          const hasSubCategory = item.commerceCategoriesThree?.some(cat =>
             cat._id === filterSubCategory
           );
           if (!hasSubCategory) return false;
@@ -783,7 +833,7 @@ const ListTable = ({
 
         // ✅ CORRECTED: Filter by subcategory two (commerceCategoriesFour)
         if (filterSubCategoryTwo) {
-          const hasSubCategoryTwo = item.commerceCategoriesFour?.some(cat => 
+          const hasSubCategoryTwo = item.commerceCategoriesFour?.some(cat =>
             cat._id === filterSubCategoryTwo
           );
           if (!hasSubCategoryTwo) return false;

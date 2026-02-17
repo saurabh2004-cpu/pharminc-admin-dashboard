@@ -44,19 +44,19 @@ const ListProduct = () => {
       label: 'Product Name',
     },
     {
-      id: 'EachPrice', // Corrected to match API response (capital P)
+      id: 'eachPrice', // Corrected to match rendering
       numeric: false,
       disablePadding: false,
       label: 'Each Price',
     },
     {
-      id: 'ComparePrice', // Corrected to match API response (capital P)
+      id: 'comparePrice', // Corrected to match rendering
       numeric: false,
       disablePadding: false,
       label: 'Compare Price',
     },
     {
-      id: 'Type', // Corrected to match API response (capital P)
+      id: 'type', // Corrected to match rendering
       numeric: false,
       disablePadding: false,
       label: 'Type',
@@ -98,7 +98,7 @@ const ListProduct = () => {
       label: 'Commerce Category Four',
     },
     {
-      id: 'Badges',
+      id: 'badge', // Corrected to match rendering
       numeric: false,
       disablePadding: false,
       label: 'Badges',
@@ -189,26 +189,26 @@ const ListProduct = () => {
 
   return (
     // <ProductProvider>
-      <PageContainer title="Products List" description="this is Products List page">
-        {/* breadcrumb */}
-        <Breadcrumb title="Products List" items={BCrumb} />
-        {/* end breadcrumb */}
-        <Box
-        // sx={{
-        //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
-        //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
-        //     transition: "margin-left 0.3s ease", // smooth animation
-        // }}
-        >
-          <ListTable
-            showCheckBox={false}
-            headCells={headCells}
-            tableData={tableData}
-            isProductsList={true}
-            setTableData={setTableData}
-          />
-        </Box>
-      </PageContainer>
+    <PageContainer title="Products List" description="this is Products List page">
+      {/* breadcrumb */}
+      <Breadcrumb title="Products List" items={BCrumb} />
+      {/* end breadcrumb */}
+      <Box
+      // sx={{
+      //     minWidth: isCollapse === "mini-sidebar" ? '120%' : '105%', // keep as number, not string
+      //     marginLeft: isCollapse === "mini-sidebar" ? "-110px" : "-24px", // adjust values
+      //     transition: "margin-left 0.3s ease", // smooth animation
+      // }}
+      >
+        <ListTable
+          showCheckBox={false}
+          headCells={headCells}
+          tableData={tableData}
+          isProductsList={true}
+          setTableData={setTableData}
+        />
+      </Box>
+    </PageContainer>
     // </ProductProvider>
   );
 };

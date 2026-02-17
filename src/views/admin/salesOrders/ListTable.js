@@ -35,17 +35,26 @@ import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/utils/ConfirmDeletePopUp';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
+  let aValue = a[orderBy];
+  let bValue = b[orderBy];
+
+  // Handle nested salesRep name
+  if (orderBy === 'salesRep') {
+    aValue = a.salesRep?.name || '';
+    bValue = b.salesRep?.name || '';
+  }
+
+  if (bValue < aValue) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (bValue > aValue) {
     return 1;
   }
   return 0;
 }
 
 function getComparator(order, orderBy) {
-  return order === 'desc'
+  return order === 'asc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
@@ -80,7 +89,7 @@ function EnhancedTableHead(props) {
 
   return (
     <TableHead>
-      <TableRow>
+      <TableRow >
         {showCheckBox && <TableCell padding="checkbox">
           <CustomCheckbox
             color="primary"
@@ -98,10 +107,12 @@ function EnhancedTableHead(props) {
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
+
               ...(index === 0 ? stickyCellStyle : {}),
             }}
           >
             <TableSortLabel
+
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
@@ -289,7 +300,7 @@ const ListTable = ({
   const { filteredAndSortedProducts } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('documentNumber');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -694,21 +705,24 @@ const ListTable = ({
   const columnWidths = {
     serial: { minWidth: '80px' },
     date: { minWidth: '200px' },
-    document: { minWidth: '200px' },
-    customer: { minWidth: '300px' },
-    salesChannel: { minWidth: '150px' },
-    tracking: { minWidth: '200px' },
+    document: { minWidth: '145px' },
+    date: { minWidth: '120px' },
+    customer: { minWidth: '160px' },
+    salesChannel: { minWidth: '160px' },
+    tracking: { minWidth: '160px' },
     shipping: { minWidth: '400px' },
     billing: { minWidth: '400px' },
-    customerPO: { minWidth: '150px' },
-    salesRep: { minWidth: '400px' },
+    customerPO: { minWidth: '130px' },
+    salesRep: { minWidth: '180px' },
+    orderComments: { minWidth: '180px' },
+    totalAmount: { minWidth: '140px' },
     creditcard: { minWidth: '250px' },
     itemSku: { minWidth: '150px' },
     packQuantity: { minWidth: '160px' },
     unitsQuantity: { minWidth: '160px' },
     amount: { minWidth: '160px' },
     finalAmount: { minWidth: '160px' },
-    createdAt: { minWidth: '280px' },
+    createdAt: { minWidth: '180px' },
     actions: { minWidth: '200px' }, // Increased width to accommodate new button
   };
 
@@ -868,7 +882,7 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={columnWidths.document}>
+                        <TableCell sx={columnWidths.date}>
                           <Box display="flex" alignItems="center">
                             <Box>
                               <Typography fontWeight="400">
@@ -879,6 +893,15 @@ const ListTable = ({
                                     year: "numeric",
                                   })
                                   : ""}
+                              </Typography>
+                              <Typography>
+                                {new Date(row.date).toLocaleTimeString("en-IN", {
+                                  timeZone: "Asia/Kolkata",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true
+                                }).replace(":", ".").toLowerCase()}
+
                               </Typography>
                             </Box>
                           </Box>
@@ -894,6 +917,16 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
+                        <TableCell sx={columnWidths.totalAmount}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.totalAmount?.toFixed(2) || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
                         <TableCell sx={columnWidths.salesChannel}>
                           <Box display="flex" alignItems="center">
                             <Box >
@@ -904,7 +937,47 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={columnWidths.tracking}>
+                        <TableCell sx={columnWidths.salesRep}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              {row.salesRep instanceof Object && (
+                                <>
+                                  <Typography fontWeight="400">
+                                    Name: {row?.salesRep?.name || 'N/A'}
+                                  </Typography>
+                                  {/* <Typography fontWeight="400">
+                                    Email: {row?.salesRep?.email || 'N/A'}
+                                  </Typography>
+                                  <Typography fontWeight="400">
+                                    Role: {row?.salesRep?.role || 'N/A'}
+                                  </Typography> */}
+                                </>
+                              )}
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.salesRep}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.comments || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell sx={columnWidths.customerPO}>
+                          <Box display="flex" alignItems="center">
+                            <Box >
+                              <Typography fontWeight="400">
+                                {row?.customerPO || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        {/* <TableCell sx={columnWidths.tracking}>
                           <Box display="flex" alignItems="center">
                             <Box >
                               <Typography fontWeight="400">
@@ -940,36 +1013,6 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={columnWidths.customerPO}>
-                          <Box display="flex" alignItems="center">
-                            <Box >
-                              <Typography fontWeight="400">
-                                {row?.customerPO || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell sx={columnWidths.salesRep}>
-                          <Box display="flex" alignItems="center">
-                            <Box >
-                              {row.salesRep instanceof Object && (
-                                <>
-                                  <Typography fontWeight="400">
-                                    Name: {row?.salesRep?.name || 'N/A'}
-                                  </Typography>
-                                  {/* <Typography fontWeight="400">
-                                    Email: {row?.salesRep?.email || 'N/A'}
-                                  </Typography>
-                                  <Typography fontWeight="400">
-                                    Role: {row?.salesRep?.role || 'N/A'}
-                                  </Typography> */}
-                                </>
-                              )}
-                            </Box>
-                          </Box>
-                        </TableCell>
-
                         <TableCell sx={columnWidths.createdAt}>
                           <Box display="flex" alignItems="center">
                             <Box >
@@ -978,27 +1021,7 @@ const ListTable = ({
                               </Typography>
                             </Box>
                           </Box>
-                        </TableCell>
-
-                        <TableCell sx={columnWidths.salesRep}>
-                          <Box display="flex" alignItems="center">
-                            <Box >
-                              <Typography fontWeight="400">
-                                {row?.comments || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell sx={columnWidths.customerPO}>
-                          <Box display="flex" alignItems="center">
-                            <Box >
-                              <Typography fontWeight="400">
-                                {row?.totalAmount?.toFixed(2) || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
+                        </TableCell> */}
 
                         {/* <TableCell sx={columnWidths.creditcard}>
                           <Box display="flex" alignItems="center">

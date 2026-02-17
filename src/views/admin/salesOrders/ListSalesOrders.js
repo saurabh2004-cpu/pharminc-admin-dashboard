@@ -26,7 +26,7 @@ const ListSalesOrders = () => {
       label: 'Actions',
     },
     {
-      id: 'orderNumber',
+      id: 'documentNumber',
       numeric: false,
       disablePadding: false,
       label: 'Order Number',
@@ -45,67 +45,66 @@ const ListSalesOrders = () => {
       label: 'Customer Name',
     },
     {
-      id: 'paymentTerms',
-      numeric: false,
-      disablePadding: false,
-      label: 'Payment Terms',
-    },
-    {
-      id: 'trackingNumber',
-      numeric: false,
-      disablePadding: false,
-      label: 'Tracking Number',
-    },
-    {
-      id: 'shippingAddress',
-      numeric: false,
-      disablePadding: false,
-      label: 'Shipping Address',
-    },
-    {
-      id: 'billingAddress',
-      numeric: false,
-      disablePadding: false,
-      label: 'Billing Address',
-    },
-    {
-      id: 'customerPO',
-      numeric: false,
-      disablePadding: false,
-      label: 'Customer PO',
-    },
-    {
-      id: 'SalesRep',
-      numeric: false,
-      disablePadding: false,
-      label: 'Sales Rep',
-    },
-    // {
-    //   id: 'paymentTerms',
-    //   numeric: false,
-    //   disablePadding: false,
-    //   label: 'Payment Terms',
-    // },
-    {
-      id: 'Po-Number',
-      numeric: false,
-      disablePadding: false,
-      label: 'Po Number',
-    },
-    {
-      id: 'Order Comments',
-      numeric: false,
-      disablePadding: false,
-      label: 'Order Comments',
-    },
-    {
       id: 'totalAmount',
       numeric: false,
       disablePadding: false,
       label: 'Total Amount',
     },
     {
-      id: 'LastUpdatedDate',
+      id: 'salesChannel',
+      numeric: false,
+      disablePadding: false,
+      label: 'Payment Terms',
+    },
+
+    {
+      id: 'salesRep',
+      numeric: false,
+      disablePadding: false,
+      label: 'Sales Rep',
+    },
+
+    {
+      id: 'comments',
+      numeric: false,
+      disablePadding: false,
+      label: 'Order Comments',
+    },
+
+    {
+      id: 'customerPO',
+      numeric: false,
+      disablePadding: false,
+      label: 'Po Number',
+    },
+
+    // {
+    //   id: 'trackingNumber',
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: 'Tracking Number',
+    // },
+    // {
+    //   id: 'shippingAddress',
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: 'Shipping Address',
+    // },
+    // {
+    //   id: 'billingAddress',
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: 'Billing Address',
+    // },
+    // {
+    //   id: 'customerPO',
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: 'Customer PO',
+    // },
+
+    {
+      id: 'updatedAt',
       numeric: false,
       disablePadding: false,
       label: 'Last Updated Date',

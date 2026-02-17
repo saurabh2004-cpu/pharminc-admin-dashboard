@@ -48,10 +48,28 @@ import { IconUserPlus } from '@tabler/icons-react';
 import { set } from 'lodash';
 
 function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
+  let aValue = a[orderBy];
+  let bValue = b[orderBy];
+
+  // Special handling for nested or complex fields
+  if (orderBy === 'netTerms') {
+    aValue = a.netTerms?.netTermName || '';
+    bValue = b.netTerms?.netTermName || '';
+  } else if (orderBy === 'shippingAddresses') {
+    aValue = a.shippingAddresses?.[0]?.shippingAddressOne || '';
+    bValue = b.shippingAddresses?.[0]?.shippingAddressOne || '';
+  } else if (orderBy === 'billingAddresses') {
+    aValue = a.billingAddresses?.[0]?.billingAddressOne || '';
+    bValue = b.billingAddresses?.[0]?.billingAddressOne || '';
+  } else if (orderBy === 'inactive') {
+    aValue = a.inactive ? 1 : 0;
+    bValue = b.inactive ? 1 : 0;
+  }
+
+  if (bValue < aValue) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (bValue > aValue) {
     return 1;
   }
   return 0;
@@ -495,7 +513,7 @@ const ListTable = ({
   } = useContext(ProductContext);
 
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('calories');
+  const [orderBy, setOrderBy] = useState('customerId');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
@@ -516,6 +534,12 @@ const ListTable = ({
 
   // Define column widths
   const columnWidths = {
+    customerId: { minWidth: '135px' },
+    customerPhoneNo: { minWidth: '150px' },
+    abn: { minWidth: '120px' },
+    primaryBrand: { minWidth: '170px' },
+    netTerms: { minWidth: '150px' },
+    inactive: { minWidth: '100px' },
     serial: { minWidth: '80px' },
     sku: { minWidth: '150px' },
     productName: { minWidth: '280px' },
@@ -529,7 +553,7 @@ const ListTable = ({
     eachBarcodes: { minWidth: '150px' },
     orderApprovel: { minWidth: '300px' },
     packBarcodes: { minWidth: '150px' },
-    defaultShippingRate: { minWidth: '200px' },
+    defaultShippingRate: { minWidth: '140px' },
     createdAt: { minWidth: '160px' },
     actions: { minWidth: '160px' },
     addresses: { minWidth: '300px' }, // Wider for addresses
@@ -565,9 +589,10 @@ const ListTable = ({
           row.customerEmail?.toLowerCase().includes(searchValue) ||
           row.contactEmail?.toLowerCase().includes(searchValue) ||
           row.CustomerPhoneNo?.toString().toLowerCase().includes(searchValue) ||
+          row.abn?.toLowerCase().includes(searchValue) ||
           row.category?.toLowerCase().includes(searchValue) ||
           row.primaryBrand?.toLowerCase().includes(searchValue) ||
-          // row.netTerms?.toString().toLowerCase().includes(searchValue) ||
+          row.netTerms?.netTermName?.toLowerCase().includes(searchValue) ||
           row.orderApproval?.toLowerCase().includes(searchValue) ||
           row.defaultShippingRate?.toString().toLowerCase().includes(searchValue) ||
           shippingAddressesText.includes(searchValue) ||
@@ -866,7 +891,7 @@ const ListTable = ({
                                 </Box>
                               </TableCell>
 
-                              <TableCell sx={columnWidths.sku}>
+                              <TableCell sx={columnWidths.customerId}>
                                 <Typography fontWeight="500" variant="subtitle2">
                                   {row.customerId || 'N/A'}
                                 </Typography>
@@ -902,13 +927,13 @@ const ListTable = ({
                                 </Typography>
                               </TableCell>
 
-                              <TableCell sx={columnWidths.category}>
+                              <TableCell sx={columnWidths.customerPhoneNo}>
                                 {row.CustomerPhoneNo && <Typography fontWeight="400">
                                   +61 {row.CustomerPhoneNo || 'N/A'}
                                 </Typography>}
                               </TableCell>
 
-                              <TableCell sx={columnWidths.category}>
+                              <TableCell sx={columnWidths.abn}>
                                 <Typography fontWeight="400">
                                   {row.abn || 'N/A'}
                                 </Typography>
@@ -920,13 +945,13 @@ const ListTable = ({
                                 </Typography>
                               </TableCell>
 
-                              <TableCell sx={columnWidths.storeDescription}>
+                              <TableCell sx={columnWidths.primaryBrand}>
                                 <Typography fontWeight="400">
                                   {row.primaryBrand || 'N/A'}
                                 </Typography>
                               </TableCell>
 
-                              <TableCell sx={columnWidths.pageTitle}>
+                              <TableCell sx={columnWidths.netTerms}>
                                 {row.netTerms?.netTermName ? (
                                   <Typography fontWeight="400">
                                     {`${row.netTerms.netTermName}  ${row.netTerms.daysCount ? "-" + row.netTerms.daysCount : ''}`}
@@ -965,7 +990,7 @@ const ListTable = ({
                                 />
                               </TableCell>
 
-                              <TableCell sx={columnWidths.packBarcodes}>
+                              <TableCell sx={columnWidths.inactive}>
                                 <Chip
                                   label={row.inactive ? 'Inactive' : 'Active'}
                                   color={row.inactive ? 'error' : 'success'}
