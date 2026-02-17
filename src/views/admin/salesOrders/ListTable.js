@@ -895,10 +895,10 @@ const ListTable = ({
                           </Box>
                         </TableCell>
 
-                        <TableCell sx={{ ...columnWidths.document, cursor: "pointer", ":hover": { color: "blue" } }} onClick={() => handleDocumentClick(row.documentNumber)}>
+                        <TableCell sx={{ ...columnWidths.document }} onClick={() => handleDocumentClick(row.documentNumber)}>
                           <Box display="flex" alignItems="center">
                             <Box sx={{ ml: 2 }}>
-                              <Typography fontWeight="500" variant="subtitle2">
+                              <Typography fontWeight="500" variant="subtitle2" sx={{ cursor: "pointer", ":hover": { color: "blue" } }}>
                                 {row?.documentNumber || 'N/A'}
                               </Typography>
                             </Box>
