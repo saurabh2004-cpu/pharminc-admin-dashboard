@@ -35,6 +35,7 @@ import { DeleteConfirmationDialog } from '../../../components/apps/ecommerce/uti
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 
 function descendingComparator(a, b, orderBy) {
+  if (!orderBy) return 0;
   let aValue = a[orderBy];
   let bValue = b[orderBy];
 
@@ -185,7 +186,7 @@ const EnhancedTableToolbar = (props) => {
 
 const CustomersCartItems = () => {
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('sku');
+  const [orderBy, setOrderBy] = useState('');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);

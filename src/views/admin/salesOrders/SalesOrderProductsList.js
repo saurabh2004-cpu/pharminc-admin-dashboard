@@ -306,6 +306,7 @@ const CustomersSalesOrders = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         customerName: "",
+        nsSalesOrderNumber: "",
         customerNumber: "",
         salesChannel: "",
         packQuantity: "",
@@ -514,6 +515,7 @@ const CustomersSalesOrders = () => {
 
             setFormData({
                 customerName: tableData[0]?.customerName || "",
+                nsSalesOrderNumber: tableData[0]?.nsSalesOrderNumber || "",
                 customerNumber: tableData[0]?.customerNumber || "",
                 salesChannel: tableData[0]?.salesChannel || "",
                 packQuantity: tableData[0]?.packQuantity || "",
@@ -579,6 +581,7 @@ const CustomersSalesOrders = () => {
                 `/sales-order/update-sales-order/${documentNo}`,
                 {
                     customerName: formData.customerName,
+                    nsSalesOrderNumber: formData.nsSalesOrderNumber,
                     salesChannel: formData.salesChannel,
                     billingAddress: billingAddress,
                     shippingAddress: shippingAddress,
@@ -1771,6 +1774,14 @@ const CustomersSalesOrders = () => {
                                             #{documentNo}
                                         </Typography>
                                     </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: 120 }}>
+                                            NS Sales Order Number :
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            {tableData[0]?.nsSalesOrderNumber || '-'}
+                                        </Typography>
+                                    </Box>
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 120 }}>
@@ -2080,6 +2091,19 @@ const CustomersSalesOrders = () => {
                                     size="small"
                                     value={formData.customerName}
                                     onChange={(e) => handleInputChange("customerName", e.target.value)}
+                                    sx={{ minWidth: 270 }}
+                                />
+                            </Box>
+
+                            {/* NS Sales Order Number */}
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 80 }}>
+                                    NS Sales Order Number :
+                                </Typography>
+                                <TextField
+                                    size="small"
+                                    value={formData.nsSalesOrderNumber || ""}
+                                    onChange={(e) => handleInputChange("nsSalesOrderNumber", e.target.value)}
                                     sx={{ minWidth: 270 }}
                                 />
                             </Box>
