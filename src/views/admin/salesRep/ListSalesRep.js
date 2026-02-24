@@ -219,6 +219,10 @@ const ListSalesRep = () => {
   const { id } = useParams();
   const theme = useTheme();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
   // Updated headCells to match schema fields
   const headCells = [
     {

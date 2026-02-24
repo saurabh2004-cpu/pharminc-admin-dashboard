@@ -242,6 +242,10 @@ const ListNetTermsData = () => {
     const [search, setSearch] = useState('');
     const navigate = useNavigate();
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [page]);
+
     // Corrected headCells based on API response
     const headCells = [
         {

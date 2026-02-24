@@ -230,6 +230,10 @@ const SalesRepCustomersList = () => {
   const theme = useTheme();
   const { id } = useParams();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
   // Corrected headCells for Customer data
   const headCells = [
     {

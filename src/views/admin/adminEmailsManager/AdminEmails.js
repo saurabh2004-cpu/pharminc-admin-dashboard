@@ -169,6 +169,10 @@ const AdminEmailsManager = () => {
   const [formData, setFormData] = useState({ email: '', active: true });
   const [editingEmail, setEditingEmail] = useState({ oldEmail: '', newEmail: '', active: true });
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
     email: '',

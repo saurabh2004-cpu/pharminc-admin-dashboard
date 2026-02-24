@@ -358,6 +358,10 @@ const ListTable = ({
   });
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page, rowsPerPage]);
+
+  useEffect(() => {
     let baseData = isBrandsList ? sourceData : filteredAndSortedProducts;
 
     if (search) {

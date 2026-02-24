@@ -226,6 +226,10 @@ const ListAdmins = () => {
     const [statusFilter, setStatusFilter] = useState('ALL');
     const navigate = useNavigate();
 
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [page]);
     // Define headCells for the table - Updated to match admin schema
     const headCells = [
         {

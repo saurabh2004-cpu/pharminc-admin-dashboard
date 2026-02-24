@@ -252,6 +252,11 @@ const ListProductGroupProducts = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page, rowsPerPage]);
+
   // Define headCells for products in product group
   const headCells = [
     {

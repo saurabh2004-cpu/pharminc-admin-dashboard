@@ -213,6 +213,10 @@ const ListTable = ({
 
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
+  useEffect(() => {
     if (isBrandsList) {
       setRows(sourceData);
     } else {

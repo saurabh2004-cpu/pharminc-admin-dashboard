@@ -417,6 +417,10 @@ const ListTable = ({
     filterSubCategoryTwo
   ].filter(Boolean).length;
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page, rowsPerPage]);
+
   const handleToggleProductStatus = async (productId, currentStatus) => {
     try {
       setTogglingProductId(productId);

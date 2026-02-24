@@ -574,6 +574,10 @@ const ListTable = ({
   };
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page, rowsPerPage]);
+
+  useEffect(() => {
     let filteredData = sourceData;
 
     // Apply approval filter first

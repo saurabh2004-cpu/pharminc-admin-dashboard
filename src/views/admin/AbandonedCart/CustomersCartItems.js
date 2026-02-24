@@ -201,6 +201,11 @@ const CustomersCartItems = () => {
   const navigate = useNavigate();
   const { customerId } = useParams();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
+
   // Define headCells for the table
   const headCells = [
     {

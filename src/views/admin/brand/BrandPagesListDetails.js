@@ -210,6 +210,10 @@ const BrandPagesListDetails = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
   const headCells = [
     {
       id: 'brand',

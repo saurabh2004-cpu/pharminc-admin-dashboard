@@ -240,6 +240,10 @@ const ListContactUsData = () => {
     const navigate = useNavigate();
     const { id } = useParams();
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [page]);
+
     // Define headCells for contact us data
     const headCells = [
         {

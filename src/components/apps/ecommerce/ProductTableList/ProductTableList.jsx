@@ -220,6 +220,10 @@ const ProductTableList = ({
     isDeleting: false
   });
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
   const [search, setSearch] = useState('');

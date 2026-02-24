@@ -230,6 +230,10 @@ const ListProductGroup = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page, rowsPerPage]);
+
   // Corrected headCells based on API response
   const headCells = [
     {

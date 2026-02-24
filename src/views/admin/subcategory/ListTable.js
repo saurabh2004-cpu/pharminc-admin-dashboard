@@ -236,6 +236,10 @@ const ListTable = ({
   const navigate = useNavigate();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
+  useEffect(() => {
     if (isBrandsList) {
       setRows(sourceData);
     }

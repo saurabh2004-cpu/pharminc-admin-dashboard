@@ -500,6 +500,12 @@ const PendingApprovalCustomers = ({
         addresses: { minWidth: '300px' }, // Wider for addresses
     };
 
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [page, rowsPerPage]);
+
+
     useEffect(() => {
         let filteredData = sourceData;
 

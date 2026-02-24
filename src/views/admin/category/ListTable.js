@@ -235,6 +235,10 @@ const ListTable = ({
 
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
+  useEffect(() => {
     let data = isBrandsList ? sourceData : filteredAndSortedProducts;
 
     // If there's an active search, filter the data
