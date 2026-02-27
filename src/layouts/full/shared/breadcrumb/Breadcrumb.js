@@ -9,7 +9,7 @@ import { NavLink } from 'react-router';
 import breadcrumbImg from 'src/assets/images/breadcrumb/ChatBc.png';
 import { IconCircle } from '@tabler/icons';
 
-const Breadcrumb = ({ subtitle, items, title, children }) => (
+const Breadcrumb = ({ subtitle, items, title, children, sx }) => (
   <Grid
     container
     sx={{
@@ -20,6 +20,7 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
       position: 'relative',
       bottom: '33px',
       overflow: 'hidden',
+      ...sx,
     }}
   >
     <Grid size={{ xs: 12, sm: 6, lg: 8 }} mb={1}>

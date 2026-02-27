@@ -7,8 +7,8 @@ import { Stack } from '@mui/system';
 import ProfileImg from 'src/assets/images/profile/user-1.jpg';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, salesRepLogout } from '../../../../store/authSlice';
 import axiosInstance from 'src/axios/axiosInstance';
+import { adminLogout } from 'src/utils/adminLogout';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -18,9 +18,6 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const user = useSelector((state) => state.auth.userData);
-  const salesRep = useSelector((state) => state.auth.salesRepData);
-
-  // console.log("sales rep data in prodfile", salesRep);
 
   const handleClick2 = (event) => {
     setAnchorEl2(event.currentTarget);
@@ -32,36 +29,11 @@ const Profile = () => {
   };
 
   const handleLogout = async () => {
-    setError(null); // clear previous error
-    try {
-      const res = await axiosInstance.post('/admin/logout', {});
-
-      if (res.data.statusCode === 200) {
-        dispatch(logout());
-        navigate('/auth/login');
-      } else {
-        setError(res.data.message || 'Logout failed');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'An error occurred');
-    }
+    setError(null);
+    await adminLogout(dispatch, navigate);
   };
 
-  const handleSalesRepLogout = async () => {
-    setError(null); // clear previous error
-    try {
-      const res = await axiosInstance.post('/sales-rep/logout-sales-rep', {});
 
-      if (res.data.statusCode === 200) {
-        dispatch(salesRepLogout());
-        navigate('/auth/login');
-      } else {
-        setError(res.data.message || 'Logout failed');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'An error occurred');
-    }
-  };
 
   return (
     <Box>
@@ -109,10 +81,10 @@ const Profile = () => {
               <Avatar src={ProfileImg} alt="User" sx={{ width: 95, height: 95 }} />
               <Box>
                 <Typography variant="subtitle2" fontWeight={600}>
-                  {user?.username || salesRep?.salesRepId}
+                  {user?.username}
                 </Typography>
                 <Typography variant="subtitle2" color="textSecondary">
-                  {user ? 'Admin' : 'Sales Rep'}
+                  Admin
                 </Typography>
                 <Typography
                   variant="subtitle2"
@@ -171,23 +143,12 @@ const Profile = () => {
             ))}
 
             <Box mt={2}>
-              {user && salesRep == null &&
+              {user &&
                 <Button Button
                   variant="outlined"
                   color="primary"
                   fullWidth
                   onClick={handleLogout}
-                  sx={{ backgroundColor: '#2E2F7F', color: 'white', ":hover": { backgroundColor: '#2E2F7F' } }}
-                >
-                  Logout
-                </Button>}
-
-              {salesRep != null && user == null &&
-                <Button Button
-                  variant="outlined"
-                  color="primary"
-                  fullWidth
-                  onClick={handleSalesRepLogout}
                   sx={{ backgroundColor: '#2E2F7F', color: 'white', ":hover": { backgroundColor: '#2E2F7F' } }}
                 >
                   Logout

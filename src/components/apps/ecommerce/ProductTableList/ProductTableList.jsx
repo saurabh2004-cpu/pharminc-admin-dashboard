@@ -29,15 +29,21 @@ import {
   DialogTitle,
   Button,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Chip,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CustomCheckbox from '../../../forms/theme-elements/CustomCheckbox';
 import CustomSwitch from '../../../forms/theme-elements/CustomSwitch';
-import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconDotsVertical, IconFilter, IconSearch, IconTrash, IconEdit, IconBriefcase, IconUserPlus, IconEye, IconReceipt } from '@tabler/icons-react';
 import { ProductContext } from "src/context/EcommerceContext";
 import axiosInstance from '../../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../utils/ConfirmDeletePopUp';
+import { toggleJobStatus } from 'src/services/jobService';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -137,7 +143,7 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder } = props;
+  const { numSelected, handleSearch, search, placeholder, statusFilter, onStatusFilterChange, statusFilterOptions } = props;
 
   return (
     <Toolbar
@@ -180,15 +186,66 @@ const EnhancedTableToolbar = (props) => {
           </IconButton>
         </Tooltip>
       ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <IconFilter size="1.2rem" />
-          </IconButton>
-        </Tooltip>
+        <Box display="flex" alignItems="center" gap={2}>
+          {statusFilterOptions && (
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+              <InputLabel id="status-filter-label">Status Filter</InputLabel>
+              <Select
+                labelId="status-filter-label"
+                value={statusFilter}
+                onChange={onStatusFilterChange}
+                label="Status Filter"
+              >
+                {statusFilterOptions.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          <Tooltip title="Filter list">
+            <IconButton>
+              <IconFilter size="1.2rem" />
+            </IconButton>
+          </Tooltip>
+        </Box>
       )}
     </Toolbar>
   );
 };
+
+
+
+function stringToColor(string) {
+  if (!string) return '#10163A';
+  let hash = 0;
+  let i;
+  /* eslint-disable no-bitwise */
+  for (i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  let color = '#';
+  for (i = 0; i < 3; i += 1) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+  /* eslint-enable no-bitwise */
+  return color;
+}
+
+function stringAvatar(name) {
+  if (!name) return { children: 'U', sx: { bgcolor: '#10163A' } };
+  const splitName = name.split(' ').filter(Boolean);
+  const firstLetter = splitName[0]?.[0] || '';
+  const secondLetter = splitName[1]?.[0] || '';
+  return {
+    sx: {
+      bgcolor: stringToColor(name),
+    },
+    children: `${firstLetter}${secondLetter}`.toUpperCase(),
+  };
+}
 
 // Confirmation Dialog Component
 
@@ -198,7 +255,24 @@ const ProductTableList = ({
   headCells,
   tableData,
   isBrandsList = false,
-  setTableData
+  isInstitutesList = false,
+  isJobsList = false,
+  isApplicantsList = false,
+  isUsersList = false,
+  isUserVerificationsList = false,
+  isUserApplicationsList = false,
+  isCreditsHistoryList = false,
+  setTableData,
+  serverPagination = false,
+  totalCount = 0,
+  page: externalPage = 0,
+  rowsPerPage: externalRowsPerPage = 10,
+  onPageChange,
+  onRowsPerPageChange,
+  statusFilter,
+  onStatusFilterChange,
+  statusFilterOptions,
+  onVerifyStatusChange
 }) => {
 
   const {
@@ -208,9 +282,12 @@ const ProductTableList = ({
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('calories');
   const [selected, setSelected] = useState([]);
-  const [page, setPage] = useState(0);
+  const [internalPage, setInternalPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [internalRowsPerPage, setInternalRowsPerPage] = useState(50);
+
+  const page = serverPagination ? externalPage : internalPage;
+  const rowsPerPage = serverPagination ? externalRowsPerPage : internalRowsPerPage;
 
   // Delete confirmation dialog state
   const [deleteDialog, setDeleteDialog] = useState({
@@ -221,8 +298,8 @@ const ProductTableList = ({
   });
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [page]);
+    if (!serverPagination) window.scrollTo(0, 0);
+  }, [page, serverPagination]);
 
   const sourceData = tableData || [];
   const [rows, setRows] = useState(sourceData);
@@ -230,20 +307,41 @@ const ProductTableList = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isBrandsList) {
+    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isUserApplicationsList || isCreditsHistoryList) {
       setRows(sourceData);
     } else {
       setRows(filteredAndSortedProducts);
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList]);
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, isInstitutesList, isJobsList, isApplicantsList, isUsersList, isUserVerificationsList, isUserApplicationsList, isCreditsHistoryList]);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
     setSearch(searchValue);
 
-    if (isBrandsList) {
+    if (isBrandsList || isInstitutesList) {
       const filteredRows = sourceData.filter((row) => {
         return row.name.toLowerCase().includes(searchValue);
+      });
+      setRows(filteredRows);
+    } else if (isJobsList) {
+      const filteredRows = sourceData.filter((row) => {
+        return row.title.toLowerCase().includes(searchValue);
+      });
+      setRows(filteredRows);
+    } else if (isApplicantsList || isUsersList || isUserVerificationsList) {
+      const filteredRows = sourceData.filter((row) => {
+        const fullName = `${row.firstName || ''} ${row.lastName || ''} ${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim();
+        return fullName.toLowerCase().includes(searchValue) || (row.email && row.email.toLowerCase().includes(searchValue));
+      });
+      setRows(filteredRows);
+    } else if (isUserApplicationsList) {
+      const filteredRows = sourceData.filter((row) => {
+        return row.job?.title?.toLowerCase().includes(searchValue) || row.job?.institute?.name?.toLowerCase().includes(searchValue);
+      });
+      setRows(filteredRows);
+    } else if (isCreditsHistoryList) {
+      const filteredRows = sourceData.filter((row) => {
+        return row.institute?.name?.toLowerCase().includes(searchValue) || row.job?.title?.toLowerCase().includes(searchValue) || row.action?.toLowerCase().includes(searchValue);
       });
       setRows(filteredRows);
     } else {
@@ -290,21 +388,49 @@ const ProductTableList = ({
   };
 
   const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+    if (serverPagination) {
+      if (onPageChange) onPageChange(event, newPage);
+    } else {
+      setInternalPage(newPage);
+    }
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    if (serverPagination) {
+      if (onRowsPerPageChange) onRowsPerPageChange(event);
+    } else {
+      setInternalRowsPerPage(parseInt(event.target.value, 10));
+      setInternalPage(0);
+    }
   };
 
   const handleChangeDense = (event) => {
     setDense(event.target.checked);
   };
 
+  const handleToggleStatus = async (id) => {
+    try {
+      const res = await toggleJobStatus(id);
+      if (res.data) {
+        // Update local rows
+        setRows((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status: res.data.status } : r))
+        );
+        // Also update source data if possible
+        if (setTableData) {
+          setTableData((prev) =>
+            prev.map((r) => (r.id === id ? { ...r, status: res.data.status } : r))
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle status', err);
+    }
+  };
+
   const isSelected = (name) => selected.indexOf(name) !== -1;
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  const emptyRows = serverPagination ? 0 : page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   const theme = useTheme();
   const borderColor = theme.palette.divider;
@@ -335,20 +461,26 @@ const ProductTableList = ({
     setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
 
     try {
-      const res = await axiosInstance.delete(`/brand/delete-brand/${deleteDialog.itemId}`);
+      const deleteId = deleteDialog.itemId;
+      const endpoint = isInstitutesList
+        ? `/institute/delete-institute/${deleteId}`
+        : isJobsList
+          ? `/job/delete-job/${deleteId}`
+          : isApplicantsList || isUserApplicationsList
+            ? `/application/delete/${deleteId}`
+            : isUsersList || isUserVerificationsList
+              ? `/user/delete-user/${deleteId}`
+              : `/brand/delete-brand/${deleteId}`;
 
-      // console.log("deleted", res.data);
+      const res = await axiosInstance.delete(endpoint);
 
-      if (res.data.statusCode === 200) {
+      if (res.status === 200 || res.status === 204 || res.data?.statusCode === 200) {
         // Remove item from both table data and rows
-        setTableData((prevData) => prevData.filter((item) => item._id !== deleteDialog.itemId));
-        setRows((prevRows) => prevRows.filter((item) => item._id !== deleteDialog.itemId));
+        setTableData((prevData) => prevData.filter((item) => (item._id || item.id) !== deleteId));
+        setRows((prevRows) => prevRows.filter((item) => (item._id || item.id) !== deleteId));
 
         // Close dialog
         handleDeleteCancel();
-
-        // You might want to show a success message here
-        // console.log("Brand deleted successfully");
       }
     } catch (error) {
       console.error('Error deleting brand:', error);
@@ -359,10 +491,37 @@ const ProductTableList = ({
     }
   };
 
-  // Edit brand
-  const handleEditBrand = (event, id) => {
+  // Edit item
+  const handleEditClick = (event, id) => {
     event.stopPropagation(); // Prevent row selection
-    navigate(`/dashboard/brand/edit/${id}`);
+    if (isInstitutesList) {
+      navigate(`/dashboard/institute/edit/${id}`);
+    } else if (isUsersList || isUserVerificationsList) {
+      navigate(`/dashboard/users/edit/${id}`);
+    } else if (isJobsList) {
+      navigate(`/dashboard/jobs/edit/${id}`);
+    } else {
+      navigate(`/dashboard/brand/edit/${id}`);
+    }
+  };
+
+  const handleVerifyInstitute = async (id) => {
+    try {
+      const res = await axiosInstance.put(`/institute-verifications/approve-verification/${id}`);
+      if (res.status === 200 || res.status === 204 || res.data?.success || res.data?.statusCode === 200) {
+        setRows((prev) =>
+          prev.map((r) => ((r.id || r._id) === id ? { ...r, verified: 'APPROVED' } : r))
+        );
+        if (setTableData) {
+          setTableData((prev) =>
+            prev.map((r) => ((r.id || r._id) === id ? { ...r, verified: 'APPROVED' } : r))
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to verify institute', err);
+      alert('Failed to verify institute. Please try again.');
+    }
   };
 
   const stickyCellStyle = {
@@ -381,7 +540,10 @@ const ProductTableList = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isBrandsList ? "Search Brand" : "Search Product"}
+          placeholder={isInstitutesList ? "Search Institute" : isBrandsList ? "Search Brand" : isJobsList ? "Search Job" : isApplicantsList ? "Search Applicant" : "Search Product"}
+          statusFilter={statusFilter}
+          onStatusFilterChange={onStatusFilterChange}
+          statusFilterOptions={statusFilterOptions}
         />
         <Paper variant="outlined" sx={{
           mt: 1,
@@ -395,9 +557,10 @@ const ProductTableList = ({
             <Table
               sx={{
                 minWidth: "100%",
-                tableLayout: "fixed",
+                tableLayout: "auto",
                 borderCollapse: "collapse",
                 "& td, & th": {
+                  whiteSpace: "nowrap",
                   paddingTop: "4px",
                   paddingBottom: "4px",
                   borderRight: "1px solid rgba(224, 224, 224, 1)",
@@ -421,8 +584,8 @@ const ProductTableList = ({
                 headCells={headCells}
               />
               <TableBody>
-                {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                {(serverPagination ? rows : stableSort(rows, getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage))
                   .map((row, index) => {
                     const isItemSelected = isSelected(row.name || row.title);
                     const labelId = `enhanced-table-checkbox-${index}`;
@@ -434,7 +597,7 @@ const ProductTableList = ({
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
-                        key={row._id || row.title}
+                        key={row.id || row._id || row.title}
                         selected={isItemSelected}
                       >
                         {showCheckBox && <TableCell padding="checkbox">
@@ -456,7 +619,7 @@ const ProductTableList = ({
                                   <IconButton
                                     size="small"
                                     color="primary"
-                                    onClick={(event) => handleEditBrand(event, row._id)}
+                                    onClick={(event) => handleEditClick(event, row.id || row._id)}
                                   >
                                     <IconEdit size="1.1rem" />
                                   </IconButton>
@@ -465,7 +628,7 @@ const ProductTableList = ({
                                   <IconButton
                                     size="small"
                                     color="error"
-                                    onClick={(event) => handleDeleteClick(event, row._id, row.name)}
+                                    onClick={(event) => handleDeleteClick(event, row.id || row._id, row.name)}
                                   >
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
@@ -493,6 +656,467 @@ const ProductTableList = ({
                             </TableCell>
 
                           </>
+                        ) : isInstitutesList ? (
+                          // Institutes List View
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="View Jobs">
+                                  <IconButton
+                                    size="small"
+                                    color="secondary"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      navigate(`/dashboard/institutes/${row.id}/jobs`, { state: { instituteName: row.name } });
+                                    }}
+                                  >
+                                    <IconBriefcase size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="View Credits History">
+                                  <IconButton
+                                    size="small"
+                                    color="warning"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      navigate(`/dashboard/institutes/${row.id}/credits-history`, { state: { instituteName: row.name } });
+                                    }}
+                                  >
+                                    <IconReceipt size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={(event) => handleEditClick(event, row.id)}
+                                  >
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={(event) => handleDeleteClick(event, row.id, row.name)}
+                                  >
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography fontWeight="600">{row.name}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.role}</Typography>
+                            </TableCell>
+                            <TableCell sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                              {row.verified === "" ? null : row.verified ? (
+                                <Chip label={row.verified === "REJECTED" ? "Rejected" : row.verified === "APPROVED" ? "Approved" : null} color={row.verified === "REJECTED" ? "error" : "success"} size="small" />
+                              ) : (
+                                ''
+                              )}
+                              {row.verified !== "APPROVED" && row.verified !== "" ? (
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  size="small"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleVerifyInstitute(row.id || row._id);
+                                  }}
+                                >
+                                  Verify
+                                </Button>
+                              ) : (
+                                ''
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.contactEmail}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.contactNumber}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.city}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.country}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.bedsCount}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.staffCount}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.created_at), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
+                          </>
+                        ) : isJobsList ? (
+                          // Jobs List View
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="View Applicants">
+                                  <IconButton
+                                    size="small"
+                                    color="info"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      navigate(`/dashboard/jobs/${row.id}/applicants`);
+                                    }}
+                                  >
+                                    <IconUserPlus size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={(event) => handleEditClick(event, row.id)}
+                                  >
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={(event) => handleDeleteClick(event, row.id, row.title)}
+                                  >
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography
+                                fontWeight="600"
+                                sx={{
+                                  cursor: 'pointer',
+                                  transition: 'color 0.2s',
+                                  '&:hover': {
+                                    color: 'primary.main',
+                                    textDecoration: 'underline',
+                                  },
+                                }}
+                                onClick={() => navigate(`/dashboard/jobs/${row.id}/applicants`)}
+                              >
+                                {row.title}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.role}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.jobType}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.workLocation}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.experienceLevel}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.salaryCurrency} {row.salaryMin} - {row.salaryMax}</Typography>
+                            </TableCell>
+                            <TableCell sx={{ minWidth: 160 }}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <CustomSwitch
+                                  checked={row.status === 'active'}
+                                  onChange={() => handleToggleStatus(row.id)}
+                                  color="primary"
+                                />
+                                <Typography variant="caption" sx={{ textTransform: 'capitalize' }}>
+                                  {row.status}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.speciality || 'N/A'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.subSpeciality || 'N/A'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.city || row.institute?.city || 'N/A'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.country || row.institute?.country || 'N/A'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.applicationDeadline ? format(new Date(row.applicationDeadline), 'MMM d yyyy') : 'N/A'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.contactEmail}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.contactPhone}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.contactPerson}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.created_at), 'MMM d yyyy')}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.updated_at), 'MMM d yyyy')}</Typography>
+                            </TableCell>
+                          </>
+                        ) : isApplicantsList ? (
+                          // Applicants List View
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={(event) => handleDeleteClick(event, row.id, `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim())}
+                                  >
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography fontWeight="600">{`${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim()}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.user?.email}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.currentPosition}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.currentInstitute}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.experienceYears} Years</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={row.status}
+                                size="small"
+                                color={
+                                  row.status === 'HIRED' ? 'success' :
+                                    row.status === 'REJECTED' || row.status === 'NEXT_ROUND_REJECTED' ? 'error' :
+                                      row.status === 'APPLIED' ? 'primary' :
+                                        row.status === 'SHORTLISTED' || row.status === 'INTERVIEW_SCHEDULED' ? 'secondary' : 'default'
+                                }
+                                variant="filled"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.appliedDate), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  window.open(row.resumeUrl, '_blank');
+                                }}
+                              >
+                                View Resume
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              {/* Actions - View Details placeholder or simple placeholder */}
+                              <Typography color="textSecondary">No Actions</Typography>
+                            </TableCell>
+                          </>
+                        ) : isUsersList || isUserVerificationsList ? (
+                          // Users / Verification Lists View
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                {isUserVerificationsList && (
+                                  <>
+                                    {row.verificationStatus === 'PENDING' ? (
+                                      <>
+                                        <Tooltip title="Approve">
+                                          <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'APPROVED'); }}>Approve</Button>
+                                        </Tooltip>
+                                        <Tooltip title="Reject">
+                                          <Button size="small" variant="outlined" color="error" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'REJECTED'); }}>Reject</Button>
+                                        </Tooltip>
+                                      </>
+                                    ) : row.verificationStatus === 'REJECTED' ? (
+                                      <Tooltip title="Approve">
+                                        <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'APPROVED'); }}>Approve</Button>
+                                      </Tooltip>
+                                    ) : null}
+                                  </>
+                                )}
+
+
+                                <Tooltip title="View Details">
+                                  <IconButton
+                                    size="small"
+                                    color="secondary"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      navigate(`/dashboard/users/${row.id || row._id}`);
+                                    }}
+                                  >
+                                    <IconBriefcase size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={(event) => handleEditClick(event, row.id || row._id)}
+                                  >
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={(event) => handleDeleteClick(event, row.id || row._id, `${row.firstName} ${row.lastName}`.trim())}
+                                  >
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center" gap={2}>
+                                <Avatar
+                                  src={row.profile_picture || undefined}
+                                  alt={row.firstName}
+                                  {...(!row.profile_picture && stringAvatar(`${row.firstName || ''} ${row.lastName || ''}`.trim()))}
+                                />
+                                <Typography
+                                  fontWeight="600"
+                                  onClick={(e) => {
+                                    if (isUsersList) {
+                                      e.stopPropagation();
+                                      navigate(`/dashboard/users/${row.id || row._id}/applications`, { state: { userName: `${row.firstName || ''} ${row.lastName || ''}`.trim() } });
+                                    }
+                                  }}
+                                  sx={isUsersList ? { cursor: 'pointer', '&:hover': { color: 'primary.main', textDecoration: 'underline' } } : {}}
+                                >
+                                  {`${row.firstName || ''} ${row.lastName || ''}`.trim()}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.email}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.role}</Typography>
+                            </TableCell>
+                            {isUserVerificationsList ? (
+                              <TableCell>
+                                <Typography>{row.verificationStatus}</Typography>
+                              </TableCell>
+                            ) : (
+                              <>
+                                <TableCell>
+                                  <Typography>{row.city}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{row.country}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{row.experience || 0} Years</Typography>
+                                </TableCell>
+                              </>
+                            )}
+                            <TableCell>
+                              <Typography>{format(new Date(row.created_at || row.createdAt), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
+                          </>
+                        ) : isUserApplicationsList ? (
+                          <>
+                            <TableCell>
+                              <Typography fontWeight="600">{row.job?.title}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.job?.salaryCurrency} {row.job?.salaryMin} - {row.job?.salaryMax}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={row.status}
+                                size="small"
+                                color={
+                                  row.status === 'HIRED' ? 'success' :
+                                    row.status === 'REJECTED' || row.status === 'NEXT_ROUND_REJECTED' ? 'error' :
+                                      row.status === 'APPLIED' ? 'primary' :
+                                        row.status === 'SHORTLISTED' || row.status === 'INTERVIEW_SCHEDULED' ? 'secondary' : 'default'
+                                }
+                                variant="filled"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.created_at || row.appliedDate || new Date()), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.job?.jobType}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.job?.institute?.name}</Typography>
+                            </TableCell>
+                          </>
+                        ) : isCreditsHistoryList ? (
+                          // Credits History List View
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="View Details">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      navigate(`/dashboard/credits-history/${row.id}`);
+                                    }}
+                                  >
+                                    <IconEye size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography fontWeight="600">{row.institute?.name || 'N/A'}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={row.type}
+                                size="small"
+                                color={row.type === 'CREDIT' ? 'success' : 'error'}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={row.action.replace(/_/g, ' ')}
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.cost || 0}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.purchasedCredits || 0}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography fontWeight="600">{row.currentCredits}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.created_at), 'MMM d yyyy HH:mm')}</Typography>
+                            </TableCell>
+                          </>
                         ) : (
                           // Products List View (original code)
                           ''
@@ -511,7 +1135,7 @@ const ProductTableList = ({
           <TablePagination
             rowsPerPageOptions={[5, 10, 30, 50, 100, 200]}
             component="div"
-            count={rows.length}
+            count={serverPagination ? totalCount : rows.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
@@ -527,7 +1151,7 @@ const ProductTableList = ({
         onConfirm={handleDeleteConfirm}
         itemName={deleteDialog.itemName}
         isDeleting={deleteDialog.isDeleting}
-        itemType={isBrandsList ? "Brand" : "Product"}
+        itemType={isInstitutesList ? "Institute" : isBrandsList ? "Brand" : isJobsList ? "Job" : isApplicantsList || isUserApplicationsList ? "Application" : isUsersList || isUserVerificationsList ? "User" : "Product"}
       />
     </Box>
   );

@@ -6,8 +6,8 @@ import img1 from 'src/assets/images/profile/user-1.jpg';
 import { IconPower } from '@tabler/icons';
 import { Link, useNavigate } from "react-router";
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, salesRepLogout } from '../../../../../store/authSlice';
 import axiosInstance from '../../../../../axios/axiosInstance';
+import { adminLogout } from 'src/utils/adminLogout';
 
 export const Profile = () => {
   const { isSidebarHover, isCollapse } = useContext(CustomizerContext);
@@ -17,41 +17,13 @@ export const Profile = () => {
   const hideMenu = lgUp ? isCollapse == 'mini-sidebar' && !isSidebarHover : '';
 
   const user = useSelector((state) => state.auth.userData);
-  const salesRep = useSelector((state) => state.auth.salesRepData);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    setError(null); // clear previous error
-    try {
-      const res = await axiosInstance.post('/admin/logout', {});
-
-      if (res.data.statusCode === 200) {
-        dispatch(logout());
-        navigate('/auth/login');
-      } else {
-        setError(res.data.message || 'Logout failed');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'An error occurred');
-    }
-  };
-
-  const handleSalesRepLogout = async () => {
-    setError(null); // clear previous error
-    try {
-      const res = await axiosInstance.post('/sales-rep/logout-sales-rep', {});
-
-      if (res.data.statusCode === 200) {
-        dispatch(salesRepLogout());
-        navigate('/auth/login');
-      } else {
-        setError(res.data.message || 'Logout failed');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'An error occurred');
-    }
+    setError(null);
+    await adminLogout(dispatch, navigate);
   };
 
   return (
@@ -66,25 +38,17 @@ export const Profile = () => {
           <Avatar alt="Remy Sharp" src={img1} />
 
           <Box>
-            <Typography variant="h6" color="textPrimary"> {user?.username || salesRep?.salesRepId}</Typography>
-            <Typography variant="caption" color="textSecondary">{user ? 'Admin' : 'Sales Rep'}</Typography>
+            <Typography variant="h6" color="textPrimary"> {user?.username}</Typography>
+            <Typography variant="caption" color="textSecondary">Admin</Typography>
           </Box>
           <Box sx={{ ml: 'auto' }}>
-            {user && salesRep == null &&
+            {user &&
               <Tooltip title="Logout" placement="top" onClick={handleLogout}>
                 <IconButton color="primary" component={Link} to="/auth/login" aria-label="logout" size="small">
                   <IconPower size="20" />
                 </IconButton>
               </Tooltip>
             }
-            {salesRep != null && user == null &&
-              <Tooltip title="Logout" placement="top" onClick={handleSalesRepLogout}>
-                <IconButton color="primary" component={Link} to="/auth/login" aria-label="logout" size="small">
-                  <IconPower size="20" />
-                </IconButton>
-              </Tooltip>
-            }
-
           </Box>
         </>
       ) : (
