@@ -60,6 +60,12 @@ const Menuitems = [
         title: 'Institutes List',
         icon: IconPoint,
         href: '/dashboard/institutes/list',
+      },
+      {
+        id: uniqueId(),
+        title: 'Verification Queue',
+        icon: IconPoint,
+        href: '/dashboard/institutes/verification',
       }
     ]
   },

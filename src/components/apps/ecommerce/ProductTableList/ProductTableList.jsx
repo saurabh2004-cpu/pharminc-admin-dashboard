@@ -262,6 +262,7 @@ const ProductTableList = ({
   isUserVerificationsList = false,
   isUserApplicationsList = false,
   isCreditsHistoryList = false,
+  isInstituteVerificationsList = false,
   setTableData,
   serverPagination = false,
   totalCount = 0,
@@ -307,12 +308,12 @@ const ProductTableList = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isUserApplicationsList || isCreditsHistoryList) {
+    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isInstituteVerificationsList || isUserApplicationsList || isCreditsHistoryList) {
       setRows(sourceData);
     } else {
       setRows(filteredAndSortedProducts);
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList, isInstitutesList, isJobsList, isApplicantsList, isUsersList, isUserVerificationsList, isUserApplicationsList, isCreditsHistoryList]);
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, isInstitutesList, isJobsList, isApplicantsList, isUsersList, isUserVerificationsList, isInstituteVerificationsList, isUserApplicationsList, isCreditsHistoryList]);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
@@ -332,6 +333,11 @@ const ProductTableList = ({
       const filteredRows = sourceData.filter((row) => {
         const fullName = `${row.firstName || ''} ${row.lastName || ''} ${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim();
         return fullName.toLowerCase().includes(searchValue) || (row.email && row.email.toLowerCase().includes(searchValue));
+      });
+      setRows(filteredRows);
+    } else if (isInstituteVerificationsList) {
+      const filteredRows = sourceData.filter((row) => {
+        return (row.name && row.name.toLowerCase().includes(searchValue)) || (row.email && row.email.toLowerCase().includes(searchValue));
       });
       setRows(filteredRows);
     } else if (isUserApplicationsList) {
@@ -468,9 +474,13 @@ const ProductTableList = ({
           ? `/job/delete-job/${deleteId}`
           : isApplicantsList || isUserApplicationsList
             ? `/application/delete/${deleteId}`
-            : isUsersList || isUserVerificationsList
-              ? `/user/delete-user/${deleteId}`
-              : `/brand/delete-brand/${deleteId}`;
+            : isUserVerificationsList
+              ? `/user-verifications/delete-verification/${deleteId}`
+              : isInstituteVerificationsList
+                ? `/institute-verifications/delete-verification/${deleteId}`
+                : isUsersList
+                  ? `/user/delete-user/${deleteId}`
+                  : `/brand/delete-brand/${deleteId}`;
 
       const res = await axiosInstance.delete(endpoint);
 
@@ -935,48 +945,35 @@ const ProductTableList = ({
                           // Users / Verification Lists View
                           <>
                             <TableCell sx={stickyCellStyle}>
+
                               <Box display="flex" gap={1}>
-                                {isUserVerificationsList && (
-                                  <>
-                                    {row.verificationStatus === 'PENDING' ? (
-                                      <>
-                                        <Tooltip title="Approve">
-                                          <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'APPROVED'); }}>Approve</Button>
-                                        </Tooltip>
-                                        <Tooltip title="Reject">
-                                          <Button size="small" variant="outlined" color="error" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'REJECTED'); }}>Reject</Button>
-                                        </Tooltip>
-                                      </>
-                                    ) : row.verificationStatus === 'REJECTED' ? (
-                                      <Tooltip title="Approve">
-                                        <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'APPROVED'); }}>Approve</Button>
-                                      </Tooltip>
-                                    ) : null}
-                                  </>
-                                )}
-
-
                                 <Tooltip title="View Details">
                                   <IconButton
                                     size="small"
                                     color="secondary"
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      navigate(`/dashboard/users/${row.id || row._id}`);
+                                      if (isUserVerificationsList) {
+                                        navigate(`/admin/user-verifications/${row.id || row._id}`);
+                                      } else {
+                                        navigate(`/dashboard/users/${row.id || row._id}`);
+                                      }
                                     }}
                                   >
-                                    <IconBriefcase size="1.1rem" />
+                                    <IconEye size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Edit">
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={(event) => handleEditClick(event, row.id || row._id)}
-                                  >
-                                    <IconEdit size="1.1rem" />
-                                  </IconButton>
-                                </Tooltip>
+                                {!isUserVerificationsList && (
+                                  <Tooltip title="Edit">
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      onClick={(event) => handleEditClick(event, row.id || row._id)}
+                                    >
+                                      <IconEdit size="1.1rem" />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
                                 <Tooltip title="Delete">
                                   <IconButton
                                     size="small"
@@ -986,15 +983,38 @@ const ProductTableList = ({
                                     <IconTrash size="1.1rem" />
                                   </IconButton>
                                 </Tooltip>
+                                {isUserVerificationsList && (
+                                  <>
+                                    {row.status === 'PENDING' ? (
+                                      <>
+                                        <Tooltip title="Approve">
+                                          <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'APPROVED'); }}>Approve</Button>
+                                        </Tooltip>
+                                        <Tooltip title="Reject">
+                                          <Button size="small" variant="outlined" color="error" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'REJECTED'); }}>Reject</Button>
+                                        </Tooltip>
+                                      </>
+                                    ) : row.status === 'REJECTED' ? (
+                                      <Tooltip title="Approve">
+                                        <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.id || row._id, 'APPROVED'); }}>Approve</Button>
+                                      </Tooltip>
+                                    ) : null}
+                                  </>
+                                )}
+
+
+
                               </Box>
                             </TableCell>
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={2}>
-                                <Avatar
-                                  src={row.profile_picture || undefined}
-                                  alt={row.firstName}
-                                  {...(!row.profile_picture && stringAvatar(`${row.firstName || ''} ${row.lastName || ''}`.trim()))}
-                                />
+                                {isUsersList && (
+                                  <Avatar
+                                    src={row.profile_picture || undefined}
+                                    alt={row.firstName}
+                                    {...(!row.profile_picture && stringAvatar(`${row.firstName || ''} ${row.lastName || ''}`.trim()))}
+                                  />
+                                )}
                                 <Typography
                                   fontWeight="600"
                                   onClick={(e) => {
@@ -1012,15 +1032,38 @@ const ProductTableList = ({
                             <TableCell>
                               <Typography>{row.email}</Typography>
                             </TableCell>
-                            <TableCell>
-                              <Typography>{row.role}</Typography>
-                            </TableCell>
                             {isUserVerificationsList ? (
-                              <TableCell>
-                                <Typography>{row.verificationStatus}</Typography>
-                              </TableCell>
+                              <>
+                                <TableCell>
+                                  <Chip
+                                    label={row.status}
+                                    size="small"
+                                    color={row.status === 'APPROVED' ? 'success' : row.status === 'REJECTED' ? 'error' : 'warning'}
+                                    variant="filled"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{format(new Date(row.created_at || row.createdAt || new Date()), 'E, MMM d yyyy')}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Box display="flex" gap={1}>
+                                    {row.governMentId && (
+                                      <Button variant="outlined" size="small" onClick={(e) => { e.stopPropagation(); window.open(row.governMentId, '_blank'); }}>Gov ID</Button>
+                                    )}
+                                    {row.degreeCertificate && (
+                                      <Button variant="outlined" size="small" onClick={(e) => { e.stopPropagation(); window.open(row.degreeCertificate, '_blank'); }}>Degree</Button>
+                                    )}
+                                    {row.postGraduateDegreeCertificate && (
+                                      <Button variant="outlined" size="small" onClick={(e) => { e.stopPropagation(); window.open(row.postGraduateDegreeCertificate, '_blank'); }}>PG Degree</Button>
+                                    )}
+                                  </Box>
+                                </TableCell>
+                              </>
                             ) : (
                               <>
+                                <TableCell>
+                                  <Typography>{row.role}</Typography>
+                                </TableCell>
                                 <TableCell>
                                   <Typography>{row.city}</Typography>
                                 </TableCell>
@@ -1030,10 +1073,66 @@ const ProductTableList = ({
                                 <TableCell>
                                   <Typography>{row.experience || 0} Years</Typography>
                                 </TableCell>
+                                <TableCell>
+                                  <Typography>{format(new Date(row.created_at || row.createdAt), 'E, MMM d yyyy')}</Typography>
+                                </TableCell>
                               </>
                             )}
+                          </>
+                        ) : isInstituteVerificationsList ? (
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="View Details">
+                                  <IconButton
+                                    size="small"
+                                    color="secondary"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      navigate(`/admin/institute-verifications/${row.id || row._id}`);
+                                    }}
+                                  >
+                                    <IconEye size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton size="small" color="error" onClick={(event) => handleDeleteClick(event, row.id || row._id, row.institute?.name || row.adminName)}>
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                {row.status === 'PENDING' ? (
+                                  <>
+                                    <Tooltip title="Approve">
+                                      <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.institute.id || row._id, 'APPROVED'); }}>Approve</Button>
+                                    </Tooltip>
+                                    <Tooltip title="Reject">
+                                      <Button size="small" variant="outlined" color="error" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.institute.id || row._id, 'REJECTED'); }}>Reject</Button>
+                                    </Tooltip>
+                                  </>
+                                ) : row.status === 'REJECTED' ? (
+                                  <Tooltip title="Approve">
+                                    <Button size="small" variant="contained" color="success" onClick={(e) => { e.stopPropagation(); onVerifyStatusChange(row.institute.id || row._id, 'APPROVED'); }}>Approve</Button>
+                                  </Tooltip>
+                                ) : null}
+
+                              </Box>
+                            </TableCell>
                             <TableCell>
-                              <Typography>{format(new Date(row.created_at || row.createdAt), 'E, MMM d yyyy')}</Typography>
+                              <Typography fontWeight="600">{row.institute?.name || row.adminName}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.email}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip label={row.status} size="small" color={row.status === 'APPROVED' ? 'success' : row.status === 'REJECTED' ? 'error' : 'warning'} variant="filled" />
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.created_at || row.createdAt || new Date()), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              {row.registrationCertificate && (
+                                <Button variant="outlined" size="small" onClick={(e) => { e.stopPropagation(); window.open(row.registrationCertificate, '_blank'); }}>View Certificate</Button>
+                              )}
                             </TableCell>
                           </>
                         ) : isUserApplicationsList ? (
@@ -1151,7 +1250,7 @@ const ProductTableList = ({
         onConfirm={handleDeleteConfirm}
         itemName={deleteDialog.itemName}
         isDeleting={deleteDialog.isDeleting}
-        itemType={isInstitutesList ? "Institute" : isBrandsList ? "Brand" : isJobsList ? "Job" : isApplicantsList || isUserApplicationsList ? "Application" : isUsersList || isUserVerificationsList ? "User" : "Product"}
+        itemType={isInstitutesList ? "Institute" : isBrandsList ? "Brand" : isJobsList ? "Job" : isApplicantsList || isUserApplicationsList ? "Application" : isUsersList || isUserVerificationsList ? "User" : isInstituteVerificationsList ? "Verification" : "Product"}
       />
     </Box>
   );

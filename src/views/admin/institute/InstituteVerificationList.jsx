@@ -3,19 +3,19 @@ import { Box, CircularProgress, Alert } from '@mui/material';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../../components/container/PageContainer';
 import ProductTableList from '../../../components/apps/ecommerce/ProductTableList/ProductTableList';
-import { getAllUserVerifications, approveUserVerification, rejectUserVerification } from '../../../services/verificationService';
+import { getAllInstituteVerifications, approveInstituteVerification, rejectInstituteVerification } from '../../../services/verificationService';
 import { Snackbar } from '@mui/material';
 
 const BCrumb = [
     { to: '/', title: 'Home' },
-    { title: 'User Verification' },
+    { title: 'Institute Verification Queue' },
 ];
 
-const UserVerificationList = () => {
+const InstituteVerificationList = () => {
     const headCells = [
         { id: 'Actions', numeric: false, disablePadding: false, label: 'Actions' },
-        { id: 'name', numeric: false, disablePadding: false, label: 'User Name' },
-        { id: 'email', numeric: false, disablePadding: false, label: 'Email' },
+        { id: 'name', numeric: false, disablePadding: false, label: 'Institute Name' },
+        { id: 'email', numeric: false, disablePadding: false, label: 'Contact Email' },
         { id: 'status', numeric: false, disablePadding: false, label: 'Status' },
         { id: 'created_at', numeric: false, disablePadding: false, label: 'Submitted Date' },
         { id: 'documents', numeric: false, disablePadding: false, label: 'Documents' },
@@ -31,11 +31,10 @@ const UserVerificationList = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [statusFilter, setStatusFilter] = useState('All');
 
-    const fetchUsersList = async () => {
+    const fetchInstitutesList = async () => {
         setLoading(true);
         try {
-            // backend expects page 1-indexed, frontend Mui is 0-indexed
-            const response = await getAllUserVerifications(page + 1, limit, statusFilter);
+            const response = await getAllInstituteVerifications(page + 1, limit, statusFilter);
 
             if (response.data && response.data.verifications) {
                 setTableData(response.data.verifications);
@@ -45,7 +44,7 @@ const UserVerificationList = () => {
                 setTotalCount(response.data.length);
             }
         } catch (error) {
-            console.error('Error fetching unverified users list:', error);
+            console.error('Error fetching unverified institutes list:', error);
             setError(error.message);
         } finally {
             setLoading(false);
@@ -53,27 +52,27 @@ const UserVerificationList = () => {
     };
 
     useEffect(() => {
-        fetchUsersList();
+        fetchInstitutesList();
     }, [page, limit, statusFilter]);
 
     const handleFilterChange = (e) => {
         setStatusFilter(e.target.value);
-        setPage(0); // reset page to 1
+        setPage(0);
     };
 
     const handleVerifyStatusChange = async (id, newStatus) => {
         try {
             if (newStatus === 'APPROVED') {
-                await approveUserVerification(id);
+                await approveInstituteVerification(id);
             } else {
-                await rejectUserVerification(id);
+                await rejectInstituteVerification(id);
             }
 
-            setSuccessMessage(`User verification successfully ${newStatus.toLowerCase()}!`);
-            fetchUsersList();
+            setSuccessMessage(`Institute verification successfully ${newStatus.toLowerCase()}!`);
+            fetchInstitutesList();
         } catch (err) {
-            console.error('Error verifying user:', err);
-            setError(err.response?.data?.error || err.message || 'Failed to update user status');
+            console.error('Error verifying institute:', err);
+            setError(err.response?.data?.error || err.message || 'Failed to update institute status');
         }
     };
 
@@ -83,8 +82,8 @@ const UserVerificationList = () => {
     };
 
     return (
-        <PageContainer title="User Verification List" description="This is the User Verification List page">
-            <Breadcrumb title="User Verification" items={BCrumb} />
+        <PageContainer title="Institute Verification List" description="This is the Institute Verification List page">
+            <Breadcrumb title="Institute Verification Queue" items={BCrumb} />
 
             <Box>
                 {loading ? (
@@ -100,7 +99,7 @@ const UserVerificationList = () => {
                         showCheckBox={false}
                         headCells={headCells}
                         tableData={tableData}
-                        isUserVerificationsList={true}
+                        isInstituteVerificationsList={true}
                         setTableData={setTableData}
                         serverPagination={true}
                         totalCount={totalCount}
@@ -137,4 +136,4 @@ const UserVerificationList = () => {
     );
 };
 
-export default UserVerificationList;
+export default InstituteVerificationList;

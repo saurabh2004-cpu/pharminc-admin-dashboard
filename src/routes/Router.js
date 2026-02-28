@@ -22,6 +22,8 @@ const InstituteList = Loadable(lazy(() => import('../views/admin/institute/Insti
 const InstituteEdit = Loadable(lazy(() => import('../views/admin/institute/InstituteEdit')));
 const InstituteJobsList = Loadable(lazy(() => import('../views/admin/institute/InstituteJobsList')));
 const JobApplicantsList = Loadable(lazy(() => import('../views/admin/institute/JobApplicantsList')));
+const InstituteVerificationList = Loadable(lazy(() => import('../views/admin/institute/InstituteVerificationList')));
+const InstituteVerificationDetails = Loadable(lazy(() => import('../views/admin/institute/InstituteVerificationDetails')));
 
 // Credits Management Imports
 const CreditsWalletList = Loadable(lazy(() => import('../views/admin/creditsWallet/CreditsWalletList')));
@@ -37,6 +39,7 @@ const UsersList = Loadable(lazy(() => import('../views/admin/users/UsersList')))
 const UserVerificationList = Loadable(lazy(() => import('../views/admin/users/UserVerificationList')));
 const UserEdit = Loadable(lazy(() => import('../views/admin/users/UserEdit')));
 const UserDetails = Loadable(lazy(() => import('../views/admin/users/UserDetails')));
+const UserVerificationDetails = Loadable(lazy(() => import('../views/admin/users/UserVerificationDetails')));
 const UserApplicationsList = Loadable(lazy(() => import('../views/admin/users/UserApplicationsList')));
 
 // Job Management Imports
@@ -66,6 +69,8 @@ const Router = [
       { path: '/dashboard/institutes/list', element: <InstituteList /> },
       { path: '/dashboard/institute/edit/:id', element: <InstituteEdit /> },
       { path: '/dashboard/institutes/:id/jobs', element: <InstituteJobsList /> },
+      { path: '/dashboard/institutes/verification', element: <InstituteVerificationList /> },
+      { path: '/admin/institute-verifications/:id', element: <InstituteVerificationDetails /> },
       { path: '/dashboard/jobs/:id/applicants', element: <JobApplicantsList /> },
 
       { path: '/dashboard/credits-wallet', element: <CreditsWalletList /> },
@@ -78,6 +83,7 @@ const Router = [
 
       { path: '/dashboard/users/list', element: <UsersList /> },
       { path: '/dashboard/users/verification', element: <UserVerificationList /> },
+      { path: '/admin/user-verifications/:id', element: <UserVerificationDetails /> },
       { path: '/dashboard/users/edit/:id', element: <UserEdit /> },
       { path: '/dashboard/users/:id', element: <UserDetails /> },
       { path: '/dashboard/users/:id/applications', element: <UserApplicationsList /> },
