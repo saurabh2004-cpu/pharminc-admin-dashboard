@@ -391,10 +391,10 @@ const InstituteEdit = () => {
 
                 {/* Row 7: Status (full width) */}
                 <Grid size={12}>
-                    <CustomFormLabel>Status</CustomFormLabel> 
+                    <CustomFormLabel>Status</CustomFormLabel>
                     <FormControlLabel
                         control={<Switch checked={formData.verified} onChange={handleChange} name="verified" color="primary" />}
-                        label={formData.verified ? "Verified" : "Rejected"}
+                        label={formData.verified ? "Verified" : "Not Verified"}
                     />
                 </Grid>
 

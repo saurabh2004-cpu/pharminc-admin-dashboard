@@ -51,6 +51,10 @@ const CreditsHistoryList = Loadable(lazy(() => import('../views/admin/credits-hi
 const InstituteCreditsHistoryList = Loadable(lazy(() => import('../views/admin/credits-history/InstituteCreditsHistoryList')));
 const CreditsHistoryDetail = Loadable(lazy(() => import('../views/admin/credits-history/CreditsHistoryDetail')));
 
+// Activity Logs Imports
+const ActivityLogsList = Loadable(lazy(() => import('../views/admin/activityLogs/ActivityLogsList')));
+const ActivityLogDetails = Loadable(lazy(() => import('../views/admin/activityLogs/ActivityLogDetails')));
+
 const Router = [
 
   {
@@ -92,6 +96,8 @@ const Router = [
       { path: '/dashboard/credits-history', element: <CreditsHistoryList /> },
       { path: '/dashboard/institutes/:id/credits-history', element: <InstituteCreditsHistoryList /> },
       { path: '/dashboard/credits-history/:id', element: <CreditsHistoryDetail /> },
+      { path: '/admin/activity-logs', element: <ActivityLogsList /> },
+      { path: '/admin/activity-logs/:id', element: <ActivityLogDetails /> },
     ],
   },
 

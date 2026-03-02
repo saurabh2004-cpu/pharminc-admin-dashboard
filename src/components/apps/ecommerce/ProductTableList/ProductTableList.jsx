@@ -722,7 +722,7 @@ const ProductTableList = ({
                               <Typography>{row.role}</Typography>
                             </TableCell>
                             <TableCell sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                              {row.verified === "" ? null : row.verified ? (
+                              {/* {row.verified === "" ? null : row.verified ? (
                                 <Chip label={row.verified === "REJECTED" ? "Rejected" : row.verified === "APPROVED" ? "Approved" : null} color={row.verified === "REJECTED" ? "error" : "success"} size="small" />
                               ) : (
                                 ''
@@ -741,7 +741,8 @@ const ProductTableList = ({
                                 </Button>
                               ) : (
                                 ''
-                              )}
+                              )} */}
+                              {row.verified ? <Typography>{row.verified}</Typography> : <Typography>N/A</Typography>}
                             </TableCell>
                             <TableCell>
                               <Typography>{row.contactEmail}</Typography>
@@ -905,7 +906,7 @@ const ProductTableList = ({
                               <Typography>{row.currentInstitute}</Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography>{row.experienceYears} Years</Typography>
+                              <Typography>{row.experienceYears ? row.experienceYears + " Years" : ""}</Typography>
                             </TableCell>
                             <TableCell>
                               <Chip

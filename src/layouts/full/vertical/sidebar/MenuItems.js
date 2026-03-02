@@ -75,12 +75,12 @@ const Menuitems = [
     icon: IconReceipt,
     href: '/dashboard/institute-credits',
     children: [
-      {
-        id: uniqueId(),
-        title: 'Credits Wallet',
-        icon: IconPoint,
-        href: '/dashboard/credits-wallet',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Credits Wallet',
+      //   icon: IconPoint,
+      //   href: '/dashboard/credits-wallet',
+      // },
       {
         id: uniqueId(),
         title: 'Institute Credits',
@@ -103,7 +103,7 @@ const Menuitems = [
     children: [
       {
         id: uniqueId(),
-        title: 'Approved Users',
+        title: 'Users List',
         icon: IconPoint,
         href: '/dashboard/users/list',
       },
@@ -129,6 +129,12 @@ const Menuitems = [
         href: '/dashboard/jobs',
       },
     ]
+  },
+  {
+    id: uniqueId(),
+    title: 'Activity Logs',
+    icon: IconListTree,
+    href: '/admin/activity-logs',
   }
 
 ];

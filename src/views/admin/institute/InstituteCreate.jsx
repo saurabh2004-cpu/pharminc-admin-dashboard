@@ -345,13 +345,13 @@ const InstituteCreate = () => {
                     </Box>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
+                {/* <Grid size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel>Status</CustomFormLabel>
                     <FormControlLabel
                         control={<Switch checked={formData.verified} onChange={handleChange} name="verified" color="primary" />}
                         label="Verified"
                     />
-                </Grid>
+                </Grid> */}
                 <Grid size={12}>
                     <CustomFormLabel htmlFor="headline">Headline</CustomFormLabel>
                     <CustomOutlinedInput id="headline" name="headline" fullWidth value={formData.headline} onChange={handleChange} />
