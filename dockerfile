@@ -14,4 +14,4 @@ RUN npm install -g serve
 
 EXPOSE 5173
 
-CMD ["serve", "-l", "5173", "-s", "dist"]
+CMD ["serve", "-s", "dist", "-l", "tcp://[88.222.242.191]"]
