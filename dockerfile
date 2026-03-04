@@ -14,4 +14,4 @@ RUN npm run build
 
 EXPOSE 5173
 
-CMD ["serve", "-s", "dist", "-l", "tcp://[IP_ADDRESS]"]
+CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:5173"]
