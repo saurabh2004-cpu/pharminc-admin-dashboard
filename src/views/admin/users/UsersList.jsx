@@ -59,7 +59,7 @@ const UsersList = () => {
 
     return (
         <PageContainer title="Users List" description="This is the Users List page">
-            <Breadcrumb title="Approved Users" items={BCrumb} />
+            <Breadcrumb title="Users List" items={BCrumb} />
 
             <Box>
                 {loading ? (

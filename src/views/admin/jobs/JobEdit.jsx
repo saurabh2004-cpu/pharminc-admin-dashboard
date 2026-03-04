@@ -8,6 +8,14 @@ import CustomFormLabel from '../../../components/forms/theme-elements/CustomForm
 import CustomOutlinedInput from '../../../components/forms/theme-elements/CustomOutlinedInput';
 import CustomSelect from '../../../components/forms/theme-elements/CustomSelect';
 import { getJobById, updateJob } from '../../../services/jobService';
+import healthcareRoles from '../../../constants/healthcareRoles.json';
+
+const currencies = [
+    { value: "INR", label: "INR (₹)" },
+    { value: "USD", label: "USD ($)" },
+    { value: "EUR", label: "EUR (€)" },
+    { value: "GBP", label: "GBP (£)" },
+];
 
 const JobEdit = () => {
     const { id } = useParams();
@@ -48,6 +56,25 @@ const JobEdit = () => {
 
     // Skills dynamic list state
     const [skillInput, setSkillInput] = useState('');
+
+    const [specialityOptions, setSpecialityOptions] = useState([]);
+    const [subSpecialityOptions, setSubSpecialityOptions] = useState([]);
+
+    useEffect(() => {
+        if (formData.role && healthcareRoles[formData.role.toUpperCase()]) {
+            setSpecialityOptions(Object.keys(healthcareRoles[formData.role.toUpperCase()]));
+        } else {
+            setSpecialityOptions([]);
+        }
+    }, [formData.role]);
+
+    useEffect(() => {
+        if (formData.role && formData.speciality && healthcareRoles[formData.role.toUpperCase()] && healthcareRoles[formData.role.toUpperCase()][formData.speciality]) {
+            setSubSpecialityOptions(healthcareRoles[formData.role.toUpperCase()][formData.speciality]);
+        } else {
+            setSubSpecialityOptions([]);
+        }
+    }, [formData.role, formData.speciality]);
 
     useEffect(() => {
         const fetchCountries = async () => {
@@ -137,7 +164,17 @@ const JobEdit = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => {
+            const newData = { ...prev, [name]: value };
+            if (name === 'role' && value !== prev.role) {
+                newData.speciality = '';
+                newData.subSpeciality = '';
+            }
+            if (name === 'speciality' && value !== prev.speciality) {
+                newData.subSpeciality = '';
+            }
+            return newData;
+        });
     };
 
     const handleAddSkill = () => {
@@ -188,10 +225,10 @@ const JobEdit = () => {
                 <Grid item size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel htmlFor="role">Role *</CustomFormLabel>
                     <CustomSelect id="role" name="role" fullWidth value={formData.role} onChange={handleChange}>
-                        <MenuItem value="Doctor">Doctor</MenuItem>
-                        <MenuItem value="Nursing">Nursing</MenuItem>
-                        <MenuItem value="Student">Student</MenuItem>
-                        <MenuItem value="Other">Other</MenuItem>
+                        <MenuItem value="DOCTOR">Doctor</MenuItem>
+                        <MenuItem value="NURSE">Nursing</MenuItem>
+                        <MenuItem value="STUDENT">Student</MenuItem>
+                        <MenuItem value="OTHER">Other</MenuItem>
                     </CustomSelect>
                 </Grid>
                 <Grid item size={{ xs: 12, sm: 6 }}>
@@ -199,7 +236,6 @@ const JobEdit = () => {
                     <CustomSelect id="jobType" name="jobType" fullWidth value={formData.jobType} onChange={handleChange}>
                         <MenuItem value="Full-time">Full-time</MenuItem>
                         <MenuItem value="Part-time">Part-time</MenuItem>
-                        <MenuItem value="Locum">Locum</MenuItem>
                         <MenuItem value="Contract">Contract</MenuItem>
                     </CustomSelect>
                 </Grid>
@@ -232,17 +268,51 @@ const JobEdit = () => {
                         </Box>
                         <Box flex={0.5}>
                             <CustomFormLabel>Currency</CustomFormLabel>
-                            <CustomOutlinedInput name="salaryCurrency" fullWidth value={formData.salaryCurrency} onChange={handleChange} />
+                            <CustomSelect id="salaryCurrency" name="salaryCurrency" fullWidth value={formData.salaryCurrency} onChange={handleChange}>
+                                {currencies.map((currency) => (
+                                    <MenuItem key={currency.value} value={currency.value}>
+                                        {currency.label}
+                                    </MenuItem>
+                                ))}
+                            </CustomSelect>
                         </Box>
                     </Box>
                 </Grid>
                 <Grid item size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel htmlFor="speciality">Speciality</CustomFormLabel>
-                    <CustomOutlinedInput id="speciality" name="speciality" fullWidth value={formData.speciality} onChange={handleChange} />
+                    <CustomSelect
+                        id="speciality"
+                        name="speciality"
+                        fullWidth
+                        value={formData.speciality}
+                        onChange={handleChange}
+                        disabled={!formData.role || specialityOptions.length === 0}
+                    >
+                        <MenuItem value=""><em>None</em></MenuItem>
+                        {specialityOptions.map((opt) => (
+                            <MenuItem key={opt} value={opt}>
+                                {opt}
+                            </MenuItem>
+                        ))}
+                    </CustomSelect>
                 </Grid>
                 <Grid item size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel htmlFor="subSpeciality">SubSpeciality</CustomFormLabel>
-                    <CustomOutlinedInput id="subSpeciality" name="subSpeciality" fullWidth value={formData.subSpeciality} onChange={handleChange} />
+                    <CustomSelect
+                        id="subSpeciality"
+                        name="subSpeciality"
+                        fullWidth
+                        value={formData.subSpeciality}
+                        onChange={handleChange}
+                        disabled={!formData.speciality || subSpecialityOptions.length === 0}
+                    >
+                        <MenuItem value=""><em>None</em></MenuItem>
+                        {subSpecialityOptions.map((opt) => (
+                            <MenuItem key={opt} value={opt}>
+                                {opt}
+                            </MenuItem>
+                        ))}
+                    </CustomSelect>
                 </Grid>
                 <Grid item size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel>Country</CustomFormLabel>
@@ -275,7 +345,7 @@ const JobEdit = () => {
                 </Grid>
                 <Grid item size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel>Contact Email</CustomFormLabel>
-                    <CustomOutlinedInput name="contactEmail" fullWidth value={formData.contactEmail} onChange={handleChange} />
+                    <CustomOutlinedInput disabled name="contactEmail" fullWidth value={formData.contactEmail} onChange={handleChange} />
                 </Grid>
                 <Grid item size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel>Contact Phone</CustomFormLabel>

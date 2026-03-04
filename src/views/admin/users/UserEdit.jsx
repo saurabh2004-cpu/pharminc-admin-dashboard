@@ -18,6 +18,7 @@ import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../../components/container/PageContainer';
 import ParentCard from '../../../components/shared/ParentCard';
 import { getUserById, updateUser } from '../../../services/userService';
+import healthcareRoles from '../../../constants/healthcareRoles.json';
 
 const BCrumb = [
     { to: '/', title: 'Home' },
@@ -56,6 +57,25 @@ const UserEdit = () => {
     const [countries, setCountries] = useState([]);
     const [cities, setCities] = useState([]);
     const [loadingCities, setLoadingCities] = useState(false);
+
+    const [specialityOptions, setSpecialityOptions] = useState([]);
+    const [subSpecialityOptions, setSubSpecialityOptions] = useState([]);
+
+    useEffect(() => {
+        if (formData.role && healthcareRoles[formData.role]) {
+            setSpecialityOptions(Object.keys(healthcareRoles[formData.role]));
+        } else {
+            setSpecialityOptions([]);
+        }
+    }, [formData.role]);
+
+    useEffect(() => {
+        if (formData.role && formData.speciality && healthcareRoles[formData.role] && healthcareRoles[formData.role][formData.speciality]) {
+            setSubSpecialityOptions(healthcareRoles[formData.role][formData.speciality]);
+        } else {
+            setSubSpecialityOptions([]);
+        }
+    }, [formData.role, formData.speciality]);
 
     useEffect(() => {
         const fetchCountries = async () => {
@@ -141,9 +161,18 @@ const UserEdit = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
+        setFormData((prev) => {
+            const newData = { ...prev, [name]: value };
+
+            if (name === 'role' && value !== prev.role) {
+                newData.speciality = '';
+                newData.subSpeciality = '';
+            }
+            if (name === 'speciality' && value !== prev.speciality) {
+                newData.subSpeciality = '';
+            }
+
+            return newData;
         });
     };
 
@@ -234,13 +263,19 @@ const UserEdit = () => {
                         </FormControl>
                     </Grid>
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <TextField
-                            fullWidth
-                            label="Gender"
-                            name="gender"
-                            value={formData.gender}
-                            onChange={handleInputChange}
-                        />
+                        <FormControl fullWidth>
+                            <InputLabel>Gender</InputLabel>
+                            <Select
+                                name="gender"
+                                value={formData.gender}
+                                onChange={handleInputChange}
+                                label="Gender"
+                            >
+                                <MenuItem value="MALE">Male</MenuItem>
+                                <MenuItem value="FEMALE">Female</MenuItem>
+                                <MenuItem value="OTHER">Other</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Grid>
                     <Grid item size={{ xs: 12, sm: 6 }}>
                         <TextField
@@ -298,7 +333,7 @@ const UserEdit = () => {
                             onChange={handleInputChange}
                         />
                     </Grid>
-                    <Grid item size={{ xs: 12, sm: 6 }}>
+                    {/* <Grid item size={{ xs: 12, sm: 6 }}>
                         <TextField
                             fullWidth
                             label="Experience (Years)"
@@ -307,27 +342,45 @@ const UserEdit = () => {
                             value={formData.experience}
                             onChange={handleInputChange}
                         />
-                    </Grid>
+                    </Grid> */}
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <TextField
-                            fullWidth
-                            label="Speciality"
-                            name="speciality"
-                            value={formData.speciality}
-                            onChange={handleInputChange}
-                        />
+                        <FormControl fullWidth>
+                            <InputLabel>Speciality</InputLabel>
+                            <Select
+                                name="speciality"
+                                value={formData.speciality}
+                                onChange={handleInputChange}
+                                label="Speciality"
+                                disabled={!formData.role || specialityOptions.length === 0}
+                            >
+                                <MenuItem value=""><em>None</em></MenuItem>
+                                {specialityOptions.map((opt) => (
+                                    <MenuItem key={opt} value={opt}>
+                                        {opt}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Grid>
 
-
-
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <TextField
-                            fullWidth
-                            label="Sub Speciality"
-                            name="subSpeciality"
-                            value={formData.subSpeciality}
-                            onChange={handleInputChange}
-                        />
+                        <FormControl fullWidth>
+                            <InputLabel>Sub Speciality</InputLabel>
+                            <Select
+                                name="subSpeciality"
+                                value={formData.subSpeciality}
+                                onChange={handleInputChange}
+                                label="Sub Speciality"
+                                disabled={!formData.speciality || subSpecialityOptions.length === 0}
+                            >
+                                <MenuItem value=""><em>None</em></MenuItem>
+                                {subSpecialityOptions.map((opt) => (
+                                    <MenuItem key={opt} value={opt}>
+                                        {opt}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Grid>
 
                     <Grid item size={{ xs: 12, sm: 6 }}>
