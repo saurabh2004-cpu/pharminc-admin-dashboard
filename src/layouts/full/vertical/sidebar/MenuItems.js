@@ -36,12 +36,12 @@ const Menuitems = [
     chipColor: 'secondary',
     chipBackground: '#E9098D'
   },
-  {
-    id: uniqueId(),
-    title: 'Earning & Revenue',
-    icon: IconShoppingCart,
-    href: '/',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Earning & Revenue',
+  //   icon: IconShoppingCart,
+  //   href: '/',
+  // },
 
   {
     id: uniqueId(),

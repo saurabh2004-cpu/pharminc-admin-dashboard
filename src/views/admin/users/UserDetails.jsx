@@ -10,11 +10,22 @@ import {
     CircularProgress,
     Alert,
     Chip,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    IconButton
 } from '@mui/material';
+import { IconCamera } from '@tabler/icons-react';
 import { useParams } from 'react-router';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../../components/container/PageContainer';
-import { getUserById } from '../../../services/userService';
+import { getUserById, uploadUserImages } from '../../../services/userService';
+import { getApplicationsByUserId } from '../../../services/applicationService';
+import { format } from 'date-fns';
 
 const BCrumb = [
     { to: '/', title: 'Home' },
@@ -65,6 +76,43 @@ const UserDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Applications State
+    const [applications, setApplications] = useState([]);
+    const [applicationsLoading, setApplicationsLoading] = useState(false);
+    const [applicationsError, setApplicationsError] = useState(null);
+
+    // Image Upload State
+    const [imageUploading, setImageUploading] = useState(false);
+
+    // Handle Image Upload
+    const handleImageUpload = async (event, type) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setImageUploading(true);
+        const formData = new FormData();
+        formData.append(type === 'cover' ? 'coverImage' : 'profileImage', file);
+        formData.append('userId', id);
+
+        try {
+            const response = await uploadUserImages(formData);
+            if (response.data) {
+                setUser((prev) => ({
+                    ...prev,
+                    profile_picture: response.data.profileImage || prev.profile_picture,
+                    banner_picture: response.data.coverImage || prev.banner_picture
+                }));
+            }
+        } catch (err) {
+            console.error("Error uploading image:", err);
+            setError(err.response?.data?.error || "Failed to upload image");
+        } finally {
+            setImageUploading(false);
+            // Reset input
+            event.target.value = null;
+        }
+    };
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -80,6 +128,27 @@ const UserDetails = () => {
             }
         };
         fetchUser();
+    }, [id]);
+
+    // Fetch Applications Independently
+    useEffect(() => {
+        const fetchApplications = async () => {
+            setApplicationsLoading(true);
+            try {
+                const response = await getApplicationsByUserId(id);
+                // Depending on API response structure, usually it's in response.data or response.data.applications
+                const data = response.data?.applications || response.data?.data || response.data || [];
+                setApplications(Array.isArray(data) ? data : []);
+            } catch (err) {
+                console.error("Error fetching applications:", err);
+                setApplicationsError(err.response?.data?.error || err.message || "Failed to load applications");
+            } finally {
+                setApplicationsLoading(false);
+            }
+        };
+        if (id) {
+            fetchApplications();
+        }
     }, [id]);
 
     if (loading) {
@@ -116,6 +185,31 @@ const UserDetails = () => {
                     borderTopLeftRadius: 8,
                     borderTopRightRadius: 8,
                 }}>
+                    {/* Cover Image Upload Button */}
+                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                        <input
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            id="cover-image-upload"
+                            type="file"
+                            onChange={(e) => handleImageUpload(e, 'cover')}
+                            disabled={imageUploading}
+                        />
+                        <label htmlFor="cover-image-upload">
+                            <IconButton
+                                component="span"
+                                sx={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                    '&:hover': { backgroundColor: 'white' },
+                                    boxShadow: 1
+                                }}
+                                disabled={imageUploading}
+                            >
+                                {imageUploading ? <CircularProgress size={24} /> : <IconCamera size="1.2rem" color="#10163A" />}
+                            </IconButton>
+                        </label>
+                    </Box>
+
                     <Box sx={{
                         position: 'absolute',
                         bottom: '-65px',
@@ -125,22 +219,51 @@ const UserDetails = () => {
                         flexDirection: 'column',
                         alignItems: 'center',
                     }}>
-                        <Avatar
-                            src={user.profile_picture || undefined}
-                            alt={user.firstName}
-                            sx={{
-                                width: 130,
-                                height: 130,
-                                border: '4px solid white',
-                                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                                backgroundColor: fallbackProps.bgcolor || 'white',
-                                fontSize: '3rem',
-                                fontWeight: 'bold',
-                                color: 'white'
-                            }}
-                        >
-                            {fallbackProps.children}
-                        </Avatar>
+                        <Box sx={{ position: 'relative' }}>
+                            <Avatar
+                                src={user.profile_picture || undefined}
+                                alt={user.firstName}
+                                sx={{
+                                    width: 130,
+                                    height: 130,
+                                    border: '4px solid white',
+                                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                                    backgroundColor: fallbackProps.bgcolor || 'white',
+                                    fontSize: '3rem',
+                                    fontWeight: 'bold',
+                                    color: 'white'
+                                }}
+                            >
+                                {fallbackProps.children}
+                            </Avatar>
+
+                            {/* Profile Image Upload Button */}
+                            <Box sx={{ position: 'absolute', bottom: 0, right: 0 }}>
+                                <input
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    id="profile-image-upload"
+                                    type="file"
+                                    onChange={(e) => handleImageUpload(e, 'profile')}
+                                    disabled={imageUploading}
+                                />
+                                <label htmlFor="profile-image-upload">
+                                    <IconButton
+                                        component="span"
+                                        size="small"
+                                        sx={{
+                                            backgroundColor: 'white',
+                                            '&:hover': { backgroundColor: '#f0f0f0' },
+                                            boxShadow: 2,
+                                            border: '2px solid white'
+                                        }}
+                                        disabled={imageUploading}
+                                    >
+                                        {imageUploading ? <CircularProgress size={16} /> : <IconCamera size="1rem" color="#10163A" />}
+                                    </IconButton>
+                                </label>
+                            </Box>
+                        </Box>
                     </Box>
                 </Box>
 
@@ -326,6 +449,99 @@ const UserDetails = () => {
                 )}
 
             </Grid>
+
+            {/* APPLICATIONS SECTION */}
+            <Box mt={4}>
+                <Typography variant="h5" fontWeight="600" mb={3}>
+                    Jobs Applied By User
+                </Typography>
+
+                <Card>
+                    <CardContent>
+                        {applicationsLoading ? (
+                            <Box display="flex" justifyContent="center" py={4}>
+                                <CircularProgress />
+                            </Box>
+                        ) : applicationsError ? (
+                            <Alert severity="error">{applicationsError}</Alert>
+                        ) : applications && applications.length > 0 ? (
+                            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid rgba(0,0,0,0.05)' }}>
+                                <Table sx={{ minWidth: 650 }} aria-label="applications table">
+                                    <TableHead sx={{ backgroundColor: '#f0f8ff' }}>
+                                        <TableRow>
+                                            <TableCell sx={{ fontWeight: 600 }}>Job Title</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>Salary</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>Institute Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>Application Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>Applied Date</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>Job Type</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>Job Role</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {applications.map((app, index) => (
+                                            <TableRow key={app.id || index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                                <TableCell>
+                                                    <Typography variant="subtitle2" fontWeight="500">
+                                                        {app.job?.title || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {app.job?.salaryMin && app.job?.salaryMax ? (
+                                                        <Typography variant="body2">
+                                                            {app.job.salaryCurrency || '$'} {app.job.salaryMin} - {app.job.salaryMax}
+                                                        </Typography>
+                                                    ) : (
+                                                        <Typography variant="body2" color="textSecondary">Not specified</Typography>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {app.job?.institute?.name || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        size="small"
+                                                        label={app.status || 'Pending'}
+                                                        color={
+                                                            app.status === 'accepted' ? 'success' :
+                                                                app.status === 'rejected' ? 'error' :
+                                                                    app.status === 'shortlisted' ? 'info' : 'warning'
+                                                        }
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {app.created_at ? format(new Date(app.created_at), 'MMM dd, yyyy') : 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {app.job?.jobType || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {app.job?.role || 'N/A'}
+                                                    </Typography>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        ) : (
+                            <Box display="flex" justifyContent="center" py={4}>
+                                <Typography variant="body1" color="textSecondary">
+                                    No Applications Found
+                                </Typography>
+                            </Box>
+                        )}
+                    </CardContent>
+                </Card>
+            </Box>
+
         </PageContainer>
     );
 };

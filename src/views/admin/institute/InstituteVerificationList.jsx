@@ -29,7 +29,7 @@ const InstituteVerificationList = () => {
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(50);
     const [totalCount, setTotalCount] = useState(0);
-    const [statusFilter, setStatusFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState('PENDING');
 
     const fetchInstitutesList = async () => {
         setLoading(true);

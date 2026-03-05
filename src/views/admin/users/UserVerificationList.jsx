@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import ProductTableList from '../../../components/apps/ecommerce/ProductTableList/ProductTableList';
 import { getAllUserVerifications, approveUserVerification, rejectUserVerification } from '../../../services/verificationService';
 import { Snackbar } from '@mui/material';
+import RejectVerificationModal from './RejectVerificationModal';
 
 const BCrumb = [
     { to: '/', title: 'Home' },
@@ -30,6 +31,11 @@ const UserVerificationList = () => {
     const [limit, setLimit] = useState(50);
     const [totalCount, setTotalCount] = useState(0);
     const [statusFilter, setStatusFilter] = useState('All');
+
+    // Reject Modal State
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [rejectTargetId, setRejectTargetId] = useState(null);
+    const [isSubmittingRejection, setIsSubmittingRejection] = useState(false);
 
     const fetchUsersList = async () => {
         setLoading(true);
@@ -62,24 +68,49 @@ const UserVerificationList = () => {
     };
 
     const handleVerifyStatusChange = async (id, newStatus) => {
-        try {
-            if (newStatus === 'APPROVED') {
+        if (newStatus === 'APPROVED') {
+            try {
                 await approveUserVerification(id);
-            } else {
-                await rejectUserVerification(id);
+                setSuccessMessage(`User verification successfully approved!`);
+                fetchUsersList();
+            } catch (err) {
+                console.error('Error verifying user:', err);
+                setError(err.response?.data?.error || err.message || 'Failed to update user status');
             }
+        } else if (newStatus === 'REJECTED') {
+            // Open Modal instead of directly calling API
+            setRejectTargetId(id);
+            setIsRejectModalOpen(true);
+        }
+    };
 
-            setSuccessMessage(`User verification successfully ${newStatus.toLowerCase()}!`);
+    const handleConfirmReject = async (payload) => {
+        if (!rejectTargetId) return;
+        setIsSubmittingRejection(true);
+        try {
+            await rejectUserVerification(rejectTargetId, payload);
+            setSuccessMessage(`User verification successfully rejected!`);
+            setIsRejectModalOpen(false);
+            setRejectTargetId(null);
             fetchUsersList();
         } catch (err) {
-            console.error('Error verifying user:', err);
-            setError(err.response?.data?.error || err.message || 'Failed to update user status');
+            console.error('Error rejecting verification:', err);
+            setError(err.response?.data?.error || err.message || 'Failed to reject verification');
+        } finally {
+            setIsSubmittingRejection(false);
         }
     };
 
     const handleCloseSnackbar = () => {
         setSuccessMessage('');
         setError(null);
+    };
+
+    const closeRejectModal = () => {
+        if (!isSubmittingRejection) {
+            setIsRejectModalOpen(false);
+            setRejectTargetId(null);
+        }
     };
 
     return (
@@ -122,6 +153,13 @@ const UserVerificationList = () => {
                     />
                 )}
             </Box>
+
+            <RejectVerificationModal
+                open={isRejectModalOpen}
+                handleClose={closeRejectModal}
+                handleReject={handleConfirmReject}
+                isSubmitting={isSubmittingRejection}
+            />
 
             <Snackbar
                 open={!!error || !!successMessage}

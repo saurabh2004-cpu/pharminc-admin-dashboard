@@ -39,3 +39,14 @@ export const verifyUser = (id, status) => {
         }
     });
 };
+
+export const uploadUserImages = (formData) => {
+    return axiosInstance.post('/user-images/upload-images', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+        params: {
+            userId: formData.get('userId')
+        }
+    });
+};

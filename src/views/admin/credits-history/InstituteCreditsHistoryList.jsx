@@ -6,6 +6,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import ProductTableList from '../../../components/apps/ecommerce/ProductTableList/ProductTableList';
 import { getCreditsHistoryByInstituteId } from '../../../services/creditsHistoryService';
 import { getInstituteById } from '../../../services/instituteService';
+import { getInstituteCredits } from '../../../services/instituteCreditsService';
 
 const InstituteCreditsHistoryList = () => {
     const { id } = useParams();
@@ -15,10 +16,11 @@ const InstituteCreditsHistoryList = () => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentCredits, setCurrentCredits] = useState(null);
 
     const headCells = [
         { id: 'Actions', numeric: false, disablePadding: false, label: 'Actions' },
-        { id: 'job', numeric: false, disablePadding: false, label: 'Job Title' },
+        { id: 'job', numeric: false, disablePadding: false, label: 'Institute Name' },
         { id: 'type', numeric: false, disablePadding: false, label: 'Type' },
         { id: 'action', numeric: false, disablePadding: false, label: 'Action' },
         { id: 'cost', numeric: false, disablePadding: false, label: 'Cost' },
@@ -47,6 +49,17 @@ const InstituteCreditsHistoryList = () => {
                 const response = await getCreditsHistoryByInstituteId(id);
                 if (response.data) {
                     setHistory(response.data);
+                }
+
+                // Fetch current credits
+                try {
+                    const creditsRes = await getInstituteCredits(id);
+                    if (creditsRes.data) {
+                        setCurrentCredits(creditsRes.data.credits !== undefined ? creditsRes.data.credits : 0);
+                    }
+                } catch (creditErr) {
+                    console.error("Failed to fetch credits balance:", creditErr);
+                    setCurrentCredits(0);
                 }
             } catch (err) {
                 console.error("Error fetching institute credit history:", err);
@@ -89,6 +102,7 @@ const InstituteCreditsHistoryList = () => {
                         isCreditsHistoryList={true}
                         setTableData={setHistory}
                         serverPagination={false}
+                        currentCredits={currentCredits}
                     />
                 )}
             </Box>

@@ -41,6 +41,7 @@ const JobsList = () => {
             setLoading(true);
             try {
                 const response = await getAllJobs(page + 1, limit, statusFilter);
+                console.log("response, jobs", response);
                 if (response.data && response.data.jobs) {
                     setJobs(response.data.jobs);
                     setTotalCount(response.data.total || response.data.jobs.length);

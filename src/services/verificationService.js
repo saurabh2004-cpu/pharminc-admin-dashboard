@@ -24,8 +24,12 @@ export const approveUserVerification = (id) => {
     return axiosInstance.patch(`/user-verifications/approve-verification/${id}`);
 };
 
-export const rejectUserVerification = (id) => {
-    return axiosInstance.patch(`/user-verifications/reject-verification/${id}`);
+export const rejectUserVerification = (id, payload) => {
+    return axiosInstance.patch(`/user-verifications/reject-verification/${id}`, payload);
+};
+
+export const getRejectionReasons = () => {
+    return axiosInstance.get(`/user-verifications/get-rejection-reasons`);
 };
 
 // ----- INSTITUTE VERIFICATIONS -----
@@ -35,7 +39,7 @@ export const getAllInstituteVerifications = (page = 1, limit = 10, status = '') 
         params: {
             page,
             pageSize: limit,
-            status: status && status !== 'All' ? status : undefined,
+            status: status ? status : undefined,
         },
     });
 };

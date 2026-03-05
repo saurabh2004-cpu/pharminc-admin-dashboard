@@ -24,7 +24,7 @@ const InstituteJobsList = Loadable(lazy(() => import('../views/admin/institute/I
 const JobApplicantsList = Loadable(lazy(() => import('../views/admin/institute/JobApplicantsList')));
 const InstituteVerificationList = Loadable(lazy(() => import('../views/admin/institute/InstituteVerificationList')));
 const InstituteVerificationDetails = Loadable(lazy(() => import('../views/admin/institute/InstituteVerificationDetails')));
-
+const InstituteDetails = Loadable(lazy(() => import('../views/admin/institute/InstituteDetails')));
 // Credits Management Imports
 const CreditsWalletList = Loadable(lazy(() => import('../views/admin/creditsWallet/CreditsWalletList')));
 const CreditsWalletCreate = Loadable(lazy(() => import('../views/admin/creditsWallet/CreditsWalletCreate')));
@@ -74,6 +74,7 @@ const Router = [
       { path: '/dashboard/institute/edit/:id', element: <InstituteEdit /> },
       { path: '/dashboard/institutes/:id/jobs', element: <InstituteJobsList /> },
       { path: '/dashboard/institutes/verification', element: <InstituteVerificationList /> },
+      { path: '/dashboard/institutes/:id', element: <InstituteDetails /> },
       { path: '/admin/institute-verifications/:id', element: <InstituteVerificationDetails /> },
       { path: '/dashboard/jobs/:id/applicants', element: <JobApplicantsList /> },
 

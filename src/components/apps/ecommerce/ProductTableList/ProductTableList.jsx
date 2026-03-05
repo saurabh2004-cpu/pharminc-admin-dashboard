@@ -143,7 +143,7 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, handleSearch, search, placeholder, statusFilter, onStatusFilterChange, statusFilterOptions } = props;
+  const { numSelected, handleSearch, search, placeholder, statusFilter, onStatusFilterChange, statusFilterOptions, currentCredits } = props;
 
   return (
     <Toolbar
@@ -209,6 +209,11 @@ const EnhancedTableToolbar = (props) => {
               <IconFilter size="1.2rem" />
             </IconButton>
           </Tooltip>
+          {currentCredits !== undefined && currentCredits !== null && (
+            <Box sx={{ ml: 2, px: 2, py: 0.5, border: '1px solid', borderColor: 'divider', borderRadius: 1, display: 'flex', alignItems: 'center', bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, whiteSpace: 'nowrap', minWidth: 'max-content' }}>
+              Credits: {currentCredits}
+            </Box>
+          )}
         </Box>
       )}
     </Toolbar>
@@ -273,7 +278,8 @@ const ProductTableList = ({
   statusFilter,
   onStatusFilterChange,
   statusFilterOptions,
-  onVerifyStatusChange
+  onVerifyStatusChange,
+  currentCredits
 }) => {
 
   const {
@@ -518,13 +524,14 @@ const ProductTableList = ({
   const handleVerifyInstitute = async (id) => {
     try {
       const res = await axiosInstance.put(`/institute-verifications/approve-verification/${id}`);
+      console.log("res update institute verification", res)
       if (res.status === 200 || res.status === 204 || res.data?.success || res.data?.statusCode === 200) {
         setRows((prev) =>
-          prev.map((r) => ((r.id || r._id) === id ? { ...r, verified: 'APPROVED' } : r))
+          prev.map((r) => ((r.id || r._id) === id ? { ...r, instituteVerifications: res.data.instituteVerification } : r))
         );
         if (setTableData) {
           setTableData((prev) =>
-            prev.map((r) => ((r.id || r._id) === id ? { ...r, verified: 'APPROVED' } : r))
+            prev.map((r) => ((r.id || r._id) === id ? { ...r, instituteVerifications: res.data.instituteVerification } : r))
           );
         }
       }
@@ -550,10 +557,11 @@ const ProductTableList = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isInstitutesList ? "Search Institute" : isBrandsList ? "Search Brand" : isJobsList ? "Search Job" : isApplicantsList ? "Search Applicant" : "Search Product"}
+          placeholder={isInstitutesList ? "Search Institute" : isBrandsList ? "Search Brand" : isJobsList ? "Search Job" : isApplicantsList ? "Search Applicant" : "Search"}
           statusFilter={statusFilter}
           onStatusFilterChange={onStatusFilterChange}
           statusFilterOptions={statusFilterOptions}
+          currentCredits={currentCredits}
         />
         <Paper variant="outlined" sx={{
           mt: 1,
@@ -716,33 +724,27 @@ const ProductTableList = ({
                               </Box>
                             </TableCell>
                             <TableCell>
-                              <Typography fontWeight="600">{row.name}</Typography>
+                              <Typography sx={{ cursor: "pointer", ":hover": { color: "blue" } }} onClick={(event) => {
+                                event.stopPropagation();
+                                window.open(`/dashboard/institutes/${row.id}`, '_blank');
+                              }} fontWeight="600">{row.name}</Typography>
                             </TableCell>
                             <TableCell>
                               <Typography>{row.role}</Typography>
                             </TableCell>
                             <TableCell sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                              {/* {row.verified === "" ? null : row.verified ? (
-                                <Chip label={row.verified === "REJECTED" ? "Rejected" : row.verified === "APPROVED" ? "Approved" : null} color={row.verified === "REJECTED" ? "error" : "success"} size="small" />
-                              ) : (
-                                ''
-                              )}
-                              {row.verified !== "APPROVED" && row.verified !== "" ? (
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  size="small"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    handleVerifyInstitute(row.id || row._id);
-                                  }}
-                                >
-                                  Verify
-                                </Button>
-                              ) : (
-                                ''
-                              )} */}
-                              {row.verified ? <Typography>{row.verified}</Typography> : <Typography>N/A</Typography>}
+                              {row.instituteVerifications && row.instituteVerifications.status !== "APPROVED" && row.instituteVerifications.status !== "" && <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleVerifyInstitute(row.id || row._id);
+                                }}
+                              >
+                                Verify
+                              </Button>}
+                              {row.instituteVerifications ? <Chip label={row.instituteVerifications.status} color={row.instituteVerifications.status === "APPROVED" ? "success" : "error"} size="small" /> : <Typography>N/A</Typography>}
                             </TableCell>
                             <TableCell>
                               <Typography>{row.contactEmail}</Typography>
@@ -757,10 +759,10 @@ const ProductTableList = ({
                               <Typography>{row.country}</Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography>{row.bedsCount}</Typography>
+                              <Typography>{row.instituteCreditsWallets?.[0]?.credits || ''}</Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography>{row.staffCount}</Typography>
+                              <Typography>{row.jobCount}</Typography>
                             </TableCell>
                             <TableCell>
                               <Typography>{format(new Date(row.created_at), 'E, MMM d yyyy')}</Typography>
@@ -807,16 +809,35 @@ const ProductTableList = ({
                               <Typography
                                 fontWeight="600"
                                 sx={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+
+                                }}
+                              >
+                                <Typography sx={{
                                   cursor: 'pointer',
+                                  fontWeight: "900",
                                   transition: 'color 0.2s',
                                   '&:hover': {
                                     color: 'primary.main',
                                     textDecoration: 'underline',
                                   },
-                                }}
-                                onClick={() => navigate(`/dashboard/jobs/${row.id}/applicants`)}
-                              >
-                                {row.title}
+                                }} onClick={() => navigate(`/dashboard/jobs/${row.id}/applicants`)}>{row.title}</Typography>
+                                <Typography
+                                  sx={{
+                                    cursor: 'pointer',
+                                    transition: 'color 0.2s',
+                                    '&:hover': {
+                                      color: 'primary.main',
+                                      textDecoration: 'underline',
+                                    },
+                                  }}
+                                  variant="caption"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    window.open(`/dashboard/institutes/${row.institute.id}`, '_blank');
+                                  }}
+                                >Posted By:{row.institute.name}</Typography>
                               </Typography>
                             </TableCell>
                             <TableCell>
@@ -894,7 +915,10 @@ const ProductTableList = ({
                               </Box>
                             </TableCell>
                             <TableCell>
-                              <Typography fontWeight="600">{`${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim()}</Typography>
+                              <Typography sx={{ cursor: "pointer", ":hover": { color: "blue" } }} onClick={(event) => {
+                                event.stopPropagation();
+                                window.open(`/dashboard/users/${row?.user?.id || row?.user?._id}`, '_blank');
+                              }} fontWeight="600">{`${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim()}</Typography>
                             </TableCell>
                             <TableCell>
                               <Typography>{row.user?.email}</Typography>
@@ -957,11 +981,11 @@ const ProductTableList = ({
                                       if (isUserVerificationsList) {
                                         navigate(`/admin/user-verifications/${row.id || row._id}`);
                                       } else {
-                                        navigate(`/dashboard/users/${row.id || row._id}`);
+                                        navigate(`/dashboard/users/${row.id || row._id}/applications`, { state: { userName: `${row.firstName || ''} ${row.lastName || ''}`.trim() } });
                                       }
                                     }}
                                   >
-                                    <IconEye size="1.1rem" />
+                                    {isUsersList ? <IconBriefcase size="1.1rem" /> : <IconEye size="1.1rem" />}
                                   </IconButton>
                                 </Tooltip>
                                 {!isUserVerificationsList && (
@@ -1002,9 +1026,6 @@ const ProductTableList = ({
                                     ) : null}
                                   </>
                                 )}
-
-
-
                               </Box>
                             </TableCell>
                             <TableCell>
@@ -1019,12 +1040,14 @@ const ProductTableList = ({
                                 <Typography
                                   fontWeight="600"
                                   onClick={(e) => {
+                                    e.stopPropagation();
                                     if (isUsersList) {
-                                      e.stopPropagation();
-                                      navigate(`/dashboard/users/${row.id || row._id}/applications`, { state: { userName: `${row.firstName || ''} ${row.lastName || ''}`.trim() } });
+                                      window.open(`/dashboard/users/${row.id || row._id}`, '_blank');
+                                    } else {
+                                      window.open(`/dashboard/users/${row.user.id || row._id}`, '_blank');
                                     }
                                   }}
-                                  sx={isUsersList ? { cursor: 'pointer', '&:hover': { color: 'primary.main', textDecoration: 'underline' } } : {}}
+                                  sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main', textDecoration: 'underline' } }}
                                 >
                                   {`${row.firstName || ''} ${row.lastName || ''}`.trim()}
                                 </Typography>
@@ -1118,7 +1141,7 @@ const ProductTableList = ({
 
                               </Box>
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => { e.stopPropagation(); window.open(`/dashboard/institutes/${row.institute.id}`, '_blank'); }} sx={{ cursor: "pointer", ":hover": { color: "blue" } }}>
                               <Typography fontWeight="600">{row.institute?.name || row.adminName}</Typography>
                             </TableCell>
                             <TableCell>
@@ -1253,7 +1276,7 @@ const ProductTableList = ({
         isDeleting={deleteDialog.isDeleting}
         itemType={isInstitutesList ? "Institute" : isBrandsList ? "Brand" : isJobsList ? "Job" : isApplicantsList || isUserApplicationsList ? "Application" : isUsersList || isUserVerificationsList ? "User" : isInstituteVerificationsList ? "Verification" : "Product"}
       />
-    </Box>
+    </Box >
   );
 };
 

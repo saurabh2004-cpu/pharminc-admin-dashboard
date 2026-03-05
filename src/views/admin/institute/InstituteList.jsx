@@ -20,8 +20,8 @@ const InstituteList = () => {
         { id: 'contactNumber', numeric: false, disablePadding: false, label: 'Contact Number' },
         { id: 'city', numeric: false, disablePadding: false, label: 'City' },
         { id: 'country', numeric: false, disablePadding: false, label: 'Country' },
-        { id: 'bedsCount', numeric: true, disablePadding: false, label: 'Beds Count' },
-        { id: 'staffCount', numeric: true, disablePadding: false, label: 'Staff Count' },
+        { id: 'credits', numeric: true, disablePadding: false, label: 'Credits' },
+        { id: 'totalJobsPosted', numeric: true, disablePadding: false, label: 'Jobs Posted' },
         { id: 'createdAt', numeric: false, disablePadding: false, label: 'Created Date' },
     ];
 
