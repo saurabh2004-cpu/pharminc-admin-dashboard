@@ -29,6 +29,6 @@ export const deleteJob = async (id) => {
     return await axiosInstance.delete(`/job/delete-job/${id}`);
 };
 
-export const toggleJobStatus = async (id) => {
-    return await axiosInstance.patch(`/job/toggle-job-status/${id}`);
+export const toggleJobStatus = async (id, reason) => {
+    return await axiosInstance.patch(`/job/toggle-job-status/${id}`, { reason, isAdmin: true });
 };

@@ -191,6 +191,8 @@ const JobEdit = () => {
 
     const handleSubmit = async () => {
         setLoading(true);
+        setError('');
+        setSuccess(false);
         try {
             const data = {
                 ...formData,
@@ -217,6 +219,19 @@ const JobEdit = () => {
     return (
         <PageContainer title="Edit Job" description="Edit job details">
             <Breadcrumb title="Edit Job" items={BCrumb} />
+
+            {error && (
+                <Box mt={2}>
+                    <Alert severity="error" onClose={() => setError('')}>{error}</Alert>
+                </Box>
+            )}
+
+            {success && (
+                <Box mt={2}>
+                    <Alert severity="success" onClose={() => setSuccess(false)}>Job updated successfully! Redirecting...</Alert>
+                </Box>
+            )}
+
             <Grid container spacing={3} mt={2}>
                 <Grid item size={{ xs: 12, sm: 6 }}>
                     <CustomFormLabel htmlFor="title">Job Title *</CustomFormLabel>

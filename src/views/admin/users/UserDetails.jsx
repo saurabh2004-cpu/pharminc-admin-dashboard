@@ -17,7 +17,8 @@ import {
     TableHead,
     TableRow,
     Paper,
-    IconButton
+    IconButton,
+    Snackbar
 } from '@mui/material';
 import { IconCamera } from '@tabler/icons-react';
 import { useParams } from 'react-router';
@@ -83,6 +84,8 @@ const UserDetails = () => {
 
     // Image Upload State
     const [imageUploading, setImageUploading] = useState(false);
+    const [uploadError, setUploadError] = useState(null);
+    const [openSnackbar, setOpenSnackbar] = useState(false);
 
     // Handle Image Upload
     const handleImageUpload = async (event, type) => {
@@ -90,6 +93,7 @@ const UserDetails = () => {
         if (!file) return;
 
         setImageUploading(true);
+        setUploadError(null);
         const formData = new FormData();
         formData.append(type === 'cover' ? 'coverImage' : 'profileImage', file);
         formData.append('userId', id);
@@ -105,12 +109,18 @@ const UserDetails = () => {
             }
         } catch (err) {
             console.error("Error uploading image:", err);
-            setError(err.response?.data?.error || "Failed to upload image");
+            const errorMessage = err.response?.data?.message || err.response?.data?.error || "Failed to upload image";
+            setUploadError(errorMessage);
+            setOpenSnackbar(true);
         } finally {
             setImageUploading(false);
             // Reset input
             event.target.value = null;
         }
+    };
+
+    const handleCloseSnackbar = () => {
+        setOpenSnackbar(false);
     };
 
     useEffect(() => {
@@ -541,6 +551,17 @@ const UserDetails = () => {
                     </CardContent>
                 </Card>
             </Box>
+
+            <Snackbar
+                open={openSnackbar}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity="error" variant="filled" sx={{ width: '100%' }}>
+                    {uploadError}
+                </Alert>
+            </Snackbar>
 
         </PageContainer>
     );

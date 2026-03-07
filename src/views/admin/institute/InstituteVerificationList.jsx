@@ -112,11 +112,11 @@ const InstituteVerificationList = () => {
                         }}
                         statusFilter={statusFilter}
                         onStatusFilterChange={handleFilterChange}
-                        statusFilterOptions={[
-                            { value: 'All', label: 'All Statuses' },
-                            { value: 'PENDING', label: 'Pending' },
-                            { value: 'REJECTED', label: 'Rejected' },
-                        ]}
+                        // statusFilterOptions={[
+                        //     { value: 'All', label: 'All Statuses' },
+                        //     { value: 'PENDING', label: 'Pending' },
+                        //     { value: 'REJECTED', label: 'Rejected' },
+                        // ]}
                         onVerifyStatusChange={handleVerifyStatusChange}
                     />
                 )}

@@ -132,6 +132,26 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'Admin Management',
+    icon: IconSettings,
+    href: '/dashboard/admins',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Admin',
+        icon: IconPoint,
+        href: '/dashboard/admins/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Admins List',
+        icon: IconPoint,
+        href: '/dashboard/admins',
+      }
+    ]
+  },
+  {
+    id: uniqueId(),
     title: 'Activity Logs',
     icon: IconListTree,
     href: '/admin/activity-logs',

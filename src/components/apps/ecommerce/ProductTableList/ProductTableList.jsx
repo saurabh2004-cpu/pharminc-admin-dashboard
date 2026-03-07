@@ -44,6 +44,7 @@ import axiosInstance from '../../../../axios/axiosInstance';
 import { useNavigate } from 'react-router';
 import { DeleteConfirmationDialog } from '../utils/ConfirmDeletePopUp';
 import { toggleJobStatus } from 'src/services/jobService';
+import { deleteAdmin } from 'src/services/adminService';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -254,7 +255,6 @@ function stringAvatar(name) {
 
 // Confirmation Dialog Component
 
-
 const ProductTableList = ({
   showCheckBox,
   headCells,
@@ -279,7 +279,8 @@ const ProductTableList = ({
   onStatusFilterChange,
   statusFilterOptions,
   onVerifyStatusChange,
-  currentCredits
+  currentCredits,
+  isAdminList = false
 }) => {
 
   const {
@@ -304,6 +305,14 @@ const ProductTableList = ({
     isDeleting: false
   });
 
+  // Reason modal state for job deactivation
+  const [reasonModal, setReasonModal] = useState({
+    open: false,
+    jobId: null,
+    reason: '',
+    isSubmitting: false
+  });
+
   useEffect(() => {
     if (!serverPagination) window.scrollTo(0, 0);
   }, [page, serverPagination]);
@@ -314,12 +323,12 @@ const ProductTableList = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isInstituteVerificationsList || isUserApplicationsList || isCreditsHistoryList) {
+    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isInstituteVerificationsList || isUserApplicationsList || isCreditsHistoryList || isAdminList) {
       setRows(sourceData);
     } else {
       setRows(filteredAndSortedProducts);
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList, isInstitutesList, isJobsList, isApplicantsList, isUsersList, isUserVerificationsList, isInstituteVerificationsList, isUserApplicationsList, isCreditsHistoryList]);
+  }, [sourceData, filteredAndSortedProducts, isBrandsList, isInstitutesList, isJobsList, isApplicantsList, isUsersList, isUserVerificationsList, isInstituteVerificationsList, isUserApplicationsList, isCreditsHistoryList, isAdminList]);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
@@ -354,6 +363,11 @@ const ProductTableList = ({
     } else if (isCreditsHistoryList) {
       const filteredRows = sourceData.filter((row) => {
         return row.institute?.name?.toLowerCase().includes(searchValue) || row.job?.title?.toLowerCase().includes(searchValue) || row.action?.toLowerCase().includes(searchValue);
+      });
+      setRows(filteredRows);
+    } else if (isAdminList) {
+      const filteredRows = sourceData.filter((row) => {
+        return row.email?.toLowerCase().includes(searchValue);
       });
       setRows(filteredRows);
     } else {
@@ -420,9 +434,26 @@ const ProductTableList = ({
     setDense(event.target.checked);
   };
 
-  const handleToggleStatus = async (id) => {
+  const handleToggleStatus = async (id, reason = '') => {
+    const job = rows.find(r => r.id === id);
+
+    // If it's a job list and we're deactivating (active -> inactive), show modal
+    if (isJobsList && job && job.status === 'active' && !reasonModal.open) {
+      setReasonModal({
+        open: true,
+        jobId: id,
+        reason: '',
+        isSubmitting: false
+      });
+      return;
+    }
+
     try {
-      const res = await toggleJobStatus(id);
+      if (reasonModal.open) {
+        setReasonModal(prev => ({ ...prev, isSubmitting: true }));
+      }
+
+      const res = await toggleJobStatus(id, reason);
       if (res.data) {
         // Update local rows
         setRows((prev) =>
@@ -435,8 +466,31 @@ const ProductTableList = ({
           );
         }
       }
+
+      if (reasonModal.open) {
+        handleReasonModalClose();
+      }
     } catch (err) {
       console.error('Failed to toggle status', err);
+      if (reasonModal.open) {
+        setReasonModal(prev => ({ ...prev, isSubmitting: false }));
+        alert('Failed to update status. Please try again.');
+      }
+    }
+  };
+
+  const handleReasonModalClose = () => {
+    setReasonModal({
+      open: false,
+      jobId: null,
+      reason: '',
+      isSubmitting: false
+    });
+  };
+
+  const handleReasonConfirm = () => {
+    if (reasonModal.jobId) {
+      handleToggleStatus(reasonModal.jobId, reasonModal.reason);
     }
   };
 
@@ -479,16 +533,23 @@ const ProductTableList = ({
         : isJobsList
           ? `/job/delete-job/${deleteId}`
           : isApplicantsList || isUserApplicationsList
-            ? `/application/delete/${deleteId}`
+            ? `/application/delete-application/${deleteId}`
             : isUserVerificationsList
               ? `/user-verifications/delete-verification/${deleteId}`
               : isInstituteVerificationsList
                 ? `/institute-verifications/delete-verification/${deleteId}`
                 : isUsersList
                   ? `/user/delete-user/${deleteId}`
-                  : `/brand/delete-brand/${deleteId}`;
+                  : isAdminList
+                    ? "ADMIN_DELETE"
+                    : `/brand/delete-brand/${deleteId}`;
 
-      const res = await axiosInstance.delete(endpoint);
+      let res;
+      if (isAdminList) {
+        res = await deleteAdmin(deleteId);
+      } else {
+        res = await axiosInstance.delete(endpoint);
+      }
 
       if (res.status === 200 || res.status === 204 || res.data?.statusCode === 200) {
         // Remove item from both table data and rows
@@ -503,7 +564,7 @@ const ProductTableList = ({
       setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
 
       // You might want to show an error message here
-      alert("Failed to delete brand. Please try again.");
+      alert("Failed to delete  Please try again.");
     }
   };
 
@@ -516,6 +577,8 @@ const ProductTableList = ({
       navigate(`/dashboard/users/edit/${id}`);
     } else if (isJobsList) {
       navigate(`/dashboard/jobs/edit/${id}`);
+    } else if (isAdminList) {
+      navigate(`/dashboard/admins/edit/${id}`);
     } else {
       navigate(`/dashboard/brand/edit/${id}`);
     }
@@ -972,7 +1035,7 @@ const ProductTableList = ({
                             <TableCell sx={stickyCellStyle}>
 
                               <Box display="flex" gap={1}>
-                                <Tooltip title="View Details">
+                                <Tooltip title={isUsersList ? "Applications" : "View Details"}>
                                   <IconButton
                                     size="small"
                                     color="secondary"
@@ -1190,6 +1253,44 @@ const ProductTableList = ({
                               <Typography>{row.job?.institute?.name}</Typography>
                             </TableCell>
                           </>
+                        ) : isAdminList ? (
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="Edit">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={(event) => handleEditClick(event, row.id)}
+                                  >
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={(event) => handleDeleteClick(event, row.id, row.email)}
+                                  >
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography fontWeight="600">{row.email}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={row.role}
+                                size="small"
+                                color={row.role === 'MASTER_ADMIN' ? 'secondary' : 'default'}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.created_at), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
+                          </>
                         ) : isCreditsHistoryList ? (
                           // Credits History List View
                           <>
@@ -1274,8 +1375,54 @@ const ProductTableList = ({
         onConfirm={handleDeleteConfirm}
         itemName={deleteDialog.itemName}
         isDeleting={deleteDialog.isDeleting}
-        itemType={isInstitutesList ? "Institute" : isBrandsList ? "Brand" : isJobsList ? "Job" : isApplicantsList || isUserApplicationsList ? "Application" : isUsersList || isUserVerificationsList ? "User" : isInstituteVerificationsList ? "Verification" : "Product"}
+        itemType={isInstitutesList ? "Institute" : isBrandsList ? "Brand" : isJobsList ? "Job" : isApplicantsList || isUserApplicationsList ? "Application" : isUsersList || isUserVerificationsList ? "User" : isInstituteVerificationsList ? "Verification" : isAdminList ? "Admin" : "Product"}
       />
+
+      {/* Reason Modal for Job Deactivation */}
+      <Dialog
+        open={reasonModal.open}
+        onClose={handleReasonModalClose}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Deactivate Job</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Please provide a reason for deactivating this job. This will be saved for future reference.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Reason"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+            value={reasonModal.reason}
+            onChange={(e) => setReasonModal(prev => ({ ...prev, reason: e.target.value }))}
+            disabled={reasonModal.isSubmitting}
+            placeholder="Enter reason here..."
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleReasonModalClose}
+            color="inherit"
+            disabled={reasonModal.isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleReasonConfirm}
+            color="error"
+            variant="contained"
+            disabled={reasonModal.isSubmitting || !reasonModal.reason.trim()}
+          >
+            {reasonModal.isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Deactivate Job'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box >
   );
 };

@@ -13,3 +13,7 @@ export const getApplicationsByUserId = async (userId) => {
     return await axiosInstance.get(`/application/get-applications-by-user/${userId}`);
 };
 
+
+export const deleteApplicationById = async (id) => {
+    return await axiosInstance.delete(`/application/delete-application/${id}`);
+}

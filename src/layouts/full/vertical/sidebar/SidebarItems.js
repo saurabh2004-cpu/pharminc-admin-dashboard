@@ -20,14 +20,22 @@ const SidebarItems = () => {
   const [adminRole, setAdminRole] = useState('')
   const admin = useSelector((state) => state.auth.userData);
 
-  // console.log("admin in sidebar ", admin)
+
+  console.log("admin in sidebar ", admin)
 
   const filteredMenuItems = Menuitems.map(item => {
     if (item.children) {
       // Filter children items
       const filteredChildren = item.children.filter(child => {
-        // Hide "Add Admin" if role is SUB ADMIN
-        if ((child.title === 'Add Admin' || child.title === 'Admin List' || child.title === 'Edit Admin' ) && admin?.role == 'SUB ADMIN') {
+        // Hide Admin management if role is not MASTER_ADMIN
+        const isAdminMgmt = item.title === 'Admin Management' ||
+          child.title === 'Add Admin' ||
+          child.title === 'Admin List' ||
+          child.title === 'Admins List' ||
+          child.title === 'Edit Admin' ||
+          child.title === 'Create Admin';
+
+        if (isAdminMgmt && admin?.role?.toUpperCase() !== 'MASTER_ADMIN') {
           return false;
         }
         return true;

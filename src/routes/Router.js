@@ -45,6 +45,10 @@ const UserApplicationsList = Loadable(lazy(() => import('../views/admin/users/Us
 // Job Management Imports
 const JobsList = Loadable(lazy(() => import('../views/admin/jobs/JobsList')));
 const JobEdit = Loadable(lazy(() => import('../views/admin/jobs/JobEdit')));
+// Admin Management Imports
+const AdminsList = Loadable(lazy(() => import('../views/admin/admins/AdminsList')));
+const CreateAdmin = Loadable(lazy(() => import('../views/admin/admins/CreateAdmin')));
+const EditAdmin = Loadable(lazy(() => import('../views/admin/admins/EditAdmin')));
 
 // Credits History Imports
 const CreditsHistoryList = Loadable(lazy(() => import('../views/admin/credits-history/CreditsHistoryList')));
@@ -94,6 +98,9 @@ const Router = [
       { path: '/dashboard/users/:id/applications', element: <UserApplicationsList /> },
       { path: '/dashboard/jobs', element: <JobsList /> },
       { path: '/dashboard/jobs/edit/:id', element: <JobEdit /> },
+      { path: '/dashboard/admins', element: <AdminsList /> },
+      { path: '/dashboard/admins/create', element: <CreateAdmin /> },
+      { path: '/dashboard/admins/edit/:id', element: <EditAdmin /> },
       { path: '/dashboard/credits-history', element: <CreditsHistoryList /> },
       { path: '/dashboard/institutes/:id/credits-history', element: <InstituteCreditsHistoryList /> },
       { path: '/dashboard/credits-history/:id', element: <CreditsHistoryDetail /> },
