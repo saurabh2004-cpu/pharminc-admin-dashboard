@@ -4,6 +4,7 @@ import { Box, Typography, Button, Grid, CircularProgress, Alert, Paper, Divider 
 import PageContainer from '../../../components/container/PageContainer';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import { getInstituteVerificationById, approveInstituteVerification, rejectInstituteVerification } from '../../../services/verificationService';
+import RejectInstituteVerificationModal from './RejectInstituteVerificationModal';
 import { format } from 'date-fns';
 
 const DocumentViewer = ({ url, title }) => {
@@ -45,6 +46,10 @@ const InstituteVerificationDetails = () => {
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState('');
 
+    // Reject Modal State
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [isSubmittingRejection, setIsSubmittingRejection] = useState(false);
+
     const fetchDetails = async () => {
         setLoading(true);
         setError(null);
@@ -74,13 +79,27 @@ const InstituteVerificationDetails = () => {
         }
     };
 
-    const handleReject = async (instituteId) => {
+    const handleReject = () => {
+        setIsRejectModalOpen(true);
+    };
+
+    const handleConfirmReject = async (payload) => {
+        setIsSubmittingRejection(true);
         try {
-            await rejectInstituteVerification(instituteId);
+            await rejectInstituteVerification(details.institute.id, payload);
             setSuccessMsg('Institute verification rejected successfully!');
             fetchDetails();
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to reject');
+        } finally {
+            setIsSubmittingRejection(false);
+            setIsRejectModalOpen(false);
+        }
+    };
+
+    const closeRejectModal = () => {
+        if (!isSubmittingRejection) {
+            setIsRejectModalOpen(false);
         }
     };
 
@@ -153,7 +172,7 @@ const InstituteVerificationDetails = () => {
                         </Button>
                     )}
                     {details.status !== 'REJECTED' && (
-                        <Button variant="outlined" color="error" onClick={() => handleReject(details.institute.id)}>
+                        <Button variant="outlined" color="error" onClick={handleReject}>
                             Reject
                         </Button>
                     )}
@@ -163,6 +182,13 @@ const InstituteVerificationDetails = () => {
             {/* <Typography variant="h4" mb={3}>Attached Documents</Typography> */}
 
             {/* <DocumentViewer url={details.registrationCertificate} title="Registration Certificate" /> */}
+
+            <RejectInstituteVerificationModal
+                open={isRejectModalOpen}
+                handleClose={closeRejectModal}
+                handleReject={handleConfirmReject}
+                isSubmitting={isSubmittingRejection}
+            />
 
         </PageContainer>
     );

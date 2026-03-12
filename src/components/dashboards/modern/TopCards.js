@@ -1,54 +1,80 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, CardContent, Typography } from '@mui/material';
 import { Grid } from '@mui/material';
 
 import icon1 from '../../../assets/images/svgs/icon-connect.svg';
 import icon2 from '../../../assets/images/svgs/icon-user-male.svg';
-import icon3 from '../../../assets/images/svgs/icon-briefcase.svg';
-import icon4 from '../../../assets/images/svgs/icon-mailbox.svg';
-import icon5 from '../../../assets/images/svgs/icon-favorites.svg';
-import icon6 from '../../../assets/images/svgs/icon-speech-bubble.svg';
+import icon3 from '../../../assets/images/svgs/588hospital_100778.svg';
+import icon4 from '../../../assets/images/svgs/icon-briefcase.svg';
+import icon5 from '../../../assets/images/svgs/resume_business_cv_work_job_curriculum_icon_175611.svg';
+import { getStats } from '../../../services/adminService';
 
-const topcards = [
-  {
-    icon: icon2,
-    title: 'Employees',
-    digits: '96',
-    bgcolor: 'primary',
-  },
-  {
-    icon: icon3,
-    title: 'Clients',
-    digits: '3,650',
-    bgcolor: 'warning',
-  },
-  {
-    icon: icon4,
-    title: 'Projects',
-    digits: '356',
-    bgcolor: 'secondary',
-  },
-  {
-    icon: icon5,
-    title: 'Events',
-    digits: '696',
-    bgcolor: 'error',
-  },
-  {
-    icon: icon6,
-    title: 'Payroll',
-    digits: '$96k',
-    bgcolor: 'success',
-  },
-  {
-    icon: icon1,
-    title: 'Reports',
-    digits: '59',
-    bgcolor: 'info',
-  },
-];
+
+
+
 
 const TopCards = () => {
+
+  const [stats, setStats] = useState([])
+
+  const fetchStats = async () => {
+    try {
+      const stats = await getStats()
+      if (stats.data) {
+        setStats(stats.data)
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+
+
+  const topcards = [
+    {
+      icon: icon2,
+      title: 'Users',
+      digits: `${stats.usersCount || 0}`,
+      bgcolor: 'primary',
+    },
+    {
+      icon: icon3,
+      title: 'Institutes',
+      digits: `${stats.institutesCount || 0}`,
+      bgcolor: 'warning',
+    },
+    {
+      icon: icon4,
+      title: 'Jobs',
+      digits: `${stats.jobsCount || 0}`,
+      bgcolor: 'secondary',
+    },
+    {
+      icon: icon5,
+      title: 'Applications',
+      digits: `${stats.applicationsCount || 0}`,
+      bgcolor: 'error',
+    },
+    // {
+    //   icon: icon6,
+    //   title: 'Payroll',
+    //   digits: '$96k',
+    //   bgcolor: 'success',
+    // },
+    // {
+    //   icon: icon1,
+    //   title: 'Reports',
+    //   digits: '59',
+    //   bgcolor: 'info',
+    // },
+  ];
+
+
   return (
     <Grid container spacing={3}>
       {topcards.map((topcard, i) => (

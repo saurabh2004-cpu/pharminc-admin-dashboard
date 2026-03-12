@@ -45,7 +45,7 @@ const Menuitems = [
 
   {
     id: uniqueId(),
-    title: 'Institute',
+    title: 'Institute Management',
     icon: IconBuildingStore,
     href: '/dashboard/institutes/list',
     children: [

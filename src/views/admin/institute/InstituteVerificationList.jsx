@@ -5,6 +5,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import ProductTableList from '../../../components/apps/ecommerce/ProductTableList/ProductTableList';
 import { getAllInstituteVerifications, approveInstituteVerification, rejectInstituteVerification } from '../../../services/verificationService';
 import { Snackbar } from '@mui/material';
+import RejectInstituteVerificationModal from './RejectInstituteVerificationModal';
 
 const BCrumb = [
     { to: '/', title: 'Home' },
@@ -31,11 +32,17 @@ const InstituteVerificationList = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [statusFilter, setStatusFilter] = useState('PENDING');
 
+    // Reject Modal State
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [rejectTargetId, setRejectTargetId] = useState(null);
+    const [isSubmittingRejection, setIsSubmittingRejection] = useState(false);
+
     const fetchInstitutesList = async () => {
         setLoading(true);
         try {
             const response = await getAllInstituteVerifications(page + 1, limit, statusFilter);
 
+            console.log("institute verifications", response);
             if (response.data && response.data.verifications) {
                 setTableData(response.data.verifications);
                 setTotalCount(response.data.total || response.data.verifications.length);
@@ -61,24 +68,48 @@ const InstituteVerificationList = () => {
     };
 
     const handleVerifyStatusChange = async (id, newStatus) => {
-        try {
-            if (newStatus === 'APPROVED') {
+        if (newStatus === 'APPROVED') {
+            try {
                 await approveInstituteVerification(id);
-            } else {
-                await rejectInstituteVerification(id);
+                setSuccessMessage(`Institute verification successfully approved!`);
+                fetchInstitutesList();
+            } catch (err) {
+                console.error('Error verifying institute:', err);
+                setError(err.response?.data?.error || err.message || 'Failed to update institute status');
             }
+        } else if (newStatus === 'REJECTED') {
+            setRejectTargetId(id);
+            setIsRejectModalOpen(true);
+        }
+    };
 
-            setSuccessMessage(`Institute verification successfully ${newStatus.toLowerCase()}!`);
+    const handleConfirmReject = async (payload) => {
+        if (!rejectTargetId) return;
+        setIsSubmittingRejection(true);
+        try {
+            await rejectInstituteVerification(rejectTargetId, payload);
+            setSuccessMessage(`Institute verification successfully rejected!`);
+            setIsRejectModalOpen(false);
+            setRejectTargetId(null);
             fetchInstitutesList();
         } catch (err) {
-            console.error('Error verifying institute:', err);
-            setError(err.response?.data?.error || err.message || 'Failed to update institute status');
+            console.error('Error rejecting verification:', err);
+            setError(err.response?.data?.error || err.message || 'Failed to reject verification');
+        } finally {
+            setIsSubmittingRejection(false);
         }
     };
 
     const handleCloseSnackbar = () => {
         setSuccessMessage('');
         setError(null);
+    };
+
+    const closeRejectModal = () => {
+        if (!isSubmittingRejection) {
+            setIsRejectModalOpen(false);
+            setRejectTargetId(null);
+        }
     };
 
     return (
@@ -121,6 +152,13 @@ const InstituteVerificationList = () => {
                     />
                 )}
             </Box>
+
+            <RejectInstituteVerificationModal
+                open={isRejectModalOpen}
+                handleClose={closeRejectModal}
+                handleReject={handleConfirmReject}
+                isSubmitting={isSubmittingRejection}
+            />
 
             <Snackbar
                 open={!!error || !!successMessage}

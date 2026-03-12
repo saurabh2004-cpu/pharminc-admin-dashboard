@@ -56,6 +56,10 @@ export const approveInstituteVerification = (id) => {
     return axiosInstance.put(`/institute-verifications/approve-verification/${id}`);
 };
 
-export const rejectInstituteVerification = (id) => {
-    return axiosInstance.put(`/institute-verifications/reject-verification/${id}`);
+export const rejectInstituteVerification = (id, payload) => {
+    return axiosInstance.put(`/institute-verifications/reject-verification/${id}`, payload);
+};
+
+export const getRecentOneInstituteVerification = (instituteId) => {
+    return axiosInstance.get(`/institute-verifications/get-recent-one-institute-verification/${instituteId}`);
 };

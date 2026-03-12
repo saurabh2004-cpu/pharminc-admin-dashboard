@@ -17,6 +17,7 @@ import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../../components/container/PageContainer';
 import { getInstituteById } from '../../../services/instituteService';
 import { getJobsByInstituteId } from '../../../services/jobService';
+import { getRecentOneInstituteVerification } from '../../../services/verificationService';
 import ProductTableList from '../../../components/apps/ecommerce/ProductTableList/ProductTableList';
 import { format } from 'date-fns';
 
@@ -80,6 +81,10 @@ const InstituteDetails = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [statusFilter, setStatusFilter] = useState('All');
 
+    // Verification State
+    const [verification, setVerification] = useState(null);
+    const [verificationLoading, setVerificationLoading] = useState(true);
+
     const jobsHeadCells = [
         { id: 'Actions', numeric: false, disablePadding: false, label: 'Actions' },
         { id: 'title', numeric: false, disablePadding: false, label: 'Job Title' },
@@ -141,6 +146,31 @@ const InstituteDetails = () => {
             fetchJobs();
         }
     }, [id, page, limit, statusFilter]);
+
+    useEffect(() => {
+        const fetchVerification = async () => {
+            setVerificationLoading(true);
+            try {
+                const response = await getRecentOneInstituteVerification(id);
+                const verData = response.data;
+                // Ensure the verification record is for the current institute
+                if (verData && verData.instituteId === id) {
+                    setVerification(verData);
+                } else {
+                    setVerification(null);
+                }
+            } catch (err) {
+                console.error("Error fetching recent verification:", err);
+                setVerification(null);
+            } finally {
+                setVerificationLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchVerification();
+        }
+    }, [id]);
 
     const handleFilterChange = (e) => {
         setStatusFilter(e.target.value);
@@ -312,6 +342,56 @@ const InstituteDetails = () => {
                     </Grid>
                 )}
             </Grid>
+
+            {/* RECENT VERIFICATION DETAILS */}
+            <Box mt={4}>
+                <Typography variant="h4" fontWeight="600" mb={2}>
+                    Recent Verification Details
+                </Typography>
+                <Card>
+                    <CardContent>
+                        {verificationLoading ? (
+                            <Box display="flex" justifyContent="center" mt={3} mb={3}>
+                                <CircularProgress />
+                            </Box>
+                        ) : verification ? (
+                            <Grid container spacing={3}>
+                                <Grid item size={{ xs: 12, md: 6 }}>
+                                    <Box display="flex" flexDirection="column">
+                                        <FieldRow label="Verification Status" value={
+                                            <Chip
+                                                label={verification.status || 'PENDING'}
+                                                color={verification.status === 'APPROVED' ? 'success' : verification.status === 'REJECTED' ? 'error' : 'warning'}
+                                                size="small"
+                                            />
+                                        } />
+                                        <FieldRow label="Admin Name" value={verification.adminName} />
+                                        <FieldRow label="Admin Phone" value={verification.adminPhone} />
+                                        <FieldRow label="Email" value={verification.email} />
+                                    </Box>
+                                </Grid>
+                                <Grid item size={{ xs: 12, md: 6 }}>
+                                    <Box display="flex" flexDirection="column">
+                                        <FieldRow label="Telephone" value={verification.telephone} />
+                                        <FieldRow label="Created Date" value={verification.created_at ? format(new Date(verification.created_at), 'MMM d, yyyy') : null} />
+                                        <FieldRow label="Registration Certificate" value={
+                                            verification.registrationCertificate ? (
+                                                <a href={verification.registrationCertificate} target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2', textDecoration: 'underline' }}>
+                                                    View Document
+                                                </a>
+                                            ) : 'N/A'
+                                        } />
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        ) : (
+                            <Typography variant="body1" color="textSecondary" align="center" py={3}>
+                                No recent verification record exists for this institute.
+                            </Typography>
+                        )}
+                    </CardContent>
+                </Card>
+            </Box>
 
             {/* JOBS SECTION */}
             <Box mt={4}>

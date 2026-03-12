@@ -19,3 +19,7 @@ export const updateAdmin = (id, adminData) => {
 export const deleteAdmin = (id) => {
     return axiosInstance.delete(`/admin/delete-admin/${id}`);
 };
+
+export const getStats = () => {
+    return axiosInstance.get(`/admin/get-stats`);
+};
