@@ -24,29 +24,41 @@ import {
 import './Tiptap.css';
 
 
-const TiptapEdit = () => {
-
+const TiptapEdit = ({ value, onChange }) => {
   const editor = useEditor({
     extensions: [StarterKit],
-    content: "<p>Type here...</p>",
+    content: value || '',
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
   });
 
-
+  // Sync external value changes to the editor
+  React.useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value || '');
+    }
+  }, [value, editor]);
 
   return (
-
     <RichTextEditorProvider editor={editor} >
       <RichTextField
+        sx={{
+          '& .ProseMirror': {
+            minHeight: '150px',
+            '&:focus': {
+              outline: 'none',
+            },
+          },
+        }}
         controls={
           <MenuControlsContainer>
             <MenuSelectHeading />
             <MenuDivider />
             <MenuButtonBold />
             <MenuButtonItalic />
-
             <MenuButtonStrikethrough />
             <MenuDivider />
-
             <MenuButtonOrderedList />
             <MenuButtonBulletedList />
             <MenuDivider />
@@ -54,19 +66,14 @@ const TiptapEdit = () => {
             <MenuButtonCode />
             <MenuButtonHorizontalRule />
             <MenuDivider />
-
             <MenuButtonUndo />
             <MenuButtonRedo />
             <MenuDivider />
-
             <MenuButtonRemoveFormatting />
-
           </MenuControlsContainer>
         }
-
       />
     </RichTextEditorProvider>
-
   );
 };
 export default TiptapEdit;

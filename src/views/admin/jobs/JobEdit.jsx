@@ -9,6 +9,7 @@ import CustomOutlinedInput from '../../../components/forms/theme-elements/Custom
 import CustomSelect from '../../../components/forms/theme-elements/CustomSelect';
 import { getJobById, updateJob } from '../../../services/jobService';
 import healthcareRoles from '../../../constants/healthcareRoles.json';
+import TiptapEdit from '../../forms/from-tiptap/TiptapEdit';
 
 const currencies = [
     { value: "INR", label: "INR (₹)" },
@@ -384,15 +385,24 @@ const JobEdit = () => {
                 </Grid>
                 <Grid item size={{ xs: 12 }}>
                     <CustomFormLabel>Full Description</CustomFormLabel>
-                    <CustomOutlinedInput name="fullDescription" multiline rows={4} fullWidth value={formData.fullDescription} onChange={handleChange} />
+                    <TiptapEdit 
+                        value={formData.fullDescription} 
+                        onChange={(val) => setFormData(prev => ({ ...prev, fullDescription: val }))} 
+                    />
                 </Grid>
                 <Grid item size={{ xs: 12 }}>
                     <CustomFormLabel>Requirements</CustomFormLabel>
-                    <CustomOutlinedInput name="requirements" multiline rows={4} fullWidth value={formData.requirements} onChange={handleChange} />
+                    <TiptapEdit 
+                        value={formData.requirements} 
+                        onChange={(val) => setFormData(prev => ({ ...prev, requirements: val }))} 
+                    />
                 </Grid>
                 <Grid item size={{ xs: 12 }}>
                     <CustomFormLabel>Additional Info</CustomFormLabel>
-                    <CustomOutlinedInput name="additionalInfo" multiline rows={2} fullWidth value={formData.additionalInfo} onChange={handleChange} />
+                    <TiptapEdit 
+                        value={formData.additionalInfo} 
+                        onChange={(val) => setFormData(prev => ({ ...prev, additionalInfo: val }))} 
+                    />
                 </Grid>
                 <Grid item size={{ xs: 12 }} mt={3}>
                     <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading} size="large">
