@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, IconButton, InputAdornment } from '@mui/material';
+import { IconEye, IconEyeOff } from '@tabler/icons';
 import { useNavigate } from 'react-router';
 
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
@@ -14,6 +15,7 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
     username: ''
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSignUp = async () => {
@@ -68,9 +70,22 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
               id="password"
               variant="outlined"
               fullWidth
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <IconEyeOff size="20" /> : <IconEye size="20" />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
             />
           </Box>
 

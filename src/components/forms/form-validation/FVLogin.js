@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { Link } from 'react-router';
 
-import { Box, Button, Stack, FormGroup, FormControlLabel, Typography } from '@mui/material';
+import { Box, Button, Stack, FormGroup, FormControlLabel, Typography, IconButton, InputAdornment } from '@mui/material';
+import { IconEye, IconEyeOff } from '@tabler/icons';
 
 import CustomTextField from '../theme-elements/CustomTextField';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
@@ -28,6 +29,7 @@ const validationSchema = yup.object({
 });
 
 const FVRegister = () => {
+  const [showPassword, setShowPassword] = useState(false);
   const formik = useFormik({
     initialValues: {
       firstName: '',
@@ -62,11 +64,24 @@ const FVRegister = () => {
             fullWidth
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={formik.values.password}
             onChange={formik.handleChange}
             error={formik.touched.password && Boolean(formik.errors.password)}
             helperText={formik.touched.password && formik.errors.password}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <IconEyeOff size="20" /> : <IconEye size="20" />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
         </Box>
       </Stack>
