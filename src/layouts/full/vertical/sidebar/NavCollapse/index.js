@@ -45,12 +45,12 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hi
     cursor: 'pointer',
     padding: '8px 10px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
-    backgroundColor: open && level < 2 ? '#2E2F7F' : 'transparent',
+    backgroundColor: open && level < 2 ? '#233F64' : 'transparent',
     whiteSpace: 'nowrap',
     position: 'relative',
     '&:hover': {
       // Only apply hover styles to the direct element, not children
-      backgroundColor: '#2E2F7F',
+      backgroundColor: '#233F64',
       color: 'white',
       // Target only the direct child icon and text, not nested ones
       '& > .MuiListItemIcon-root': {

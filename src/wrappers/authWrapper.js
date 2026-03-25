@@ -1,6 +1,6 @@
-// AuthWrapper.js
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import Cookies from 'js-cookie';
 
 const AuthWrapper = ({ children }) => {
     const adminUser = useSelector((state) => state.auth.userData);
@@ -10,15 +10,16 @@ const AuthWrapper = ({ children }) => {
             const currentPath = window.location.pathname;
 
             // 1. Perform explicit token verification directly on the HTTP cookie string
-            const hasAdminCookie = document.cookie.includes('adminAccessToken');
+            const adminAccessToken = Cookies.get('adminAccessToken');
+            const hasAdminCookie = !!adminAccessToken;
 
             // 2. Establish final authentication booleans
-            const isAdminAuthenticated = adminUser || hasAdminCookie;
+            const isAdminAuthenticated = !!adminUser || hasAdminCookie;
 
             // 3. Handle Authenticated Users
             if (isAdminAuthenticated) {
-                // If authenticated admin tries to visit login page, send to dashboard
-                if (currentPath === '/auth/login' || currentPath === '/auth/login/') {
+                // If authenticated admin tries to visit login page or the root path, send to dashboard
+                if (currentPath === '/auth/login' || currentPath === '/auth/login/' || currentPath === '/') {
                     window.location.href = '/dashboards/modern';
                 }
                 return;

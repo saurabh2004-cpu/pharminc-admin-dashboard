@@ -26,6 +26,7 @@ import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../../components/container/PageContainer';
 import { getUserById, uploadUserImages } from '../../../services/userService';
 import { getApplicationsByUserId } from '../../../services/applicationService';
+import { getRecentOneUserVerification } from '../../../services/verificationService';
 import { format } from 'date-fns';
 
 const BCrumb = [
@@ -81,6 +82,10 @@ const UserDetails = () => {
     const [applications, setApplications] = useState([]);
     const [applicationsLoading, setApplicationsLoading] = useState(false);
     const [applicationsError, setApplicationsError] = useState(null);
+
+    // Verification State
+    const [verification, setVerification] = useState(null);
+    const [verificationLoading, setVerificationLoading] = useState(true);
 
     // Image Upload State
     const [imageUploading, setImageUploading] = useState(false);
@@ -158,6 +163,31 @@ const UserDetails = () => {
         };
         if (id) {
             fetchApplications();
+        }
+    }, [id]);
+
+    useEffect(() => {
+        const fetchVerification = async () => {
+            setVerificationLoading(true);
+            try {
+                const response = await getRecentOneUserVerification(id);
+                const verData = response.data;
+                // Ensure the verification record is for the current user
+                if (verData && verData.userId === id) {
+                    setVerification(verData);
+                } else {
+                    setVerification(null);
+                }
+            } catch (err) {
+                console.error("Error fetching recent verification:", err);
+                setVerification(null);
+            } finally {
+                setVerificationLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchVerification();
         }
     }, [id]);
 
@@ -547,6 +577,76 @@ const UserDetails = () => {
                                     No Applications Found
                                 </Typography>
                             </Box>
+                        )}
+                    </CardContent>
+                </Card>
+            </Box>
+
+            {/* RECENT VERIFICATION DETAILS */}
+            <Box mt={4}>
+                <Typography variant="h4" fontWeight="600" mb={2}>
+                    Recent Verification Details
+                </Typography>
+                <Card>
+                    <CardContent>
+                        {verificationLoading ? (
+                            <Box display="flex" justifyContent="center" mt={3} mb={3}>
+                                <CircularProgress />
+                            </Box>
+                        ) : verification ? (
+                            <Grid container spacing={3}>
+                                <Grid item size={{ xs: 12, md: 6 }}>
+                                    <Box display="flex" flexDirection="column">
+                                        <FieldRow label="Verification Status" value={
+                                            <Chip
+                                                label={verification.status || 'PENDING'}
+                                                color={verification.status === 'APPROVED' ? 'success' : verification.status === 'REJECTED' ? 'error' : 'warning'}
+                                                size="small"
+                                            />
+                                        } />
+                                        <FieldRow label="First Name" value={verification.firstName} />
+                                        <FieldRow label="Last Name" value={verification.lastName} />
+                                        <FieldRow label="Email" value={verification.email} />
+                                        <FieldRow label="Phone" value={verification.phone} />
+                                        <FieldRow label="License Number" value={verification.licenseNumber} />
+                                        <FieldRow label="License Expiry" value={verification.licenseExpiryDate ? format(new Date(verification.licenseExpiryDate), 'MMM d, yyyy') : null} />
+                                    </Box>
+                                </Grid>
+                                <Grid item size={{ xs: 12, md: 6 }}>
+                                    <Box display="flex" flexDirection="column">
+                                        <FieldRow label="Degree" value={verification.degree} />
+                                        <FieldRow label="University" value={verification.university} />
+                                        <FieldRow label="Graduation Year" value={verification.yearOfGraduation ? format(new Date(verification.yearOfGraduation), 'yyyy') : null} />
+                                        <FieldRow label="Created Date" value={verification.created_at ? format(new Date(verification.created_at), 'MMM d, yyyy') : null} />
+                                        <FieldRow label="Government ID" value={
+                                            verification.governMentId ? (
+                                                <a href={verification.governMentId} target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2', textDecoration: 'underline' }}>
+                                                    View Document
+                                                </a>
+                                            ) : 'N/A'
+                                        } />
+                                        <FieldRow label="Degree Certificate" value={
+                                            verification.degreeCertificate ? (
+                                                <a href={verification.degreeCertificate} target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2', textDecoration: 'underline' }}>
+                                                    View Document
+                                                </a>
+                                            ) : 'N/A'
+                                        } />
+                                        <FieldRow label="Post Graduate Certificate" value={
+                                            verification.postGraduateDegreeCertificate ? (
+                                                <a href={verification.postGraduateDegreeCertificate} target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2', textDecoration: 'underline' }}>
+                                                    View Document
+                                                </a>
+                                            ) : 'N/A'
+                                        } />
+                                    </Box>
+
+                                </Grid>
+                            </Grid>
+                        ) : (
+                            <Typography variant="body1" color="textSecondary" align="center" py={3}>
+                                No recent verification record exists for this user.
+                            </Typography>
                         )}
                     </CardContent>
                 </Card>

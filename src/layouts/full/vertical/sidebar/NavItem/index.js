@@ -35,7 +35,7 @@ const NavItem = ({ item, level, pathDirect, onClick, hideMenu }) => {
       level > 1 && pathDirect === item.href ? `${theme.palette.primary.main}!important` : theme.palette.text.secondary,
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
     '&:hover': {
-      backgroundColor: '#2E2F7F',
+      backgroundColor: '#233F64',
       color: 'white',
     },
     '&.active': {

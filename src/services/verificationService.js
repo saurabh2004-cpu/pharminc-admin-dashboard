@@ -32,6 +32,11 @@ export const getRejectionReasons = () => {
     return axiosInstance.get(`/user-verifications/get-rejection-reasons`);
 };
 
+export const getRecentOneUserVerification = (userId) => {
+    return axiosInstance.get(`/user-verifications/get-recent-one-user-verification/${userId}`);
+};
+
+
 // ----- INSTITUTE VERIFICATIONS -----
 
 export const getAllInstituteVerifications = (page = 1, limit = 10, status = '') => {

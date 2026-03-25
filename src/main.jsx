@@ -5,8 +5,9 @@ import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { Provider } from 'react-redux';
-import { store } from './store/authStore'
+import { store, persistor } from './store/authStore'
 import AuthWrapper from './wrappers/authWrapper';
+import { PersistGate } from 'redux-persist/integration/react';
 
 async function deferRender() {
   // const { worker } = await import("./api/mocks/browser");
@@ -21,10 +22,12 @@ deferRender().then(() => {
     <CustomizerContextProvider>
       <Suspense fallback={<Spinner />}>
         <Provider store={store}>
-          <AuthWrapper>
-            <App />
-          </AuthWrapper>
-        </Provider>,
+          <PersistGate loading={<Spinner />} persistor={persistor}>
+            <AuthWrapper>
+              <App />
+            </AuthWrapper>
+          </PersistGate>
+        </Provider>
       </Suspense>
     </CustomizerContextProvider>,
   )
