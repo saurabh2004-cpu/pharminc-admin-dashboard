@@ -58,6 +58,10 @@ const CreditsHistoryDetail = Loadable(lazy(() => import('../views/admin/credits-
 // Activity Logs Imports
 const ActivityLogsList = Loadable(lazy(() => import('../views/admin/activityLogs/ActivityLogsList')));
 const ActivityLogDetails = Loadable(lazy(() => import('../views/admin/activityLogs/ActivityLogDetails')));
+// Package Management Imports
+const PackageList = Loadable(lazy(() => import('../views/admin/packages/PackageList')));
+const PackageCreate = Loadable(lazy(() => import('../views/admin/packages/PackageCreate')));
+const PackageEdit = Loadable(lazy(() => import('../views/admin/packages/PackageEdit')));
 
 const Router = [
 
@@ -106,6 +110,9 @@ const Router = [
       { path: '/dashboard/credits-history/:id', element: <CreditsHistoryDetail /> },
       { path: '/admin/activity-logs', element: <ActivityLogsList /> },
       { path: '/admin/activity-logs/:id', element: <ActivityLogDetails /> },
+      { path: '/dashboard/packages/list', element: <PackageList /> },
+      { path: '/dashboard/packages/create', element: <PackageCreate /> },
+      { path: '/dashboard/packages/edit/:id', element: <PackageEdit /> },
     ],
   },
 

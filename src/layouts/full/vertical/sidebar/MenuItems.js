@@ -155,7 +155,31 @@ const Menuitems = [
     title: 'Activity Logs',
     icon: IconListTree,
     href: '/admin/activity-logs',
-  }
+  },
+  {
+    navlabel: true,
+    subheader: 'Subscription',
+  },
+  {
+    id: uniqueId(),
+    title: 'Package Management',
+    icon: IconBox,
+    href: '/dashboard/packages/list',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Packages List',
+        icon: IconPoint,
+        href: '/dashboard/packages/list',
+      },
+      {
+        id: uniqueId(),
+        title: 'Create Package',
+        icon: IconPoint,
+        href: '/dashboard/packages/create',
+      },
+    ]
+  },
 
 ];
 

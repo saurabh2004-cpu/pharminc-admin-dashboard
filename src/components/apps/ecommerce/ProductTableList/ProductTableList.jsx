@@ -280,7 +280,8 @@ const ProductTableList = ({
   statusFilterOptions,
   onVerifyStatusChange,
   currentCredits,
-  isAdminList = false
+  isAdminList = false,
+  isPackagesList = false
 }) => {
 
   const {
@@ -323,7 +324,7 @@ const ProductTableList = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isInstituteVerificationsList || isUserApplicationsList || isCreditsHistoryList || isAdminList) {
+    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isInstituteVerificationsList || isUserApplicationsList || isCreditsHistoryList || isAdminList || isPackagesList) {
       setRows(sourceData);
     } else {
       setRows(filteredAndSortedProducts);
@@ -368,6 +369,11 @@ const ProductTableList = ({
     } else if (isAdminList) {
       const filteredRows = sourceData.filter((row) => {
         return row.email?.toLowerCase().includes(searchValue);
+      });
+      setRows(filteredRows);
+    } else if (isPackagesList) {
+      const filteredRows = sourceData.filter((row) => {
+        return row.name?.toLowerCase().includes(searchValue);
       });
       setRows(filteredRows);
     } else {
@@ -542,7 +548,9 @@ const ProductTableList = ({
                   ? `/user/delete-user/${deleteId}`
                   : isAdminList
                     ? "ADMIN_DELETE"
-                    : `/brand/delete-brand/${deleteId}`;
+                    : isPackagesList
+                      ? `/packages/delete-package/${deleteId}`
+                      : `/brand/delete-brand/${deleteId}`;
 
       let res;
       if (isAdminList) {
@@ -579,6 +587,8 @@ const ProductTableList = ({
       navigate(`/dashboard/jobs/edit/${id}`);
     } else if (isAdminList) {
       navigate(`/dashboard/admins/edit/${id}`);
+    } else if (isPackagesList) {
+      navigate(`/dashboard/packages/edit/${id}`);
     } else {
       navigate(`/dashboard/brand/edit/${id}`);
     }
@@ -620,7 +630,7 @@ const ProductTableList = ({
           numSelected={selected.length}
           search={search}
           handleSearch={handleSearch}
-          placeholder={isInstitutesList ? "Search Institute" : isBrandsList ? "Search Brand" : isJobsList ? "Search Job" : isApplicantsList ? "Search Applicant" : "Search"}
+          placeholder={isInstitutesList ? "Search Institute" : isBrandsList ? "Search Brand" : isJobsList ? "Search Job" : isApplicantsList ? "Search Applicant" : isPackagesList ? "Search Package" : "Search"}
           statusFilter={statusFilter}
           onStatusFilterChange={onStatusFilterChange}
           statusFilterOptions={statusFilterOptions}
@@ -734,6 +744,45 @@ const ProductTableList = ({
                             </TableCell>
                             <TableCell>
                               <Typography>{format(new Date(row.createAlt || row.createdAt), 'E, MMM d yyyy')}</Typography>
+                            </TableCell>
+
+                          </>
+                        ) : isPackagesList ? (
+                          // Packages List View
+                          <>
+                            <TableCell sx={stickyCellStyle}>
+                              <Box display="flex" gap={1}>
+                                <Tooltip title="Edit">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={(event) => handleEditClick(event, row.id || row._id)}
+                                  >
+                                    <IconEdit size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={(event) => handleDeleteClick(event, row.id || row._id, row.name)}
+                                  >
+                                    <IconTrash size="1.1rem" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography fontWeight="600">{row.name}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.price}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{row.credits}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography>{format(new Date(row.createdAt), 'E, MMM d yyyy')}</Typography>
                             </TableCell>
 
                           </>
