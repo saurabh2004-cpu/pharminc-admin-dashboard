@@ -433,7 +433,7 @@ const UserEdit = () => {
                         <Box display="flex" justifyContent="flex-end" gap={2}>
                             <Button
                                 variant="outlined"
-                                color="error"
+                                color="secondary"
                                 onClick={() => navigate('/dashboard/users/list')}
                                 disabled={saving}
                             >

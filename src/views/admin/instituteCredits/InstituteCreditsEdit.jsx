@@ -131,7 +131,7 @@ const InstituteCreditsEdit = () => {
                     <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
                         {loading ? <CircularProgress size={24} /> : 'Save Credits'}
                     </Button>
-                    <Button variant="outlined" color="error" sx={{ ml: 2 }} onClick={() => navigate('/dashboard/institute-credits')}>
+                    <Button variant="outlined" color="secondary" sx={{ ml: 2 }} onClick={() => navigate('/dashboard/institute-credits')}>
                         Cancel
                     </Button>
                 </Grid>

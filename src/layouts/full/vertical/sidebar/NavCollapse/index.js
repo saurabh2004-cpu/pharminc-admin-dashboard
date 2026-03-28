@@ -45,19 +45,19 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hi
     cursor: 'pointer',
     padding: '8px 10px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
-    backgroundColor: open && level < 2 ? '#233F64' : 'transparent',
+    backgroundColor: open && level < 2 ? theme.palette.primary.main : 'transparent',
     whiteSpace: 'nowrap',
     position: 'relative',
     '&:hover': {
       // Only apply hover styles to the direct element, not children
-      backgroundColor: '#233F64',
-      color: 'white',
+      backgroundColor: theme.palette.primary.light,
+      color: theme.palette.primary.main,
       // Target only the direct child icon and text, not nested ones
       '& > .MuiListItemIcon-root': {
-        color: 'white',
+        color: theme.palette.primary.main,
       },
       '& > .MuiListItemText-root': {
-        color: 'white',
+        color: theme.palette.primary.main,
       },
       // Prevent hover styles from affecting nested collapse items
       '& .MuiCollapse-root': {

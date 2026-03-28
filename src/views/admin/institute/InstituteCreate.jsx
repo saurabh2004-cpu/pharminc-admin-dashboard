@@ -362,7 +362,7 @@ const InstituteCreate = () => {
                 </Grid>
 
                 <Grid size={12} mt={3}>
-                    <Button variant="contained" color="primary" sx={{ backgroundColor: '#2E2F7F' }} onClick={handleSubmit} disabled={loading}>
+                    <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
                         {loading ? <CircularProgress size={24} /> : 'Create Institute'}
                     </Button>
                 </Grid>

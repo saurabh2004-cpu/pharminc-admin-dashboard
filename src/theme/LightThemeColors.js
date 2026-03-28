@@ -3,15 +3,15 @@ const LightThemeColors = [
     name: 'BLUE_THEME',
     palette: {
       primary: {
-        main: '#5D87FF',
-        light: '#ECF2FF',
-        dark: '#4570EA',
+        main: '#169BA4',
+        light: '#E6FFFA',
+        dark: '#127177',
         contrastText: '#ffffff',
       },
       secondary: {
-        main: '#49BEFF',
-        light: '#E8F7FF',
-        dark: '#23afdb',
+        main: '#233F64',
+        light: '#EBF3FE',
+        dark: '#1B2F4A',
         contrastText: '#ffffff',
       },
     },

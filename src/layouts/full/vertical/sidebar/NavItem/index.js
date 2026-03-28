@@ -35,14 +35,17 @@ const NavItem = ({ item, level, pathDirect, onClick, hideMenu }) => {
       level > 1 && pathDirect === item.href ? `${theme.palette.primary.main}!important` : theme.palette.text.secondary,
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
     '&:hover': {
-      backgroundColor: '#233F64',
-      color: 'white',
+      backgroundColor: theme.palette.primary.light,
+      color: theme.palette.primary.main,
+      '& .MuiListItemIcon-root': {
+        color: theme.palette.primary.main,
+      },
     },
     '&.active': {
       color: 'white',
       backgroundColor: theme.palette.primary.main,
       '&:hover': {
-        backgroundColor: theme.palette.primary,
+        backgroundColor: theme.palette.primary.dark,
         color: 'white',
       },
     },

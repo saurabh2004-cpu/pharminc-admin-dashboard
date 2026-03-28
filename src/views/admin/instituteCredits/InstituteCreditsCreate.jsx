@@ -150,7 +150,7 @@ const InstituteCreditsCreate = () => {
                     <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading || loadingInstitutes}>
                         {loading ? <CircularProgress size={24} /> : 'Allocate Credits'}
                     </Button>
-                    <Button variant="outlined" color="error" sx={{ ml: 2 }} onClick={() => navigate('/dashboard/institute-credits')}>
+                    <Button variant="outlined" color="secondary" sx={{ ml: 2 }} onClick={() => navigate('/dashboard/institute-credits')}>
                         Cancel
                     </Button>
                 </Grid>

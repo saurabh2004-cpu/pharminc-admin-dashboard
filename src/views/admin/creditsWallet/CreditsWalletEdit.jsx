@@ -133,7 +133,7 @@ const CreditsWalletEdit = () => {
                     <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
                         {loading ? <CircularProgress size={24} /> : 'Save Changes'}
                     </Button>
-                    <Button variant="outlined" color="error" sx={{ ml: 2 }} onClick={() => navigate('/dashboard/credits-wallet')}>
+                    <Button variant="outlined" color="secondary" sx={{ ml: 2 }} onClick={() => navigate('/dashboard/credits-wallet')}>
                         Cancel
                     </Button>
                 </Grid>
