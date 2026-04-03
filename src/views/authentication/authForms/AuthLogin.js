@@ -164,14 +164,14 @@ const AuthLogin = ({ subtitle }) => {
         </Box>
 
         <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-          <Typography
+          {/* <Typography
             component={Link}
             to="/salas-rep/login"
             fontWeight="500"
             sx={{ textDecoration: 'none', color: 'primary.main' }}
           >
             Login as Sales Rep
-          </Typography>
+          </Typography> */}
         </Stack>
       </Stack>
 
