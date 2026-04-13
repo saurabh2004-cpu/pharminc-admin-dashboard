@@ -19,6 +19,7 @@ import {
   IconTruck,
   IconShoppingBag,
   IconCalendar,
+  IconMessage,
 } from '@tabler/icons-react';
 
 const Menuitems = [
@@ -129,6 +130,12 @@ const Menuitems = [
         href: '/dashboard/jobs',
       },
     ]
+  },
+  {
+    id: uniqueId(),
+    title: 'Conversations',
+    icon: IconMessage,
+    href: '/dashboard/conversations',
   },
   {
     id: uniqueId(),

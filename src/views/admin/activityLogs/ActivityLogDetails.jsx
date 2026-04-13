@@ -86,6 +86,18 @@ const ActivityLogDetails = () => {
                             <Typography variant="subtitle2" color="textSecondary">Action</Typography>
                             <Typography variant="body1" fontWeight={500}>{log.action}</Typography>
                         </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                            <Typography variant="subtitle2" color="textSecondary">Actor Name</Typography>
+                            <Typography variant="body1" fontWeight={500}>
+                                {log.admin ? log.admin.name : (log.user ? `${log.user.firstName} ${log.user.lastName}` : (log.institute ? log.institute.name : 'System'))}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                            <Typography variant="subtitle2" color="textSecondary">Actor Role</Typography>
+                            <Typography variant="body1" fontWeight={500}>
+                                {log.admin ? log.admin.role : (log.user ? log.user.role : (log.institute ? log.institute.role : '-'))}
+                            </Typography>
+                        </Grid>
                         <Grid item xs={12} md={4}>
                             <Typography variant="subtitle2" color="textSecondary">Description</Typography>
                             <Typography variant="body1" fontWeight={500}>{log.description || '-'}</Typography>

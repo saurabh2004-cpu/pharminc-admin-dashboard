@@ -39,6 +39,9 @@ const ActivityLogsList = () => {
             if (actionFilter !== 'All') params.action = actionFilter;
 
             const response = await axiosInstance.get('/activity-logs', { params });
+
+            console.log("Activity logs response", response.data);
+
             if (response.data) {
                 setLogs(response.data.data);
                 setTotalPages(response.data.pagination.totalPages);
@@ -75,7 +78,7 @@ const ActivityLogsList = () => {
         <PageContainer title="Activity Logs" description="View system activity logs">
             <Breadcrumb title="Activity Logs" items={BCrumb} />
 
-            <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+            <Box sx={{ mb: 3, display: 'flex', gap: 2 }} marginTop={6}>
                 <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Module</InputLabel>
                     <Select value={moduleFilter} onChange={handleModuleChange} label="Module">
@@ -121,6 +124,8 @@ const ActivityLogsList = () => {
                                         <TableCell sx={headCellStyle}>Date</TableCell>
                                         <TableCell sx={headCellStyle}>Module</TableCell>
                                         <TableCell sx={headCellStyle}>Action</TableCell>
+                                        <TableCell sx={headCellStyle}>Role</TableCell>
+                                        <TableCell sx={headCellStyle}>Updated By</TableCell>
                                         <TableCell sx={headCellStyle}>Description</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -135,12 +140,18 @@ const ActivityLogsList = () => {
                                             <TableCell>{format(new Date(row.createdAt), 'E, MMM d yyyy HH:mm')}</TableCell>
                                             <TableCell>{row.module}</TableCell>
                                             <TableCell>{row.action}</TableCell>
-                                            <TableCell>{row.description || '-'}</TableCell>
+                                            <TableCell>
+                                                {row.admin ? row.admin.role : (row.user ? row.user.role : (row.institute ? row.institute.role : '-'))}
+                                            </TableCell>
+                                            <TableCell>
+                                                {row.admin ? (row.admin.name || 'Admin') : (row.user ? `${row.user.firstName} ${row.user.lastName}` : (row.institute ? row.institute.name : 'System'))}
+                                            </TableCell>
+                                            <TableCell sx={{ maxWidth: 400, overflow: 'hidden' }}>{row.description || '-'}</TableCell>
                                         </TableRow>
                                     ))}
                                     {logs.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={4} align="center">No activity logs found.</TableCell>
+                                            <TableCell colSpan={6} align="center">No activity logs found.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
@@ -148,26 +159,43 @@ const ActivityLogsList = () => {
                         </TableContainer>
 
                         {/* Pagination */}
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', p: 2, gap: 2 }}>
-                            <Typography variant="body2">
-                                Page {page} of {totalPages || 1}
-                            </Typography>
-                            <Button
-                                disabled={page <= 1}
-                                onClick={() => setPage(page - 1)}
-                                variant="outlined"
-                                size="small"
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                disabled={page >= totalPages}
-                                onClick={() => setPage(page + 1)}
-                                variant="outlined"
-                                size="small"
-                            >
-                                Next
-                            </Button>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, gap: 2, flexWrap: 'wrap' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="textSecondary">Rows per page:</Typography>
+                                <Select
+                                    value={limit}
+                                    onChange={(e) => { setLimit(e.target.value); setPage(1); }}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ minWidth: 75 }}
+                                >
+                                    <MenuItem value={10}>10</MenuItem>
+                                    <MenuItem value={25}>25</MenuItem>
+                                    <MenuItem value={50}>50</MenuItem>
+                                    <MenuItem value={100}>100</MenuItem>
+                                </Select>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography variant="body2">
+                                    Page {page} of {totalPages || 1}
+                                </Typography>
+                                <Button
+                                    disabled={page <= 1}
+                                    onClick={() => setPage(page - 1)}
+                                    variant="outlined"
+                                    size="small"
+                                >
+                                    Previous
+                                </Button>
+                                <Button
+                                    disabled={page >= totalPages}
+                                    onClick={() => setPage(page + 1)}
+                                    variant="outlined"
+                                    size="small"
+                                >
+                                    Next
+                                </Button>
+                            </Box>
                         </Box>
                     </Paper>
                 )}

@@ -34,6 +34,7 @@ const EditAdmin = () => {
 
     const formik = useFormik({
         initialValues: {
+            name: '',
             email: '',
             password: '',
             role: 'ADMIN',
@@ -69,6 +70,7 @@ const EditAdmin = () => {
                 const response = await getAdminById(id);
                 if (response.data && response.data.profile) {
                     formik.setValues({
+                        name: response.data.profile.name,
                         email: response.data.profile.email,
                         password: '', // Don't show password
                         role: response.data.profile.role,
@@ -104,10 +106,22 @@ const EditAdmin = () => {
             <ParentCard title="Admin Details">
                 <CardContent>
                     <form onSubmit={formik.handleSubmit}>
+                        <Grid item xs={12}>
+                            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                            {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+                        </Grid>
                         <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                                {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+                            <Grid item size={{ xs: 10, sm: 5 }}>
+                                <CustomFormLabel htmlFor="name">Name</CustomFormLabel>
+                                <CustomTextField
+                                    id="name"
+                                    name="name"
+                                    fullWidth
+                                    value={formik.values.name}
+                                    onChange={formik.handleChange}
+                                    error={formik.touched.name && Boolean(formik.errors.name)}
+                                    helperText={formik.touched.name && formik.errors.name}
+                                />
                             </Grid>
                             <Grid item size={{ xs: 10, sm: 5 }}>
                                 <CustomFormLabel htmlFor="email">Email Address</CustomFormLabel>
@@ -136,7 +150,7 @@ const EditAdmin = () => {
                                 />
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid item size={{ xs: 10, sm: 6 }}>
                                 <CustomFormLabel htmlFor="role">Role</CustomFormLabel>
                                 <Select
                                     id="role"
@@ -149,7 +163,7 @@ const EditAdmin = () => {
                                     <MenuItem value="MASTER_ADMIN">Master Admin</MenuItem>
                                 </Select>
                             </Grid>
-                            <Grid item xs={12} marginLeft={3}>
+                            <Grid item xs={12} >
                                 <Button
                                     color="primary"
                                     variant="contained"

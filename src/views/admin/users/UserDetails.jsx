@@ -212,7 +212,7 @@ const UserDetails = () => {
 
     return (
         <PageContainer title="User Details" description="View user profile">
-            <Breadcrumb title="User Details" items={BCrumb} />
+            {/* <Breadcrumb title="User Details" items={BCrumb} /> */}
 
             {/* TOP SECTION: Cover & Profile Avatar */}
             <Card sx={{ padding: 0, mb: 3, overflow: 'visible' }}>

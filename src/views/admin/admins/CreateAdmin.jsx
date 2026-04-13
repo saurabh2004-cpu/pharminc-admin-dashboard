@@ -32,6 +32,7 @@ const CreateAdmin = () => {
 
     const formik = useFormik({
         initialValues: {
+            name: '',
             email: '',
             password: '',
             role: 'ADMIN',
@@ -68,10 +69,22 @@ const CreateAdmin = () => {
             <ParentCard title="Admin Details">
                 <CardContent>
                     <form onSubmit={formik.handleSubmit}>
+                        <Grid item xs={12}>
+                            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                            {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+                        </Grid>
                         <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                                {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+                            <Grid item size={{ xs: 10, sm: 5 }} >
+                                <CustomFormLabel htmlFor="name">Name</CustomFormLabel>
+                                <CustomTextField
+                                    id="name"
+                                    name="name"
+                                    fullWidth
+                                    value={formik.values.name}
+                                    onChange={formik.handleChange}
+                                    error={formik.touched.name && Boolean(formik.errors.name)}
+                                    helperText={formik.touched.name && formik.errors.name}
+                                />
                             </Grid>
                             <Grid item size={{ xs: 10, sm: 5 }} >
                                 <CustomFormLabel htmlFor="email">Email Address</CustomFormLabel>
@@ -98,7 +111,7 @@ const CreateAdmin = () => {
                                     helperText={formik.touched.password && formik.errors.password}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item size={{ xs: 10, sm: 6 }}>
                                 <CustomFormLabel htmlFor="role">Role</CustomFormLabel>
                                 <Select
                                     id="role"
@@ -111,7 +124,7 @@ const CreateAdmin = () => {
                                     <MenuItem value="MASTER_ADMIN">Master Admin</MenuItem>
                                 </Select>
                             </Grid>
-                            <Grid item xs={12} marginLeft={3}>
+                            <Grid item xs={12} >
                                 <Button
                                     color="primary"
                                     variant="contained"
