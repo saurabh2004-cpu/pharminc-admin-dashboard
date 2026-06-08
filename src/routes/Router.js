@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
+import ProtectedRoute from './ProtectedRoute';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -14,64 +15,47 @@ const Modern = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const Login2 = Loadable(lazy(() => import('../views/authentication/auth2/Login2')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 
-//my imports
 
-// Institute Imports
-const InstituteCreate = Loadable(lazy(() => import('../views/admin/institute/InstituteCreate')));
-const InstituteList = Loadable(lazy(() => import('../views/admin/institute/InstituteList')));
-const InstituteEdit = Loadable(lazy(() => import('../views/admin/institute/InstituteEdit')));
-const InstituteJobsList = Loadable(lazy(() => import('../views/admin/institute/InstituteJobsList')));
-const JobApplicantsList = Loadable(lazy(() => import('../views/admin/institute/JobApplicantsList')));
-const InstituteVerificationList = Loadable(lazy(() => import('../views/admin/institute/InstituteVerificationList')));
-const InstituteVerificationDetails = Loadable(lazy(() => import('../views/admin/institute/InstituteVerificationDetails')));
-const InstituteDetails = Loadable(lazy(() => import('../views/admin/institute/InstituteDetails')));
-// Credits Management Imports
-const CreditsWalletList = Loadable(lazy(() => import('../views/admin/creditsWallet/CreditsWalletList')));
-const CreditsWalletCreate = Loadable(lazy(() => import('../views/admin/creditsWallet/CreditsWalletCreate')));
-const CreditsWalletEdit = Loadable(lazy(() => import('../views/admin/creditsWallet/CreditsWalletEdit')));
 
-const InstituteCreditsList = Loadable(lazy(() => import('../views/admin/instituteCredits/InstituteCreditsList')));
-const InstituteCreditsCreate = Loadable(lazy(() => import('../views/admin/instituteCredits/InstituteCreditsCreate')));
-const InstituteCreditsEdit = Loadable(lazy(() => import('../views/admin/instituteCredits/InstituteCreditsEdit')));
+// Services Imports
+const ServiceCreate = Loadable(lazy(() => import('../views/admin/services/ServiceCreate')));
+const ServicesList = Loadable(lazy(() => import('../views/admin/services/ServicesList')));
+const ServiceEdit = Loadable(lazy(() => import('../views/admin/services/ServiceEdit')));
 
-// User Management Imports
-const UsersList = Loadable(lazy(() => import('../views/admin/users/UsersList')));
-const UserVerificationList = Loadable(lazy(() => import('../views/admin/users/UserVerificationList')));
-const UserEdit = Loadable(lazy(() => import('../views/admin/users/UserEdit')));
-const UserDetails = Loadable(lazy(() => import('../views/admin/users/UserDetails')));
-const UserVerificationDetails = Loadable(lazy(() => import('../views/admin/users/UserVerificationDetails')));
-const UserApplicationsList = Loadable(lazy(() => import('../views/admin/users/UserApplicationsList')));
+// Addresses Imports
+const AddressCreate = Loadable(lazy(() => import('../views/admin/addresses/AddressCreate')));
+const AddressList = Loadable(lazy(() => import('../views/admin/addresses/AddressList')));
+const AddressEdit = Loadable(lazy(() => import('../views/admin/addresses/AddressEdit')));
 
-// Job Management Imports
-const JobsList = Loadable(lazy(() => import('../views/admin/jobs/JobsList')));
-const JobEdit = Loadable(lazy(() => import('../views/admin/jobs/JobEdit')));
-// Admin Management Imports
-const AdminsList = Loadable(lazy(() => import('../views/admin/admins/AdminsList')));
-const CreateAdmin = Loadable(lazy(() => import('../views/admin/admins/CreateAdmin')));
-const EditAdmin = Loadable(lazy(() => import('../views/admin/admins/EditAdmin')));
+// Locations Imports
 
-// Credits History Imports
-const CreditsHistoryList = Loadable(lazy(() => import('../views/admin/credits-history/CreditsHistoryList')));
-const InstituteCreditsHistoryList = Loadable(lazy(() => import('../views/admin/credits-history/InstituteCreditsHistoryList')));
-const CreditsHistoryDetail = Loadable(lazy(() => import('../views/admin/credits-history/CreditsHistoryDetail')));
+// Blogs Imports
+const BlogCreate = Loadable(lazy(() => import('../views/admin/blogs/BlogCreate')));
+const BlogList = Loadable(lazy(() => import('../views/admin/blogs/BlogList')));
+const BlogEdit = Loadable(lazy(() => import('../views/admin/blogs/BlogEdit')));
 
-// Activity Logs Imports
-const ActivityLogsList = Loadable(lazy(() => import('../views/admin/activityLogs/ActivityLogsList')));
-const ActivityLogDetails = Loadable(lazy(() => import('../views/admin/activityLogs/ActivityLogDetails')));
-// Package Management Imports
-const PackageList = Loadable(lazy(() => import('../views/admin/packages/PackageList')));
-const PackageCreate = Loadable(lazy(() => import('../views/admin/packages/PackageCreate')));
-const PackageEdit = Loadable(lazy(() => import('../views/admin/packages/PackageEdit')));
+// Consultations Imports
+const ConsultationList = Loadable(lazy(() => import('../views/admin/consultations/ConsultationList')));
+const ConsultationView = Loadable(lazy(() => import('../views/admin/consultations/ConsultationView')));
 
-// Conversation Management Imports
-const ConversationsList = Loadable(lazy(() => import('../views/admin/conversations/ConversationsList')));
-const ConversationChat = Loadable(lazy(() => import('../views/admin/conversations/ConversationChat')));
+// Labels Imports
+const LabelCreate = Loadable(lazy(() => import('../views/admin/labels/LabelCreate')));
+const LabelsList = Loadable(lazy(() => import('../views/admin/labels/LabelsList')));
+const LabelEdit = Loadable(lazy(() => import('../views/admin/labels/LabelEdit')));
+
+// Keywords Imports
+const KeywordsImport = Loadable(lazy(() => import('../views/admin/keywords/KeywordsImport')));
+const KeywordsList = Loadable(lazy(() => import('../views/admin/keywords/KeywordsList')));
 
 const Router = [
 
   {
     path: '/',
-    element: <FullLayout />,
+    element: (
+      <ProtectedRoute>
+        <FullLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { path: '/', element: <Navigate to="/dashboards/modern" /> },
       // { path: '/dashboards/ecommerce', exact: true, element: <EcommerceDash /> },
@@ -81,44 +65,30 @@ const Router = [
       { path: '*', element: <Navigate to="/auth/404" /> },
 
 
-      { path: '/dashboard/institute/create', element: <InstituteCreate /> },
-      { path: '/dashboard/institutes/list', element: <InstituteList /> },
-      { path: '/dashboard/institute/edit/:id', element: <InstituteEdit /> },
-      { path: '/dashboard/institutes/:id/jobs', element: <InstituteJobsList /> },
-      { path: '/dashboard/institutes/verification', element: <InstituteVerificationList /> },
-      { path: '/dashboard/institutes/:id', element: <InstituteDetails /> },
-      { path: '/admin/institute-verifications/:id', element: <InstituteVerificationDetails /> },
-      { path: '/dashboard/jobs/:id/applicants', element: <JobApplicantsList /> },
 
-      { path: '/dashboard/credits-wallet', element: <CreditsWalletList /> },
-      { path: '/dashboard/credits-wallet/create', element: <CreditsWalletCreate /> },
-      { path: '/dashboard/credits-wallet/edit/:id', element: <CreditsWalletEdit /> },
+      { path: '/dashboard/services/create', element: <ServiceCreate /> },
+      { path: '/dashboard/services/list', element: <ServicesList /> },
+      { path: '/dashboard/services/edit/:id', element: <ServiceEdit /> },
 
-      { path: '/dashboard/institute-credits', element: <InstituteCreditsList /> },
-      { path: '/dashboard/institute-credits/create', element: <InstituteCreditsCreate /> },
-      { path: '/dashboard/institute-credits/edit/:id', element: <InstituteCreditsEdit /> },
+      { path: '/dashboard/addresses/create', element: <AddressCreate /> },
+      { path: '/dashboard/addresses/list', element: <AddressList /> },
+      { path: '/dashboard/addresses/edit/:id', element: <AddressEdit /> },
 
-      { path: '/dashboard/users/list', element: <UsersList /> },
-      { path: '/dashboard/users/verification', element: <UserVerificationList /> },
-      { path: '/admin/user-verifications/:id', element: <UserVerificationDetails /> },
-      { path: '/dashboard/users/edit/:id', element: <UserEdit /> },
-      { path: '/dashboard/users/:id', element: <UserDetails /> },
-      { path: '/dashboard/users/:id/applications', element: <UserApplicationsList /> },
-      { path: '/dashboard/jobs', element: <JobsList /> },
-      { path: '/dashboard/jobs/edit/:id', element: <JobEdit /> },
-      { path: '/dashboard/admins', element: <AdminsList /> },
-      { path: '/dashboard/admins/create', element: <CreateAdmin /> },
-      { path: '/dashboard/admins/edit/:id', element: <EditAdmin /> },
-      { path: '/dashboard/credits-history', element: <CreditsHistoryList /> },
-      { path: '/dashboard/institutes/:id/credits-history', element: <InstituteCreditsHistoryList /> },
-      { path: '/dashboard/credits-history/:id', element: <CreditsHistoryDetail /> },
-      { path: '/admin/activity-logs', element: <ActivityLogsList /> },
-      { path: '/admin/activity-logs/:id', element: <ActivityLogDetails /> },
-      { path: '/dashboard/packages/list', element: <PackageList /> },
-      { path: '/dashboard/packages/create', element: <PackageCreate /> },
-      { path: '/dashboard/packages/edit/:id', element: <PackageEdit /> },
-      { path: '/dashboard/conversations', element: <ConversationsList /> },
-      { path: '/dashboard/conversations/:id', element: <ConversationChat /> },
+
+      { path: '/dashboard/blogs/create', element: <BlogCreate /> },
+      { path: '/dashboard/blogs/list', element: <BlogList /> },
+      { path: '/dashboard/blogs/edit/:id', element: <BlogEdit /> },
+
+      { path: '/dashboard/consultations/list', element: <ConsultationList /> },
+      { path: '/dashboard/consultations/view/:id', element: <ConsultationView /> },
+
+      { path: '/dashboard/labels/create', element: <LabelCreate /> },
+      { path: '/dashboard/labels/list', element: <LabelsList /> },
+      { path: '/dashboard/labels/edit/:id', element: <LabelEdit /> },
+
+      { path: '/dashboard/keywords/import', element: <KeywordsImport /> },
+      { path: '/dashboard/keywords/list', element: <KeywordsList /> },
+
     ],
   },
 

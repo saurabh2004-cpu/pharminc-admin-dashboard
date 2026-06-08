@@ -3,7 +3,7 @@ import { logout } from '../store/authSlice';
 
 export const adminLogout = async (dispatch, navigate) => {
     try {
-        await axiosInstance.post('/admin/logout', {});
+        await axiosInstance.post('/admins/logout', {});
     } catch (err) {
         console.warn("Logout API failed, forcing local session clear:", err);
     } finally {

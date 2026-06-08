@@ -24,15 +24,13 @@ const Modern = () => {
   return (
     <Box>
       <Grid container spacing={3}>
-        {/* column */}
-        <Grid size={12}>
+        {/* All dashboard widgets commented out to prevent API calls and show empty UI */}
+        {/* <Grid size={12}>
           <TopCards />
         </Grid>
-        {/* column */}
         <Grid size={{ xs: 12, lg: 8 }}>
           <RevenueUpdates />
         </Grid>
-        {/* column */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <Grid spacing={3} container columns={{ xs: 12, sm: 6 }}>
             <Grid size={12}>
@@ -43,11 +41,9 @@ const Modern = () => {
             </Grid>
           </Grid>
         </Grid>
-        {/* column */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <EmployeeSalary />
         </Grid>
-        {/* column */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <Grid spacing={3} container columns={{ xs: 12, sm: 6 }}>
             <Grid size={{ xs: 12, md: 6, lg: 'grow' }}>
@@ -61,20 +57,16 @@ const Modern = () => {
             </Grid>
           </Grid>
         </Grid>
-        {/* column */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <SellingProducts />
         </Grid>
-        {/* column */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <WeeklyStats />
         </Grid>
-        {/* column */}
         <Grid size={{ xs: 12, lg: 8 }}>
           <TopPerformers />
-        </Grid>
+        </Grid> */}
       </Grid>
-      {/* column */}
       <Welcome />
     </Box>
   );

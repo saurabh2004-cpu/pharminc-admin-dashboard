@@ -9,7 +9,7 @@ const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_BACKEND_URL,
 
   headers: {},
-  withCredentials: true
+  withCredentials: true 
 });
 
 export default axiosInstance;

@@ -13,7 +13,7 @@ import {
 import { Link } from 'react-router';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
-import axiosInstance from '../../../axios/axiosInstance';
+import { loginAdmin } from '../../../services/adminService';
 import { login } from '../../../store/authSlice';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router';
@@ -71,12 +71,7 @@ const AuthLogin = ({ subtitle }) => {
     setLoading(true);
 
     try {
-      const res = await axiosInstance.post('/admin/login', formData, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        withCredentials: true // ensure HTTP-only cookies are processed
-      });
+      const res = await loginAdmin(formData.email, formData.password);
 
       // API responses with success
       if (res.data.statusCode === 200 || res.status === 200) {

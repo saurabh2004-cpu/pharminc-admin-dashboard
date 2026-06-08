@@ -1,25 +1,21 @@
 import axiosInstance from '../axios/axiosInstance';
 
-export const getAllAdmins = () => {
-    return axiosInstance.get('/admin/get-all-admins');
+export const loginAdmin = async (email, password) => {
+    return await axiosInstance.post('/admin/login', { email, password }, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
 };
 
-export const getAdminById = (id) => {
-    return axiosInstance.get(`/admin/get-admin/${id}`);
+export const logoutAdmin = async () => {
+    return await axiosInstance.post('/admin/logout', {}, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
 };
 
-export const createAdmin = (adminData) => {
-    return axiosInstance.post('/admin/signup', adminData);
-};
-
-export const updateAdmin = (id, adminData) => {
-    return axiosInstance.put(`/admin/edit-admin/${id}`, adminData);
-};
-
-export const deleteAdmin = (id) => {
-    return axiosInstance.delete(`/admin/delete-admin/${id}`);
-};
-
-export const getStats = () => {
-    return axiosInstance.get(`/admin/get-stats`);
+export const deleteAdmin = async (id) => {
+    return await axiosInstance.delete(`/admin/delete/${id}`);
 };

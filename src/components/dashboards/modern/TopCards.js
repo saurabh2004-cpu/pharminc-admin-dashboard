@@ -7,7 +7,6 @@ import icon2 from '../../../assets/images/svgs/icon-user-male.svg';
 import icon3 from '../../../assets/images/svgs/588hospital_100778.svg';
 import icon4 from '../../../assets/images/svgs/icon-briefcase.svg';
 import icon5 from '../../../assets/images/svgs/resume_business_cv_work_job_curriculum_icon_175611.svg';
-import { getStats } from '../../../services/adminService';
 
 
 

@@ -46,148 +46,119 @@ const Menuitems = [
 
   {
     id: uniqueId(),
-    title: 'Institute Management',
+    title: 'Services',
+    icon: IconCategory,
+    href: '/dashboard/services/list',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Create Service',
+        icon: IconPoint,
+        href: '/dashboard/services/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Services List',
+        icon: IconPoint,
+        href: '/dashboard/services/list',
+      }
+    ]
+  },
+  {
+    id: uniqueId(),
+    title: 'Addresses',
     icon: IconBuildingStore,
-    href: '/dashboard/institutes/list',
+    href: '/dashboard/addresses/list',
     children: [
       {
         id: uniqueId(),
-        title: 'Create Institute',
+        title: 'Create Address',
         icon: IconPoint,
-        href: '/dashboard/institute/create',
+        href: '/dashboard/addresses/create',
       },
       {
         id: uniqueId(),
-        title: 'Institutes List',
+        title: 'Addresses List',
         icon: IconPoint,
-        href: '/dashboard/institutes/list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Verification Queue',
-        icon: IconPoint,
-        href: '/dashboard/institutes/verification',
-      }
-    ]
-  },
-  {
-    id: uniqueId(),
-    title: 'Credits Management',
-    icon: IconReceipt,
-    href: '/dashboard/institute-credits',
-    children: [
-      // {
-      //   id: uniqueId(),
-      //   title: 'Credits Wallet',
-      //   icon: IconPoint,
-      //   href: '/dashboard/credits-wallet',
-      // },
-      {
-        id: uniqueId(),
-        title: 'Institute Credits',
-        icon: IconPoint,
-        href: '/dashboard/institute-credits',
-      },
-      {
-        id: uniqueId(),
-        title: 'Credits History',
-        icon: IconPoint,
-        href: '/dashboard/credits-history',
-      }
-    ]
-  },
-  {
-    id: uniqueId(),
-    title: 'User Management',
-    icon: IconUserPlus,
-    href: '/dashboard/users/list',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Users List',
-        icon: IconPoint,
-        href: '/dashboard/users/list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Verification Queue',
-        icon: IconPoint,
-        href: '/dashboard/users/verification',
+        href: '/dashboard/addresses/list',
       }
     ]
   },
 
   {
     id: uniqueId(),
-    title: 'Job Management',
-    icon: IconReceipt,
-    href: '/dashboard/jobs',
+    title: 'Blogs',
+    icon: IconNotebook,
+    href: '/dashboard/blogs/list',
     children: [
       {
         id: uniqueId(),
-        title: 'Jobs List',
+        title: 'Create Blog',
         icon: IconPoint,
-        href: '/dashboard/jobs',
+        href: '/dashboard/blogs/create',
       },
+      {
+        id: uniqueId(),
+        title: 'Blogs List',
+        icon: IconPoint,
+        href: '/dashboard/blogs/list',
+      }
     ]
   },
   {
     id: uniqueId(),
-    title: 'Conversations',
+    title: 'Consultations',
     icon: IconMessage,
-    href: '/dashboard/conversations',
-  },
-  {
-    id: uniqueId(),
-    title: 'Admin Management',
-    icon: IconSettings,
-    href: '/dashboard/admins',
+    href: '/dashboard/consultations/list',
     children: [
       {
         id: uniqueId(),
-        title: 'Create Admin',
+        title: 'Consultations List',
         icon: IconPoint,
-        href: '/dashboard/admins/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Admins List',
-        icon: IconPoint,
-        href: '/dashboard/admins',
+        href: '/dashboard/consultations/list',
       }
     ]
   },
   {
     id: uniqueId(),
-    title: 'Activity Logs',
-    icon: IconListTree,
-    href: '/admin/activity-logs',
-  },
-  {
-    navlabel: true,
-    subheader: 'Subscription',
-  },
-  {
-    id: uniqueId(),
-    title: 'Package Management',
-    icon: IconBox,
-    href: '/dashboard/packages/list',
+    title: 'Labels',
+    icon: IconTags,
+    href: '/dashboard/labels/list',
     children: [
       {
         id: uniqueId(),
-        title: 'Packages List',
+        title: 'Create Label',
         icon: IconPoint,
-        href: '/dashboard/packages/list',
+        href: '/dashboard/labels/create',
       },
       {
         id: uniqueId(),
-        title: 'Create Package',
+        title: 'Labels List',
         icon: IconPoint,
-        href: '/dashboard/packages/create',
-      },
+        href: '/dashboard/labels/list',
+      }
     ]
   },
-
+  {
+    id: uniqueId(),
+    title: 'Keywords',
+    icon: IconFileDescription,
+    href: '/dashboard/keywords/list',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Import CSV',
+        icon: IconPoint,
+        href: '/dashboard/keywords/import',
+      },
+      {
+        id: uniqueId(),
+        title: 'Keywords List',
+        icon: IconPoint,
+        href: '/dashboard/keywords/list',
+      }
+    ]
+  },
 ];
 
 export default Menuitems;
