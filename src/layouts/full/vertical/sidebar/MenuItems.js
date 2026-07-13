@@ -139,6 +139,12 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'Messages',
+    icon: IconMessage,
+    href: '/dashboard/messages',
+  },
+  {
+    id: uniqueId(),
     title: 'Admin Management',
     icon: IconSettings,
     href: '/dashboard/admins',
@@ -187,6 +193,7 @@ const Menuitems = [
       },
     ]
   },
+
 
 ];
 

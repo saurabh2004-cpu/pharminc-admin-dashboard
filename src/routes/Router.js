@@ -66,6 +66,7 @@ const PackageEdit = Loadable(lazy(() => import('../views/admin/packages/PackageE
 // Conversation Management Imports
 const ConversationsList = Loadable(lazy(() => import('../views/admin/conversations/ConversationsList')));
 const ConversationChat = Loadable(lazy(() => import('../views/admin/conversations/ConversationChat')));
+const AdminMessages = Loadable(lazy(() => import('../views/admin/messages/AdminMessages')));
 
 const Router = [
 
@@ -119,6 +120,8 @@ const Router = [
       { path: '/dashboard/packages/edit/:id', element: <PackageEdit /> },
       { path: '/dashboard/conversations', element: <ConversationsList /> },
       { path: '/dashboard/conversations/:id', element: <ConversationChat /> },
+      { path: '/dashboard/messages', element: <AdminMessages /> },
+
     ],
   },
 

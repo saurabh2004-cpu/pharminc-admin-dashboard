@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /var/www/myapps
+            cd /var/www/my-apps
 
             docker-compose pull
             docker-compose up -d --force-recreate

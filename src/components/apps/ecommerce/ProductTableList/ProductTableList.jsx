@@ -268,6 +268,7 @@ const ProductTableList = ({
   isUserApplicationsList = false,
   isCreditsHistoryList = false,
   isInstituteVerificationsList = false,
+  isFeedbackList = false,
   setTableData,
   serverPagination = false,
   totalCount = 0,
@@ -324,12 +325,12 @@ const ProductTableList = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isBrandsList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isInstituteVerificationsList || isUserApplicationsList || isCreditsHistoryList || isAdminList || isPackagesList) {
+    if (isBrandsList || isFeedbackList || isInstitutesList || isJobsList || isApplicantsList || isUsersList || isUserVerificationsList || isInstituteVerificationsList || isUserApplicationsList || isCreditsHistoryList || isAdminList || isPackagesList) {
       setRows(sourceData);
     } else {
       setRows(filteredAndSortedProducts);
     }
-  }, [sourceData, filteredAndSortedProducts, isBrandsList, isInstitutesList, isJobsList, isApplicantsList, isUsersList, isUserVerificationsList, isInstituteVerificationsList, isUserApplicationsList, isCreditsHistoryList, isAdminList]);
+  }, [sourceData, filteredAndSortedProducts, isFeedbackList, isBrandsList, isInstitutesList, isJobsList, isApplicantsList, isUsersList, isUserVerificationsList, isInstituteVerificationsList, isUserApplicationsList, isCreditsHistoryList, isAdminList]);
 
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
@@ -346,6 +347,12 @@ const ProductTableList = ({
       });
       setRows(filteredRows);
     } else if (isApplicantsList || isUsersList || isUserVerificationsList) {
+      const filteredRows = sourceData.filter((row) => {
+        const fullName = `${row.firstName || ''} ${row.lastName || ''} ${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim();
+        return fullName.toLowerCase().includes(searchValue) || (row.email && row.email.toLowerCase().includes(searchValue));
+      });
+      setRows(filteredRows);
+    } else if (isFeedbackList) {
       const filteredRows = sourceData.filter((row) => {
         const fullName = `${row.firstName || ''} ${row.lastName || ''} ${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim();
         return fullName.toLowerCase().includes(searchValue) || (row.email && row.email.toLowerCase().includes(searchValue));
@@ -1390,10 +1397,52 @@ const ProductTableList = ({
                               <Typography>{format(new Date(row.created_at), 'MMM d yyyy HH:mm')}</Typography>
                             </TableCell>
                           </>
-                        ) : (
-                          // Products List View (original code)
-                          ''
-                        )}
+                        ) :
+                          isFeedbackList ?
+                            (
+                              // list the feddbacks coloumns 
+                              <>
+                                <TableCell sx={stickyCellStyle}>
+                                  <Box display="flex" gap={1}>
+                                    <Tooltip title="View Details">
+                                      <IconButton
+                                        size="small"
+                                        color="primary"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          navigate(`/dashboard/feedback-details/${row.id}`);
+                                        }}
+                                      >
+                                        <IconEye size="1.1rem" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{row.feedbackType}</Typography>
+                                </TableCell>
+                                <TableCell sx={{ whiteSpace: 'pre-wrap', maxWidth: 300 }}>
+                                  <Typography>{row.message.substring(0, 100) + "..."}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{row.user.firstName + " " + row.user.lastName}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{row.user.email}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{row.user.role}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography>{format(new Date(row.createdAt), 'MMM d yyyy HH:mm')}</Typography>
+                                </TableCell>
+                              </>
+                            )
+                            :
+                            (
+                              // Products List View (original code)
+                              ''
+                            )}
                       </TableRow>
                     );
                   })}
