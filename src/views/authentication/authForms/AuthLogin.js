@@ -80,6 +80,9 @@ const AuthLogin = ({ subtitle }) => {
 
       // API responses with success
       if (res.data.statusCode === 200 || res.status === 200) {
+        if (res.data.token) {
+          localStorage.setItem('adminAccessToken', res.data.token);
+        }
         dispatch(login(res.data.user || { email: formData.email, role: 'admin' }));
         showNotification('Login successful! Redirecting...', 'success');
 

@@ -184,7 +184,10 @@ const AdminMessages = () => {
 
     // Socket Connection Setup
     useEffect(() => {
-        const token = Cookies.get('adminAccessToken');
+        let token = Cookies.get('adminAccessToken');
+        if (!token) {
+            token = localStorage.getItem('adminAccessToken');
+        }
         const socket = connectSocket(token);
 
         socket.on('new_message', handleNewMessage);
